@@ -3,7 +3,7 @@
 **負責人：** aaaaa  
 **階段：** Phase 1（基礎估算）/ Phase 2（調度券效率）  
 **依賴 CR：** CR-01（設備擺放）、CR-02（管線連接）、CR-03（警示與 Error 狀態）  
-**文件版本：** v0.4  
+**文件版本：** v0.6  
 **最後更新：** 2026-05-18
 
 ---
@@ -40,14 +40,16 @@ CR-04 是模擬器的**核心計算引擎**，稱為 **FlowEngine**。
 ```
 畫布操作（CR-01 / CR-02）
         │
-        ▼  watch（deep）+ debounce 150ms
+        ▼  [() => editorStore.nodes, () => editorStore.edges]
+           watch（deep, immediate）+ useDebounceFn(runFlowEngine, 150ms)
   FlowEngine（composable）
         │
-        ├─ buildGraph()          ← 過濾 Error 節點，建立有向圖
-        ├─ validateChains()      ← 反向 BFS 過濾非合法鏈路（P1-C ✅）
-        ├─ topologicalSort()     ← Kahn's Algorithm，偵測環路
-        ├─ propagateFlows()      ← 正向傳播，計算每條邊流量與每台設備效率
-        └─ calcItemSummary()     ← 彙整品項生產 / 消耗 / 淨產量
+        ├─ buildGraph()          ← 過濾 CR-03 Error 節點，建立有向圖 ✅
+        ├─ validateChains()      ← 反向 BFS 過濾非合法鏈路 ✅
+        ├─ topologicalSort()     ← Kahn's Algorithm，偵測環路 ✅
+        ├─ propagateFlows()      ← 正向傳播，計算每條邊流量與每台設備效率 ✅
+        ├─ detectCongestion()    ← 堵塞反向傳播、縮減上游效率 ✅
+        └─ calcItemSummary()     ← 彙整品項生產 / 消耗 / 淨產量 ✅
         │
         ▼
   useFlowStore（Pinia）
@@ -61,19 +63,21 @@ CR-04 是模擬器的**核心計算引擎**，稱為 **FlowEngine**。
 
 ```
 src/
+├─ app/layouts/
+│   └─ MainLayout.vue           ← E2：呼叫 useFlowEngine()，挂載時自動啟動監聽
 ├─ composables/
-│   └─ useFlowEngine.ts          ← FlowEngine 核心邏輯與 watch 觸發
+│   └─ useFlowEngine.ts         ← FlowEngine 核心逻輯與 watch 觸發
 ├─ store/
-│   └─ flowStore.ts              ← Pinia store，儲存計算結果
+│   └─ flowStore.ts             ← Pinia store，儲存計算結果
 ├─ data/
-│   └─ devices.ts                ← 設備與配方定義（CR-01 主責，CR-04 唯讀）
+│   └─ devices.ts               ← 設備與配方定義（CR-01 主責，CR-04 維護 stub）
 ├─ editor/
 │   ├─ canvas/
-│   │   └─ FactoryCanvas.vue     ← 管線與設備 overlay 顯示
+│   │   └─ FactoryCanvas.vue    ← 管線與設備 overlay 顯示
 │   └─ stats/
-│       └─ ProductionStats.vue   ← 右側統計面板
+│       └─ ProductionStats.vue  ← 右側統計面板
 └─ types/
-    └─ flow.ts                   ← FlowEngine 相關型別定義
+    └─ flow.ts                  ← FlowEngine 相關型別定義
 ```
 
 ---
@@ -191,6 +195,47 @@ surplus = totalPowerSupply - totalPowerDemand
 | 50%–99% | 黃色 | `text-yellow-400` |
 | 1%–49% | 橘色 | `text-orange-400` |
 | 0%（無輸入） | 灰色 | `text-gray-400` |
+
+### 3.6 FlowEngine 實作方函清單（`useFlowEngine.ts`）✅ 已實作
+
+| 函式 | 導出 | 說明 |
+|------|------|------|
+| `calcDeviceRate(recipe)` | ✓ | D4：計算單機技術速率 |
+| `buildGraph(nodes, edges)` | ✓ | D2：建立 FlowGraph，初始化節點速率 |
+| `validateRecipeMatch(...)` | ✓ | C2：配方品項符合性檢查 |
+| `validateChains(graph)` | ✓ | C1：反向 BFS 合法鏈路過濾 |
+| `topologicalSort(graph)` | ✓ | D3：Kahn's Algorithm |
+| `propagateFlows(sorted, graph)` | ✓ | D6：正向傳播主迴圈 |
+| `detectCongestion(graph, flows)` | ✓ | D7：堵塞反向傳播 |
+| `calcItemSummary(graph)` | ✓ | D8：品項統計 |
+| `runFlowEngine()` | ✓ | D9：主入口（async），串接全流程 |
+| `useFlowEngine()` | ✓ | E1：Composable，內含 watch + debounce |
+
+#### Watch 觸發詳細（E1）
+
+```typescript
+// src/composables/useFlowEngine.ts
+export function useFlowEngine() {
+    const editorStore = useEditorStore();
+    const debouncedRun = useDebounceFn(runFlowEngine, 150);
+
+    watch(
+        [() => editorStore.nodes, () => editorStore.edges],  // getter 形式，相容 shallowRef
+        debouncedRun,
+        { deep: true, immediate: true },  // immediate: 挂載即執行首次計算
+    );
+
+    return { runFlowEngine };
+}
+```
+
+#### 掛載點（E2）
+
+```typescript
+// src/app/layouts/MainLayout.vue <script setup>
+import { useFlowEngine } from '@/composables/useFlowEngine';
+useFlowEngine();  // 在 Editor layout 載入時自動啟動監聽
+```
 
 ---
 
@@ -359,6 +404,8 @@ applyResult(payload: {
 | v0.2 | 2026-05-18 | P1-A：建立 `src/types/flow.ts`（完整型別定義）、`src/data/devices.ts`（14 台設備 stub + 20 配方 + 查詢 API） |
 | v0.3 | 2026-05-18 | P1-B：建立 `src/store/flowStore.ts`（Pinia store，含 State / Computed / `reset()` / `applyResult()`） |
 | v0.4 | 2026-05-18 | P1-C：建立 `useFlowEngine.ts`，實作 `validateChains()`（反向 BFS × 5 步驟）與 `validateRecipeMatch()` |
+| v0.5 | 2026-05-18 | P1-D：實作 `buildGraph` / `topologicalSort` / `propagateFlows` / `detectCongestion` / `calcItemSummary` / `runFlowEngine` |
+| v0.6 | 2026-05-18 | P1-E：`useFlowEngine` 加入 watch + `useDebounceFn(150ms)`，在 `MainLayout.vue` 提升挂載 |
 
 ---
 
