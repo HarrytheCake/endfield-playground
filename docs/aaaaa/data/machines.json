@@ -1,0 +1,206 @@
+[
+  {
+    "name": "塑型機",
+    "width": 4,
+    "height": 3,
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      },
+      {
+        "side": "left",
+        "offset": 2
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      }
+    ],
+    "power": -1.0,
+    "tags": [
+      "合成"
+    ]
+  },
+  {
+    "name": "灌裝機",
+    "width": 1,
+    "height": 1,
+    "input_ports": [],
+    "output_ports": [],
+    "power": -1.0,
+    "tags": [
+      "合成"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "精煉爐",
+    "width": 3,
+    "height": 3,
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 1
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      }
+    ],
+    "power": -1.0,
+    "tags": [
+      "合成"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "粉碎機",
+    "width": 3,
+    "height": 3,
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 1
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      }
+    ],
+    "power": -1.0,
+    "tags": [
+      "分解"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "配件機",
+    "width": 3,
+    "height": 3,
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 1
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      }
+    ],
+    "power": -1.0,
+    "tags": [
+      "合成"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "裝備原件機",
+    "width": 3,
+    "height": 3,
+    "input_ports": [],
+    "output_ports": [],
+    "power": -1.0,
+    "tags": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "封裝機",
+    "width": 1,
+    "height": 1,
+    "input_ports": [],
+    "output_ports": [],
+    "power": -1,
+    "tags": []
+  },
+  {
+    "name": "研磨機",
+    "width": 1,
+    "height": 1,
+    "input_ports": [],
+    "output_ports": [],
+    "power": -1,
+    "tags": []
+  },
+  {
+    "name": "反應池",
+    "width": 1,
+    "height": 1,
+    "input_ports": [],
+    "output_ports": [],
+    "power": -1,
+    "tags": []
+  },
+  {
+    "name": "天有洪爐",
+    "width": 1,
+    "height": 1,
+    "input_ports": [],
+    "output_ports": [],
+    "power": -1,
+    "tags": []
+  },
+  {
+    "name": "提純機",
+    "width": 1,
+    "height": 1,
+    "input_ports": [],
+    "output_ports": [],
+    "power": -1,
+    "tags": []
+  },
+  {
+    "name": "拆解機",
+    "width": 1,
+    "height": 1,
+    "input_ports": [],
+    "output_ports": [],
+    "power": -1.0,
+    "tags": []
+  },
+  {
+    "name": "物品輸出口",
+    "width": 1,
+    "height": 3,
+    "power": -1.0,
+    "tags": [],
+    "input_ports": [],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      }
+    ],
+    "is_source": true,
+    "is_sink": false
+  },
+  {
+    "name": "物品輸入口",
+    "width": 1,
+    "height": 3,
+    "power": -1.0,
+    "tags": [],
+    "input_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      }
+    ],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": true
+  }
+]
