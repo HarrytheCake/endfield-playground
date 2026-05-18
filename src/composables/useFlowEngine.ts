@@ -23,7 +23,7 @@
 
 import type { FlowGraph, FlowNode, EdgeMeta, EdgeFlow, ItemSummary, RecipeDef } from '@/types/flow';
 import { BELT_RATE_LIMIT } from '@/types/flow';
-import { getMachineDef, getRecipe, getRecipesForMachine } from '@/data/devices';
+import { getMachineDef, getRecipesForMachine } from '@/data/devices';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
@@ -80,7 +80,8 @@ export function validateRecipeMatch(
     recipeIndex: number,
     incomingItemIds: Set<string>,
 ): boolean {
-    const recipe = getRecipe(machineType, recipeIndex) as RecipeDef | undefined;
+    // 依設備名稱查詢配方（與 getRecipeForNode / propagateFlows 一致）
+    const recipe = getRecipesForMachine(machineType)[recipeIndex];
 
     // 找不到配方  不合法
     if (!recipe) return false;

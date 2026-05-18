@@ -11,7 +11,9 @@
     "lint": "eslint . --fix",
     "lint-check": "eslint .",
     "format": "prettier --write src/",
-    "format-check": "prettier --check src/"
+    "format-check": "prettier --check src/",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@nuxt/ui": "^4.6.1",
@@ -42,6 +44,7 @@
     "tailwindcss": "^4.2.4",
     "typescript": "~6.0.2",
     "vite": "^8.0.10",
+    "vitest": "^4.1.6",
     "vue-tsc": "^3.2.7"
   },
   "packageManager": "pnpm@10.7.0"
