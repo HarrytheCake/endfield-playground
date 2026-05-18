@@ -1,7 +1,7 @@
 # CR-04 開發 Todo List
 
 **負責人：** aaaaa  
-**最後更新：** 2026-05-18（P1-A、P1-B、P1-C、P1-D 完成，技術細節已更新）
+**最後更新：** 2026-05-18（P1-A、P1-B、P1-C、P1-D、P1-E 完成，技術細節已更新）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 
@@ -166,11 +166,12 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
 
 ### P1-E｜Watch 觸發（依賴 B1、D9）
 
-- [ ] **E1** 在 `useFlowEngine.ts` 內加入 `watch` + `useDebounceFn(runFlowEngine, 150)`
-  - 監聽 `editorStore.nodes`（設備）與 `editorStore.edges`（管線）
-  - `{ deep: true }`
+- [x] **E1** 在 `useFlowEngine.ts` 內加入 `watch` + `useDebounceFn(runFlowEngine, 150)`
+  - 監聽 `[() => editorStore.nodes, () => editorStore.edges]`（getter 形式，相容 `shallowRef`）
+  - `{ deep: true, immediate: true }`：掛載即執行首次全量計算
+  - `useDebounceFn` 來自 `@vueuse/core`（已安裝 v14.2.1）
 
-- [ ] **E2** 在主 App 或 Editor layout 掛載 `useFlowEngine()` 啟動監聽
+- [x] **E2** 在 `MainLayout.vue` `<script setup>` 中直接呼叫 `useFlowEngine()`，掛載時自動啟動監聽
 
 ### P1-F｜畫布 Overlay 顯示（依賴 B1、E1）
 
