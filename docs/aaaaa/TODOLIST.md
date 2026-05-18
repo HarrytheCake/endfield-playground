@@ -66,7 +66,7 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
 
 ### P1-A｜型別與資料基礎（前置，無依賴）
 
-- [ ] **A1** 建立 `src/types/flow.ts`，定義以下型別：
+- [x] **A1** 建立 `src/types/flow.ts`，定義以下型別：
   ```typescript
   interface EdgeFlow {
     connectionUid: string
@@ -102,7 +102,7 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
   }
   ```
 
-- [ ] **A2** 確認 `src/data/devices.ts`（對應 `docs/aaaaa/data/machines.json`）結構：
+- [x] **A2** 確認 `src/data/devices.ts`（對應 `docs/aaaaa/data/machines.json`）結構：
   ```typescript
   interface MachineDef {
     name: string
