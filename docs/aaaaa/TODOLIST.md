@@ -1,7 +1,7 @@
 # CR-04 開發 Todo List
 
 **負責人：** aaaaa  
-**最後更新：** 2026-05-18
+**最後更新：** 2026-05-18（P1-A、P1-B、P1-C 完成，技術細節已更新）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 
@@ -66,95 +66,55 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
 
 ### P1-A｜型別與資料基礎（前置，無依賴）
 
-- [x] **A1** 建立 `src/types/flow.ts`，定義以下型別：
-  ```typescript
-  interface EdgeFlow {
-    connectionUid: string
-    itemId: string        // 品項名稱（對應 products.json name）
-    rate: number          // 個/min（已套用傳送帶上限 min(rate, 30)）
-    isCongested: boolean  // 上游供給 > 下游需求
-  }
-  interface ItemSummary {
-    itemId: string
-    name: string
-    produced: number      // 個/min（所有 source / 設備輸出加總）
-    consumed: number      // 個/min（所有 sink / 設備輸入加總）
-    net: number           // produced - consumed
-    efficiency: number    // 0~1（上游瓶頸決定）
-  }
-  interface FlowNode {
-    deviceUid: string
-    isSource: boolean     // 物品輸出口
-    isSink: boolean       // 物品輸入口
-    isValid: boolean      // false = 略過（Error 節點 or 孤立節點）
-    efficiency: number    // 0~1
-    // 多輸出配方支援
-    outputRates: Map<string, number>  // itemId → 個/min
-    inputRates: Map<string, number>   // itemId → 個/min
-  }
-  interface FlowGraph {
-    nodes: Map<string, FlowNode>
-    // adjacency: deviceUid → 出邊 connectionUid[]
-    outEdges: Map<string, string[]>
-    inEdges: Map<string, string[]>
-    hasCycle: boolean
-    invalidSubgraphUids: Set<string>  // 孤立 / 非合法鏈路的節點
-  }
-  ```
+- [x] **A1** 建立 `src/types/flow.ts`
+  - **常數**：`BELT_RATE_LIMIT = 30`（傳送帶每條上限 30/min）
+  - **設備 / 配方型別**：`PortSide`、`PortDef`、`MachineDef`、`RecipeItem`、`RecipeDef`、`ProductDef`
+  - **圖結構型別**：`EdgeMeta`、`FlowNode`（含 `recipeIndex`、`outputRates: Map`、`inputRates: Map`）、`FlowGraph`（含 `edgeMeta`、`invalidSubgraphUids`）
+  - **計算結果型別**：`EdgeFlow`（含 `isCongested`）、`ItemSummary`
+  - **Store 參照型別**：`FlowStoreState`（完整狀態結構）
 
-- [x] **A2** 確認 `src/data/devices.ts`（對應 `docs/aaaaa/data/machines.json`）結構：
-  ```typescript
-  interface MachineDef {
-    name: string
-    width: number; height: number
-    inputPorts: Port[]
-    outputPorts: Port[]
-    power: number         // kW，-1 = 待補
-    tags: string[]
-    isSource?: boolean    // 物品輸出口
-    isSink?: boolean      // 物品輸入口
-  }
-  interface RecipeDef {
-    inputs:  { itemId: string; quantity: number }[]
-    outputs: { itemId: string; quantity: number }[]
-    machine: string       // 對應 MachineDef.name
-    timeSeconds: number
-    // 衍生欄位（由 FlowEngine 計算，不存在 JSON 中）
-    // inputRatePerMin  = quantity × (60 / timeSeconds)
-    // outputRatePerMin = quantity × (60 / timeSeconds)
-  }
-  ```
-  若 CR-01 尚未建立，以 stub 資料先行（對齊 `docs/aaaaa/data/machines.json`）。
+- [x] **A2** 建立 `src/data/devices.ts`（stub，CR-01 接管前暫由 CR-04 維護）
+  - **14 台設備**（全對齊 machines.json）：塑型機、灌裝機、精煉爐、粉碎機、配件機、裝備原件機、封裝機、研磨機、反應池、天有洪爐、提純機、拆解機、物品輸出口（isSource）、物品輸入口（isSink）
+  - **20 個品項配方**（涵蓋 H1–H6 所有測試情境）：
+    - 粉碎機系列：源石粉末、藍鐵粉末（×2 輸出）、紫晶粉末、赤銅粉末
+    - 研磨機：研製合成粉末方塊（H2/H3 配頻測試用假想品項）
+    - 精煉爐：藍鐵塊、紫晶纖維、赤銅塊＋汙水（多輸出，H5）、穩定碳塊
+    - 反應池：赤銅溶液、赫銅塊＋汙水（多輸出）
+    - 提純機：赫銅溶液＋沉積酸（多輸出，H6 武陵鏈路）
+    - 配件機：赤銅零件、赫銅零件
+    - 塑型機：紫晶質瓶、藍鐵瓶
+    - 封裝機：低 / 中 / 高容量谷地電池
+  - **查詢 API**：`getMachineDef()`、`getRecipesByProduct()`、`getRecipe()`、`getRecipesForMachine()`、`getAllMachines()`、`getAllProducts()`、`getAllRecipes()`
 
 ### P1-B｜Pinia Store（依賴 A1）
 
-- [x] **B1** 建立 `src/store/flowStore.ts`
-  - `edgeFlows: Map<string, EdgeFlow>`
-  - `nodeEfficiencies: Map<string, number>`
-  - `itemSummary: ItemSummary[]`
-  - `congestedEdges: Set<string>`（堵塞的 connectionUid）
-  - `invalidChainUids: Set<string>`（非合法鏈路節點 uid）
-  - `totalPowerDemand: number` / `totalPowerSupply: number`
-  - `isCalculating: boolean` / `lastCalculatedAt: number`
-  - `reset()` action
+- [x] **B1** 建立 `src/store/flowStore.ts`（Pinia Composition API 風格）
+  - **State（ref）**：`edgeFlows`、`nodeEfficiencies`、`itemSummary`、`congestedEdges`、`invalidChainUids`、`totalPowerDemand`、`totalPowerSupply`、`isCalculating`、`lastCalculatedAt`
+  - **Computed**：`powerBalance`（盈缺 kW）、`hasPowerShortage`、`edgeFlowCount`、`congestedEdgeCount`、`invalidChainCount`、`hasResults`（是否有合法鏈路計算結果）
+  - **`reset()`**：清空所有計算結果，保留 `lastCalculatedAt` 歷史
+  - **`applyResult(payload)`**：批次寫入所有計算結果（一次性更新，避免多次觸發響應式），完成後自動設定 `lastCalculatedAt = Date.now()` 並關閉 `isCalculating`
 
 ### P1-C｜鏈路合法性驗證（依賴 A1、A2）
 
 > **本群組為新增工項**，在建圖後、傳播前執行，排除非合法鏈路。
 
-- [ ] **C1** 實作 `validateChains(graph)` — 合法鏈路過濾
-  - 演算法：從所有 sink（物品輸入口）出發做**反向 BFS/DFS**，標記可達節點
-  - 未被標記的節點（無法到達任一 sink）→ 加入 `invalidChainUids`，不參與流量計算
-  - 同時驗證每條路徑上所有節點的配方輸入品項是否與上游輸出品項相符
-  - 配方不符的節點 → 標記為 `isValid = false`
+- [x] **C1** 實作 `validateChains(graph)` — 合法鏈路過濾
+  - **Step 1**：收集所有 `isSink && isValid` 的節點加入 BFS 佇列（`reachableSinks`）
+  - **Step 2**：反向 BFS（走 `inEdges`），從 sink 往上游遞迴標記所有可達到 sink 的節點
+  - **Step 3**：未被標記的節點 → `node.isValid = false`、加入 `invalidSubgraphUids`
+  - **Step 4**：對合法且非 source 節點呼叫 `validateRecipeMatch`；填入上游 `outputRates`（或 fallback 配方 outputs）來推斷品項種類
+  - **Step 5**：呼叫 `_propagateInvalidDownstream(graph)`，正向 BFS 將配方不符節點的下游連帶標記非法（sink 節點不繼續傳播）
+  - **直接 mutate graph**，不回傳新物件
 
-- [ ] **C2** 實作 `validateRecipeMatch(device, incomingItemIds)` — 配方品項符合性檢查
-  - 檢查輸入品項集合是否為所選配方 inputs 的子集
-  - 回傳 `matched: boolean`（不符合則整台設備效率 = 0）
+- [x] **C2** 實作 `validateRecipeMatch(machineType, recipeIndex, incomingItemIds)` — 配方品項符合性檢查
+  - 查詢 `getRecipe(machineType, recipeIndex)`；找不到配方 → `false`
+  - 配方 inputs 為空（source 節點）→ `true`
+  - `recipe.inputs.every((input) => incomingItemIds.has(input.itemId))`
+  - 回傳 `matched: boolean`（不符則整台設備效率 = 0）
 
 ### P1-D｜FlowEngine 核心演算法（依賴 A1、A2、C1、C2）
 
-- [ ] **D1** 建立 `src/composables/useFlowEngine.ts`
+- [x] **D1** 建立 `src/composables/useFlowEngine.ts`（P1-C 階段已建立，含 `validateChains`、`validateRecipeMatch`、`useFlowEngine` stub）
 
 - [ ] **D2** 實作 `buildGraph(devices, connections)` — 建立有向圖
   - 過濾 `useValidationStore.hasBlockingError(uid)` 為 true 的節點
