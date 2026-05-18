@@ -2,17 +2,60 @@
  * CR-04 useFlowEngine
  *
  * FlowEngine 核心演算法入口。
- * 當前實作範圍：P1-C（鏈路合法性驗證）
- *   C1 validateChains(graph)         合法鏈路過濾（反向 BFS）
- *   C2 validateRecipeMatch(...)      配方品項符合性檢查
  *
- * P1-D（buildGraph / topologicalSort / propagateFlows / ...）待後續工項補充。
+ * P1-C（鏈路合法性驗證）:
+ *   C1  validateChains(graph)              — 反向 BFS 合法鏈路過濾
+ *   C2  validateRecipeMatch(...)           — 配方品項符合性檢查
+ *
+ * P1-D（核心演算法）:
+ *   D2  buildGraph(nodes, edges)           — 建立有向圖
+ *   D3  topologicalSort(graph)             — Kahn's Algorithm
+ *   D4  calcDeviceRate(recipe)             — 計算單機速率
+ *   D5  calcDeviceOutput(node, received)   — 效率 + 多輸出
+ *   D6  propagateFlows(sorted, graph)      — 正向傳播主迴圈
+ *   D7  detectCongestion(graph, flows)     — 堵塞反向傳播
+ *   D8  calcItemSummary(graph)             — 品項統計
+ *   D9  runFlowEngine()                    — 主入口
  */
 
-import type { FlowGraph, RecipeDef } from '@/types/flow';
-import { getRecipe } from '@/data/devices';
+import type { FlowGraph, FlowNode, EdgeMeta, EdgeFlow, ItemSummary, RecipeDef } from '@/types/flow';
+import { BELT_RATE_LIMIT } from '@/types/flow';
+import { getMachineDef, getRecipe, getRecipesForMachine } from '@/data/devices';
+import { useEditorStore } from '@/store/editorStore';
+import { useFlowStore } from '@/store/flowStore';
+import type { FactoryNode, FactoryEdge } from '@/types/graph';
 
-//  C2：配方品項符合性檢查
+// ─── 內部工具 ─────────────────────────────────────────────────────────────────
+
+/**
+ * 依設備類型與配方索引取得 RecipeDef。
+ * 使用 getRecipesForMachine（依設備名）而非 getRecipe（依產品名）。
+ */
+function getRecipeForNode(machineType: string, recipeIndex: number): RecipeDef | undefined {
+    return getRecipesForMachine(machineType)[recipeIndex];
+}
+
+/**
+ * D4 — 計算單台設備的理論輸入 / 輸出速率（個/min）。
+ * ratePerMin = quantity × (60 / timeSeconds)
+ */
+function calcDeviceRate(recipe: RecipeDef): {
+    inputRates: Map<string, number>;
+    outputRates: Map<string, number>;
+} {
+    const cyclePerMin = 60 / recipe.timeSeconds;
+    const inputRates = new Map<string, number>();
+    const outputRates = new Map<string, number>();
+    for (const item of recipe.inputs) {
+        inputRates.set(item.itemId, item.quantity * cyclePerMin);
+    }
+    for (const item of recipe.outputs) {
+        outputRates.set(item.itemId, item.quantity * cyclePerMin);
+    }
+    return { inputRates, outputRates };
+}
+
+// ─── C2：配方品項符合性檢查 ────────────────────────────────────────────────────
 
 /**
  * 驗證上游實際傳入的品項集合是否符合設備所選配方的輸入需求。
@@ -44,7 +87,7 @@ export function validateRecipeMatch(
     return recipe.inputs.every((input) => incomingItemIds.has(input.itemId));
 }
 
-//  C1：合法鏈路過濾
+// ─── C1：合法鏈路過濾 ─────────────────────────────────────────────────────────
 
 /**
  * 從所有 sink 節點出發進行反向 BFS，標記可以到達 sink 的節點為「合法鏈路」。
@@ -125,7 +168,7 @@ export function validateChains(graph: FlowGraph): void {
                 }
             } else {
                 // fallback：從配方定義推斷
-                const upstreamRecipe = getRecipe(
+                const upstreamRecipe = getRecipeForNode(
                     upstreamNode.machineType,
                     upstreamNode.recipeIndex,
                 );
@@ -182,16 +225,442 @@ function _propagateInvalidDownstream(graph: FlowGraph): void {
     }
 }
 
-//  主入口（stub，P1-D 補齊）
+// ─── D2：建立有向圖 ───────────────────────────────────────────────────────────
 
 /**
- * FlowEngine 主入口。
+ * D2 — 依 editorStore 的 nodes / edges 建立 FlowGraph。
  *
- * 目前為 stub，P1-D 工項完成後串接完整演算法：
- *   buildGraph  validateChains  topologicalSort  propagateFlows
- *    detectCongestion  calcItemSummary  applyResult
+ * - 過濾 useValidationStore.hasBlockingError(uid) 為 true 的節點（CR-03 尚未定義時略過）
+ * - 過濾兩端節點不存在於圖中的 edge（孤立邊）
+ * - 為每個節點初始化理論 inputRates / outputRates（由 D4 calcDeviceRate 計算）
+ */
+export function buildGraph(nodes: FactoryNode[], edges: FactoryEdge[]): FlowGraph {
+    // 嘗試取得 CR-03 ValidationStore（尚未定義時降級為永遠不封鎖）
+    let hasBlockingError: (uid: string) => boolean = () => false;
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const vsModule = require('@/store/validationStore') as {
+            useValidationStore: () => { hasBlockingError: (uid: string) => boolean };
+        };
+        const vs = vsModule.useValidationStore();
+        hasBlockingError = (uid) => vs.hasBlockingError(uid);
+    } catch {
+        // CR-03 validationStore 尚未就緒，略過錯誤過濾
+    }
+
+    const graph: FlowGraph = {
+        nodes: new Map(),
+        outEdges: new Map(),
+        inEdges: new Map(),
+        edgeMeta: new Map(),
+        hasCycle: false,
+        invalidSubgraphUids: new Set(),
+    };
+
+    for (const node of nodes) {
+        if (hasBlockingError(node.id)) continue;
+
+        const machineType = node.data?.machineType ?? node.data?.label ?? node.id;
+        const machineDef = getMachineDef(machineType);
+        const recipeIndex = 0; // FactoryNodeData 尚未含 recipeIndex，預設 0
+
+        const recipe = getRecipeForNode(machineType, recipeIndex);
+        const { inputRates, outputRates } = recipe
+            ? calcDeviceRate(recipe)
+            : { inputRates: new Map<string, number>(), outputRates: new Map<string, number>() };
+
+        const flowNode: FlowNode = {
+            deviceUid: node.id,
+            machineType,
+            recipeIndex,
+            isSource: machineDef?.isSource ?? false,
+            isSink: machineDef?.isSink ?? false,
+            isValid: true,
+            efficiency: 1,
+            outputRates,
+            inputRates,
+        };
+
+        graph.nodes.set(node.id, flowNode);
+        graph.outEdges.set(node.id, []);
+        graph.inEdges.set(node.id, []);
+    }
+
+    for (const edge of edges) {
+        if (!graph.nodes.has(edge.source) || !graph.nodes.has(edge.target)) continue;
+        const meta: EdgeMeta = {
+            connectionUid: edge.id,
+            sourceDeviceUid: edge.source,
+            targetDeviceUid: edge.target,
+        };
+        graph.edgeMeta.set(edge.id, meta);
+        graph.outEdges.get(edge.source)!.push(edge.id);
+        graph.inEdges.get(edge.target)!.push(edge.id);
+    }
+
+    return graph;
+}
+
+// ─── D3：拓撲排序（Kahn's Algorithm） ────────────────────────────────────────
+
+/**
+ * D3 — Kahn's Algorithm 拓撲排序。
+ *
+ * 若排序後節點數 < 圖中節點總數，表示存在環路：
+ *   graph.hasCycle = true，環路節點加入 invalidSubgraphUids 並標記 isValid = false。
+ */
+export function topologicalSort(graph: FlowGraph): string[] {
+    const { nodes, outEdges, inEdges, edgeMeta } = graph;
+
+    // 計算入度（僅計算兩端均 isValid 的邊）
+    const inDegree = new Map<string, number>();
+    for (const uid of nodes.keys()) {
+        const validInCount = (inEdges.get(uid) ?? []).filter((connUid) => {
+            const meta = edgeMeta.get(connUid);
+            if (!meta) return false;
+            return nodes.get(meta.sourceDeviceUid)?.isValid ?? false;
+        }).length;
+        inDegree.set(uid, validInCount);
+    }
+
+    const queue: string[] = [];
+    for (const [uid, degree] of inDegree) {
+        if (degree === 0) queue.push(uid);
+    }
+
+    const sorted: string[] = [];
+    while (queue.length > 0) {
+        const current = queue.shift()!;
+        sorted.push(current);
+        for (const connUid of outEdges.get(current) ?? []) {
+            const meta = edgeMeta.get(connUid);
+            if (!meta) continue;
+            const targetUid = meta.targetDeviceUid;
+            const newDegree = (inDegree.get(targetUid) ?? 0) - 1;
+            inDegree.set(targetUid, newDegree);
+            if (newDegree === 0) queue.push(targetUid);
+        }
+    }
+
+    if (sorted.length < nodes.size) {
+        graph.hasCycle = true;
+        const sortedSet = new Set(sorted);
+        for (const uid of nodes.keys()) {
+            if (!sortedSet.has(uid)) {
+                const node = nodes.get(uid)!;
+                node.isValid = false;
+                graph.invalidSubgraphUids.add(uid);
+            }
+        }
+    }
+
+    return sorted;
+}
+
+// ─── D6：正向傳播 ─────────────────────────────────────────────────────────────
+
+/**
+ * D6 — 依拓撲順序正向傳播，計算每條邊的流量與每台設備的效率。
+ *
+ * 出邊品項配對策略：優先比對下游配方所需 inputs，無法配對時取第一個有餘量的輸出品項。
+ */
+export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<string, EdgeFlow> {
+    const { nodes, outEdges, edgeMeta } = graph;
+    const edgeFlows = new Map<string, EdgeFlow>();
+
+    // 記錄每個節點實際收到的各品項輸入（由上游正向填充）
+    const nodeInputReceived = new Map<string, Map<string, number>>();
+    for (const uid of nodes.keys()) {
+        nodeInputReceived.set(uid, new Map());
+    }
+
+    for (const uid of sortedNodes) {
+        const node = nodes.get(uid)!;
+        if (!node.isValid) continue;
+
+        const outEdgeUids = outEdges.get(uid) ?? [];
+
+        if (node.isSource) {
+            // Source：直接以理論速率輸出（套 BELT_RATE_LIMIT）
+            for (const connUid of outEdgeUids) {
+                const meta = edgeMeta.get(connUid);
+                if (!meta) continue;
+                for (const [itemId, recipeRate] of node.outputRates) {
+                    const rate = Math.min(recipeRate, BELT_RATE_LIMIT);
+                    edgeFlows.set(connUid, {
+                        connectionUid: connUid,
+                        itemId,
+                        rate,
+                        isCongested: false,
+                    });
+                    const downstream = nodeInputReceived.get(meta.targetDeviceUid);
+                    if (downstream) downstream.set(itemId, (downstream.get(itemId) ?? 0) + rate);
+                }
+            }
+        } else if (node.isSink) {
+            // Sink：接受所有上游輸入，更新 inputRates
+            const received = nodeInputReceived.get(uid) ?? new Map();
+            for (const [itemId, rate] of received) node.inputRates.set(itemId, rate);
+            node.efficiency = 1;
+        } else {
+            // 一般設備（D5 calcDeviceOutput）
+            const received = nodeInputReceived.get(uid) ?? new Map();
+            const recipe = getRecipeForNode(node.machineType, node.recipeIndex);
+            if (!recipe) {
+                node.isValid = false;
+                graph.invalidSubgraphUids.add(uid);
+                continue;
+            }
+
+            const { inputRates: requiredRates, outputRates: recipeOutputRates } =
+                calcDeviceRate(recipe);
+
+            // efficiency = min(supplied / required)
+            let efficiency = 1;
+            for (const [itemId, required] of requiredRates) {
+                const supplied = received.get(itemId) ?? 0;
+                if (required > 0) efficiency = Math.min(efficiency, supplied / required);
+            }
+            efficiency = Math.min(1, Math.max(0, efficiency));
+            node.efficiency = efficiency;
+
+            for (const [itemId, required] of requiredRates) {
+                node.inputRates.set(itemId, required * efficiency);
+            }
+
+            const actualOutputRates = new Map<string, number>();
+            for (const [itemId, recipeRate] of recipeOutputRates) {
+                actualOutputRates.set(itemId, recipeRate * efficiency);
+            }
+            node.outputRates = actualOutputRates;
+
+            // 傳遞至下游各邊（品項配對）
+            const outputAvailable = new Map(actualOutputRates);
+            for (const connUid of outEdgeUids) {
+                const meta = edgeMeta.get(connUid);
+                if (!meta) continue;
+                const downstreamNode = nodes.get(meta.targetDeviceUid);
+                if (!downstreamNode) continue;
+
+                const downstreamRecipe = downstreamNode.isSink
+                    ? null
+                    : getRecipeForNode(downstreamNode.machineType, downstreamNode.recipeIndex);
+
+                let chosenItemId: string | undefined;
+                let chosenRate = 0;
+
+                if (downstreamRecipe) {
+                    for (const input of downstreamRecipe.inputs) {
+                        const available = outputAvailable.get(input.itemId) ?? 0;
+                        if (available > 0) {
+                            chosenItemId = input.itemId;
+                            chosenRate = Math.min(available, BELT_RATE_LIMIT);
+                            break;
+                        }
+                    }
+                }
+                if (!chosenItemId) {
+                    for (const [itemId, rate] of outputAvailable) {
+                        if (rate > 0) {
+                            chosenItemId = itemId;
+                            chosenRate = Math.min(rate, BELT_RATE_LIMIT);
+                            break;
+                        }
+                    }
+                }
+                if (!chosenItemId) continue;
+
+                edgeFlows.set(connUid, {
+                    connectionUid: connUid,
+                    itemId: chosenItemId,
+                    rate: chosenRate,
+                    isCongested: false,
+                });
+                outputAvailable.set(
+                    chosenItemId,
+                    (outputAvailable.get(chosenItemId) ?? 0) - chosenRate,
+                );
+                const downstream = nodeInputReceived.get(meta.targetDeviceUid);
+                if (downstream)
+                    downstream.set(chosenItemId, (downstream.get(chosenItemId) ?? 0) + chosenRate);
+            }
+        }
+    }
+
+    return edgeFlows;
+}
+
+// ─── D7：堵塞反向傳播 ─────────────────────────────────────────────────────────
+
+/**
+ * D7 — 偵測堵塞並向上游反向更新效率。
+ *
+ * 若某條邊的 supply > downstream.inputRates（需求）：
+ *   - isCongested = true，rate 截斷至 demand
+ *   - 上游節點效率與 outputRates 按比例縮減
+ *   - 上游的 inputRates 同步縮減，影響更上游的剩餘資源計算
+ */
+export function detectCongestion(graph: FlowGraph, edgeFlows: Map<string, EdgeFlow>): void {
+    const { nodes, outEdges, inEdges, edgeMeta } = graph;
+
+    for (const [connUid, flow] of edgeFlows) {
+        const meta = edgeMeta.get(connUid);
+        if (!meta) continue;
+
+        const targetNode = nodes.get(meta.targetDeviceUid);
+        if (!targetNode || !targetNode.isValid) continue;
+
+        const demand = targetNode.inputRates.get(flow.itemId) ?? 0;
+        if (flow.rate <= demand + 1e-6) continue;
+
+        // 標記堵塞，截斷至 demand
+        edgeFlows.set(connUid, { ...flow, isCongested: true, rate: demand });
+
+        const sourceNode = nodes.get(meta.sourceDeviceUid);
+        if (!sourceNode || !sourceNode.isValid || sourceNode.isSource) continue;
+
+        const congestionRatio = flow.rate > 0 ? demand / flow.rate : 0;
+        sourceNode.efficiency = Math.max(0, sourceNode.efficiency * congestionRatio);
+
+        for (const [itemId, rate] of sourceNode.outputRates) {
+            sourceNode.outputRates.set(itemId, rate * congestionRatio);
+        }
+        for (const [itemId, rate] of sourceNode.inputRates) {
+            sourceNode.inputRates.set(itemId, rate * congestionRatio);
+        }
+
+        // 同步縮減上游其他出邊的 rate
+        for (const upConnUid of outEdges.get(meta.sourceDeviceUid) ?? []) {
+            if (upConnUid === connUid) continue;
+            const upFlow = edgeFlows.get(upConnUid);
+            if (upFlow)
+                edgeFlows.set(upConnUid, { ...upFlow, rate: upFlow.rate * congestionRatio });
+        }
+
+        // 檢查更上游的入邊是否也需標記堵塞
+        for (const upConnUid of inEdges.get(meta.sourceDeviceUid) ?? []) {
+            const upMeta = edgeMeta.get(upConnUid);
+            if (!upMeta) continue;
+            const upFlow = edgeFlows.get(upConnUid);
+            if (!upFlow) continue;
+            const upDemand = sourceNode.inputRates.get(upFlow.itemId) ?? 0;
+            if (upFlow.rate > upDemand + 1e-6) {
+                edgeFlows.set(upConnUid, { ...upFlow, isCongested: true, rate: upDemand });
+            }
+        }
+    }
+}
+
+// ─── D8：品項統計 ─────────────────────────────────────────────────────────────
+
+/**
+ * D8 — 統計所有合法節點的品項生產 / 消耗 / 淨產量 / 效率。
+ */
+export function calcItemSummary(graph: FlowGraph): ItemSummary[] {
+    const { nodes } = graph;
+    const produced = new Map<string, number>();
+    const consumed = new Map<string, number>();
+    const efficiencyByItem = new Map<string, number[]>();
+
+    for (const [, node] of nodes) {
+        if (!node.isValid) continue;
+        for (const [itemId, rate] of node.outputRates) {
+            if (rate <= 0) continue;
+            produced.set(itemId, (produced.get(itemId) ?? 0) + rate);
+            if (!efficiencyByItem.has(itemId)) efficiencyByItem.set(itemId, []);
+            efficiencyByItem.get(itemId)!.push(node.efficiency);
+        }
+        for (const [itemId, rate] of node.inputRates) {
+            if (rate <= 0) continue;
+            consumed.set(itemId, (consumed.get(itemId) ?? 0) + rate);
+        }
+    }
+
+    const allItems = new Set([...produced.keys(), ...consumed.keys()]);
+    const summary: ItemSummary[] = [];
+
+    for (const itemId of allItems) {
+        const p = produced.get(itemId) ?? 0;
+        const c = consumed.get(itemId) ?? 0;
+        const effs = efficiencyByItem.get(itemId) ?? [1];
+        summary.push({
+            itemId,
+            name: itemId,
+            produced: p,
+            consumed: c,
+            net: p - c,
+            efficiency: Math.min(...effs),
+        });
+    }
+
+    summary.sort((a, b) => b.net - a.net);
+    return summary;
+}
+
+// ─── D9：runFlowEngine 主入口 ─────────────────────────────────────────────────
+
+/**
+ * D9 — FlowEngine 主入口，串接 D2 → C1 → D3 → D6 → D7 → D8，寫入 useFlowStore。
+ *
+ * 電力統計：
+ *   totalPowerDemand = Σ machineDef.power（power > 0 的有效設備）
+ *   totalPowerSupply = 0（供電設備尚待 CR-01 定義）
+ */
+export async function runFlowEngine(): Promise<void> {
+    const editorStore = useEditorStore();
+    const flowStore = useFlowStore();
+
+    flowStore.$patch({ isCalculating: true });
+
+    try {
+        const graph = buildGraph(editorStore.nodes, editorStore.edges);
+        validateChains(graph);
+        const sortedNodes = topologicalSort(graph);
+        const edgeFlowsMap = propagateFlows(sortedNodes, graph);
+        detectCongestion(graph, edgeFlowsMap);
+        const itemSummaryList = calcItemSummary(graph);
+
+        let totalPowerDemand = 0;
+        for (const [, node] of graph.nodes) {
+            if (!node.isValid) continue;
+            const def = getMachineDef(node.machineType);
+            if (def && def.power > 0) totalPowerDemand += def.power;
+        }
+
+        const congestedEdges = new Set<string>();
+        for (const [connUid, flow] of edgeFlowsMap) {
+            if (flow.isCongested) congestedEdges.add(connUid);
+        }
+
+        const nodeEfficiencies = new Map<string, number>();
+        for (const [uid, node] of graph.nodes) {
+            nodeEfficiencies.set(uid, node.isValid ? node.efficiency : 0);
+        }
+
+        flowStore.applyResult({
+            edgeFlows: edgeFlowsMap,
+            nodeEfficiencies,
+            itemSummary: itemSummaryList,
+            congestedEdges,
+            invalidChainUids: graph.invalidSubgraphUids,
+            totalPowerDemand,
+            totalPowerSupply: 0,
+        });
+    } catch (err) {
+        console.error('[FlowEngine] runFlowEngine error:', err);
+        flowStore.$patch({ isCalculating: false });
+    }
+}
+
+// ─── Composable 入口 ──────────────────────────────────────────────────────────
+
+/**
+ * useFlowEngine — Vue composable 入口。
+ *
+ * P1-E 將在此加入 watch + useDebounceFn(runFlowEngine, 150) 觸發。
+ * 目前僅導出 runFlowEngine 供手動呼叫。
  */
 export function useFlowEngine() {
-    // TODO P1-D: 實作完整引擎並掛載 watch
-    return {};
+    // TODO P1-E: 加入 watch + debounce 觸發
+    return { runFlowEngine };
 }
