@@ -128,7 +128,7 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
 
 ### P1-B｜Pinia Store（依賴 A1）
 
-- [ ] **B1** 建立 `src/store/flowStore.ts`
+- [x] **B1** 建立 `src/store/flowStore.ts`
   - `edgeFlows: Map<string, EdgeFlow>`
   - `nodeEfficiencies: Map<string, number>`
   - `itemSummary: ItemSummary[]`
