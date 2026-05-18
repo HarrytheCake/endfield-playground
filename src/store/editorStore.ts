@@ -4,27 +4,37 @@ import type { FactoryEdge, FactoryNode } from '@/types/graph';
 import type { EquipmentType, ToolMode } from '@/types/editor';
 
 const mockNodes: FactoryNode[] = [
+    // ── 鏈路 1：物品輸出口(源礦) → 粉碎機(源石粉末) → 物品輸入口（H1 情境）
     {
-        id: 'node-iron',
+        id: 'src-1',
         type: 'default',
-        position: { x: 160, y: 120 },
-        data: { label: 'Iron Miner' },
+        position: { x: 150, y: 150 },
+        data: { label: '物品輸出口', machineType: '物品輸出口' },
     },
     {
-        id: 'node-smelter',
+        id: 'crusher-1',
         type: 'default',
-        position: { x: 420, y: 240 },
-        data: { label: 'Smelter' },
+        position: { x: 420, y: 150 },
+        data: { label: '粉碎機', machineType: '粉碎機' },
+    },
+    {
+        id: 'sink-1',
+        type: 'default',
+        position: { x: 700, y: 150 },
+        data: { label: '物品輸入口', machineType: '物品輸入口' },
+    },
+    // ── 孤立節點（H4 情境：無連線，應顯示灰色虛線外框）
+    {
+        id: 'orphan-1',
+        type: 'default',
+        position: { x: 420, y: 400 },
+        data: { label: '粉碎機（孤立）', machineType: '粉碎機' },
     },
 ];
 
 const mockEdges: FactoryEdge[] = [
-    {
-        id: 'edge-1',
-        source: 'node-iron',
-        target: 'node-smelter',
-        animated: true,
-    },
+    { id: 'e-src-crusher', source: 'src-1', target: 'crusher-1', animated: true },
+    { id: 'e-crusher-sink', source: 'crusher-1', target: 'sink-1', animated: true },
 ];
 
 export const useEditorStore = defineStore('editor', () => {

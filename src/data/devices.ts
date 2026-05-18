@@ -167,6 +167,52 @@ const MACHINE_DEFS: MachineDef[] = [
 // 命名慣例：RECIPES_<品項名> ，以 ProductDef 格式組織。
 
 const PRODUCT_DEFS: ProductDef[] = [
+    // ── 原礦 Source 類（物品輸出口，供 FlowEngine 計算用）────────────────────
+    // recipeIndex=0 → 源礦，recipeIndex=1 → 藍鐵礦，recipeIndex=2 → 赤銅礦
+    {
+        name: '源礦',
+        recipes: [
+            {
+                inputs: [],
+                outputs: [{ itemId: '源礦', quantity: 1 }],
+                machine: '物品輸出口',
+                timeSeconds: 2, // 30/min per belt
+            },
+        ],
+    },
+    {
+        name: '藍鐵礦',
+        recipes: [
+            {
+                inputs: [],
+                outputs: [{ itemId: '藍鐵礦', quantity: 1 }],
+                machine: '物品輸出口',
+                timeSeconds: 2,
+            },
+        ],
+    },
+    {
+        name: '赤銅礦',
+        recipes: [
+            {
+                inputs: [],
+                outputs: [{ itemId: '赤銅礦', quantity: 1 }],
+                machine: '物品輸出口',
+                timeSeconds: 2,
+            },
+        ],
+    },
+    {
+        name: '清水',
+        recipes: [
+            {
+                inputs: [],
+                outputs: [{ itemId: '清水', quantity: 1 }],
+                machine: '物品輸出口',
+                timeSeconds: 2,
+            },
+        ],
+    },
     // ── 粉末類 ──────────────────────────────────────────────────────────────
     {
         name: '源石粉末',
