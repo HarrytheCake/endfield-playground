@@ -1,7 +1,7 @@
 # CR-04 開發 Todo List
 
 **負責人：** aaaaa  
-**最後更新：** 2026-05-18（P1-A、P1-B、P1-C 完成，技術細節已更新）
+**最後更新：** 2026-05-18（P1-A、P1-B、P1-C、P1-D 完成，技術細節已更新）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 
@@ -116,47 +116,53 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
 
 - [x] **D1** 建立 `src/composables/useFlowEngine.ts`（P1-C 階段已建立，含 `validateChains`、`validateRecipeMatch`、`useFlowEngine` stub）
 
-- [ ] **D2** 實作 `buildGraph(devices, connections)` — 建立有向圖
-  - 過濾 `useValidationStore.hasBlockingError(uid)` 為 true 的節點
-  - 建立 `outEdges` / `inEdges` adjacency map
-  - 標記 `isSource`（物品輸出口）和 `isSink`（物品輸入口）
+- [x] **D2** 實作 `buildGraph(devices, connections)` — 建立有向圖
+  - 過濾 `useValidationStore.hasBlockingError(uid)` 為 true 的節點（CR-03 不存在時 try-catch 降級）
+  - 建立 `outEdges` / `inEdges` adjacency map；跳過兩端不存在的孤立邊
+  - 每個節點初始化理論 `inputRates` / `outputRates`（由 `calcDeviceRate` 計算）
+  - `machineType` 取自 `node.data.machineType ?? node.data.label ?? node.id`
 
-- [ ] **D3** 實作 `topologicalSort(graph)` — Kahn's Algorithm
-  - 計算入度（inDegree）
-  - 入度 0 的節點加入佇列，依序處理
-  - 最終排序數 < 節點總數 → `hasCycle = true`，將環路節點加入 `invalidChainUids`
+- [x] **D3** 實作 `topologicalSort(graph)` — Kahn's Algorithm
+  - 計算入度時只計算兩端均 `isValid` 的邊
+  - 入度 0 → 加入佇列，依序處理，更新下游入度
+  - 排序數 < 節點總數 → `hasCycle = true`，環路節點加入 `invalidSubgraphUids`
 
-- [ ] **D4** 實作 `calcDeviceRate(device, recipe)` — 計算單機速率
+- [x] **D4** 實作 `calcDeviceRate(recipe)` — 計算單機速率
   ```
   inputRatePerMin[itemId]  = input.quantity  × (60 / recipe.timeSeconds)
   outputRatePerMin[itemId] = output.quantity × (60 / recipe.timeSeconds)
   ```
 
-- [ ] **D5** 實作 `calcDeviceOutput(node, inputFlows)` — 單設備效率與多輸出計算
-  - 計算各輸入品項的 `supplied / required` 比值
-  - `efficiency = Math.min(1, ...ratios)`（上游最差瓶頸決定）
-  - 所有輸出品項同步等比縮放：`actual = recipe_rate × efficiency`
-  - 套用傳送帶上限：`edge_rate = Math.min(actual, 30)`
+- [x] **D5** 實作 `calcDeviceOutput` — 單設備效率與多輸出計算（整合於 D6 propagateFlows）
+  - `efficiency = Math.min(1, ...ratios)`（supplied / required per input item）
+  - 所有輸出品項等比縮放：`actual = recipe_rate × efficiency`
+  - 套用傳送帶上限：`edge_rate = Math.min(actual, BELT_RATE_LIMIT)`
 
-- [ ] **D6** 實作 `propagateFlows(sortedNodes, graph)` — 正向傳播主迴圈
-  - 依拓撲排序依序處理每個節點
-  - source 節點（物品輸出口）：直接以地區資源速率初始化（30/min 上限）
-  - 一般設備：調用 `calcDeviceOutput`
-  - 傳遞各出邊 `EdgeFlow`
+- [x] **D6** 實作 `propagateFlows(sortedNodes, graph)` — 正向傳播主迴圈
+  - 依拓撲排序依序處理每個節點；isValid=false 的節點跳過
+  - source：直接輸出理論速率（BELT_RATE_LIMIT 截斷）
+  - 一般設備：呼叫 D5 邏輯計算效率與輸出
+  - 出邊品項配對：優先比對下游配方 inputs，fallback 取第一個有餘量的輸出品項
+  - 回傳 `Map<connectionUid, EdgeFlow>`
 
-- [ ] **D7** 實作 `detectCongestion(graph, edgeFlows)` — 堵塞反向傳播
-  - 比對每條邊：上游輸出速率 vs 下游需求速率
-  - 若 `upstream_rate > downstream_demand` → 標記該邊 `isCongested = true`
-  - 反向更新上游節點的實際輸出速率（`actual = downstream_demand`）
-  - 遞迴向更上游傳播縮減效果
+- [x] **D7** 實作 `detectCongestion(graph, edgeFlows)` — 堵塞反向傳播
+  - 比對每條邊 supply vs `targetNode.inputRates`（需求）
+  - 若 supply > demand + 1e-6 → `isCongested = true`，rate 截斷至 demand
+  - 上游節點效率與 outputRates / inputRates 按 `demand/supply` 比例縮減
+  - 同步縮減上游其他出邊的 rate；檢查更上游入邊是否也需標記堵塞
 
-- [ ] **D8** 實作 `calcItemSummary(graph, edgeFlows)` — 品項統計
-  - `produced`：所有 source 節點與設備的 outputRates 加總
-  - `consumed`：所有 sink 節點與設備的 inputRates 加總
+- [x] **D8** 實作 `calcItemSummary(graph)` — 品項統計
+  - `produced`：所有合法節點 outputRates 加總
+  - `consumed`：所有合法節點 inputRates 加總
   - `net = produced - consumed`
-  - 更新地區剩餘資源：`region_rate - consumed_from_source`
+  - `efficiency`：產出該品項的所有設備效率最小值
+  - 結果依 net 降序排列
 
-- [ ] **D9** 實作 `runFlowEngine()` — 主入口，串接 D2→C1→D3→D6→D7→D8，寫入 `useFlowStore`
+- [x] **D9** 實作 `runFlowEngine()` — 主入口（async），串接 D2→C1→D3→D6→D7→D8，寫入 `useFlowStore`
+  - 開始時 `flowStore.$patch({ isCalculating: true })`
+  - 電力統計：`Σ machineDef.power`（power > 0 的有效設備）
+  - `totalPowerSupply = 0`（CR-01 供電定義待補）
+  - 完成後呼叫 `flowStore.applyResult(...)` 批次寫入；錯誤時關閉 isCalculating
 
 ### P1-E｜Watch 觸發（依賴 B1、D9）
 
