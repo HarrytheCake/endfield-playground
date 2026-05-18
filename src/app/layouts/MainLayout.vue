@@ -5,9 +5,13 @@ import ProjectSidebar from '@/editor/sidebar/ProjectSidebar.vue';
 import ToolbarPanel from '@/editor/toolbar/ToolbarPanel.vue';
 import FactoryCanvas from '@/editor/canvas/FactoryCanvas.vue';
 import InspectorSidebar from '@/editor/inspector/InspectorSidebar.vue';
+import { useFlowEngine } from '@/composables/useFlowEngine';
 
 const sidebarOpen = ref(false);
 const inspectorOpen = ref(true);
+
+// E2：啟動 FlowEngine 監聽（watch + debounce 150ms）
+useFlowEngine();
 </script>
 
 <template>

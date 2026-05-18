@@ -16,6 +16,9 @@
  *   D7  detectCongestion(graph, flows)     — 堵塞反向傳播
  *   D8  calcItemSummary(graph)             — 品項統計
  *   D9  runFlowEngine()                    — 主入口
+ *
+ * P1-E（Watch 觸發）:
+ *   E1  useFlowEngine() composable         — watch + useDebounceFn(runFlowEngine, 150)
  */
 
 import type { FlowGraph, FlowNode, EdgeMeta, EdgeFlow, ItemSummary, RecipeDef } from '@/types/flow';
@@ -24,6 +27,8 @@ import { getMachineDef, getRecipe, getRecipesForMachine } from '@/data/devices';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
+import { watch } from 'vue';
+import { useDebounceFn } from '@vueuse/core';
 
 // ─── 內部工具 ─────────────────────────────────────────────────────────────────
 
@@ -652,15 +657,29 @@ export async function runFlowEngine(): Promise<void> {
     }
 }
 
-// ─── Composable 入口 ──────────────────────────────────────────────────────────
+// ─── E1：Composable 入口 ──────────────────────────────────────────────────
 
 /**
  * useFlowEngine — Vue composable 入口。
  *
- * P1-E 將在此加入 watch + useDebounceFn(runFlowEngine, 150) 觸發。
- * 目前僅導出 runFlowEngine 供手動呼叫。
+ * 在元件內呼叫一次即可啟動監聽（建議在 MainLayout.vue onMounted 或 setup 處呼叫）。
+ *
+ * 監聽策略：
+ *   - 監聽目標：`editorStore.nodes` 與 `editorStore.edges`（兩者均為 `shallowRef`）
+ *   - `immediate: true`：處理就立即執行一次全量計算
+ *   - `deep: true`：捕捉節點內部變動（配方更改、文字標簽變更等）
+ *   - `useDebounceFn(runFlowEngine, 150)`：150ms 防抄動，避免畫布快速操作時重複計算
  */
 export function useFlowEngine() {
-    // TODO P1-E: 加入 watch + debounce 觸發
+    const editorStore = useEditorStore();
+    const debouncedRun = useDebounceFn(runFlowEngine, 150);
+
+    watch(
+        // 同時監聽 nodes 與 edges
+        [() => editorStore.nodes, () => editorStore.edges],
+        debouncedRun,
+        { deep: true, immediate: true },
+    );
+
     return { runFlowEngine };
 }
