@@ -1,19 +1,36 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { Background } from '@vue-flow/background';
 import { Controls } from '@vue-flow/controls';
 import { MiniMap } from '@vue-flow/minimap';
-import { VueFlow, useVueFlow } from '@vue-flow/core';
+import { VueFlow, EdgeLabelRenderer, useVueFlow } from '@vue-flow/core';
 import type { EquipmentType } from '@/types/editor';
 import type { FactoryNode } from '@/types/graph';
 import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
+import { useFlowStore } from '@/store/flowStore';
+import FlowNodeOverlay from './FlowNodeOverlay.vue';
+
+/** 自訂節點型別：覆寫 default，加入效率 overlay */
+const nodeTypes = { default: FlowNodeOverlay };
 
 const editorStore = useEditorStore();
 const selectionStore = useSelectionStore();
+const flowStore = useFlowStore();
 const { nodes, edges, snapToGrid, activeTool, selectedEquipment, placementArmed } =
     storeToRefs(editorStore);
-const { screenToFlowCoordinate, addNodes } = useVueFlow();
+const { edgeFlows, congestedEdges } = storeToRefs(flowStore);
+const { screenToFlowCoordinate, addNodes, edges: vfEdges } = useVueFlow();
+
+/** 需要顯示流量標籤的管線（rate > 0 且已計算） */
+const labeledEdges = computed(() => vfEdges.value.filter((e) => edgeFlows.value.has(e.id)));
+
+function edgeLabelClass(edgeId: string): string {
+    return congestedEdges.value.has(edgeId)
+        ? 'bg-orange-400/90 text-black'
+        : 'bg-zinc-700/90 text-white';
+}
 
 const equipmentLabelMap: Record<EquipmentType, string> = {
     smelter: '精煉爐',
@@ -76,6 +93,7 @@ function handleCanvasDrop(event: DragEvent) {
         <VueFlow
             v-model:nodes="nodes"
             v-model:edges="edges"
+            :node-types="nodeTypes"
             :fit-view-on-init="true"
             :nodes-draggable="true"
             :zoom-on-scroll="true"
@@ -89,6 +107,21 @@ function handleCanvasDrop(event: DragEvent) {
             <Background :size="1.2" pattern-color="#3f3f46" />
             <Controls />
             <MiniMap />
+
+            <!-- F2：管線流量速率標籤 overlay -->
+            <EdgeLabelRenderer>
+                <div
+                    v-for="edge in labeledEdges"
+                    :key="edge.id"
+                    class="pointer-events-none absolute rounded px-1.5 py-0.5 text-xs font-semibold"
+                    :class="edgeLabelClass(edge.id)"
+                    :style="{
+                        transform: `translate(-50%, -50%) translate(${(edge.sourceX + edge.targetX) / 2}px,${(edge.sourceY + edge.targetY) / 2}px)`,
+                    }"
+                >
+                    {{ edgeFlows.get(edge.id)!.rate.toFixed(1) }}/min
+                </div>
+            </EdgeLabelRenderer>
         </VueFlow>
     </div>
 </template>
