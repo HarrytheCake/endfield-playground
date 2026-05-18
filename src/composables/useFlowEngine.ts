@@ -153,6 +153,7 @@ export function validateChains(graph: FlowGraph): void {
     for (const [uid, node] of nodes) {
         if (!node.isValid) continue; // 已非法，跳過
         if (node.isSource) continue; // source 節點不需要驗配方輸入
+        if (node.isSink) continue; // sink 節點接受任意品項，不驗配方
 
         // 蒐集上游所有邊傳入的品項（此時尚未計算速率，只看品項種類）
         const incomingEdgeUids = inEdges.get(uid) ?? [];
@@ -268,7 +269,7 @@ export function buildGraph(nodes: FactoryNode[], edges: FactoryEdge[]): FlowGrap
 
         const machineType = node.data?.machineType ?? node.data?.label ?? node.id;
         const machineDef = getMachineDef(machineType);
-        const recipeIndex = 0; // FactoryNodeData 尚未含 recipeIndex，預設 0
+        const recipeIndex = node.data?.recipeIndex ?? 0;
 
         const recipe = getRecipeForNode(machineType, recipeIndex);
         const { inputRates, outputRates } = recipe
@@ -509,51 +510,69 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
 export function detectCongestion(graph: FlowGraph, edgeFlows: Map<string, EdgeFlow>): void {
     const { nodes, outEdges, inEdges, edgeMeta } = graph;
 
-    for (const [connUid, flow] of edgeFlows) {
-        const meta = edgeMeta.get(connUid);
-        if (!meta) continue;
+    // 多遍迭代直到穩定，確保堵塞能反向傳播至 source 節點
+    const MAX_PASSES = nodes.size + 2;
+    for (let pass = 0; pass < MAX_PASSES; pass++) {
+        let changed = false;
 
-        const targetNode = nodes.get(meta.targetDeviceUid);
-        if (!targetNode || !targetNode.isValid) continue;
+        for (const [connUid, flow] of edgeFlows) {
+            const meta = edgeMeta.get(connUid);
+            if (!meta) continue;
 
-        const demand = targetNode.inputRates.get(flow.itemId) ?? 0;
-        if (flow.rate <= demand + 1e-6) continue;
+            const targetNode = nodes.get(meta.targetDeviceUid);
+            if (!targetNode || !targetNode.isValid) continue;
 
-        // 標記堵塞，截斷至 demand
-        edgeFlows.set(connUid, { ...flow, isCongested: true, rate: demand });
+            const demand = targetNode.inputRates.get(flow.itemId) ?? 0;
+            if (flow.rate <= demand + 1e-6) continue;
 
-        const sourceNode = nodes.get(meta.sourceDeviceUid);
-        if (!sourceNode || !sourceNode.isValid || sourceNode.isSource) continue;
+            // 標記堵塞，截斷至 demand
+            edgeFlows.set(connUid, { ...flow, isCongested: true, rate: demand });
+            changed = true;
 
-        const congestionRatio = flow.rate > 0 ? demand / flow.rate : 0;
-        sourceNode.efficiency = Math.max(0, sourceNode.efficiency * congestionRatio);
+            const sourceNode = nodes.get(meta.sourceDeviceUid);
+            if (!sourceNode || !sourceNode.isValid) continue;
 
-        for (const [itemId, rate] of sourceNode.outputRates) {
-            sourceNode.outputRates.set(itemId, rate * congestionRatio);
-        }
-        for (const [itemId, rate] of sourceNode.inputRates) {
-            sourceNode.inputRates.set(itemId, rate * congestionRatio);
-        }
+            const congestionRatio = flow.rate > 0 ? demand / flow.rate : 0;
 
-        // 同步縮減上游其他出邊的 rate
-        for (const upConnUid of outEdges.get(meta.sourceDeviceUid) ?? []) {
-            if (upConnUid === connUid) continue;
-            const upFlow = edgeFlows.get(upConnUid);
-            if (upFlow)
-                edgeFlows.set(upConnUid, { ...upFlow, rate: upFlow.rate * congestionRatio });
-        }
+            // source 節點：只縮減 outputRates（無 inputRates）
+            if (sourceNode.isSource) {
+                for (const [itemId, rate] of sourceNode.outputRates) {
+                    sourceNode.outputRates.set(itemId, rate * congestionRatio);
+                }
+                continue;
+            }
 
-        // 檢查更上游的入邊是否也需標記堵塞
-        for (const upConnUid of inEdges.get(meta.sourceDeviceUid) ?? []) {
-            const upMeta = edgeMeta.get(upConnUid);
-            if (!upMeta) continue;
-            const upFlow = edgeFlows.get(upConnUid);
-            if (!upFlow) continue;
-            const upDemand = sourceNode.inputRates.get(upFlow.itemId) ?? 0;
-            if (upFlow.rate > upDemand + 1e-6) {
-                edgeFlows.set(upConnUid, { ...upFlow, isCongested: true, rate: upDemand });
+            sourceNode.efficiency = Math.max(0, sourceNode.efficiency * congestionRatio);
+
+            for (const [itemId, rate] of sourceNode.outputRates) {
+                sourceNode.outputRates.set(itemId, rate * congestionRatio);
+            }
+            for (const [itemId, rate] of sourceNode.inputRates) {
+                sourceNode.inputRates.set(itemId, rate * congestionRatio);
+            }
+
+            // 同步縮減上游其他出邊的 rate
+            for (const upConnUid of outEdges.get(meta.sourceDeviceUid) ?? []) {
+                if (upConnUid === connUid) continue;
+                const upFlow = edgeFlows.get(upConnUid);
+                if (upFlow)
+                    edgeFlows.set(upConnUid, { ...upFlow, rate: upFlow.rate * congestionRatio });
+            }
+
+            // 檢查更上游的入邊是否也需標記堵塞
+            for (const upConnUid of inEdges.get(meta.sourceDeviceUid) ?? []) {
+                const upMeta = edgeMeta.get(upConnUid);
+                if (!upMeta) continue;
+                const upFlow = edgeFlows.get(upConnUid);
+                if (!upFlow) continue;
+                const upDemand = sourceNode.inputRates.get(upFlow.itemId) ?? 0;
+                if (upFlow.rate > upDemand + 1e-6) {
+                    edgeFlows.set(upConnUid, { ...upFlow, isCongested: true, rate: upDemand });
+                }
             }
         }
+
+        if (!changed) break;
     }
 }
 
@@ -626,6 +645,19 @@ export async function runFlowEngine(): Promise<void> {
         detectCongestion(graph, edgeFlowsMap);
         const itemSummaryList = calcItemSummary(graph);
 
+        // 計算物品輸入口（sink）實際接收量，供「總產出」面板使用
+        const sinkDeliveriesMap = new Map<string, number>();
+        for (const [, node] of graph.nodes) {
+            if (!node.isValid || !node.isSink) continue;
+            for (const [itemId, rate] of node.inputRates) {
+                if (rate > 0)
+                    sinkDeliveriesMap.set(
+                        itemId,
+                        (sinkDeliveriesMap.get(itemId) ?? 0) + rate,
+                    );
+            }
+        }
+
         let totalPowerDemand = 0;
         for (const [, node] of graph.nodes) {
             if (!node.isValid) continue;
@@ -647,6 +679,7 @@ export async function runFlowEngine(): Promise<void> {
             edgeFlows: edgeFlowsMap,
             nodeEfficiencies,
             itemSummary: itemSummaryList,
+            sinkDeliveries: sinkDeliveriesMap,
             congestedEdges,
             invalidChainUids: graph.invalidSubgraphUids,
             totalPowerDemand,

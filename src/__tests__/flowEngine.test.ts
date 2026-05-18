@@ -639,27 +639,30 @@ describe('H6 — 武陵建造計畫端對端（赫銅零件鏈路）', () => {
             ]),
         });
 
-        // 反應池B：赫銅溶液 + 藍鐵粉末 → 赫銅塊 + 汙水（1+1→1+1, time=2s）
-        // 輸入：赫銅溶液 7.5/min + 藍鐵粉末 7.5/min → 赫銅塊 7.5 + 汙水 7.5
+        // 反應池B：2赫銅溶液 + 1藍鐵粉末 → 赫銅塊 + 汙水（2s）
+        // 理論速率：赫銅溶液需求 60/min，藍鐵粉末需求 30/min，產出 30/min
+        // 實際：赫銅溶液 7.5/min → efficiency = 7.5/60 = 0.125 → 赫銅塊 3.75/min
         addNode(graph, 'reactionB', {
             machineType: '反應池',
             recipeIndex: 1, // 赫銅塊配方
             inputRates: new Map([
-                ['赫銅溶液', 7.5],
-                ['藍鐵粉末', 7.5],
+                ['赫銅溶液', 60],
+                ['藍鐵粉末', 30],
             ]),
             outputRates: new Map([
-                ['赫銅塊', 7.5],
-                ['汙水', 7.5],
+                ['赫銅塊', 30],
+                ['汙水', 30],
             ]),
         });
 
-        // 配件機：赫銅塊 → 赫銅零件（1:1, time=2s → 7.5/min）
+        // 配件機：5赫銅塊 → 赫銅零件（10s）
+        // 理論速率：赫銅塊需求 30/min，產出 6/min
+        // 實際：赫銅塊 3.75/min → efficiency = 3.75/30 = 0.125 → 赫銅零件 0.75/min
         addNode(graph, 'partMachine', {
             machineType: '配件機',
             recipeIndex: 1, // 赫銅零件
-            inputRates: new Map([['赫銅塊', 7.5]]),
-            outputRates: new Map([['赫銅零件', 7.5]]),
+            inputRates: new Map([['赫銅塊', 30]]),
+            outputRates: new Map([['赫銅零件', 6]]),
         });
 
         // Sinks
@@ -687,17 +690,17 @@ describe('H6 — 武陵建造計畫端對端（赫銅零件鏈路）', () => {
         expect(output).toBeCloseTo(7.5, 3);
     });
 
-    it('赫銅零件最終產出 = 7.5/min（belt 不截斷，< 30）', () => {
+    it('赫銅零件最終產出 = 0.75/min（赫銅塊供給 3.75/min，配件機需求 30/min，效率 12.5%）', () => {
         const { flows } = runPipeline(graph);
-        expect(flows.get('e_part_sink')?.rate).toBeCloseTo(7.5, 3);
+        expect(flows.get('e_part_sink')?.rate).toBeCloseTo(0.75, 3);
         expect(flows.get('e_part_sink')?.itemId).toBe('赫銅零件');
     });
 
-    it('反應池B 效率 = 0.25（提純機 4:1 稀釋，赫銅溶液 7.5/min < 需求 30/min）', () => {
+    it('反應池B 效率 = 0.125（赫銅溶液需求 60/min，實際 7.5/min → 12.5%）', () => {
         runPipeline(graph);
         // purifier: 4×赤銅溶液→赫銅溶液×1，30/min 輸入 → 7.5/min 赫銅溶液
-        // reactionB 需求 30/min，實際 7.5/min → efficiency = 0.25
-        expect(graph.nodes.get('reactionB')!.efficiency).toBeCloseTo(0.25, 3);
+        // reactionB 需求 2×(60/2)=60/min，實際 7.5/min → efficiency = 7.5/60 = 0.125
+        expect(graph.nodes.get('reactionB')!.efficiency).toBeCloseTo(0.125, 3);
     });
 
     it('calcItemSummary 赫銅零件 produced > 0（由 partMachine 產出，最終送入 sink）', () => {

@@ -22,6 +22,10 @@ export const useFlowStore = defineStore('flow', () => {
     /** 所有參與計算品項的 produced / consumed / net / efficiency */
     const itemSummary = ref<ItemSummary[]>([]);
 
+    // ── 物品輸入口交付量 ──────────────────────────────────────────────────────
+    /** itemId → 流入物品輸入口（sink）的速率（個/min），代表產線實際交付量 */
+    const sinkDeliveries = ref(new Map<string, number>());
+
     // ── 異常節點集合 ──────────────────────────────────────────────────────────
     /** 堵塞的 connectionUid 集合（isCongested = true 的邊） */
     const congestedEdges = ref(new Set<string>());
@@ -76,6 +80,7 @@ export const useFlowStore = defineStore('flow', () => {
         edgeFlows.value = new Map();
         nodeEfficiencies.value = new Map();
         itemSummary.value = [];
+        sinkDeliveries.value = new Map();
         congestedEdges.value = new Set();
         invalidChainUids.value = new Set();
         totalPowerDemand.value = 0;
@@ -93,6 +98,7 @@ export const useFlowStore = defineStore('flow', () => {
         edgeFlows: Map<string, EdgeFlow>;
         nodeEfficiencies: Map<string, number>;
         itemSummary: ItemSummary[];
+        sinkDeliveries: Map<string, number>;
         congestedEdges: Set<string>;
         invalidChainUids: Set<string>;
         totalPowerDemand: number;
@@ -101,6 +107,7 @@ export const useFlowStore = defineStore('flow', () => {
         edgeFlows.value = payload.edgeFlows;
         nodeEfficiencies.value = payload.nodeEfficiencies;
         itemSummary.value = payload.itemSummary;
+        sinkDeliveries.value = payload.sinkDeliveries;
         congestedEdges.value = payload.congestedEdges;
         invalidChainUids.value = payload.invalidChainUids;
         totalPowerDemand.value = payload.totalPowerDemand;
@@ -114,6 +121,7 @@ export const useFlowStore = defineStore('flow', () => {
         edgeFlows,
         nodeEfficiencies,
         itemSummary,
+        sinkDeliveries,
         congestedEdges,
         invalidChainUids,
         totalPowerDemand,

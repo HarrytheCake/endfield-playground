@@ -213,6 +213,17 @@ const PRODUCT_DEFS: ProductDef[] = [
             },
         ],
     },
+    {
+        name: '沉積酸',
+        recipes: [
+            {
+                inputs: [],
+                outputs: [{ itemId: '沉積酸', quantity: 1 }],
+                machine: '物品輸出口',
+                timeSeconds: 2,
+            },
+        ],
+    },
     // ── 粉末類 ──────────────────────────────────────────────────────────────
     {
         name: '源石粉末',
@@ -360,7 +371,7 @@ const PRODUCT_DEFS: ProductDef[] = [
         recipes: [
             {
                 inputs: [
-                    { itemId: '赫銅溶液', quantity: 1 },
+                    { itemId: '赫銅溶液', quantity: 2 },
                     { itemId: '藍鐵粉末', quantity: 1 },
                 ],
                 outputs: [
@@ -403,10 +414,10 @@ const PRODUCT_DEFS: ProductDef[] = [
         name: '赫銅零件',
         recipes: [
             {
-                inputs: [{ itemId: '赫銅塊', quantity: 1 }],
+                inputs: [{ itemId: '赫銅塊', quantity: 5 }],
                 outputs: [{ itemId: '赫銅零件', quantity: 1 }],
                 machine: '配件機',
-                timeSeconds: 2,
+                timeSeconds: 10,
             },
         ],
     },

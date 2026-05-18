@@ -1,0 +1,113 @@
+export interface MaterialRate {
+    name: string;
+    rate: number; // -1 = 無限制
+}
+
+export interface MachineLimit {
+    name: string;
+    limit: number; // -1 = 無限制
+}
+
+export interface ProductValue {
+    name: string;
+    price: number;
+}
+
+export interface Plan {
+    id: string;
+    name: string;
+    material_rates: MaterialRate[];
+    machine_limits: MachineLimit[];
+    product_values: ProductValue[];
+    priority_products: { name: string; max_rate: number }[];
+}
+
+export const plans: Plan[] = [
+    {
+        id: '7dd94e87-a806-4035-9644-63eb99f76f75',
+        name: '四號谷地',
+        material_rates: [
+            { name: '源礦', rate: 560 },
+            { name: '紫晶礦', rate: 240 },
+            { name: '藍鐵礦', rate: 1080 },
+            { name: '蕎花', rate: -1 },
+            { name: '柑實', rate: -1 },
+            { name: '砂葉', rate: -1 },
+            { name: '酮化灌木', rate: -1 },
+            { name: '錦草', rate: -1 },
+            { name: '芽針', rate: -1 },
+        ],
+        machine_limits: [
+            { name: '塑型機', limit: -1 },
+            { name: '灌裝機', limit: -1 },
+            { name: '精煉爐', limit: -1 },
+            { name: '粉碎機', limit: -1 },
+            { name: '配件機', limit: -1 },
+            { name: '裝備原件機', limit: -1 },
+            { name: '封裝機', limit: -1 },
+            { name: '研磨機', limit: -1 },
+        ],
+        product_values: [
+            { name: '精選蕎癒膠囊', price: 70 },
+            { name: '高容量谷地電池', price: 70 },
+            { name: '精選柑實罐頭', price: 70 },
+            { name: '中容量谷地電池', price: 30 },
+            { name: '優質蕎癒膠囊', price: 27 },
+            { name: '優質柑實罐頭', price: 27 },
+            { name: '蕎癒膠囊', price: 10 },
+            { name: '柑實罐頭', price: 10 },
+            { name: '紫晶質瓶', price: 2 },
+            { name: '晶體外殼', price: 1 },
+            { name: '紫晶零件', price: 1 },
+            { name: '低容量谷地電池', price: 16 },
+            { name: '鐵製零件', price: 1 },
+            { name: '鋼製零件', price: 1 },
+        ],
+        priority_products: [{ name: '高容量谷地電池', max_rate: -1 }],
+    },
+    {
+        id: '9bdb2f99-531e-416a-8f4c-27c5e8d8957c',
+        name: '武陵',
+        material_rates: [
+            { name: '源礦', rate: 540 },
+            { name: '紫晶礦', rate: 0 },
+            { name: '藍鐵礦', rate: 90 },
+            { name: '赤銅礦', rate: 240 },
+            { name: '蕎花', rate: -1 },
+            { name: '柑實', rate: -1 },
+            { name: '砂葉', rate: -1 },
+            { name: '酮化灌木', rate: -1 },
+            { name: '錦草', rate: -1 },
+            { name: '芽針', rate: -1 },
+            { name: '清水', rate: -1 },
+            { name: '沉積酸', rate: -1 },
+        ],
+        machine_limits: [
+            { name: '塑型機', limit: -1 },
+            { name: '灌裝機', limit: -1 },
+            { name: '精煉爐', limit: -1 },
+            { name: '粉碎機', limit: -1 },
+            { name: '配件機', limit: -1 },
+            { name: '裝備原件機', limit: -1 },
+            { name: '封裝機', limit: -1 },
+            { name: '研磨機', limit: -1 },
+            { name: '反應池', limit: -1 },
+            { name: '天有洪爐', limit: 12 },
+            { name: '提純機', limit: -1 },
+            { name: '拆解機', limit: -1 },
+        ],
+        product_values: [
+            { name: '中容量武陵電池', price: 54 },
+            { name: '優質芽針針劑', price: 22 },
+            { name: '赫銅零件', price: 48 },
+            { name: '低容量谷地電池', price: 25 },
+            { name: '芽針針劑', price: 16 },
+            { name: '赤銅零件', price: 1 },
+            { name: '息壤', price: 1 },
+            { name: '重息壤', price: 27 },
+            { name: '優質錦草飲料', price: 22 },
+            { name: '錦草飲料', price: 16 },
+        ],
+        priority_products: [],
+    },
+];
