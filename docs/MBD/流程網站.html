@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>明日方舟：終末地 - AIC 工業開發主控台 v1.0 完全體</title>
+    
+    <!-- 🟢 關鍵重合點 1：自動連結同資料夾下的 style.css 美術外觀 -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 頂部終末地 AIC 實機風格數據導航列 -->
+    <div class="game-header">
+        <div class="header-left">
+            <span class="header-logo">🪐 AIC_MATRIX_BUILDER_V1.0</span>
+            <span class="zone-badge">武陵工業園區前哨站</span>
+        </div>
+        <div class="header-center">
+            <label class="control-label">當前 AIC 園區生產目標：</label>
+            <!-- 整合 5 大類別共 13 種全合成表下拉選單 -->
+            <select class="recipe-picker" id="global-recipe-select">
+                <optgroup label="⚙️ 1. 精煉爐配方 (Stage 1 基礎板材)">
+                    <option value="iron_plate">工業鐵板 (粗鐵礦 × 2 ➔ 鐵板 × 1)</option>
+                    <option value="copper_wire">整合導線 (粗銅礦 × 1 ➔ 導線 × 2)</option>
+                    <option value="carbon_block">穩定化碳塊 (天然木材 × 1 ➔ 碳塊 × 1)</option>
+                    <option value="originium_block">源石精煉塊 (源石粉末 × 1 ➔ 精煉塊 × 1)</option>
+                </optgroup>
+                <optgroup label="🌀 2. 粉碎與研磨機系列">
+                    <option value="sand_powder">沙葉粉 (野生沙葉 × 1 ➔ 沙葉粉 × 1)</option>
+                    <option value="wheat_powder">灰蘆麥粉 (原株灰蘆麥 × 1 ➔ 麥粉 × 1)</option>
+                    <option value="copper_powder">赤銅塊粉 (粗銅礦原石 × 1 ➔ 銅粉 × 1)</option>
+                </optgroup>
+                <optgroup label="🔷 3. 組合加工廠 (Stage 2 多級匯流合成)">
+                    <option value="aic_core" selected>AIC 自動化核心 (鐵板 × 1 + 導線 × 2 ➔ 核心 × 1)</option>
+                    <option value="battery">高能電池模組 (碳塊 × 2 + 導線 × 3 ➔ 電池 × 1)</option>
+                    <option value="ori_component">源石集成構件 (精煉塊 × 3 + 導線 × 2 ➔ 構件 × 1)</option>
+                    <option value="steel_bottle">鋼製空瓶 (工業鐵板 × 2 ➔ 空瓶 × 1)</option>
+                </optgroup>
+                <optgroup label="🚰 4. 灌裝反應池 (流體工業)">
+                    <option value="water_bottle">裝瓶清水 (空瓶 × 1 + 清水 × 10 ➔ 裝瓶水 × 1)</option>
+                    <option value="stimulant">戰術過載針劑 (空瓶 × 1 + 麥粉 × 1 ➔ 針劑 × 1)</option>
+                </optgroup>
+                <optgroup label="🌱 5. 生態種植機 (農業自動化)">
+                    <option value="rye_seed">灰蘆麥種子 (灰蘆麥 × 1 ➔ 種子 × 2)</option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="header-right">
+            <div class="status-indicator">全網電網狀態：<span id="global-status-text">正常運轉</span></div>
+            <div class="grid-control-group">
+                <button class="grid-toggle-btn active" id="grid-toggle">格線：開</button>
+                <div class="grid-size-label">格線間距：100px</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主編輯核心工作區 -->
+    <div class="editor-container">
+        
+        <!-- 5.1 規範：左下角懸浮視角切換器 (支援滑鼠點擊與鍵盤 Tab 鍵全自動輪替) -->
+        <div class="view-switcher-leftbottom">
+            <button class="switch-icon-btn" id="sw-bp">⚒️ 藍圖視角</button>
+            <button class="switch-icon-btn" id="sw-fl">📊 流量視角</button>
+            <button class="switch-icon-btn active" id="sw-multi">田 並列視角</button>
+        </div>
+
+        <!-- 5.2 規範：雙視角彈性排版骨架 (預設 dir-row 左右並排模式) -->
+        <div class="workspace-layout dir-row" id="workspace-layout">
+            
+            <!-- 左側/上方：自由建造與拉線沙盒畫布 -->
+            <div class="view-panel" id="panel-blueprint" style="flex: 60%;">
+                <div class="panel-header">
+                    <span>📐 3D 俯視沙盒畫布 (滾輪縮放鏡頭、按住滑鼠拖曳平移、拉線模式下點 A 再點 B)</span>
+                    <span class="panel-hint" id="overclock-btn">⚡ 點擊開啟全線超頻 (100%)</span>
+                </div>
+                
+                <div class="sandbox-viewport" id="viewport">
+                    <!-- 內建懸浮鏡頭微調按鈕組 -->
+                    <div class="zoom-overlay">
+                        <button class="zoom-btn" id="zoom-in" title="放大">＋</button>
+                        <button class="zoom-btn" id="zoom-out" title="縮小">－</button>
+                        <button class="zoom-btn" id="zoom-reset" style="font-size:12px;">重置鏡頭</button>
+                    </div>
+
+                    <!-- 被控制 Pan & Zoom 的相對變換圖層畫布 -->
+                    <div class="sandbox-transform-layer" id="transform-layer">
+                        <!-- SVG 動態物流傳送帶渲染層 -->
+                        <svg class="conveyor-svg-layer" id="conveyor-svg"></svg>
+                        <!-- 實機風格設備卡片將由 JS 渲染進這裡 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5.2 規範：中央可拖移阻隔線 ＆ 分隔線方向切換按鈕 (⇄ vs ⇳) -->
+            <div class="resizer-bar" id="pane-resizer">
+                <button class="dir-toggle-btn" id="dirBtn" title="切換左右並排 / 上下並排">⇄</button>
+            </div>
+
+            <!-- 右側/下方：即時產能大盤與短板效能回報 -->
+            <div class="view-panel" id="panel-flow" style="flex: 40%;">
+                <div class="panel-header">📊 園區生產網路實時數據 (CR-04 流量估算報告)</div>
+                <div class="data-panel">
+                    <div class="data-card" style="border-left-color: var(--accent-orange);">
+                        <div class="card-title" id="lbl-supplyA">一級源 A 總出力</div>
+                        <div class="card-val" id="stat-supplyA">0 /min</div>
+                    </div>
+                    <div class="data-card" style="border-left-color: var(--accent-blue);">
+                        <div class="card-title" id="lbl-supplyB">一級源 B 總出力</div>
+                        <div class="card-val" id="stat-supplyB">0 /min</div>
+                    </div>
+                    <div class="data-card" style="border-left-color: var(--accent-green);">
+                        <div class="card-title">🚀 最終成品總產出率</div>
+                        <div class="card-val" id="stat-final-output" style="color:var(--accent-green);">0 /min</div>
+                    </div>
+                    <div class="data-card network-report-card" id="status-report-card">
+                        <div class="card-title" style="color:var(--accent-blue);">AIC 全域網絡動態綜合評估報告</div>
+                        <div class="card-val" id="stat-report-text">偵測中...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 底部一字排開的黑色快捷控制面板選單 (自由切換建造與拉線拆除模式) -->
+    <div class="game-bottom-bar">
+        <div class="bar-item active" id="mode-view">🔍 檢視/平移地圖</div>
+        <div class="bar-item" id="mode-add-refinery">🏭 建造：精煉爐設備</div>
+        <div class="bar-item" id="mode-add-assembly">🔷 建造：組合加工廠</div>
+        <div class="bar-item" id="mode-add-hub">📦 建造：儲存終端</div>
+        <div class="bar-item" id="mode-link">🔗 傳送帶自由拉線</div>
+        <div class="bar-item mode-delete" id="mode-delete">💥 拆除回收模式</div>
+    </div>
+
+    <!-- 🟢 關鍵重合點 2：自動依序載入配方引擎與滑鼠拉線大腦控制腳本 -->
+    <script src="recipes.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

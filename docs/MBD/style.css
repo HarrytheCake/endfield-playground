@@ -1,0 +1,239 @@
+/* ==========================================
+   1. 全域變數與重置設定 (大字體與方舟黑橘工業視覺)
+   ========================================== */
+:root {
+    --bg-dark: #07090d;
+    --panel-bg: #121620;
+    --panel-border: #3b4659;
+    --accent-orange: #ff6b00;
+    --accent-blue: #00e5ff;
+    --accent-green: #a3e635;
+    --status-grey: #64748b;
+    --text-main: #e2e8f0;
+    --text-muted: #8a99ad;
+    --warn-red: #ef4444;
+    --game-grid: #1b1e19;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Segoe UI', "Microsoft JhengHei", sans-serif;
+    margin: 0; padding: 15px;
+    display: flex; flex-direction: column;
+    height: 100vh; box-sizing: border-box; overflow: hidden;
+    font-size: 18px; /* 全域字體放大，提升 scannability */
+    user-select: none;
+}
+
+/* 頂部導航控制列 */
+.game-header {
+    display: flex; background: #0f121a; padding: 12px 20px;
+    border-radius: 6px; border: 2px solid var(--panel-border);
+    align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.header-left { display: flex; align-items: center; gap: 15px; }
+.header-logo { font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #fff; }
+.zone-badge { background: #1c2433; padding: 4px 10px; font-size: 14px; border-radius: 4px; border: 1px solid var(--accent-blue); color: var(--accent-blue); font-weight: bold; }
+.control-label { font-size: 18px; font-weight: bold; color: var(--accent-blue); }
+.recipe-picker { background: #000; color: #fff; border: 2px solid var(--accent-orange); padding: 8px 12px; font-size: 18px; border-radius: 4px; cursor: pointer; }
+.status-indicator { font-size: 16px; font-weight: bold; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.grid-control-group {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(2, 14, 28, 0.85);
+    border: 1px solid var(--panel-border);
+    padding: 8px 10px; border-radius: 8px;
+}
+.grid-toggle-btn {
+    background: #15202b; color: #8ab4f8; border: 1px solid #2b3a50;
+    padding: 7px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+.grid-toggle-btn.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); }
+.grid-size-label { color: #a0c4ff; font-size: 14px; white-space: nowrap; }
+
+/* 主編輯外框結構 */
+.editor-container {
+    position: relative; flex: 1; display: flex;
+    background: #151924; border: 2px solid var(--panel-border);
+    border-radius: 8px; overflow: hidden;
+}
+
+.workspace-layout { display: flex; width: 100%; height: 100%; position: relative; }
+.workspace-layout.dir-row { flex-direction: row; }
+.workspace-layout.dir-col { flex-direction: column; }
+
+.view-panel {
+    background: var(--panel-bg); box-sizing: border-box;
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
+}
+.panel-header {
+    padding: 12px 20px; background: #181f2d; font-size: 18px;
+    font-weight: bold; border-bottom: 2px solid var(--panel-border);
+    color: var(--accent-blue); display: flex; justify-content: space-between; align-items: center;
+}
+.panel-hint { font-size: 16px; font-weight: bold; cursor: pointer; color: var(--accent-blue); transition: color 0.2s; }
+
+/* ==========================================
+   2. 5.2 規範：垂直/水平可拖移阻隔線 ＆ 分隔線方向按鈕
+   ========================================== */
+.resizer-bar { background: #232c3d; position: relative; z-index: 100; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.resizer-bar:hover { background: #2d394e; }
+.workspace-layout.dir-row > .resizer-bar { width: 12px; cursor: col-resize; height: 100%; }
+.workspace-layout.dir-col > .resizer-bar { height: 12px; cursor: row-resize; width: 100%; }
+
+.dir-toggle-btn {
+    position: absolute; background: var(--accent-blue); color: #000; border: 1px solid #000; border-radius: 50%; width: 32px; height: 32px;
+    font-size: 16px; font-weight: bold; cursor: pointer; z-index: 101; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: auto;
+}
+
+/* ==========================================
+   3. 實機沙盒無限畫布與微調縮放控制
+   ========================================== */
+.sandbox-viewport {
+    flex: 1; position: relative; overflow: hidden;
+    background-color: var(--game-grid); cursor: grab;
+}
+.sandbox-viewport:active { cursor: grabbing; }
+
+.sandbox-transform-layer {
+    position: absolute; width: 4000px; height: 4000px;
+    top: -1500px; left: -1500px;
+    transform-origin: 0 0;
+    transition: transform 0.05s ease-out;
+}
+
+.sandbox-transform-layer.grid-visible {
+    --grid-size: 130px;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+}
+
+.sandbox-transform-layer.grid-hidden {
+    background-image: none;
+}
+
+/* 左側邊界警告斜紋斑馬線 */
+.sandbox-transform-layer::before {
+    content: ''; position: absolute; top: 1500px; left: 1500px; width: 8px; height: 1000px;
+    background: repeating-linear-gradient(-45deg, #f59e0b, #f59e0b 6px, #000 6px, #000 12px);
+    opacity: 0.6; z-index: 5;
+}
+
+/* 懸浮縮放控制按鈕組 */
+.zoom-overlay { position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; gap: 6px; z-index: 500; }
+.zoom-btn {
+    background: rgba(15,17,21,0.95); border: 2px solid var(--panel-border); color: #fff;
+    width: 44px; height: 44px; font-size: 22px; font-weight: bold; border-radius: 4px; cursor: pointer;
+}
+.zoom-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+/* ==========================================
+   4. 5.3 規範：實機風格建築元件與外觀類型精準還原
+   ========================================== */
+.placed-building {
+    position: absolute; width: 130px; height: 130px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6); box-sizing: border-box; z-index: 20; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+.placed-building:hover { border-color: var(--accent-orange) !important; }
+
+.placed-building.preview {
+    opacity: 0.92;
+    filter: saturate(1.1);
+    pointer-events: none;
+}
+.placed-building.preview.invalid {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 18px rgba(239,68,68,0.65);
+    background: rgba(40,16,16,0.96);
+}
+.placed-building.preview.invalid .b-name {
+    color: #ffb3b3;
+}
+
+/* 5.3 點選雙向聯動高亮樣式 */
+.placed-building.link-highlight { border: 3px solid var(--accent-blue) !important; box-shadow: 0 0 20px var(--accent-blue) !important; }
+.placed-building.selected-src { border: 3px dashed var(--accent-green) !important; box-shadow: 0 0 15px var(--accent-green); }
+
+/* 5.3 節點外觀類型細節 */
+/* 原料節點：圓角矩形，深灰背景，白字 */
+.type-raw { background: #2d3748; border: 2px solid #4a5568; border-radius: 12px; color: #fff; }
+
+/* 設備節點：矩形，顯示設備圖示與邊框效率 */
+.type-refinery { background: #171d26; border: 2px solid #3b4659; border-radius: 0; border-left: 6px solid var(--accent-orange); }
+.type-assembly { background: #171d26; border: 2px solid #3b4659; border-radius: 0; border-left: 6px solid var(--accent-blue); }
+
+/* 產物與倉庫節點：橢圓形外觀 */
+.type-product { background: #111622; border: 2px solid var(--accent-green); border-radius: 50% / 50%; color: #fff; }
+/* 倉庫節點：橢圓形，虛線邊框 */
+.type-hub { background: #171d26; border: 2px dashed var(--status-grey); border-radius: 50% / 50%; color: var(--text-muted); }
+
+/* 待導入節點：矩形，虛線邊框，半透明 */
+.type-pending { background: rgba(234, 179, 8, 0.15); border: 2px dashed #eab308; border-radius: 0; opacity: 0.6; color: #fef08a; }
+
+/* 元件內部物件 */
+.placed-building select { width: 92%; background: #000; color: #fff; border: 1px solid #4a5568; font-size: 13px; text-align: center; margin-top: 5px; border-radius: 3px; padding: 2px; }
+.b-icon { font-size: 28px; }
+.b-name { font-size: 13px; font-weight: bold; margin-top: 3px; text-align: center; }
+.b-indicator { width: 10px; height: 10px; border-radius: 50%; background: #00ff66; box-shadow: 0 0 8px #00ff66; margin-top: 5px; }
+.b-overclocked .b-indicator { background: var(--accent-orange); box-shadow: 0 0 8px var(--accent-orange); }
+
+/* ==========================================
+   5. 5.3 規範：動體物流傳送帶 (SVG 連線與滾動動畫)
+   ========================================== */
+.conveyor-svg-layer {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: auto; z-index: 10;
+}
+.belt-path-bg { fill: none; stroke: #262c38; stroke-width: 14; stroke-linecap: round; pointer-events: none; }
+.belt-path-edge { fill: none; stroke: #3d4758; stroke-width: 16; stroke-linecap: round; pointer-events: none; }
+.belt-path-flow {
+    fill: none; stroke: var(--accent-orange); stroke-width: 6; stroke-linecap: round;
+    stroke-dasharray: 10, 15; animation: beltRun 1.2s linear infinite;
+    pointer-events: stroke; cursor: pointer;
+}
+.belt-path-hit {
+    fill: none; stroke: transparent; stroke-width: 24; stroke-linecap: round;
+    pointer-events: stroke; cursor: pointer;
+}
+.belt-path-flow.delete-target:hover { stroke: #ef4444; }
+.belt-fast { animation-duration: 0.4s !important; stroke: var(--accent-green) !important; }
+
+@keyframes beltRun { from { stroke-dashoffset: 50; } to { stroke-dashoffset: 0; } }
+
+/* ==========================================
+   6. 數據流量回報大盤
+   ========================================== */
+.data-panel { flex: 1; background: #0a0d14; padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+.data-card { background: #161c26; padding: 18px; border-radius: 6px; border-left: 6px solid var(--status-grey); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+.card-title { font-size: 16px; color: var(--text-muted); margin-bottom: 6px; font-weight: bold; }
+.card-val { font-size: 26px; font-weight: bold; color: var(--accent-orange); }
+.network-report-card { border-left-color: #fff; background: #0d111a; border: 1px dashed var(--panel-border); }
+
+/* 底部遊戲實機快捷控制列 */
+.game-bottom-bar {
+    background: #0f121a; border: 2px solid var(--panel-border); border-radius: 6px;
+    padding: 12px; display: flex; gap: 12px; justify-content: center; margin-top: 12px;
+}
+.bar-item { background: #1c2433; border: 1px solid #3b485e; color: var(--text-muted); padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+.bar-item:hover { border-color: var(--accent-blue); color: #fff; }
+.bar-item.active { border-color: var(--accent-orange); color: #fff; background: var(--accent-orange); box-shadow: 0 0 12px rgba(255,107,0,0.5); }
+.bar-item.mode-delete.active { background: var(--warn-red); border-color: var(--warn-red); box-shadow: 0 0 12px rgba(239,68,68,0.5); }
+
+/* 5.1 左下角懸浮視角切換器 */
+.view-switcher-leftbottom {
+    position: absolute; bottom: 20px; left: 20px; background: rgba(10, 14, 22, 0.95);
+    border: 2px solid var(--accent-blue); padding: 8px 12px; border-radius: 6px; display: flex; gap: 8px; z-index: 999;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+.switch-icon-btn { background: #1c2433; border: 1px solid #3b485e; color: #94a3b8; padding: 6px 12px; font-size: 16px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+.switch-icon-btn:focus-visible { outline: 2px solid rgba(96, 165, 250, 0.8); outline-offset: 3px; }
+.switch-icon-btn.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); }
+.switch-icon-btn.active:focus-visible { outline: 2px solid rgba(14, 165, 233, 0.8); }
+
+.hidden { display: none !important; }
