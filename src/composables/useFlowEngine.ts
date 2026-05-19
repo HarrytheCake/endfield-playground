@@ -651,10 +651,7 @@ export async function runFlowEngine(): Promise<void> {
             if (!node.isValid || !node.isSink) continue;
             for (const [itemId, rate] of node.inputRates) {
                 if (rate > 0)
-                    sinkDeliveriesMap.set(
-                        itemId,
-                        (sinkDeliveriesMap.get(itemId) ?? 0) + rate,
-                    );
+                    sinkDeliveriesMap.set(itemId, (sinkDeliveriesMap.get(itemId) ?? 0) + rate);
             }
         }
 

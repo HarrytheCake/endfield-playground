@@ -81,9 +81,7 @@ function remainingClass(allocated: number, remaining: number): string {
  */
 const totalOutput = computed(() => {
     const result: { name: string; rate: number; type: 'raw' | 'product' }[] = [];
-    const planMaterialNames = new Set(
-        currentPlan.value?.material_rates.map((m) => m.name) ?? [],
-    );
+    const planMaterialNames = new Set(currentPlan.value?.material_rates.map((m) => m.name) ?? []);
 
     // 1. 計畫原料剩餘（有限配額且剩餘 > 0）
     for (const m of materialUsage.value) {
@@ -251,12 +249,9 @@ function machineCountClass(used: number, limit: number): string {
         <section v-if="hasResults">
             <h4 class="mb-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
                 總產出
-                <span class="ml-1 text-zinc-600 normal-case font-normal">/min</span>
+                <span class="ml-1 font-normal text-zinc-600 normal-case">/min</span>
             </h4>
-            <div
-                v-if="totalOutput.length === 0"
-                class="py-2 text-center text-xs text-zinc-500"
-            >
+            <div v-if="totalOutput.length === 0" class="py-2 text-center text-xs text-zinc-500">
                 尚無可用產出
             </div>
             <div v-else class="space-y-1">
@@ -267,7 +262,7 @@ function machineCountClass(used: number, limit: number): string {
                 >
                     <div class="flex items-center gap-1.5">
                         <span
-                            class="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            class="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full"
                             :class="item.type === 'raw' ? 'bg-zinc-500' : 'bg-blue-400'"
                         />
                         <span class="text-zinc-200">{{ item.name }}</span>
@@ -283,12 +278,9 @@ function machineCountClass(used: number, limit: number): string {
         <section v-if="hasResults">
             <h4 class="mb-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
                 總產出
-                <span class="ml-1 text-zinc-600 normal-case font-normal">/min</span>
+                <span class="ml-1 font-normal text-zinc-600 normal-case">/min</span>
             </h4>
-            <div
-                v-if="totalOutput.length === 0"
-                class="py-2 text-center text-xs text-zinc-500"
-            >
+            <div v-if="totalOutput.length === 0" class="py-2 text-center text-xs text-zinc-500">
                 尚無可用產出
             </div>
             <div v-else class="space-y-1">
@@ -356,10 +348,7 @@ function machineCountClass(used: number, limit: number): string {
             <h4 class="mb-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
                 計畫產物
             </h4>
-            <div
-                v-if="planProducts.length === 0"
-                class="py-2 text-center text-xs text-zinc-500"
-            >
+            <div v-if="planProducts.length === 0" class="py-2 text-center text-xs text-zinc-500">
                 尚無計畫產物輸出
             </div>
             <div v-else class="overflow-x-auto">
@@ -382,10 +371,7 @@ function machineCountClass(used: number, limit: number): string {
                             <td class="py-1 text-right font-semibold text-green-400">
                                 +{{ p.net.toFixed(1) }}
                             </td>
-                            <td
-                                class="py-1 text-right font-bold"
-                                :class="effClass(p.efficiency)"
-                            >
+                            <td class="py-1 text-right font-bold" :class="effClass(p.efficiency)">
                                 {{ Math.round(p.efficiency * 100) }}%
                             </td>
                             <td class="py-1 text-right text-zinc-400">{{ p.price }}</td>
@@ -407,10 +393,7 @@ function machineCountClass(used: number, limit: number): string {
                     class="flex items-center justify-between text-xs"
                 >
                     <span class="text-zinc-300">{{ m.name }}</span>
-                    <span
-                        class="font-semibold"
-                        :class="machineCountClass(m.used, m.limit)"
-                    >
+                    <span class="font-semibold" :class="machineCountClass(m.used, m.limit)">
                         {{ m.used }} / {{ m.limit === -1 ? '∞' : m.limit }}
                     </span>
                 </div>

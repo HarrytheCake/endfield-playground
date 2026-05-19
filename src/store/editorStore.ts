@@ -166,8 +166,8 @@ export const useEditorStore = defineStore('editor', () => {
     const currentPlanId = ref<string>('9bdb2f99-531e-416a-8f4c-27c5e8d8957c');
 
     /** 目前選定的計畫物件 */
-    const currentPlan = computed<Plan | undefined>(
-        () => plans.find((p) => p.id === currentPlanId.value),
+    const currentPlan = computed<Plan | undefined>(() =>
+        plans.find((p) => p.id === currentPlanId.value),
     );
 
     /** 每種機器類型的已使用台數（不含物品輸出口 / 物品輸入口） */
