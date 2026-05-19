@@ -30,12 +30,12 @@ const EndfieldApp = {
 
     // 2. 鏡頭與畫面平移控制變數
     camera: {
-        scale: 1.0,    // 縮放倍率限制在 0.4 ~ 2.0 之間
-        panX: 0,       // 橫向位移量
-        panY: 0,       // 縱向位移量
-        isDragging: false,
-        startX: 0,
-        startY: 0
+        scale: 1.0,    // 當前畫布縮放比例
+        panX: 0,       // 畫布在視口中的水平偏移
+        panY: 0,       // 畫布在視口中的垂直偏移
+        isDragging: false, // 是否正在以滑鼠拖曳方式平移視角
+        startX: 0,     // 平移開始時的滑鼠 X 位置
+        startY: 0      // 平移開始時的滑鼠 Y 位置
     },
 
     draggingBuildingId: null,
@@ -68,6 +68,7 @@ const EndfieldApp = {
         const viewport = document.getElementById('viewport');
 
         // A. 監聽滑鼠滾輪，執行平滑鏡頭縮放 (Zoom)
+        //    這裡以視窗中心點為縮放焦點，補償平移量讓畫面不會因縮放而移動
         viewport.addEventListener('wheel', (e) => {
             e.preventDefault();
             const zoomSpeed = 0.05;
@@ -79,9 +80,12 @@ const EndfieldApp = {
             }
             const scaleDiff = this.camera.scale - oldScale;
             const layer = document.getElementById('transform-layer');
-            const rect = layer.getBoundingClientRect();
-            this.camera.panX -= (rect.width / 2) * (scaleDiff / oldScale);
-            this.camera.panY -= (rect.height / 2) * (scaleDiff / oldScale);
+            const layerRect = layer.getBoundingClientRect();
+            const viewportRect = viewport.getBoundingClientRect();
+            const centerX = (viewportRect.left + viewportRect.width / 2) - layerRect.left;
+            const centerY = (viewportRect.top + viewportRect.height / 2) - layerRect.top;
+            this.camera.panX -= centerX * (scaleDiff / oldScale);
+            this.camera.panY -= centerY * (scaleDiff / oldScale);
             this.applyCameraMatrix();
         });
 
@@ -170,8 +174,24 @@ const EndfieldApp = {
         layer.style.transform = `translate(${this.camera.panX}px, ${this.camera.panY}px) scale(${this.camera.scale})`;
     },
 
+    // 手動按鈕調整縮放時，要保留畫面中心不動，避免畫布跳動
     manuallyAdjustZoom(amount) {
-        this.camera.scale = Math.max(0.4, Math.min(2.0, this.camera.scale + amount));
+        const oldScale = this.camera.scale;
+        const newScale = Math.max(0.4, Math.min(2.0, this.camera.scale + amount));
+        const scaleDiff = newScale - oldScale;
+        if (scaleDiff === 0) return;
+
+        const layer = document.getElementById('transform-layer');
+        const layerRect = layer.getBoundingClientRect();
+        const viewport = document.getElementById('viewport').getBoundingClientRect();
+        const centerX = (viewport.left + viewport.width / 2) - layerRect.left;
+        const centerY = (viewport.top + viewport.height / 2) - layerRect.top;
+
+        // 使用視窗中心點計算補償，讓縮放時原本中心位置保持不動
+        this.camera.panX -= centerX * (scaleDiff / oldScale);
+        this.camera.panY -= centerY * (scaleDiff / oldScale);
+
+        this.camera.scale = newScale;
         this.applyCameraMatrix();
     },
 
