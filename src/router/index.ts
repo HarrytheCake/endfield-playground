@@ -10,6 +10,11 @@ const router = createRouter({
             component: MainLayout,
         },
         {
+            path: '/mbd/flow',
+            name: 'mbd-flow',
+            component: () => import('@/pages/MBDFlow.vue'),
+        },
+        {
             path: '/:pathMatch(.*)*',
             redirect: '/',
         },
