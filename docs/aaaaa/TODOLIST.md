@@ -1,7 +1,7 @@
 # CR-04 開發 Todo List
 
 **負責人：** aaaaa  
-**最後更新：** 2026-05-18（P1-A、P1-B、P1-C、P1-D、P1-E、P1-F、P1-G、P1-H 完成）
+**最後更新：** 2026-05-19（P1-A~P1-H 全部完成；Bug Fix × 4；建造計畫資訊面板；detectCongestion 多遍迭代修正；sinkDeliveries + 總產出面板）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 
@@ -44,13 +44,22 @@
            輸出 = 60/min 研製合成粉末方塊
 ```
 
-### 堵塞（Congestion）反向傳播
-當下游消耗速率 < 上游供給速率時：
+### 堵塞（Congestion）反向傳播（多遍迭代）
+當下游消耗速率 < 上游供給速率時截斷並回推：
 ```
-actual_consumed = downstream_demand
-upstream_efficiency = actual_consumed / upstream_supply
+MAX_PASSES = nodes.size + 2
+for pass in range(MAX_PASSES):
+    changed = false
+    for each edge in edgeFlows:
+        if supply > demand:
+            isCongested = true; rate = demand
+            if sourceNode.isSource:
+                outputRates ×= demand/supply  // source 只縮 outputRates
+            else:
+                efficiency ×= ratio; outputRates ×= ratio; inputRates ×= ratio
+    if not changed: break  // 提前收斂
 ```
-堵塞從下游往上游逐層回推，直到 source 節點或找到緩衝點。
+多遍原因：source 節點的縮減需等到下游節點 inputRates 先被縮減後（pass 1），下一遍（pass 2）才能正確偵測 src→機器 這條邊的堵塞。
 
 ### 多輸出配方處理
 同一配方同一次加工同時產出多種品項（如精煉赤銅礦同時產赤銅塊+汙水）。
@@ -89,7 +98,7 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
 ### P1-B｜Pinia Store（依賴 A1）
 
 - [x] **B1** 建立 `src/store/flowStore.ts`（Pinia Composition API 風格）
-  - **State（ref）**：`edgeFlows`、`nodeEfficiencies`、`itemSummary`、`congestedEdges`、`invalidChainUids`、`totalPowerDemand`、`totalPowerSupply`、`isCalculating`、`lastCalculatedAt`
+  - **State（ref）**：`edgeFlows`、`nodeEfficiencies`、`itemSummary`、`sinkDeliveries`（2026-05-19 新增）、`congestedEdges`、`invalidChainUids`、`totalPowerDemand`、`totalPowerSupply`、`isCalculating`、`lastCalculatedAt`
   - **Computed**：`powerBalance`（盈缺 kW）、`hasPowerShortage`、`edgeFlowCount`、`congestedEdgeCount`、`invalidChainCount`、`hasResults`（是否有合法鏈路計算結果）
   - **`reset()`**：清空所有計算結果，保留 `lastCalculatedAt` 歷史
   - **`applyResult(payload)`**：批次寫入所有計算結果（一次性更新，避免多次觸發響應式），完成後自動設定 `lastCalculatedAt = Date.now()` 並關閉 `isCalculating`
@@ -145,11 +154,14 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
   - 出邊品項配對：優先比對下游配方 inputs，fallback 取第一個有餘量的輸出品項
   - 回傳 `Map<connectionUid, EdgeFlow>`
 
-- [x] **D7** 實作 `detectCongestion(graph, edgeFlows)` — 堵塞反向傳播
+- [x] **D7** 實作 `detectCongestion(graph, edgeFlows)` — 堵塞反向傳播（**多遍迭代，2026-05-19 修正**）
   - 比對每條邊 supply vs `targetNode.inputRates`（需求）
   - 若 supply > demand + 1e-6 → `isCongested = true`，rate 截斷至 demand
-  - 上游節點效率與 outputRates / inputRates 按 `demand/supply` 比例縮減
+  - **source 節點特殊處理**：只縮減 `outputRates`（無 `inputRates`），不設 efficiency
+  - 一般節點：按 `demand/supply` 比例縮減 efficiency / outputRates / inputRates
   - 同步縮減上游其他出邊的 rate；檢查更上游入邊是否也需標記堵塞
+  - **外層迴圈 `MAX_PASSES = nodes.size + 2`**：直到一遍內 `changed = false` 才提前退出
+  - Bug：舊版單遍迭代，source.outputRates 未被修正（net 偏高）→ 多遍修正後 net=0（正確）
 
 - [x] **D8** 實作 `calcItemSummary(graph)` — 品項統計
   - `produced`：所有合法節點 outputRates 加總
@@ -162,7 +174,8 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
   - 開始時 `flowStore.$patch({ isCalculating: true })`
   - 電力統計：`Σ machineDef.power`（power > 0 的有效設備）
   - `totalPowerSupply = 0`（CR-01 供電定義待補）
-  - 完成後呼叫 `flowStore.applyResult(...)` 批次寫入；錯誤時關閉 isCalculating
+  - **sinkDeliveries 計算**（2026-05-19 新增）：`calcItemSummary` 後掃描所有 `isSink && isValid` 節點的 `inputRates`，統計每個品項從物品輸入口流出的實際速率
+  - 完成後呼叫 `flowStore.applyResult({ ..., sinkDeliveries })` 批次寫入；錯誤時關閉 isCalculating
 
 ### P1-E｜Watch 觸發（依賴 B1、D9）
 
@@ -225,6 +238,100 @@ outputs.forEach(o => o.actual_rate = o.recipe_rate × efficiency)
 - [x] 建置計畫：武陵（源礦 540/min、赤銅礦 240/min、清水 unlimited）
 - [x] 反向追蹤：`赫銅零件` → `赫銅塊` → `赫銅溶液` → `赤銅溶液` → `赤銅粉末` / `沉積酸`
 - [x] 完整鏈路配頻驗算，確認各段速率與地區剩餘值正確
+
+---
+
+## Phase 1 後記（2026-05-19 補充完成工項）
+
+### BF-01 — Bug Fix：validateChains sink 跳過 + buildGraph recipeIndex 讀取
+
+- [x] **BF-01a** `validateChains` 中 sink 節點在 Step 5 正向 BFS 時不繼續傳播（修正前：sink 的下游也會被連帶標記非法）
+- [x] **BF-01b** `buildGraph` 中 `recipeIndex` 讀取改為 `node.data.recipeIndex ?? 0`，不再依賴不存在的 `data.recipe`
+
+### BF-02 — Bug Fix：devices.ts 配方數值修正
+
+- [x] **BF-02a** 反應池 → 赫銅塊：`赫銅溶液 quantity 1 → 2`（影響效率計算由 0.25 → 0.125）
+- [x] **BF-02b** 配件機 → 赫銅零件：`quantity 1 → 5`，`timeSeconds 2 → 10`（赫銅零件產率由 7.5 → 0.75/min）
+
+### BF-03 — Bug Fix：detectCongestion 多遍迭代（source 節點回推）
+
+- [x] **BF-03a** 改為外層迴圈 `MAX_PASSES = nodes.size + 2`，每遍 `changed = false` 時提早退出
+- [x] **BF-03b** source 節點特殊處理：偵測到堵塞時只縮減 `outputRates`（無 `inputRates` 可縮）
+- [x] **BF-03c** 驗證：武陵鏈路 B — 藍鐵礦 produced 從 30 修正為 3.75（net = 0，正確）
+
+### P1-X1 — 建造計畫資訊面板
+
+- [x] **X1-a** 建立 `src/data/plans.ts`：`MaterialRate / MachineLimit / ProductValue / Plan` 型別，定義四號谷地 + 武陵兩個計畫
+- [x] **X1-b** `editorStore` 新增：`currentPlanId`、`currentPlan` computed、`machineUsedCounts` computed
+- [x] **X1-c** `ProductionStats.vue` 新增「原料供給」區塊（計畫配額 vs 實際消耗，顏色警示：超量紅 / 接近上限黃 / 正常綠 / 無限灰）
+- [x] **X1-d** `ProductionStats.vue` 新增「計畫產物」區塊（計畫 product_values 中 net > 0 的品項）
+- [x] **X1-e** `ProductionStats.vue` 新增「機器用量」區塊（計畫 machine_limits vs 畫布已用台數）
+
+### P1-X2 — 總產出面板
+
+- [x] **X2-a** `flowStore` 新增 `sinkDeliveries: Map<string, number>` state 與 `applyResult` / `reset` 更新
+- [x] **X2-b** `useFlowEngine.ts` 在 `calcItemSummary` 後計算 `sinkDeliveriesMap`（掃描所有 `isSink && isValid` 節點 inputRates）
+- [x] **X2-c** `ProductionStats.vue` 新增 `totalOutput` computed（原料剩餘灰點 + 機器交付藍點，排除計畫原料名稱重複）
+- [x] **X2-d** `ProductionStats.vue` 新增「總產出」section 顯示，位於原料供給之前
+
+### 測試驗收
+
+- [x] **T1** `pnpm type-check` 零錯誤
+- [x] **T2** `pnpm test --run`：27 條單元測試全數通過
+  - 含 H6 更新測試：`reactionB.efficiency ≈ 0.125`，`赫銅零件 ≈ 0.75/min`
+
+---
+
+## 跨 CR 需求清單（協作者請閱讀）
+
+> CR-04 對其他分工的**強依賴**，若有異動請主動通知 aaaaa。詳細說明見 [README.md](README.md) 第十一節。
+
+### 對 CR-01 的需求
+
+| ID | 需求 | 說明 |
+|----|------|------|
+| N1-01 | `FactoryNode.data.machineType` | 設備類型名稱，與 `devices.ts MachineDef.name` 完全一致 |
+| N1-02 | `FactoryNode.data.recipeIndex` | 使用者選定配方索引（0-based），UI 需提供切換介面 |
+| N1-03 | `FactoryEdge.id` = connectionUid | CR-04 以此作為 `edgeFlows` Map 的 key |
+| N1-04 | `FactoryEdge.source → target` = 物質流向 | source 為輸出端，target 為輸入端 |
+| N1-05 | `getMachineDef(name).power` | 每台設備耗電 kW（-1 表示未知），用於 `totalPowerDemand` |
+| N1-06 | `getMachineDef(name).power_output` | 供電設備的產電 kW，待 CR-01 定義後 CR-04 可計算 `totalPowerSupply` |
+| N1-07 | `getMachineDef(name).isSource / isSink` | 識別物品輸出口 / 物品輸入口 |
+
+### 對 CR-02 的需求
+
+| ID | 需求 | 說明 |
+|----|------|------|
+| N2-01 | `edge.id` 穩定唯一 | 不因重新排列或撤銷重做而改變，否則 `edgeFlows` 快取失效 |
+| N2-02 | 分流器識別方式 | 協商中，目前 CR-04 以 `machineType === 'Splitter'` 或 `tags.includes('splitter')` 偵測 |
+| N2-03 | 匯流器識別方式 | 同上，`'Merger'` / `'merger'` |
+
+### 對 CR-03 的需求
+
+| ID | 需求 | 說明 |
+|----|------|------|
+| N3-01 | `useValidationStore().hasBlockingError(uid)` | uid = `FactoryNode.id`，回傳 true 時 CR-04 將節點排除在計算外 |
+| N3-02 | uid 一致性 | CR-03 Error 紀錄的 uid 必須與 `editorStore.nodes[].id` 完全一致 |
+
+### 對前端 / FactoryCanvas 維護者的消費指南
+
+```typescript
+// 管線 overlay（每條 edge）
+const flow = useFlowStore().edgeFlows.get(edge.id)
+// flow.rate        → X.X /min
+// flow.isCongested → 橘色警示
+// flow.itemId      → 品項名稱
+
+// 設備 overlay（每個 node）
+const eff = useFlowStore().nodeEfficiencies.get(node.id)
+// eff >= 1 → green-500 / >= 0.5 → yellow-400 / > 0 → orange-400 / 0 → zinc-500
+
+// 非法節點（灰色虛線外框）
+const isInvalid = useFlowStore().invalidChainUids.has(node.id)
+
+// 計畫切換（下拉選單 v-model）
+useEditorStore().currentPlanId = '<plan.id>'
+```
 
 ---
 
