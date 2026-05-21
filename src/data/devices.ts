@@ -9,155 +9,8 @@
  *   import { getMachineDef, getRecipesForMachine, getAllRecipes } from '@/data/devices'
  */
 
-import type { MachineDef, RecipeDef, ProductDef } from '@/types/flow';
-
-// ─── 設備定義（對齊 machines.json） ────────────────────────────────────────────
-
-const MACHINE_DEFS: MachineDef[] = [
-    {
-        name: '塑型機',
-        width: 4,
-        height: 3,
-        inputPorts: [
-            { side: 'left', offset: 0 },
-            { side: 'left', offset: 2 },
-        ],
-        outputPorts: [{ side: 'right', offset: 1 }],
-        power: -1,
-        tags: ['合成'],
-    },
-    {
-        name: '灌裝機',
-        width: 1,
-        height: 1,
-        inputPorts: [],
-        outputPorts: [],
-        power: -1,
-        tags: ['合成'],
-        isSource: false,
-        isSink: false,
-    },
-    {
-        name: '精煉爐',
-        width: 3,
-        height: 3,
-        inputPorts: [{ side: 'left', offset: 1 }],
-        outputPorts: [{ side: 'right', offset: 1 }],
-        power: -1,
-        tags: ['合成'],
-        isSource: false,
-        isSink: false,
-    },
-    {
-        name: '粉碎機',
-        width: 3,
-        height: 3,
-        inputPorts: [{ side: 'left', offset: 1 }],
-        outputPorts: [{ side: 'right', offset: 1 }],
-        power: -1,
-        tags: ['分解'],
-        isSource: false,
-        isSink: false,
-    },
-    {
-        name: '配件機',
-        width: 3,
-        height: 3,
-        inputPorts: [{ side: 'left', offset: 1 }],
-        outputPorts: [{ side: 'right', offset: 1 }],
-        power: -1,
-        tags: ['合成'],
-        isSource: false,
-        isSink: false,
-    },
-    {
-        name: '裝備原件機',
-        width: 3,
-        height: 3,
-        inputPorts: [],
-        outputPorts: [],
-        power: -1,
-        tags: [],
-        isSource: false,
-        isSink: false,
-    },
-    {
-        name: '封裝機',
-        width: 1,
-        height: 1,
-        inputPorts: [],
-        outputPorts: [],
-        power: -1,
-        tags: [],
-    },
-    {
-        name: '研磨機',
-        width: 1,
-        height: 1,
-        inputPorts: [],
-        outputPorts: [],
-        power: -1,
-        tags: [],
-    },
-    {
-        name: '反應池',
-        width: 1,
-        height: 1,
-        inputPorts: [],
-        outputPorts: [],
-        power: -1,
-        tags: [],
-    },
-    {
-        name: '天有洪爐',
-        width: 1,
-        height: 1,
-        inputPorts: [],
-        outputPorts: [],
-        power: -1,
-        tags: [],
-    },
-    {
-        name: '提純機',
-        width: 1,
-        height: 1,
-        inputPorts: [],
-        outputPorts: [],
-        power: -1,
-        tags: [],
-    },
-    {
-        name: '拆解機',
-        width: 1,
-        height: 1,
-        inputPorts: [],
-        outputPorts: [],
-        power: -1,
-        tags: [],
-    },
-    {
-        name: '物品輸出口',
-        width: 1,
-        height: 3,
-        inputPorts: [],
-        outputPorts: [{ side: 'right', offset: 1 }],
-        power: -1,
-        tags: [],
-        isSource: true,
-        isSink: false,
-    },
-    {
-        name: '物品輸入口',
-        width: 1,
-        height: 3,
-        inputPorts: [{ side: 'right', offset: 1 }],
-        outputPorts: [],
-        power: -1,
-        tags: [],
-        isSource: false,
-        isSink: true,
-    },
-];
+import type { RecipeDef, ProductDef } from '@/types/flow';
+import { getMachine, getAllMachines as getAllMachinesFromStore } from '@/data/machines';
 
 // ─── 配方定義（對齊 products.json，部分品項）──────────────────────────────────
 //
@@ -208,6 +61,17 @@ const PRODUCT_DEFS: ProductDef[] = [
             {
                 inputs: [],
                 outputs: [{ itemId: '清水', quantity: 1 }],
+                machine: '物品輸出口',
+                timeSeconds: 2,
+            },
+        ],
+    },
+    {
+        name: '沉積酸',
+        recipes: [
+            {
+                inputs: [],
+                outputs: [{ itemId: '沉積酸', quantity: 1 }],
                 machine: '物品輸出口',
                 timeSeconds: 2,
             },
@@ -360,7 +224,7 @@ const PRODUCT_DEFS: ProductDef[] = [
         recipes: [
             {
                 inputs: [
-                    { itemId: '赫銅溶液', quantity: 1 },
+                    { itemId: '赫銅溶液', quantity: 2 },
                     { itemId: '藍鐵粉末', quantity: 1 },
                 ],
                 outputs: [
@@ -403,10 +267,10 @@ const PRODUCT_DEFS: ProductDef[] = [
         name: '赫銅零件',
         recipes: [
             {
-                inputs: [{ itemId: '赫銅塊', quantity: 1 }],
+                inputs: [{ itemId: '赫銅塊', quantity: 5 }],
                 outputs: [{ itemId: '赫銅零件', quantity: 1 }],
                 machine: '配件機',
-                timeSeconds: 2,
+                timeSeconds: 10,
             },
         ],
     },
@@ -479,18 +343,15 @@ const PRODUCT_DEFS: ProductDef[] = [
 
 // ─── 查詢 API ─────────────────────────────────────────────────────────────────
 
-/** MachineDef 快查 Map（name → MachineDef） */
-const _machineMap = new Map<string, MachineDef>(MACHINE_DEFS.map((m) => [m.name, m]));
-
-/** ProductDef 快查 Map（productName → ProductDef） */
+/** MachineDef 快查 Map（委託至 getMachine） */
 const _productMap = new Map<string, ProductDef>(PRODUCT_DEFS.map((p) => [p.name, p]));
 
 /**
  * 依設備名稱取得 MachineDef。
- * @returns MachineDef 或 undefined（未知設備）
+ * 委託至 src/data/machines.ts 的 getMachine()（V1-D1）。
  */
-export function getMachineDef(machineName: string): MachineDef | undefined {
-    return _machineMap.get(machineName);
+export function getMachineDef(machineName: string) {
+    return getMachine(machineName);
 }
 
 /**
@@ -518,9 +379,9 @@ export function getRecipe(productName: string, index = 0): RecipeDef | undefined
     return _productMap.get(productName)?.recipes[index];
 }
 
-/** 取得所有 MachineDef */
-export function getAllMachines(): MachineDef[] {
-    return MACHINE_DEFS;
+/** 取得所有 MachineDef（委託至 src/data/machines） */
+export function getAllMachines() {
+    return getAllMachinesFromStore();
 }
 
 /** 取得所有 ProductDef */
