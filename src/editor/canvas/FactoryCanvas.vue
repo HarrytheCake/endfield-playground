@@ -28,8 +28,13 @@ function handleSelectionChange(selection: { nodes?: Array<{ id: string }> }) {
     selectionStore.setSelection((selection.nodes ?? []).map((node) => node.id));
 }
 
+const GRID_SIZE = 20;
+
 function buildFactoryNode(equipment: EquipmentType, clientX: number, clientY: number): FactoryNode {
-    const position = screenToFlowCoordinate({ x: clientX, y: clientY });
+    const raw = screenToFlowCoordinate({ x: clientX, y: clientY });
+    const position = snapToGrid.value
+        ? { x: Math.round(raw.x / GRID_SIZE) * GRID_SIZE, y: Math.round(raw.y / GRID_SIZE) * GRID_SIZE }
+        : raw;
 
     return {
         id: `node-${equipment}-${Date.now()}-${Math.round(Math.random() * 10000)}`,
@@ -82,11 +87,12 @@ function handleCanvasDrop(event: DragEvent) {
             :pan-on-drag="activeTool === 'pan'"
             :selection-on-drag="activeTool === 'box-select'"
             :snap-to-grid="snapToGrid"
+            :snap-grid="[20, 20]"
             class="factory-flow"
             @selection-change="handleSelectionChange"
             @pane-click="handlePaneClick"
         >
-            <Background :size="1.2" pattern-color="#3f3f46" />
+            <Background variant="lines" :gap="20" :size="1" pattern-color="#3f3f46" />
             <Controls />
             <MiniMap />
         </VueFlow>
