@@ -12,46 +12,13 @@ export const BELT_RATE_LIMIT = 30;
 
 // ─── 基礎型別 ────────────────────────────────────────────────────────────────
 
-/** Port 方位 */
-export type PortSide = 'left' | 'right' | 'top' | 'bottom';
-
-/** 設備的單一連接埠定義 */
-export interface PortDef {
-    side: PortSide;
-    /** 從設備頂端起算的格子偏移量 */
-    offset: number;
-}
-
-// ─── 設備 / 配方定義型別（對齊 docs/aaaaa/data/machines.json） ───────────────
+// ─── Machine 型別橋接（自 src/types/machine re-export） ──────────────────────
 
 /**
- * 設備定義（Machine Definition）
- *
- * CR-01 正式建立 src/data/devices.ts 後，此型別須與之對齊。
+ * MachineDef = Machine（來自 src/types/machine）
+ * PortDef / PortSide / PortType 同步 re-export，外部程式碼可從此處或 machine.ts 匯入。
  */
-export interface MachineDef {
-    /** 設備名稱（唯一鍵，對應 RecipeDef.machine） */
-    name: string;
-    /** 佔格寬度 */
-    width: number;
-    /** 佔格高度 */
-    height: number;
-    /** 輸入連接埠列表 */
-    inputPorts: PortDef[];
-    /** 輸出連接埠列表 */
-    outputPorts: PortDef[];
-    /**
-     * 耗電量（kW）。
-     * -1 = 資料待補（machines.json 目前大多為 -1）
-     */
-    power: number;
-    /** 設備分類標籤，例如 '合成' | '分解' */
-    tags: string[];
-    /** 是否為物品輸出口（地區資源 source） */
-    isSource?: boolean;
-    /** 是否為物品輸入口（產值 sink） */
-    isSink?: boolean;
-}
+export type { Machine as MachineDef, PortDef, PortSide, PortType } from '@/types/machine';
 
 /** 單一配方的一個輸入或輸出項目 */
 export interface RecipeItem {
@@ -202,4 +169,29 @@ export interface FlowStoreState {
     isCalculating: boolean;
     /** 最後一次計算完成的 timestamp（ms） */
     lastCalculatedAt: number;
+}
+
+// ─── FlowEngine 計算結果 payload 型別 ────────────────────────────────────────
+
+/**
+ * FlowEngine 一次計算的完整輸出，作為 `flowStore.applyResult()` 的參數型別。
+ * 同時供 `useFlowEngine.ts` 組裝結果物件時使用。
+ */
+export interface FlowEngineResult {
+    /** connectionUid → EdgeFlow */
+    edgeFlows: Map<string, EdgeFlow>;
+    /** deviceUid → 效率 0~1 */
+    nodeEfficiencies: Map<string, number>;
+    /** 所有參與計算品項的統計摘要 */
+    itemSummary: ItemSummary[];
+    /** itemId → 流入物品輸入口的速率（個/min） */
+    sinkDeliveries: Map<string, number>;
+    /** 堵塞的 connectionUid 集合 */
+    congestedEdges: Set<string>;
+    /** 非合法鏈路 / 孤立節點的 deviceUid 集合 */
+    invalidChainUids: Set<string>;
+    /** 所有有效設備的總耗電量（kW） */
+    totalPowerDemand: number;
+    /** 所有供電設備的總供電量（kW） */
+    totalPowerSupply: number;
 }
