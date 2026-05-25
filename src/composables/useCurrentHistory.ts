@@ -1,4 +1,4 @@
-import { HistoryManager } from './historyManager';
+import { HistoryManager } from '@/lib/history';
 import type { HistoryBasicRecord, HistoryRecordType } from '@/types/history';
 import { onMounted, onUnmounted, ref } from 'vue';
 
