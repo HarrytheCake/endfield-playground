@@ -30,6 +30,10 @@ export class HistoryManager {
         this.historyStack.splice(currentIndex + 1);
         this.historyStack.push(record);
         this.currentIndex = this.historyStack.length - 1;
+        const previous = this.historyStack[currentIndex];
+        this.subscribers.forEach((callback) => {
+            callback({ action: 'push', current: record, previous });
+        });
     }
 
     /**
@@ -40,7 +44,12 @@ export class HistoryManager {
         const currentIndex = this.currentIndex ?? -1;
         if (currentIndex <= 0) return null;
         this.currentIndex = currentIndex - 1;
-        return this.historyStack[currentIndex - 1];
+        const previous = this.historyStack[currentIndex - 1];
+        const current = this.historyStack[currentIndex];
+        this.subscribers.forEach((callback) => {
+            callback({ action: 'undo', current, previous });
+        });
+        return current;
     }
 
     /**
@@ -51,19 +60,27 @@ export class HistoryManager {
         const currentIndex = this.currentIndex ?? -1;
         if (currentIndex >= this.historyStack.length - 1) return null;
         this.currentIndex = currentIndex + 1;
-        return this.historyStack[currentIndex + 1];
+        const current = this.historyStack[currentIndex + 1];
+        const previous = this.historyStack[currentIndex];
+        this.subscribers.forEach((callback) => {
+            callback({ action: 'redo', current, previous });
+        });
+        return current;
     }
 
     /** 清空歷史紀錄 */
     public static clear() {
         this.historyStack = [];
         this.currentIndex = null;
+        this.subscribers.forEach((callback) => {
+            callback({ action: 'clear', current: null, previous: null });
+        });
     }
 
     /**
      * 訂閱歷史紀錄變更事件
-     * @param callback 訂閱者
-     * @returns 訂閱者索引
+     * @param callback 監聽函數
+     * @returns 監聽函數索引
      */
     public static subscribe(callback: HistorySubscriber): number {
         const existingIndex = this.subscribers.indexOf(callback);
@@ -74,13 +91,13 @@ export class HistoryManager {
 
     /**
      * 取消訂閱歷史紀錄變更事件
-     * @param callback 訂閱者
+     * @param callback 監聽函數
      * @returns 是否成功取消訂閱
      */
     public static unsubscribe(callback: HistorySubscriber): boolean;
     /**
      * 取消訂閱歷史紀錄變更事件
-     * @param index 訂閱者索引
+     * @param index 監聽函數索引
      * @returns 是否成功取消訂閱
      */
     public static unsubscribe(index: number): boolean;
