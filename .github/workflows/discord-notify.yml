@@ -2,125 +2,405 @@ name: Discord Notifications
 
 on:
     push:
-        branches: ['**'] # 所有 branch
+        branches: ['**']
     pull_request:
-        types: [opened, synchronize, reopened, closed]
+        types:
+            [
+                opened,
+                reopened,
+                closed,
+                ready_for_review,
+                converted_to_draft,
+                review_requested,
+                synchronize,
+            ]
+    pull_request_review:
+        types: [submitted]
+    pull_request_review_comment:
+        types: [created]
     issues:
         types: [opened, reopened, closed]
     issue_comment:
         types: [created]
+    create: # branch / tag created
+    delete: # branch / tag deleted
+    release:
+        types: [published, prereleased, released]
     workflow_run:
         workflows: ['*']
         types: [completed]
+    check_run:
+        types: [completed]
+    fork:
+    member:
+        types: [added]
+    discussion:
+        types: [created, answered, edited, deleted]
+
+# Prevent overlapping runs of the same event from flooding the channel
+concurrency:
+    group: discord-${{ github.event_name }}-${{ github.ref }}
+    cancel-in-progress: false
 
 jobs:
-    notify:
+    # ─── push ─────────────────────────────────────────────────────────────────
+    push:
+        if: github.event_name == 'push' && !github.event.created && !github.event.deleted
         runs-on: ubuntu-latest
         steps:
-            - name: Prepare message
-              id: prep
+            - name: Send push embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  COMMITS_JSON: ${{ toJSON(github.event.commits) }}
               run: |
-                  EVENT="${{ github.event_name }}"
-                  COLOR=3447003  # blue default
-                  TITLE=""
-                  DESC=""
-                  URL="https://github.com/${{ github.repository }}"
+                  BRANCH="${GITHUB_REF#refs/heads/}"
+                  COUNT=$(echo "$COMMITS_JSON" | jq 'length')
+                  [ "$COUNT" = "0" ] && exit 0
 
-                  # ---------------- PUSH ----------------
-                  if [ "$EVENT" = "push" ]; then
-                    TITLE="📌 New Push"
-                    DESC="**${{ github.actor }}** pushed to **${{ github.ref_name }}**"
-                    URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
-                    COLOR=3066993  # green
-                  fi
+                  LABEL=$([ "$COUNT" = "1" ] && echo "1 new commit" || echo "$COUNT new commits")
+                  REPO_NAME=$(echo "${{ github.repository }}" | cut -d/ -f2)
+                  DESC=$(echo "$COMMITS_JSON" | jq -r '.[0:6] | map(
+                    "[`\(.id[0:7])`](\(.url)) \(.message | split("\n")[0] | .[0:60]) - \(.author.name)"
+                  ) | join("\n")')
 
-                  # ---------------- PR EVENTS ----------------
-                  if [ "$EVENT" = "pull_request" ]; then
-                    ACTION="${{ github.event.action }}"
-                    MERGED="${{ github.event.pull_request.merged }}"
-                    PR_URL="${{ github.event.pull_request.html_url }}"
-                    PR_TITLE="${{ github.event.pull_request.title }}"
+                  jq -n \
+                    --arg title "[$REPO_NAME:$BRANCH] $LABEL" \
+                    --arg url   "${{ github.event.compare }}" \
+                    --arg desc  "$DESC" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg ahref "https://github.com/${{ github.actor }}" \
+                    '{embeds:[{color:5793266,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon,url:$ahref}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
-                    if [ "$ACTION" = "closed" ] && [ "$MERGED" = "true" ]; then
-                      TITLE="🚀 PR Merged"
-                      COLOR=10181046  # purple
-                    else
-                      TITLE="🔧 Pull Request Updated"
-                      COLOR=15844367  # orange
-                    fi
-
-                    DESC="**${{ github.actor }}** → ${PR_TITLE}"
-                    URL="$PR_URL"
-                  fi
-
-                  # ---------------- WORKFLOW RESULT ----------------
-                  if [ "$EVENT" = "workflow_run" ]; then
-                    STATUS="${{ github.event.workflow_run.conclusion }}"
-                    WF_NAME="${{ github.event.workflow_run.name }}"
-                    URL="${{ github.event.workflow_run.html_url }}"
-
-                    if [ "$STATUS" = "success" ]; then
-                      TITLE="✅ Build Succeeded"
-                      COLOR=3066993
-                    else
-                      TITLE="❌ Build Failed"
-                      COLOR=15158332
-                    fi
-
-                    DESC="Workflow **$WF_NAME** finished with **$STATUS**"
-                  fi
-
-                  # ---------------- ISSUE EVENTS ----------------
-                  if [ "$EVENT" = "issues" ]; then
-                    ACTION="${{ github.event.action }}"
-                    ISSUE_TITLE="${{ github.event.issue.title }}"
-                    ISSUE_URL="${{ github.event.issue.html_url }}"
-
-                    if [ "$ACTION" = "opened" ]; then
-                      TITLE="🆕 Issue Opened"
-                      COLOR=3447003
-                    elif [ "$ACTION" = "reopened" ]; then
-                      TITLE="♻️ Issue Reopened"
-                      COLOR=10181046
-                    elif [ "$ACTION" = "closed" ]; then
-                      TITLE="✅ Issue Closed"
-                      COLOR=3066993
-                    fi
-
-                    DESC="**${{ github.actor }}** → ${ISSUE_TITLE}"
-                    URL="$ISSUE_URL"
-                  fi
-
-                  # ---------------- ISSUE COMMENT ----------------
-                  if [ "$EVENT" = "issue_comment" ]; then
-                    ISSUE_TITLE="${{ github.event.issue.title }}"
-                    COMMENT_URL="${{ github.event.comment.html_url }}"
-
-                    TITLE="💬 New Issue Comment"
-                    COLOR=15844367
-                    DESC="**${{ github.actor }}** commented on: ${ISSUE_TITLE}"
-                    URL="$COMMENT_URL"
-                  fi
-
-                  echo "title=$TITLE" >> $GITHUB_OUTPUT
-                  echo "desc=$DESC" >> $GITHUB_OUTPUT
-                  echo "color=$COLOR" >> $GITHUB_OUTPUT
-                  echo "url=$URL" >> $GITHUB_OUTPUT
-
-            - name: Send Discord Embed
+    # ─── pull_request ────────────────────────────────────────────────────────
+    pull_request:
+        if: github.event_name == 'pull_request'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send PR embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  PR_BODY_JSON: ${{ toJSON(github.event.pull_request.body) }}
               run: |
-                  curl -H "Content-Type: application/json" \
-                  -X POST \
-                  -d "{
-                    \"embeds\": [{
-                      \"title\": \"${{ steps.prep.outputs.title }}\",
-                      \"description\": \"${{ steps.prep.outputs.desc }}\",
-                      \"color\": ${{ steps.prep.outputs.color }},
-                      \"url\": \"${{ steps.prep.outputs.url }}\",
-                      \"footer\": {
-                        \"text\": \"${{ github.repository }}\"
-                      },
-                      \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-                    }]
-                  }" \
-                  ${{ secrets.DISCORD_WEBHOOK }}
+                  ACTION="${{ github.event.action }}"
+                  MERGED="${{ github.event.pull_request.merged }}"
+
+                  if [ "$ACTION" = "closed" ] && [ "$MERGED" = "true" ]; then
+                    LABEL="merged";            COLOR=10181046
+                  elif [ "$ACTION" = "closed" ]; then
+                    LABEL="closed";            COLOR=15548997
+                  elif [ "$ACTION" = "opened" ] || [ "$ACTION" = "reopened" ] || [ "$ACTION" = "ready_for_review" ]; then
+                    LABEL="$ACTION";           COLOR=5763719
+                  elif [ "$ACTION" = "review_requested" ]; then
+                    LABEL="review requested";  COLOR=15105570
+                  elif [ "$ACTION" = "synchronize" ]; then
+                    LABEL="updated";           COLOR=5793266
+                  elif [ "$ACTION" = "converted_to_draft" ]; then
+                    LABEL="converted to draft"; COLOR=10070709
+                  else
+                    LABEL="$ACTION";           COLOR=10070709
+                  fi
+
+                  BODY=$(echo "$PR_BODY_JSON" | jq -r '. // "" | .[0:300]')
+
+                  jq -n \
+                    --arg title "[${{ github.repository }}] Pull request $LABEL: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}" \
+                    --arg url   "${{ github.event.pull_request.html_url }}" \
+                    --arg desc  "$BODY" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --argjson color $COLOR \
+                    '{embeds:[{color:$color,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── pull_request_review ─────────────────────────────────────────────────
+    pull_request_review:
+        if: github.event_name == 'pull_request_review' && github.event.action == 'submitted'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send review embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  REVIEW_BODY_JSON: ${{ toJSON(github.event.review.body) }}
+              run: |
+                  STATE="${{ github.event.review.state }}"
+                  case "$STATE" in
+                    approved)           LABEL="approved";              COLOR=5763719  ;;
+                    changes_requested)  LABEL="requested changes on";  COLOR=15548997 ;;
+                    commented)          LABEL="reviewed";              COLOR=15105570 ;;
+                    *)                  LABEL="$STATE";                COLOR=10070709 ;;
+                  esac
+
+                  BODY=$(echo "$REVIEW_BODY_JSON" | jq -r '. // "" | .[0:300]')
+
+                  jq -n \
+                    --arg title "[${{ github.repository }}] ${{ github.actor }} $LABEL PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" \
+                    --arg url   "${{ github.event.review.html_url }}" \
+                    --arg desc  "$BODY" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --argjson color $COLOR \
+                    '{embeds:[{color:$color,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── pull_request_review_comment ─────────────────────────────────────────
+    pull_request_review_comment:
+        if: github.event_name == 'pull_request_review_comment' && github.event.action == 'created'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send review comment embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  COMMENT_BODY_JSON: ${{ toJSON(github.event.comment.body) }}
+              run: |
+                  BODY=$(echo "$COMMENT_BODY_JSON" | jq -r '. // "" | .[0:300]')
+
+                  jq -n \
+                    --arg title "[${{ github.repository }}] New review comment on PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" \
+                    --arg url   "${{ github.event.comment.html_url }}" \
+                    --arg desc  "$BODY" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    '{embeds:[{color:15105570,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── issues ──────────────────────────────────────────────────────────────
+    issues:
+        if: github.event_name == 'issues'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send issue embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  ISSUE_BODY_JSON: ${{ toJSON(github.event.issue.body) }}
+              run: |
+                  ACTION="${{ github.event.action }}"
+                  case "$ACTION" in
+                    opened)   COLOR=5763719  ;;
+                    closed)   COLOR=15548997 ;;
+                    reopened) COLOR=15105570 ;;
+                    *)        COLOR=10070709 ;;
+                  esac
+
+                  BODY=""
+                  if [ "$ACTION" = "opened" ]; then
+                    BODY=$(echo "$ISSUE_BODY_JSON" | jq -r '. // "" | .[0:300]')
+                  fi
+
+                  jq -n \
+                    --arg title "[${{ github.repository }}] Issue $ACTION: #${{ github.event.issue.number }} ${{ github.event.issue.title }}" \
+                    --arg url   "${{ github.event.issue.html_url }}" \
+                    --arg desc  "$BODY" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --argjson color $COLOR \
+                    '{embeds:[{color:$color,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── issue_comment ───────────────────────────────────────────────────────
+    issue_comment:
+        if: github.event_name == 'issue_comment' && github.event.action == 'created'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send issue comment embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  COMMENT_BODY_JSON: ${{ toJSON(github.event.comment.body) }}
+              run: |
+                  IS_PR="${{ github.event.issue.pull_request != null }}"
+                  KIND=$([ "$IS_PR" = "true" ] && echo "PR" || echo "issue")
+                  BODY=$(echo "$COMMENT_BODY_JSON" | jq -r '. // "" | .[0:300]')
+
+                  jq -n \
+                    --arg title "[${{ github.repository }}] New comment on $KIND #${{ github.event.issue.number }}: ${{ github.event.issue.title }}" \
+                    --arg url   "${{ github.event.comment.html_url }}" \
+                    --arg desc  "$BODY" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    '{embeds:[{color:15105570,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── create (branch / tag) ───────────────────────────────────────────────
+    create:
+        if: github.event_name == 'create'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send create-ref embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+              run: |
+                  REF_TYPE="${{ github.event.ref_type }}"
+                  REF="${{ github.event.ref }}"
+                  REPO_URL="https://github.com/${{ github.repository }}"
+
+                  if [ "$REF_TYPE" = "tag" ]; then
+                    TITLE="[${{ github.repository }}] New tag created: $REF"
+                    URL="$REPO_URL/releases/tag/$REF"
+                    COLOR=16705372
+                  else
+                    TITLE="[${{ github.repository }}] New branch created: $REF"
+                    URL="$REPO_URL/tree/$REF"
+                    COLOR=5793266
+                  fi
+
+                  jq -n \
+                    --arg title "$TITLE" \
+                    --arg url   "$URL" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --argjson color $COLOR \
+                    '{embeds:[{color:$color,title:$title,url:$url,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── delete (branch / tag) ───────────────────────────────────────────────
+    delete:
+        if: github.event_name == 'delete'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send delete-ref embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+              run: |
+                  REF_TYPE="${{ github.event.ref_type }}"
+                  LABEL=$([ "$REF_TYPE" = "tag" ] && echo "Tag" || echo "Branch")
+
+                  jq -n \
+                    --arg title "[${{ github.repository }}] $LABEL deleted: ${{ github.event.ref }}" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    '{embeds:[{color:15548997,title:$title,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── release ─────────────────────────────────────────────────────────────
+    release:
+        if: github.event_name == 'release'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send release embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  RELEASE_BODY_JSON: ${{ toJSON(github.event.release.body) }}
+              run: |
+                  PRERELEASE="${{ github.event.release.prerelease }}"
+                  LABEL=$([ "$PRERELEASE" = "true" ] && echo "pre-release" || echo "release")
+                  BODY=$(echo "$RELEASE_BODY_JSON" | jq -r '. // "" | .[0:400]')
+
+                  jq -n \
+                    --arg title "[${{ github.repository }}] New $LABEL published: ${{ github.event.release.tag_name }}" \
+                    --arg url   "${{ github.event.release.html_url }}" \
+                    --arg desc  "$BODY" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    '{embeds:[{color:16705372,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── workflow_run ────────────────────────────────────────────────────────
+    workflow_run:
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != null && github.event.workflow_run.name != 'Discord Notifications'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send workflow run embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+              run: |
+                  CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+                  NAME=$(echo "${{ github.event.workflow_run.name }}" | tr '[:upper:]' '[:lower:]')
+                  BRANCH="${{ github.event.workflow_run.head_branch }}"
+                  REPO_NAME=$(echo "${{ github.repository }}" | cut -d/ -f2)
+
+                  case "$CONCLUSION" in
+                    success) COLOR=5763719 ;;
+                    failure) COLOR=15548997 ;;
+                    *)       COLOR=10070709 ;;
+                  esac
+
+                  jq -n \
+                    --arg title "[$REPO_NAME] $NAME $CONCLUSION on $BRANCH" \
+                    --arg url   "${{ github.event.workflow_run.html_url }}" \
+                    --argjson color $COLOR \
+                    '{embeds:[{color:$color,title:$title,url:$url}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── check_run (GitHub Actions only) ─────────────────────────────────────
+    check_run:
+        if: github.event_name == 'check_run' && github.event.action == 'completed' && contains(github.event.check_run.app.slug, 'github-actions')
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send check run embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+              run: |
+                  CONCLUSION="${{ github.event.check_run.conclusion }}"
+                  REPO_NAME=$(echo "${{ github.repository }}" | cut -d/ -f2)
+                  case "$CONCLUSION" in
+                    success) COLOR=5763719 ;;
+                    failure) COLOR=15548997 ;;
+                    *)       COLOR=10070709 ;;
+                  esac
+
+                  jq -n \
+                    --arg title "[$REPO_NAME] ${{ github.event.check_run.name }} $CONCLUSION on ${{ github.event.check_run.check_suite.head_branch }}" \
+                    --arg url   "${{ github.event.check_run.html_url }}" \
+                    --argjson color $COLOR \
+                    '{embeds:[{color:$color,title:$title,url:$url}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── fork ────────────────────────────────────────────────────────────────
+    fork:
+        if: github.event_name == 'fork'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send fork embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+              run: |
+                  jq -n \
+                    --arg title "[${{ github.repository }}] Repository forked to ${{ github.event.forkee.full_name }}" \
+                    --arg url   "${{ github.event.forkee.html_url }}" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    '{embeds:[{color:5793266,title:$title,url:$url,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── member ──────────────────────────────────────────────────────────────
+    member:
+        if: github.event_name == 'member' && github.event.action == 'added'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send member added embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+              run: |
+                  jq -n \
+                    --arg title "[${{ github.repository }}] New collaborator added: ${{ github.event.member.login }}" \
+                    --arg url   "https://github.com/${{ github.repository }}" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    '{embeds:[{color:5763719,title:$title,url:$url,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
+
+    # ─── discussion ──────────────────────────────────────────────────────────
+    discussion:
+        if: github.event_name == 'discussion'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send discussion embed
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  DISCUSSION_BODY_JSON: ${{ toJSON(github.event.discussion.body) }}
+              run: |
+                  ACTION="${{ github.event.action }}"
+                  BODY=""
+                  if [ "$ACTION" = "created" ]; then
+                    BODY=$(echo "$DISCUSSION_BODY_JSON" | jq -r '. // "" | .[0:300]')
+                  fi
+
+                  jq -n \
+                    --arg title "[${{ github.repository }}] Discussion $ACTION: ${{ github.event.discussion.title }}" \
+                    --arg url   "${{ github.event.discussion.html_url }}" \
+                    --arg desc  "$BODY" \
+                    --arg name  "${{ github.actor }}" \
+                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    '{embeds:[{color:5793266,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
+                    | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
