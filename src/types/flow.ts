@@ -12,14 +12,6 @@ export const BELT_RATE_LIMIT = 30;
 
 // ─── 基礎型別 ────────────────────────────────────────────────────────────────
 
-// ─── Machine 型別橋接（自 src/types/machine re-export） ──────────────────────
-
-/**
- * MachineDef = Machine（來自 src/types/machine）
- * PortDef / PortSide / PortType 同步 re-export，外部程式碼可從此處或 machine.ts 匯入。
- */
-export type { Machine as MachineDef, PortDef, PortSide, PortType } from '@/types/machine';
-
 /** 單一配方的一個輸入或輸出項目 */
 export interface RecipeItem {
     /** 品項名稱（對應 products.json name 或 materials.json name） */
@@ -36,9 +28,11 @@ export interface RecipeItem {
  *   ratePerMin = quantity × (60 / timeSeconds)
  */
 export interface RecipeDef {
+    /** 配方唯一識別碼，格式：`<machineId>_<productId>_<recipeIndex>` */
+    id: string;
     inputs: RecipeItem[];
     outputs: RecipeItem[];
-    /** 使用此配方的設備名稱（對應 MachineDef.name） */
+    /** 使用此配方的設備名稱（對應 Machine.name） */
     machine: string;
     /** 單次加工時間（秒） */
     timeSeconds: number;
@@ -49,7 +43,9 @@ export interface RecipeDef {
  * 一個產品可有多個替代配方。
  */
 export interface ProductDef {
-    /** 產品名稱（唯一鍵） */
+    /** 產品唯一識別碼，英文 slug，例如 `jing_cao_solution` */
+    id: string;
+    /** 產品名稱 */
     name: string;
     recipes: RecipeDef[];
 }
@@ -67,7 +63,7 @@ export interface EdgeMeta {
 export interface FlowNode {
     /** 對應 editorStore.nodes 中的 id */
     deviceUid: string;
-    /** 設備定義名稱，用於查找 MachineDef 與配方 */
+    /** 設備定義名稱，用於查找 Machine 定義與配方 */
     machineType: string;
     /** 目前選用的配方索引（預設 0） */
     recipeIndex: number;
