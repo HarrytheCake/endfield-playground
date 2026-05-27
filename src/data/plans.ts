@@ -1,26 +1,7 @@
-export interface MaterialRate {
-    name: string;
-    rate: number | null; // null = 無限制
-}
+import type { MaterialRate, MachineLimit, ProductValue, Plan } from '@/types/plan';
 
-export interface MachineLimit {
-    name: string;
-    limit: number | null; // null = 無限制
-}
-
-export interface ProductValue {
-    name: string;
-    price: number;
-}
-
-export interface Plan {
-    id: string;
-    name: string;
-    material_rates: MaterialRate[];
-    machine_limits: MachineLimit[];
-    product_values: ProductValue[];
-    priority_products: { name: string; max_rate: number | null }[];
-}
+// 向後相容：原本從 @/data/plans 直接 import type 的消費者不需修改
+export type { MaterialRate, MachineLimit, ProductValue, Plan };
 
 export const plans: Plan[] = [
     {
