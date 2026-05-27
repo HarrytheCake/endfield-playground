@@ -31,7 +31,8 @@ import type {
     FlowEngineResult,
 } from '@/types/flow';
 import { BELT_RATE_LIMIT } from '@/types/flow';
-import { getMachineDef, getRecipesForMachine } from '@/data/devices';
+import { getRecipesForMachine } from '@/data/devices';
+import { getMachine } from '@/data/machines';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
@@ -276,7 +277,7 @@ export function buildGraph(nodes: FactoryNode[], edges: FactoryEdge[]): FlowGrap
         if (hasBlockingError(node.id)) continue;
 
         const machineType = node.data?.machineType ?? node.data?.label ?? node.id;
-        const machineDef = getMachineDef(machineType);
+        const machineDef = getMachine(machineType);
         const recipeIndex = node.data?.recipeIndex ?? 0;
 
         const recipe = getRecipeForNode(machineType, recipeIndex);
@@ -666,7 +667,7 @@ export async function runFlowEngine(): Promise<void> {
         let totalPowerDemand = 0;
         for (const [, node] of graph.nodes) {
             if (!node.isValid) continue;
-            const def = getMachineDef(node.machineType);
+            const def = getMachine(node.machineType);
             if (def && def.power > 0) totalPowerDemand += def.power;
         }
 
