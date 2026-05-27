@@ -80,6 +80,8 @@ export type MachineEfficiencyFn = null | ((inputs: Map<string, number>) => numbe
  */
 export interface Machine {
     // ── 靜態屬性 ──────────────────────────────────────────────────────────────
+    /** 機器唯一識別碼，英文 snake_case，例如 `shaping_machine`、`crusher` */
+    readonly id: string;
     readonly name: string;
     readonly width: number;
     readonly height: number;
@@ -100,57 +102,11 @@ export interface Machine {
     calcEfficiency: MachineEfficiencyFn;
 }
 
-// ─── Port 旋轉工具函式 ────────────────────────────────────────────────────────
+// ─── Port 旋轉工具函式（已遷移至 src/utils/portUtils.ts） ────────────────────
+//
+// 此處保留 re-export 維持向後相容。
+// 新程式碼請直接從 @/utils/portUtils 匯入。
+//
+// @deprecated 請改用 import { rotatePortSide, rotatePortOffset } from '@/utils/portUtils'
 
-const SIDE_ORDER: PortSide[] = ['top', 'right', 'bottom', 'left'];
-
-/**
- * 將方位按順時針步數旋轉
- *
- * @param side     原始方位（0° 時）
- * @param rotation 旋轉步數（0=0°, 1=90°CW, 2=180°, 3=270°CW）
- */
-export function rotatePortSide(side: PortSide, rotation: 0 | 1 | 2 | 3): PortSide {
-    const idx = SIDE_ORDER.indexOf(side);
-    return SIDE_ORDER[(idx + rotation) % 4];
-}
-
-/**
- * 將 offset 按旋轉步數轉換（需搭配機器尺寸，確保非方形機器旋轉後格子正確）
- *
- * 轉換規則（每步 90°CW）：
- *   left  → top    : offset → (machineHeight - 1 - offset)  // 垂直翻轉
- *   top   → right  : offset → offset                         // 不變
- *   right → bottom : offset → (machineWidth  - 1 - offset)  // 水平翻轉
- *   bottom→ left   : offset → offset                         // 不變
- *
- * @param side         原始方位
- * @param offset       原始 offset
- * @param machineWidth  機器原始寬度（格）
- * @param machineHeight 機器原始高度（格）
- * @param rotation     旋轉步數（0~3）
- */
-export function rotatePortOffset(
-    side: PortSide,
-    offset: number,
-    machineWidth: number,
-    machineHeight: number,
-    rotation: 0 | 1 | 2 | 3,
-): number {
-    if (rotation === 0) return offset;
-
-    const transforms: Record<PortSide, (o: number) => number> = {
-        left: (o) => machineHeight - 1 - o, // left→top：垂直翻轉
-        top: (o) => o, //  top→right：不變
-        right: (o) => machineWidth - 1 - o, // right→bottom：水平翻轉
-        bottom: (o) => o, // bottom→left：不變
-    };
-
-    let currentSide: PortSide = side;
-    let currentOffset = offset;
-    for (let i = 0; i < rotation; i++) {
-        currentOffset = transforms[currentSide](currentOffset);
-        currentSide = rotatePortSide(currentSide, 1);
-    }
-    return currentOffset;
-}
+export { rotatePortSide, rotatePortOffset } from '@/utils/portUtils';

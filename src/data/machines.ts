@@ -12,6 +12,7 @@ import type { Machine } from '@/types/machine';
 // ─── 基礎生產類 ───────────────────────────────────────────────────────────────
 
 export const 塑型機: Machine = {
+    id: 'shaping_machine',
     name: '塑型機',
     width: 3,
     height: 3,
@@ -36,6 +37,7 @@ export const 塑型機: Machine = {
 };
 
 export const 精煉爐: Machine = {
+    id: 'refinery',
     name: '精煉爐',
     width: 3,
     height: 3,
@@ -62,6 +64,7 @@ export const 精煉爐: Machine = {
 };
 
 export const 粉碎機: Machine = {
+    id: 'crusher',
     name: '粉碎機',
     width: 3,
     height: 3,
@@ -86,6 +89,7 @@ export const 粉碎機: Machine = {
 };
 
 export const 配件機: Machine = {
+    id: 'parts_machine',
     name: '配件機',
     width: 3,
     height: 3,
@@ -110,6 +114,7 @@ export const 配件機: Machine = {
 };
 
 export const 採種機: Machine = {
+    id: 'seed_harvester',
     name: '採種機',
     width: 5,
     height: 5,
@@ -138,6 +143,7 @@ export const 採種機: Machine = {
 };
 
 export const 種植機: Machine = {
+    id: 'planter',
     name: '種植機',
     width: 5,
     height: 5,
@@ -167,6 +173,7 @@ export const 種植機: Machine = {
 };
 
 export const 廢水處理機: Machine = {
+    id: 'wastewater_processor',
     name: '廢水處理機',
     width: 3,
     height: 3,
@@ -185,6 +192,7 @@ export const 廢水處理機: Machine = {
 // ─── 合成製造類 ───────────────────────────────────────────────────────────────
 
 export const 灌裝機: Machine = {
+    id: 'filling_machine',
     name: '灌裝機',
     width: 6,
     height: 4,
@@ -216,6 +224,7 @@ export const 灌裝機: Machine = {
 };
 
 export const 裝備原件機: Machine = {
+    id: 'equipment_parts_machine',
     name: '裝備原件機',
     width: 4,
     height: 6,
@@ -246,6 +255,7 @@ export const 裝備原件機: Machine = {
 };
 
 export const 封裝機: Machine = {
+    id: 'packaging_machine',
     name: '封裝機',
     width: 6,
     height: 4,
@@ -276,6 +286,7 @@ export const 封裝機: Machine = {
 };
 
 export const 研磨機: Machine = {
+    id: 'grinder',
     name: '研磨機',
     width: 6,
     height: 4,
@@ -306,6 +317,7 @@ export const 研磨機: Machine = {
 };
 
 export const 反應池: Machine = {
+    id: 'reactor',
     name: '反應池',
     width: 5,
     height: 5,
@@ -332,6 +344,7 @@ export const 反應池: Machine = {
 };
 
 export const 天有洪爐: Machine = {
+    id: 'blast_furnace',
     name: '天有洪爐',
     width: 5,
     height: 5,
@@ -361,6 +374,7 @@ export const 天有洪爐: Machine = {
 };
 
 export const 提純機: Machine = {
+    id: 'purifier',
     name: '提純機',
     width: 5,
     height: 5,
@@ -383,6 +397,7 @@ export const 提純機: Machine = {
 };
 
 export const 拆解機: Machine = {
+    id: 'disassembler',
     name: '拆解機',
     width: 6,
     height: 4,
@@ -414,6 +429,7 @@ export const 拆解機: Machine = {
 };
 
 export const 擴容反應池: Machine = {
+    id: 'large_reactor',
     name: '擴容反應池',
     width: 6,
     height: 5,
@@ -446,6 +462,7 @@ export const 擴容反應池: Machine = {
 // ─── 物流設備類 ───────────────────────────────────────────────────────────────
 
 export const 物品准入口: Machine = {
+    id: 'item_access_port',
     name: '物品准入口',
     width: 1,
     height: 1,
@@ -462,6 +479,7 @@ export const 物品准入口: Machine = {
 };
 
 export const 分流器: Machine = {
+    id: 'splitter',
     name: '分流器',
     width: 1,
     height: 1,
@@ -482,6 +500,7 @@ export const 分流器: Machine = {
 };
 
 export const 物流橋: Machine = {
+    id: 'logistics_bridge',
     name: '物流橋',
     width: 1,
     height: 1,
@@ -504,6 +523,7 @@ export const 物流橋: Machine = {
 };
 
 export const 匯流器: Machine = {
+    id: 'merger',
     name: '匯流器',
     width: 1,
     height: 1,
@@ -524,6 +544,7 @@ export const 匯流器: Machine = {
 };
 
 export const 管道准入口: Machine = {
+    id: 'pipe_access_port',
     name: '管道准入口',
     width: 1,
     height: 1,
@@ -540,6 +561,7 @@ export const 管道准入口: Machine = {
 };
 
 export const 管道分流器: Machine = {
+    id: 'pipe_splitter',
     name: '管道分流器',
     width: 1,
     height: 1,
@@ -560,6 +582,7 @@ export const 管道分流器: Machine = {
 };
 
 export const 管道橋: Machine = {
+    id: 'pipe_bridge',
     name: '管道橋',
     width: 1,
     height: 1,
@@ -582,6 +605,7 @@ export const 管道橋: Machine = {
 };
 
 export const 管道匯流器: Machine = {
+    id: 'pipe_merger',
     name: '管道匯流器',
     width: 1,
     height: 1,
@@ -604,6 +628,7 @@ export const 管道匯流器: Machine = {
 // ─── 倉庫存取類 ───────────────────────────────────────────────────────────────
 
 export const 協議儲存箱: Machine = {
+    id: 'protocol_storage_box',
     name: '協議儲存箱',
     width: 3,
     height: 3,
@@ -628,6 +653,7 @@ export const 協議儲存箱: Machine = {
 };
 
 export const 倉庫存貨口: Machine = {
+    id: 'warehouse_input',
     name: '倉庫存貨口',
     width: 3,
     height: 1,
@@ -644,6 +670,7 @@ export const 倉庫存貨口: Machine = {
 };
 
 export const 倉庫取貨口: Machine = {
+    id: 'warehouse_output',
     name: '倉庫取貨口',
     width: 3,
     height: 1,
@@ -660,6 +687,7 @@ export const 倉庫取貨口: Machine = {
 };
 
 export const 儲液罐: Machine = {
+    id: 'liquid_tank',
     name: '儲液罐',
     width: 3,
     height: 3,
@@ -676,6 +704,7 @@ export const 儲液罐: Machine = {
 };
 
 export const 倉庫存取線基段: Machine = {
+    id: 'warehouse_line_base',
     name: '倉庫存取線基段',
     width: 4,
     height: 8,
@@ -692,6 +721,7 @@ export const 倉庫存取線基段: Machine = {
 };
 
 export const 倉庫存取線源樁: Machine = {
+    id: 'warehouse_line_source',
     name: '倉庫存取線源樁',
     width: 4,
     height: 4,
@@ -708,6 +738,7 @@ export const 倉庫存取線源樁: Machine = {
 };
 
 export const 暗管入口: Machine = {
+    id: 'conduit_inlet',
     name: '暗管入口',
     width: 3,
     height: 3,
@@ -724,6 +755,7 @@ export const 暗管入口: Machine = {
 };
 
 export const 暗管出口: Machine = {
+    id: 'conduit_outlet',
     name: '暗管出口',
     width: 3,
     height: 3,
@@ -740,6 +772,7 @@ export const 暗管出口: Machine = {
 };
 
 export const 多口暗管入口: Machine = {
+    id: 'multi_conduit_inlet',
     name: '多口暗管入口',
     width: 3,
     height: 5,
@@ -759,6 +792,7 @@ export const 多口暗管入口: Machine = {
 };
 
 export const 多口暗管出口: Machine = {
+    id: 'multi_conduit_outlet',
     name: '多口暗管出口',
     width: 3,
     height: 5,
@@ -780,6 +814,7 @@ export const 多口暗管出口: Machine = {
 // ─── 電力類 ───────────────────────────────────────────────────────────────────
 
 export const 供電樁: Machine = {
+    id: 'power_pole',
     name: '供電樁',
     width: 2,
     height: 2,
@@ -796,6 +831,7 @@ export const 供電樁: Machine = {
 };
 
 export const 息壤供電樁: Machine = {
+    id: 'xi_rang_power_pole',
     name: '息壤供電樁',
     width: 2,
     height: 2,
@@ -812,6 +848,7 @@ export const 息壤供電樁: Machine = {
 };
 
 export const 中繼器: Machine = {
+    id: 'relay',
     name: '中繼器',
     width: 3,
     height: 3,
@@ -828,6 +865,7 @@ export const 中繼器: Machine = {
 };
 
 export const 息壤中繼器: Machine = {
+    id: 'xi_rang_relay',
     name: '息壤中繼器',
     width: 3,
     height: 3,
@@ -844,6 +882,7 @@ export const 息壤中繼器: Machine = {
 };
 
 export const 熱能池: Machine = {
+    id: 'thermal_pool',
     name: '熱能池',
     width: 2,
     height: 2,
@@ -869,6 +908,7 @@ export const 熱能池: Machine = {
  * FlowEngine 以此識別資源生產節點，直接輸出配方速率。
  */
 export const 物品輸出口: Machine = {
+    id: 'item_source',
     name: '物品輸出口',
     width: 1,
     height: 3,
@@ -889,6 +929,7 @@ export const 物品輸出口: Machine = {
  * FlowEngine 以此識別產值交付節點，BFS 反向追蹤的起點。
  */
 export const 物品輸入口: Machine = {
+    id: 'item_sink',
     name: '物品輸入口',
     width: 1,
     height: 3,
