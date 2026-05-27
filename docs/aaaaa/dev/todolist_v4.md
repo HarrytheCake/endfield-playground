@@ -57,26 +57,30 @@
 
 > 主編指定：中文變數名稱、建議改用 machineList + ReadonlyMap
 
-- [ ] **V4-C1** 將所有中文具名常數收攏為 `machineList: Machine[]` 陣列
-  - 移除所有 `export const 塑型機 = { ... }` 等個別中文 export
+- [x] **V4-C1** 將所有中文具名常數收攏為 `machineList: Machine[]` 陣列
+  - 移除所有 `export const 塑型機 = { ... }` 等個別中文 export（共 41 個常數）
   - 改以物件字面值直接寫入 `machineList` 陣列，順序與 machines.json 一致
-  - 每台機器補充 `id` 欄位（snake_case）：說明如下對照表
+  - id 欄位已在 V4-B3 補齊（41 台），對照表詳見下方
   - **附加：新增 `getMachineById(id: string)` 函式**（方案 B 對法）
+  - 確認影響範圍：grep 確認無外部直接 import 中文常數；`MACHINES` export 亦僅內部使用
 
-- [ ] **V4-C2** 將 `MACHINES: Map<string, Machine>` 改為 `machineMap: ReadonlyMap<string, Machine>`
-  - 從 `machineList.map(m => [m.name, m])` 自動建立
+- [x] **V4-C2** 將 `MACHINES: Map<string, Machine>` 改為 `machineMap: ReadonlyMap<string, Machine>`
+  - 從 `machineList.map(m => [m.name, m])` 自動建立（key 仍為中文 name，向後相容）
+  - 同步新增 `machineByIdMap`（key 為英文 id），供 `getMachineById` 查詢
   - 移除原本逐條 `[塑型機.name, 塑型機]` 的硬編碼 map 初始化
+  - `machineByIdMap` 為模組私有（不 export），僅供 `getMachineById` 使用
 
-- [ ] **V4-C3** 更新匯出 API
-  - `getMachine(name)` 改為查詢 `machineMap`（路徑不變，向後相容）
-  - **新增 `getMachineById(id: string)` 函式**，查詢以 id 為 key 的 `machineByIdMap`
-  - `getAllMachines()` 改為回傳 `machineList`（路徑不變，向後相容）
+- [x] **V4-C3** 更新匯出 API
+  - `getMachine(name)` 改為查詢 `machineMap`（路徑不變，向後相容；供 editorStore 中文 machineType 繼續正常查找）
+  - **新增 `getMachineById(id: string)` 函式**，查詢 `machineByIdMap`
+  - `getAllMachines()` 改為回傳 `[...machineList]`（路徑不變，向後相容）
   - 移除所有中文常數的個別 export
+  - 更新檔案頭部 JSDoc，反映新 API（`machineList`、`machineMap`、`getMachineById`）
 
-#### 機器 id 對照表（待完整填入）
+#### 機器 id 對照表（41 台，已全部填入 ✅）
 
-| 中文名稱 | 建議 id | 分類 |
-|---------|--------|------|
+| 中文名稱 | id | 分類 |
+|---------|-----|------|
 | 塑型機 | `shaping_machine` | 基礎生產 |
 | 精煉爐 | `refinery` | 基礎生產 |
 | 粉碎機 | `crusher` | 基礎生產 |
@@ -94,9 +98,30 @@
 | 拆解機 | `disassembler` | 合成製造 |
 | 擴容反應池 | `large_reactor` | 合成製造 |
 | 物品准入口 | `item_access_port` | 物流設備 |
-| 物品輸出口 | `item_source` | 物流設備 |
-| 物品輸入口 | `item_sink` | 物流設備 |
-| （其餘待補充） | — | — |
+| 分流器 | `splitter` | 物流設備 |
+| 物流橋 | `logistics_bridge` | 物流設備 |
+| 匯流器 | `merger` | 物流設備 |
+| 管道准入口 | `pipe_access_port` | 物流設備 |
+| 管道分流器 | `pipe_splitter` | 物流設備 |
+| 管道橋 | `pipe_bridge` | 物流設備 |
+| 管道匯流器 | `pipe_merger` | 物流設備 |
+| 協議儲存箱 | `protocol_storage_box` | 倉庫存取 |
+| 倉庫存貨口 | `warehouse_input` | 倉庫存取 |
+| 倉庫取貨口 | `warehouse_output` | 倉庫存取 |
+| 儲液罐 | `liquid_tank` | 倉庫存取 |
+| 倉庫存取線基段 | `warehouse_line_base` | 倉庫存取 |
+| 倉庫存取線源樁 | `warehouse_line_source` | 倉庫存取 |
+| 暗管入口 | `conduit_inlet` | 倉庫存取 |
+| 暗管出口 | `conduit_outlet` | 倉庫存取 |
+| 多口暗管入口 | `multi_conduit_inlet` | 倉庫存取 |
+| 多口暗管出口 | `multi_conduit_outlet` | 倉庫存取 |
+| 供電樁 | `power_pole` | 電力 |
+| 息壤供電樁 | `xi_rang_power_pole` | 電力 |
+| 中繼器 | `relay` | 電力 |
+| 息壤中繼器 | `xi_rang_relay` | 電力 |
+| 熱能池 | `thermal_pool` | 電力 |
+| 物品輸出口 | `item_source` | FlowEngine 專用 |
+| 物品輸入口 | `item_sink` | FlowEngine 專用 |
 
 ---
 

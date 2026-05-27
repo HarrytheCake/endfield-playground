@@ -325,3 +325,5 @@ machine.ts 在工具函式移出後保留 re-export，確保舊路徑短期內�
 | 2026-05-27 | V4-D 全組完成後最終驗證：type-check ✅ 零錯誤；test --run ✅ 27/27 通過；lint-check ✅ 零警告 |
 | 2026-05-27 | 主編回復跨 CR 協調問題：問題 1 確認方案 B（machineType 改存 Machine.id）；問題 2 確認使用 snake_case。V4-B3 和 V4-C 解封 |
 | 2026-05-27 | V4-B3 完成：`Machine` interface 新增 `readonly id: string`；`machines.ts` 41 台機器全部補齊 id（snake_case）；type-check 零錯誤 |
+| 2026-05-27 | V4-C 預分析完成：確認唯一修改檔案為 `src/data/machines.ts`。中文具名 export 41 個全無外部消費者（grep 驗證）；`MACHINES` export 亦無外部引用；`useFlowEngine.ts` 與 `devices.ts` 只 import `getMachine` 函式，函式簽名不變故不需同步修改。`editorStore.ts`（CR-01）的 `machineType` 仍存中文 name，V4-C 後 `getMachine(name)` key 不變，查詢行為維持向後相容。 |
+| 2026-05-27 | V4-C 完成：`machines.ts` 41 台中文具名常數全數改為 `machineList: Machine[]` 陣列；`MACHINES` Map 改為 `machineMap: ReadonlyMap`；新增 `machineByIdMap`（私有）+ `getMachineById(id)` 函式；`getMachine/getAllMachines` 向後相容保留；格式化由 Prettier 修正縮排。type-check ✅ 零錯誤；test --run ✅ 27/27 通過；lint ✅ 零警告。commit a427f85 |
