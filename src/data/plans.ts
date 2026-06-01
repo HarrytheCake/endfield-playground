@@ -1,7 +1,4 @@
-import type { MaterialRate, MachineLimit, ProductValue, Plan } from '@/types/plan';
-
-// 向後相容：原本從 @/data/plans 直接 import type 的消費者不需修改
-export type { MaterialRate, MachineLimit, ProductValue, Plan };
+import type { Plan } from '@/types/plan';
 
 export const plans: Plan[] = [
     {

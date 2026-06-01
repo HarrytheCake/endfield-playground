@@ -302,7 +302,7 @@ function applyPlanRates(): void {
                 >
                     <div class="flex items-center gap-1.5">
                         <span
-                            class="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                            class="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
                             :class="item.type === 'raw' ? 'bg-zinc-500' : 'bg-blue-400'"
                         />
                         <span class="text-zinc-200">{{ item.name }}</span>
@@ -331,7 +331,7 @@ function applyPlanRates(): void {
                 >
                     <div class="flex items-center gap-1.5">
                         <span
-                            class="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                            class="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
                             :class="item.type === 'raw' ? 'bg-zinc-500' : 'bg-blue-400'"
                         />
                         <span class="text-zinc-200">{{ item.name }}</span>

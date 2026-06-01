@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import type { FactoryEdge, FactoryNode } from '@/types/graph';
 import type { EquipmentType, ToolMode } from '@/types/editor';
 import { plans } from '@/data/plans';
-import type { Plan } from '@/data/plans';
+import type { Plan } from '@/types/plan';
 
 const mockNodes: FactoryNode[] = [
     // ═══════════════════════════════════════════════════════════════════

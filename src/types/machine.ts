@@ -101,12 +101,3 @@ export interface Machine {
     onOutput: MachineOutputFn;
     calcEfficiency: MachineEfficiencyFn;
 }
-
-// ─── Port 旋轉工具函式（已遷移至 src/utils/portUtils.ts） ────────────────────
-//
-// 此處保留 re-export 維持向後相容。
-// 新程式碼請直接從 @/utils/portUtils 匯入。
-//
-// @deprecated 請改用 import { rotatePortSide, rotatePortOffset } from '@/utils/portUtils'
-
-export { rotatePortSide, rotatePortOffset } from '@/utils/portUtils';
