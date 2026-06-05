@@ -956,27 +956,55 @@ export const machineList: Machine[] = [
 
 // ─── 查詢 Map ───────────────────────────────────────────────────────────────────
 
-/** name（中文）→ Machine，供 editorStore 向後相容 */
+/**
+ * name（中文）→ Machine 快查 Map。  \
+ * 供 editorStore 向後相容（仍以中文名作為鍵）。
+ */
 export const machineMap: ReadonlyMap<string, Machine> = new Map(
     machineList.map((m) => [m.name, m]),
 );
 
-/** id（英文）→ Machine，FlowEngine 專用 */
+/** id（英文 snake_case）→ Machine 快查 Map，FlowEngine 與 detector 使用 */
 const machineByIdMap: ReadonlyMap<string, Machine> = new Map(machineList.map((m) => [m.id, m]));
 
 // ─── 查詢函式 ───────────────────────────────────────────────────────────────────
 
-/** 依名稱查詢機器定義（向後相容，editorStore 使用） */
+/**
+ * 依中文名稱查詢機器定義（向後相容，editorStore 使用）。
+ *
+ * @param name 機器中文名稱（對應 Machine.name）
+ * @returns Machine 物件，找不到時為 `undefined`
+ *
+ * @example
+ * const crusher = getMachine('粉碎機')
+ * if (crusher) console.log(crusher.power)
+ */
 export function getMachine(name: string): Machine | undefined {
     return machineMap.get(name);
 }
 
-/** 依 id 查詢機器定義（FlowEngine 使用） */
+/**
+ * 依英文 id 查詢機器定義（FlowEngine 使用）。
+ *
+ * @param id 機器英文 id（對應 Machine.id，snake_case）
+ * @returns Machine 物件，找不到時為 `undefined`
+ *
+ * @example
+ * const crusher = getMachineById('crusher')
+ */
 export function getMachineById(id: string): Machine | undefined {
     return machineByIdMap.get(id);
 }
 
-/** 取得所有機器定義列表 */
+/**
+ * 取得所有機器定義列表的副本（避免外部 mutate 影響 source）。
+ *
+ * @returns 機器陣列副本
+ *
+ * @example
+ * const all = getAllMachines()
+ * const sources = all.filter((m) => m.is_source)
+ */
 export function getAllMachines(): Machine[] {
     return [...machineList];
 }

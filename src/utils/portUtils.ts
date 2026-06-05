@@ -17,6 +17,11 @@ const SIDE_ORDER: PortSide[] = ['top', 'right', 'bottom', 'left'];
  *
  * @param side     原始方位（0° 時）
  * @param rotation 旋轉步數（0=0°, 1=90°CW, 2=180°, 3=270°CW）
+ * @returns 旋轉後的方位
+ *
+ * @example
+ * rotatePortSide('top', 1)    // → 'right'
+ * rotatePortSide('right', 2)  // → 'left'
  */
 export function rotatePortSide(side: PortSide, rotation: 0 | 1 | 2 | 3): PortSide {
     const idx = SIDE_ORDER.indexOf(side);
@@ -26,10 +31,10 @@ export function rotatePortSide(side: PortSide, rotation: 0 | 1 | 2 | 3): PortSid
 /**
  * 將 offset 按旋轉步數轉換（需搭配機器尺寸，確保非方形機器旋轉後格子正確）
  *
- * 轉換規則（每步 90°CW）：
- *   left  → top    : offset → (machineHeight - 1 - offset)  // 垂直翻轉
- *   top   → right  : offset → offset                         // 不變
- *   right → bottom : offset → (machineWidth  - 1 - offset)  // 水平翻轉
+ * 轉換規則（每步 90°CW）：  \
+ *   left  → top    : offset → (machineHeight - 1 - offset)  // 垂直翻轉  \
+ *   top   → right  : offset → offset                         // 不變  \
+ *   right → bottom : offset → (machineWidth  - 1 - offset)  // 水平翻轉  \
  *   bottom→ left   : offset → offset                         // 不變
  *
  * @param side          原始方位
@@ -37,6 +42,14 @@ export function rotatePortSide(side: PortSide, rotation: 0 | 1 | 2 | 3): PortSid
  * @param machineWidth  機器原始寬度（格）
  * @param machineHeight 機器原始高度（格）
  * @param rotation      旋轉步數（0~3）
+ * @returns 旋轉後該方位上的新 offset
+ *
+ * @example
+ * // 3×3 機器，top 邊 offset=2 的 port，順時針旋轉 1 次後 → right 邊 offset=2
+ * rotatePortOffset('top', 2, 3, 3, 1)  // → 2
+ *
+ * // 2×4 機器，left 邊 offset=0 的 port，順時針旋轉 1 次後 → top 邊 offset=3
+ * rotatePortOffset('left', 0, 2, 4, 1) // → 3
  */
 export function rotatePortOffset(
     side: PortSide,

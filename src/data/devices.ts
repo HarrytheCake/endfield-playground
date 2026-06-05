@@ -397,35 +397,68 @@ const _productMap = new Map<string, ProductDef>(productList.map((p) => [p.name, 
 
 /**
  * 取得所有使用指定設備的配方。
- * @param machineName 設備名稱
- * @returns RecipeDef[]（可能為空陣列）
+ *
+ * @param machineName 設備中文名稱（對應 Machine.name / RecipeDef.machine）
+ * @returns 該設備可用的配方陣列；找不到時為空陣列
+ *
+ * @example
+ * const recipes = getRecipesForMachine('粉碎機')
+ * // recipes[0].outputs[0].itemId === '源石粉末'
  */
 export function getRecipesForMachine(machineName: string): RecipeDef[] {
     return productList.flatMap((p) => p.recipes.filter((r) => r.machine === machineName));
 }
 
 /**
- * 依產品名稱取得所有配方。
- * @returns RecipeDef[]（可能為空陣列）
+ * 依產品名稱取得所有配方（多配方時依資料定義順序）。
+ *
+ * @param productName 產品中文名稱（對應 ProductDef.name）
+ * @returns 配方陣列；找不到時為空陣列
+ *
+ * @example
+ * const recipes = getRecipesByProduct('赫銅塊')
  */
 export function getRecipesByProduct(productName: string): RecipeDef[] {
     return _productMap.get(productName)?.recipes ?? [];
 }
 
 /**
- * 取得指定產品的單一配方（依 index）。
- * @returns RecipeDef 或 undefined
+ * 取得指定產品的單一配方（依 index，預設第 0 個）。
+ *
+ * @param productName 產品中文名稱
+ * @param index       配方索引；對應 FactoryNodeData.recipeIndex
+ * @returns 對應的 RecipeDef，找不到時為 `undefined`
+ *
+ * @example
+ * const recipe = getRecipe('源石粉末', 0)
  */
 export function getRecipe(productName: string, index = 0): RecipeDef | undefined {
     return _productMap.get(productName)?.recipes[index];
 }
 
-/** 取得所有 ProductDef */
+/**
+ * 取得所有 ProductDef（含所有產品與其下的全部配方）。
+ *
+ * @returns 全部產品定義陣列
+ *
+ * @example
+ * const products = getAllProducts()
+ * const totalRecipes = products.reduce((n, p) => n + p.recipes.length, 0)
+ */
 export function getAllProducts(): ProductDef[] {
     return productList;
 }
 
-/** 取得所有 RecipeDef（攤平） */
+/**
+ * 取得所有 RecipeDef（攤平所有產品下的配方）。  \
+ * 適合做全域配方搜尋 / 統計用途。
+ *
+ * @returns 全部配方攤平陣列
+ *
+ * @example
+ * const all = getAllRecipes()
+ * const crusherRecipes = all.filter((r) => r.machine === '粉碎機')
+ */
 export function getAllRecipes(): RecipeDef[] {
     return productList.flatMap((p) => p.recipes);
 }

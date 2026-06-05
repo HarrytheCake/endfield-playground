@@ -84,6 +84,11 @@ function calcDeviceRate(recipe: RecipeDef): {
  * @param recipeIndex   選用的配方索引
  * @param incomingItemIds  上游實際連入的品項名稱集合
  * @returns matched = true 代表配方合法
+ *
+ * @example
+ * // 粉碎機配方 0（源石粉末）需要「源礦」作為輸入
+ * validateRecipeMatch('粉碎機', 0, new Set(['源礦']))    // → true
+ * validateRecipeMatch('粉碎機', 0, new Set(['赤銅礦']))  // → false（品項不符）
  */
 export function validateRecipeMatch(
     machineType: string,
@@ -114,8 +119,13 @@ export function validateRecipeMatch(
  *   - 配方品項不符的節點       node.isValid = false，加入 graph.invalidSubgraphUids
  *   - 所有合法節點             node.isValid 維持 true
  *
- * 注意：此函式直接 mutate graph，不回傳新物件。
+ * 注意：此函式直接 mutate graph，不回傳新物件。  \
  * 呼叫前應先完成 buildGraph()，呼叫後再進行 topologicalSort() 與 propagateFlows()。
+ *
+ * @example
+ * const graph = buildGraph(nodes, edges, hasBlockingError)
+ * validateChains(graph)
+ * // graph.invalidSubgraphUids 已含所有不可達 sink 或配方不符的節點
  */
 export function validateChains(graph: FlowGraph): void {
     const { nodes, inEdges, edgeMeta } = graph;
@@ -326,8 +336,15 @@ export function buildGraph(
 /**
  * D3 — Kahn's Algorithm 拓撲排序。
  *
- * 若排序後節點數 < 圖中節點總數，表示存在環路：
+ * 若排序後節點數 < 圖中節點總數，表示存在環路：  \
  *   graph.hasCycle = true，環路節點加入 invalidSubgraphUids 並標記 isValid = false。
+ *
+ * @param graph 已建立的 FlowGraph（會被 mutate）
+ * @returns 依拓撲順序排列的節點 uid 陣列；存在環路時環路節點不會出現在結果中
+ *
+ * @example
+ * const sorted = topologicalSort(graph)
+ * if (graph.hasCycle) console.warn('偵測到環路')
  */
 export function topologicalSort(graph: FlowGraph): string[] {
     const { nodes, outEdges, inEdges, edgeMeta } = graph;
@@ -382,7 +399,16 @@ export function topologicalSort(graph: FlowGraph): string[] {
 /**
  * D6 — 依拓撲順序正向傳播，計算每條邊的流量與每台設備的效率。
  *
- * 出邊品項配對策略：優先比對下游配方所需 inputs，無法配對時取第一個有餘量的輸出品項。
+ * 出邊品項配對策略：優先比對下游配方所需 inputs，無法配對時取第一個有餘量的輸出品項。  \
+ * 同時 mutate `graph.nodes[*].efficiency` 與 `outputRates` 反映實際運轉狀態。
+ *
+ * @param sortedNodes 由 topologicalSort 產生的拓撲順序 uid 陣列
+ * @param graph       目前 FlowGraph
+ * @returns connectionUid → EdgeFlow 對映表
+ *
+ * @example
+ * const sorted = topologicalSort(graph)
+ * const edgeFlows = propagateFlows(sorted, graph)
  */
 export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<string, EdgeFlow> {
     const { nodes, outEdges, edgeMeta } = graph;
@@ -515,10 +541,18 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
 /**
  * D7 — 偵測堵塞並向上游反向更新效率。
  *
- * 若某條邊的 supply > downstream.inputRates（需求）：
- *   - isCongested = true，rate 截斷至 demand
- *   - 上游節點效率與 outputRates 按比例縮減
+ * 若某條邊的 supply > downstream.inputRates（需求）：  \
+ *   - isCongested = true，rate 截斷至 demand  \
+ *   - 上游節點效率與 outputRates 按比例縮減  \
  *   - 上游的 inputRates 同步縮減，影響更上游的剩餘資源計算
+ *
+ * @param graph     目前 FlowGraph（會被 mutate）
+ * @param edgeFlows propagateFlows 產生的邊流量表（會被 mutate）
+ *
+ * @example
+ * const edgeFlows = propagateFlows(sorted, graph)
+ * detectCongestion(graph, edgeFlows)
+ * // 受限邊在 edgeFlows 中已標記 isCongested = true
  */
 export function detectCongestion(graph: FlowGraph, edgeFlows: Map<string, EdgeFlow>): void {
     const { nodes, outEdges, inEdges, edgeMeta } = graph;
@@ -592,7 +626,15 @@ export function detectCongestion(graph: FlowGraph, edgeFlows: Map<string, EdgeFl
 // ─── D8：品項統計 ─────────────────────────────────────────────────────────────
 
 /**
- * D8 — 統計所有合法節點的品項生產 / 消耗 / 淨產量 / 效率。
+ * D8 — 統計所有合法節點的品項生產 / 消耗 / 淨產量 / 效率。  \
+ * 略過 `isValid = false` 的節點；多台生產同品項的設備效率取最小值。
+ *
+ * @param graph 已跑完 propagateFlows / detectCongestion 的 FlowGraph
+ * @returns 各品項統計陣列；依 net 由大到小排序
+ *
+ * @example
+ * const summary = calcItemSummary(graph)
+ * const surplus = summary.filter((s) => s.net > 0)
  */
 export function calcItemSummary(graph: FlowGraph): ItemSummary[] {
     const { nodes } = graph;
@@ -640,9 +682,17 @@ export function calcItemSummary(graph: FlowGraph): ItemSummary[] {
 /**
  * D9 — FlowEngine 主入口，串接 D2 → C1 → D3 → D6 → D7 → D8，寫入 useFlowStore。
  *
- * 電力統計：
- *   totalPowerDemand = Σ machineDef.power（power > 0 的有效設備）
+ * 電力統計：  \
+ *   totalPowerDemand = Σ machineDef.power（power > 0 的有效設備）  \
  *   totalPowerSupply = 0（供電設備尚待 CR-01 定義）
+ *
+ * 副作用：寫入 `useFlowStore`（applyResult / isCalculating flag）。  \
+ * 失敗時不 throw，僅 console.error 並重置 isCalculating。
+ *
+ * @example
+ * // 通常透過 useFlowEngine composable 自動觸發；
+ * // 在 dev 測試頁可手動呼叫：
+ * await runFlowEngine()
  */
 export async function runFlowEngine(): Promise<void> {
     const editorStore = useEditorStore();
