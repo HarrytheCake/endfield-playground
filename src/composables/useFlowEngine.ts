@@ -35,6 +35,7 @@ import { getRecipesForMachine } from '@/data/devices';
 import { getMachine } from '@/data/machines';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
+import { useValidationStore } from '@/store/validationStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
 import { watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
@@ -246,24 +247,27 @@ function _propagateInvalidDownstream(graph: FlowGraph): void {
 /**
  * D2 — 依 editorStore 的 nodes / edges 建立 FlowGraph。
  *
- * - 過濾 useValidationStore.hasBlockingError(uid) 為 true 的節點（CR-03 尚未定義時略過）
+ * - 過濾 hasBlockingError(uid) 為 true 的節點
  * - 過濾兩端節點不存在於圖中的 edge（孤立邊）
  * - 為每個節點初始化理論 inputRates / outputRates（由 D4 calcDeviceRate 計算）
+ *
+ * @param nodes editorStore 中的所有節點
+ * @param edges editorStore 中的所有邊
+ * @param hasBlockingError 判斷指定設備是否被 CR-03 標記為 blocking error；  \
+ *                         未傳入時所有節點都被視為合法（適合純單元測試）
+ * @returns 初始化完成的 FlowGraph（節點 isValid 預設為 true）
+ *
+ * @example
+ * const validationStore = useValidationStore()
+ * const graph = buildGraph(editorStore.nodes, editorStore.edges, (uid) =>
+ *   validationStore.hasBlockingError(uid),
+ * )
  */
-export function buildGraph(nodes: FactoryNode[], edges: FactoryEdge[]): FlowGraph {
-    // 嘗試取得 CR-03 ValidationStore（尚未定義時降級為永遠不封鎖）
-    let hasBlockingError: (uid: string) => boolean = () => false;
-    try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const vsModule = require('@/store/validationStore') as {
-            useValidationStore: () => { hasBlockingError: (uid: string) => boolean };
-        };
-        const vs = vsModule.useValidationStore();
-        hasBlockingError = (uid) => vs.hasBlockingError(uid);
-    } catch {
-        // CR-03 validationStore 尚未就緒，略過錯誤過濾
-    }
-
+export function buildGraph(
+    nodes: FactoryNode[],
+    edges: FactoryEdge[],
+    hasBlockingError: (uid: string) => boolean = () => false,
+): FlowGraph {
     const graph: FlowGraph = {
         nodes: new Map(),
         outEdges: new Map(),
@@ -643,11 +647,14 @@ export function calcItemSummary(graph: FlowGraph): ItemSummary[] {
 export async function runFlowEngine(): Promise<void> {
     const editorStore = useEditorStore();
     const flowStore = useFlowStore();
+    const validationStore = useValidationStore();
 
     flowStore.$patch({ isCalculating: true });
 
     try {
-        const graph = buildGraph(editorStore.nodes, editorStore.edges);
+        const graph = buildGraph(editorStore.nodes, editorStore.edges, (uid) =>
+            validationStore.hasBlockingError(uid),
+        );
         validateChains(graph);
         const sortedNodes = topologicalSort(graph);
         const edgeFlowsMap = propagateFlows(sortedNodes, graph);
@@ -703,21 +710,28 @@ export async function runFlowEngine(): Promise<void> {
 /**
  * useFlowEngine — Vue composable 入口。
  *
- * 在元件內呼叫一次即可啟動監聽（建議在 MainLayout.vue onMounted 或 setup 處呼叫）。
+ * 在元件內呼叫一次即可啟動監聽（建議在 MainLayout.vue 的 setup 處呼叫）。  \
+ * 為了讓 FlowEngine 能用到最新的 validation 結果，**請先呼叫 `useValidation()` 再呼叫本函式**。
  *
  * 監聽策略：
- *   - 監聽目標：`editorStore.nodes` 與 `editorStore.edges`（兩者均為 `shallowRef`）
- *   - `immediate: true`：處理就立即執行一次全量計算
- *   - `deep: true`：捕捉節點內部變動（配方更改、文字標簽變更等）
+ *   - 監聽目標：`editorStore.nodes` / `editorStore.edges` / `validationStore.alerts`
+ *   - `immediate: true`：setup 時立即執行一次全量計算
+ *   - `deep: true`：捕捉節點內部變動（配方更改、旋轉等）
  *   - `useDebounceFn(runFlowEngine, 150)`：150ms 防抄動，避免畫布快速操作時重複計算
+ *
+ * @example
+ * // MainLayout.vue
+ * useValidation()
+ * useFlowEngine()
  */
 export function useFlowEngine() {
     const editorStore = useEditorStore();
+    const validationStore = useValidationStore();
     const debouncedRun = useDebounceFn(runFlowEngine, 150);
 
     watch(
-        // 同時監聽 nodes 與 edges
-        [() => editorStore.nodes, () => editorStore.edges],
+        // 同時監聽 nodes / edges 與 validation 結果
+        [() => editorStore.nodes, () => editorStore.edges, () => validationStore.alerts],
         debouncedRun,
         { deep: true, immediate: true },
     );

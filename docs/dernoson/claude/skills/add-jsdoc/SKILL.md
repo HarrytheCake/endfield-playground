@@ -22,13 +22,43 @@ description: 為指定範圍的 TS / Vue 程式碼補上符合本專案規範的
 
 1. **繁體中文**為主，專有名詞 / API 名稱 / 型別名（`PlacedDevice`、`ref`、`computed`、`Map` 等）保持原樣
 2. **嚴禁表情符號**
-3. **單行也用 `/** */`**，不用 `//`
+3. **單行也用 `/** \*/`**，不用 `//`
 4. **描述意圖，不描述程式碼字面**
-   - 不行：「設定 state 為傳入的 value」
-   - 可以：「同步畫布縮放係數，避免 zoom 與 gridSize 出現中間狀態」
+    - 不行：「設定 state 為傳入的 value」
+    - 可以：「同步畫布縮放係數，避免 zoom 與 gridSize 出現中間狀態」
 5. **多行內容用 `  \` 換行**（兩個空白 + 反斜線），不要用 `<br>` 或多個 `\n` 段落
 6. **既有有意義的 JSDoc 保留**；空洞或錯誤的重寫
 7. 不在 JSDoc 之外加 `//` 解釋（除非是 inline 不便 JSDoc 的特殊技巧說明）
+8. JSDoc 與被註解目標必須相鄰，這樣 IDE 才能正確顯示 hover 提示。
+
+不行：
+
+```ts
+/**
+ * store 的註解（位置錯誤：在 import 之前）
+ */
+
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+
+export const useMyStore = defineStore('my', () => { ... });
+```
+
+正確：
+
+```ts
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+
+/**
+ * store 的註解（在 defineStore 宣告上方）
+ *
+ * @example
+ * const store = useMyStore()
+ * store.doSomething()
+ */
+export const useMyStore = defineStore('my', () => { ... });
+```
 
 ## 必須加 `@example` 的目標（本專案特別規定）
 
@@ -40,6 +70,7 @@ description: 為指定範圍的 TS / Vue 程式碼補上符合本專案規範的
 - Pinia **store** 的整個 `defineStore`
 
 `@example` 內容規則：
+
 - 顯示**怎麼用**，不顯示「內部如何運作」
 - 內部省略段用 `// ...`
 - 程式碼縮排與本身一致（4 空格）
@@ -72,10 +103,10 @@ description: 為指定範圍的 TS / Vue 程式碼補上符合本專案規範的
 ### Class
 
 - 類別頂部 JSDoc：
-  - 若 class 有 `abstract`、`final` 語意（TS 沒有 `final` 關鍵字，但概念上不該被繼承時）或全 `static` 成員的工具類，**在描述開頭以 `[abstract]` / `[final]` / `[static]` 標註**
-  - 例：「`[abstract]` 所有 detector 的基類，子類必須實作 `run()`」
+    - 若 class 有 `abstract`、`final` 語意（TS 沒有 `final` 關鍵字，但概念上不該被繼承時）或全 `static` 成員的工具類，**在描述開頭以 `[abstract]` / `[final]` / `[static]` 標註**
+    - 例：「`[abstract]` 所有 detector 的基類，子類必須實作 `run()`」
 - **每個屬性**：用 `[public]` / `[protected]` / `[private]` 標註可見性後接描述
-  - 例：「`[private]` 內部快取，避免每次重算拓撲」
+    - 例：「`[private]` 內部快取，避免每次重算拓撲」
 - **constructor**：用 `@param` 列出每個參數意義；構造邏輯特殊時加描述
 - **每個 method**：當作 function 寫（含 `@param` / `@returns` / `@example`）
 - 整個 class **頂部需 `@example`** 顯示典型用法
@@ -84,46 +115,13 @@ description: 為指定範圍的 TS / Vue 程式碼補上符合本專案規範的
 
 - 整個 type 頂部 JSDoc 描述用途
 - **`@example` 規則特別**：
-  - **泛型（generic）/ 工具型別**（如 `Result<T, E>`、`DeepPartial<T>`）→ **必加** `@example`，顯示一個具體實例化的用法
-  - **純資料 type / interface**（如 `PlacedDevice`、`Alert`）→ **不必加**，但若用法不直覺可加
+    - **泛型（generic）/ 工具型別**（如 `Result<T, E>`、`DeepPartial<T>`）→ **必加** `@example`，顯示一個具體實例化的用法
+    - **純資料 type / interface**（如 `PlacedDevice`、`Alert`）→ **不必加**，但若用法不直覺可加
 - **每個欄位 / 屬性**：個別 `/** */`
-  - 物件型 type 的每個 key 都要寫
-  - interface extends 父介面時，父介面的欄位**不重複寫**
+    - 物件型 type 的每個 key 都要寫
+    - interface extends 父介面時，父介面的欄位**不重複寫**
 
 ### Pinia Store（特殊規則）
-
-#### JSDoc 必須放在 `defineStore` 宣告本身上方
-
-**禁止**把 store JSDoc 放在檔頭（import 之前）。JSDoc 與被註解目標必須相鄰，這樣 IDE 才能正確顯示 hover 提示。
-
-不行：
-
-```ts
-/**
- * store 的註解（位置錯誤：在 import 之前）
- */
-
-import { ref } from 'vue';
-import { defineStore } from 'pinia';
-
-export const useMyStore = defineStore('my', () => { ... });
-```
-
-正確：
-
-```ts
-import { ref } from 'vue';
-import { defineStore } from 'pinia';
-
-/**
- * store 的註解（在 defineStore 宣告上方）
- *
- * @example
- * const store = useMyStore()
- * store.doSomething()
- */
-export const useMyStore = defineStore('my', () => { ... });
-```
 
 #### 內部結構個別加註
 
@@ -192,9 +190,9 @@ return {
 
 1. **讀指定範圍的源檔**，列出所有符合「必須註解的目標」
 2. 對每個目標：
-   - 已有 JSDoc 且內容具體 → 保留
-   - 已有 JSDoc 但空洞 / 錯誤 / 不符規範 → 重寫
-   - 沒有 JSDoc → 補上
+    - 已有 JSDoc 且內容具體 → 保留
+    - 已有 JSDoc 但空洞 / 錯誤 / 不符規範 → 重寫
+    - 沒有 JSDoc → 補上
 3. **store 額外步驟**：補完內部 + return 兩邊註解，並驗證同步
 4. 用 `Edit` 工具一段段改，不要用 `Write` 整檔覆寫（保護其他段落與格式）
 5. 完成後回報：補了哪些目標、改了哪些既有註解、有沒有發現邏輯上不確定要再向使用者確認的地方
