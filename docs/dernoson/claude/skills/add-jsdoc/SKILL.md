@@ -92,17 +92,80 @@ description: 為指定範圍的 TS / Vue 程式碼補上符合本專案規範的
 
 ### Pinia Store（特殊規則）
 
-整個 `defineStore` 一份 JSDoc，內含 `@example` 顯示元件如何取得與使用。
+#### JSDoc 必須放在 `defineStore` 宣告本身上方
 
-內部結構**個別加註**：
+**禁止**把 store JSDoc 放在檔頭（import 之前）。JSDoc 與被註解目標必須相鄰，這樣 IDE 才能正確顯示 hover 提示。
+
+不行：
+
+```ts
+/**
+ * store 的註解（位置錯誤：在 import 之前）
+ */
+
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+
+export const useMyStore = defineStore('my', () => { ... });
+```
+
+正確：
+
+```ts
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+
+/**
+ * store 的註解（在 defineStore 宣告上方）
+ *
+ * @example
+ * const store = useMyStore()
+ * store.doSomething()
+ */
+export const useMyStore = defineStore('my', () => { ... });
+```
+
+#### 內部結構個別加註
 
 - 每個 `ref` / `reactive` / `computed`：在宣告處上方加 JSDoc
 - 每個內部宣告的 function：當作 function 寫（`@param` / `@returns` / `@example` 視情況）
-- **`return { ... }` 中暴露的每個成員**：再寫一次 JSDoc，**內容必須與宣告處同步**
 
-> Store 的 return 同步是本專案硬性規定。修改宣告處註解時，必須同步修改 return 處；反之亦然。本 skill 在處理 store 時應主動檢查兩處是否一致，若已存在的兩邊不一致，以宣告處為準，警示給使用者。
+#### `return { ... }` 的每個成員必須有 JSDoc，且與宣告處**完全同步**
 
-藍圖類 action（會自動進歷史的）**在描述中明確指出**「呼叫一次自動產生一筆 Command 推入 historyStore」。
+return 物件中**禁止使用** `// state` / `// actions` 這類 section-header 註解取代正規 JSDoc。每個成員都必須用 `/** ... */` 註解，而且該註解的文字內容必須與該成員在宣告處的 JSDoc 一字不差。
+
+不行：
+
+```ts
+return {
+    // state（用 section header 偽裝註解，禁止）
+    state1,
+    state2,
+    // actions
+    func1,
+}
+```
+
+正確：
+
+```ts
+return {
+    /** state1 的註解（與宣告處完全相同） */
+    state1,
+    /** state2 的註解（與宣告處完全相同） */
+    state2,
+    /** func1 的註解（與宣告處完全相同；若宣告處是多行，這裡也照樣多行） */
+    func1,
+};
+```
+
+> Store 的 return 同步是本專案硬性規定。修改宣告處註解時，必須同步修改 return 處；反之亦然。本 skill 在處理 store 時應主動檢查兩處是否一致，若已存在的兩邊不一致，以宣告處為準，並警示給使用者。
+
+> 若宣告處的 JSDoc 含有 `@param` / `@returns` / `@example` 等 tag，return 處同樣要把這些 tag 完整複製過去 —— 不要為了「節省空間」只在 return 處留簡短摘要。
+
+#### 藍圖類 action 額外規則
+
+藍圖類 action（會自動進歷史的）在描述中明確指出「呼叫一次自動產生一筆 Command 推入 historyStore」。
 
 ### Vue SFC（`.vue` 內 `<script setup lang="ts">`）
 

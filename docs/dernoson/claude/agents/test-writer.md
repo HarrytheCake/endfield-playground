@@ -71,7 +71,7 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 |---|---|
 | `src/store/flowStore.ts` | `src/__tests__/store/flowStore.test.ts` |
 | `src/composables/useFlowEngine.ts` | `src/__tests__/composables/useFlowEngine.test.ts` |
-| `src/lib/graph/buildGraph.ts` | `src/__tests__/lib/graph/buildGraph.test.ts` |
+| `src/composables/useShortcuts.ts` | `src/__tests__/composables/useShortcuts.test.ts` |
 | `src/lib/validation/detectors/E001_xxx.ts` | `src/__tests__/lib/validation/detectors/E001_xxx.test.ts` |
 | `src/utils/portUtils.ts` | `src/__tests__/utils/portUtils.test.ts` |
 
