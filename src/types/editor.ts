@@ -29,15 +29,3 @@ export interface MapSettings {
     /** 是否啟用 snap-to-grid */
     snapToGrid: boolean;
 }
-
-/**
- * 快捷鍵動作定義
- */
-export interface ShortcutAction {
-    /** 動作唯一識別碼 */
-    id: string;
-    /** 人類可讀描述 */
-    description: string;
-    /** 觸發時執行的函式 */
-    run: () => void;
-}
