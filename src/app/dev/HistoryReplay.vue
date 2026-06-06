@@ -7,6 +7,131 @@
             </p>
         </div>
 
+        <!-- 使用說明 -->
+        <div
+            class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950"
+        >
+            <h3 class="mb-3 text-sm font-semibold text-blue-900 dark:text-blue-200">📖 使用說明</h3>
+            <div class="space-y-2 text-xs text-blue-800 dark:text-blue-300">
+                <p class="font-semibold">歷史系統架構（CR-08）：</p>
+                <ul class="ml-4 space-y-1">
+                    <li>• <strong>Command Pattern</strong>：每個操作都是可逆的指令物件</li>
+                    <li>
+                        • <strong>8 個高階 Actions</strong>：placeDevice, moveDevices,
+                        removeDevices, connectPorts, disconnectPorts, updateRecipe, rotateMachine,
+                        updateFacing
+                    </li>
+                    <li>• <strong>自動記錄</strong>：所有 editorStore 操作自動進入歷史堆疊</li>
+                    <li>• <strong>深度限制</strong>：最多保留 50 步，超過自動刪除最舊記錄</li>
+                </ul>
+
+                <p class="mt-3 font-semibold">測試流程：</p>
+                <ol class="ml-4 list-decimal space-y-1">
+                    <li>點擊「測試操作」區的按鈕執行操作（會自動記錄到 Undo Stack）</li>
+                    <li>觀察 Undo Stack 增加一筆記錄，Editor State 更新</li>
+                    <li>點擊「⏮️ Undo」還原操作（記錄移到 Redo Stack）</li>
+                    <li>點擊「⏭️ Redo」重做操作（記錄回到 Undo Stack）</li>
+                    <li>執行新操作會清空 Redo Stack（分支點規則）</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- 使用範例 -->
+        <div
+            class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950"
+        >
+            <h3 class="mb-3 text-sm font-semibold text-green-900 dark:text-green-200">
+                💡 使用範例
+            </h3>
+            <div class="grid grid-cols-3 gap-4">
+                <!-- 範例 1 -->
+                <div class="rounded-lg bg-white p-3 dark:bg-gray-800">
+                    <div class="mb-2 text-xs font-semibold text-green-700 dark:text-green-300">
+                        範例 1：基礎 Undo/Redo
+                    </div>
+                    <ol
+                        class="ml-4 list-decimal space-y-1 text-xs text-gray-700 dark:text-gray-300"
+                    >
+                        <li>點擊「➕ 擺放設備」3 次</li>
+                        <li>觀察 Undo Stack 有 3 筆記錄</li>
+                        <li>點擊「⏮️ Undo」2 次</li>
+                        <li>觀察設備數量從 3 → 1</li>
+                        <li>點擊「⏭️ Redo」1 次</li>
+                        <li>觀察設備數量從 1 → 2</li>
+                    </ol>
+                </div>
+
+                <!-- 範例 2 -->
+                <div class="rounded-lg bg-white p-3 dark:bg-gray-800">
+                    <div class="mb-2 text-xs font-semibold text-green-700 dark:text-green-300">
+                        範例 2：移動與還原
+                    </div>
+                    <ol
+                        class="ml-4 list-decimal space-y-1 text-xs text-gray-700 dark:text-gray-300"
+                    >
+                        <li>點擊「➕ 擺放設備」1 次</li>
+                        <li>記住設備的 X 座標</li>
+                        <li>點擊「↔️ 移動所有設備」</li>
+                        <li>觀察 X 座標 +50</li>
+                        <li>點擊「⏮️ Undo」</li>
+                        <li>觀察座標恢復原值</li>
+                    </ol>
+                </div>
+
+                <!-- 範例 3 -->
+                <div class="rounded-lg bg-white p-3 dark:bg-gray-800">
+                    <div class="mb-2 text-xs font-semibold text-green-700 dark:text-green-300">
+                        範例 3：分支點測試
+                    </div>
+                    <ol
+                        class="ml-4 list-decimal space-y-1 text-xs text-gray-700 dark:text-gray-300"
+                    >
+                        <li>點擊「➕ 擺放設備」2 次</li>
+                        <li>點擊「⏮️ Undo」1 次</li>
+                        <li>觀察 Redo Stack 有 1 筆</li>
+                        <li>點擊「➕ 擺放設備」</li>
+                        <li>觀察 Redo Stack 清空</li>
+                        <li>（新分支產生，舊未來被丟棄）</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速測試場景 -->
+        <div
+            class="mb-6 rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-900 dark:bg-purple-950"
+        >
+            <h3 class="mb-3 text-sm font-semibold text-purple-900 dark:text-purple-200">
+                🚀 快速測試場景
+            </h3>
+            <div class="flex space-x-2">
+                <button
+                    @click="runScenario1"
+                    class="rounded-md bg-purple-600 px-3 py-2 text-xs text-white hover:bg-purple-700"
+                >
+                    場景 1：連續擺放 5 台設備
+                </button>
+                <button
+                    @click="runScenario2"
+                    class="rounded-md bg-purple-600 px-3 py-2 text-xs text-white hover:bg-purple-700"
+                >
+                    場景 2：擺放 → 移動 → 刪除
+                </button>
+                <button
+                    @click="runScenario3"
+                    class="rounded-md bg-purple-600 px-3 py-2 text-xs text-white hover:bg-purple-700"
+                >
+                    場景 3：測試深度限制（51 步）
+                </button>
+            </div>
+            <div
+                v-if="scenarioMessage"
+                class="mt-3 rounded-md bg-white p-2 text-xs text-purple-700 dark:bg-gray-800 dark:text-purple-300"
+            >
+                {{ scenarioMessage }}
+            </div>
+        </div>
+
         <!-- 控制面板 -->
         <div
             class="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
@@ -36,6 +161,7 @@
                 </div>
                 <div class="text-sm text-gray-600 dark:text-gray-400">
                     Depth: <span class="font-mono font-semibold">{{ historyStore.undoDepth }}</span>
+                    / 50
                 </div>
             </div>
         </div>
@@ -192,11 +318,13 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useEditorStore } from '@/store/editorStore';
 import { useHistoryStore } from '@/store/historyStore';
 
 const editorStore = useEditorStore();
 const historyStore = useHistoryStore();
+const scenarioMessage = ref('');
 
 function undo() {
     historyStore.undo();
@@ -237,6 +365,49 @@ function testMoveDevices() {
 function testRemoveDevices() {
     const allUids = editorStore.nodes.map((n) => n.id);
     editorStore.removeDevices(allUids);
+}
+
+// 快速測試場景
+async function runScenario1() {
+    scenarioMessage.value = '執行中：連續擺放 5 台設備...';
+    for (let i = 0; i < 5; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        testPlaceDevice();
+    }
+    scenarioMessage.value = '✓ 完成！Undo Stack 應有 5 筆記錄，試試 Undo 看看';
+}
+
+async function runScenario2() {
+    scenarioMessage.value = '執行中：擺放 → 移動 → 刪除...';
+
+    // 擺放 3 台
+    for (let i = 0; i < 3; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        testPlaceDevice();
+    }
+    scenarioMessage.value = '擺放完成，移動中...';
+
+    // 移動
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    testMoveDevices();
+    scenarioMessage.value = '移動完成，刪除中...';
+
+    // 刪除
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    testRemoveDevices();
+    scenarioMessage.value = '✓ 完成！Undo Stack 應有 5 筆記錄（3×擺放 + 1×移動 + 1×刪除）';
+}
+
+async function runScenario3() {
+    scenarioMessage.value = '執行中：測試深度限制（51 步）...';
+    for (let i = 0; i < 51; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        testPlaceDevice();
+        if (i % 10 === 0) {
+            scenarioMessage.value = `執行中：${i + 1} / 51 步...`;
+        }
+    }
+    scenarioMessage.value = `✓ 完成！Undo Stack 應只保留最新 50 筆（深度限制生效），當前 Depth: ${historyStore.undoDepth}`;
 }
 </script>
 
