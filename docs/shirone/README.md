@@ -20,10 +20,40 @@ L1 Rule Contributor —— 負責 CR-03 各個 detector 純函式。  \
 
 ## 開工流程（每個 detector）
 
+### 0. 使用 geometryUtils 工具（V5 新增）
+
+aaaaa 已在 V5-B1 提供 `src/utils/geometryUtils.ts`，包含三個工具函式：
+
+```typescript
+import { getOccupiedCells, cellsOverlap, isWithinBaseRegion } from '@/utils/geometryUtils';
+
+// 計算設備佔據的所有格子（考慮旋轉）
+const cells = getOccupiedCells(device, def);
+// 回傳 Set<"x,y">，例如 Set { "5,10", "5,11", "6,10", "6,11" }
+
+// 檢查兩個格子集合是否有重疊
+const hasOverlap = cellsOverlap(cellsA, cellsB);
+
+// 檢查座標是否在基地範圍內（null 基地永遠回傳 true）
+const inBounds = isWithinBaseRegion(x, y, canvasStore.baseRegion);
+```
+
+**E001 已使用這些函式完成實作，可作為參考範例。** 見 `src/lib/validation/detectors/E001_deviceOverlap.ts`。
+
 ### 1. 從 E001 開始（最熟悉）
 
-打開 `src/lib/validation/detectors/E001_deviceOverlap.ts`，依檔頭 JSDoc 內的算法草稿補上 `run()` 內容。  \
-**算法重點都已內嵌**，包括格子掃描法、佔位計算範例、待確認細節。
+E001 已完成實作草稿，展示如何：
+- 使用 `getOccupiedCells` 取得設備佔據格子
+- 使用 `cellsOverlap` 檢查重疊
+- 處理無效 machineType 的邊界情況
+- 產生 Alert 物件
+
+測試檔案已建立於 `src/__tests__/lib/validation/detectors/E001_deviceOverlap.test.ts`，包含 H1~H8 測試案例。
+
+**你可以直接執行測試確認邏輯正確性**：
+```bash
+pnpm test E001
+```
 
 ### 2. 後續 detector
 
