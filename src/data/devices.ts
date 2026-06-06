@@ -32,6 +32,13 @@ const productList: ProductDef[] = [
                 machine: '物品輸出口',
                 timeSeconds: 2, // 30/min per belt
             },
+            {
+                id: 'item_source_yuan_ore_1',
+                inputs: [],
+                outputs: [{ itemId: '源礦', quantity: 1 }],
+                machine: '物品輸出口',
+                timeSeconds: 4, // 15/min (半速，用於瓶頸測試)
+            },
         ],
     },
     {

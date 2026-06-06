@@ -288,6 +288,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { runFlowEngine } from '@/composables/useFlowEngine';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
@@ -307,7 +308,11 @@ let originalEdges: FactoryEdge[] = [];
 
 const presets = [
     { id: 'h1', name: 'H1', description: '基礎單鏈路：Source → 粉碎機 → Sink（效率 100%）' },
-    { id: 'h2', name: 'H2', description: '瓶頸情境：上游供給不足（效率 50%）' },
+    {
+        id: 'h2',
+        name: 'H2',
+        description: '瓶頸測試：Source(15/min) → 粉碎機(需30/min) → Sink（效率 50%）',
+    },
     { id: 'h3', name: 'H3', description: '分流器均分：1→2 分流（各 50%）' },
     { id: 'h4', name: 'H4', description: '環路偵測：A → B → C → A' },
     { id: 'h5', name: 'H5', description: '懸空設備：無輸入輸出（效率 0%）' },
@@ -323,7 +328,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 0, y: 100 },
                 data: {
                     label: '物品輸出口',
-                    machineType: 'ore_source',
+                    machineType: '物品輸出口',
                     recipeIndex: 0,
                     rotation: 0,
                 },
@@ -332,7 +337,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 id: 'crusher',
                 type: 'default',
                 position: { x: 200, y: 100 },
-                data: { label: '粉碎機', machineType: 'crusher', recipeIndex: 0, rotation: 0 },
+                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
             },
             {
                 id: 'sink',
@@ -340,7 +345,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 400, y: 100 },
                 data: {
                     label: '物品輸入口',
-                    machineType: 'item_sink',
+                    machineType: '物品輸入口',
                     recipeIndex: 0,
                     rotation: 0,
                 },
@@ -372,7 +377,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 data: {
                     label: '物品輸出口',
                     machineType: '物品輸出口',
-                    recipeIndex: 0,
+                    recipeIndex: 1, // 使用半速配方 (15/min)
                     rotation: 0,
                 },
             },
@@ -382,12 +387,30 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 200, y: 100 },
                 data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
             },
+            {
+                id: 'sink',
+                type: 'default',
+                position: { x: 400, y: 100 },
+                data: {
+                    label: '物品輸入口',
+                    machineType: '物品輸入口',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
+            },
         ],
         edges: [
             {
                 id: 'e1',
                 source: 'miner',
                 target: 'crusher',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+            {
+                id: 'e2',
+                source: 'crusher',
+                target: 'sink',
                 sourceHandle: 'out-0',
                 targetHandle: 'in-0',
             },
@@ -574,8 +597,8 @@ async function runCalculation() {
         editorStore.nodes = data.nodes;
         editorStore.edges = data.edges;
 
-        // 等待 FlowEngine watch 觸發（debounce 150ms + 計算時間）
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        // 直接執行 FlowEngine，避免 /dev 路由未掛載 watcher 時無計算結果
+        await runFlowEngine();
 
         // 讀取計算結果
         result.value = {

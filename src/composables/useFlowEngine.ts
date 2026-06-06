@@ -449,6 +449,51 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
             for (const [itemId, rate] of received) node.inputRates.set(itemId, rate);
             node.efficiency = 1;
         } else {
+            // 檢查是否為分流器（無配方節點，需特殊處理）
+            const machineDef = getMachine(node.machineType);
+            const isSplitter =
+                machineDef && (machineDef.name === '分流器' || machineDef.name === '管道分流器');
+
+            if (isSplitter) {
+                // 分流器邏輯：輸入流量均分至所有輸出邊
+                const received = nodeInputReceived.get(uid) ?? new Map();
+                let totalInput = 0;
+                let inputItemId: string | undefined;
+
+                for (const [itemId, rate] of received) {
+                    totalInput += rate;
+                    inputItemId = itemId;
+                }
+
+                if (totalInput > 0 && inputItemId) {
+                    node.inputRates.set(inputItemId, totalInput);
+                    node.efficiency = 1;
+
+                    const outputCount = outEdgeUids.length;
+                    const ratePerOutput = outputCount > 0 ? totalInput / outputCount : 0;
+
+                    for (const connUid of outEdgeUids) {
+                        const meta = edgeMeta.get(connUid);
+                        if (!meta) continue;
+
+                        const rate = Math.min(ratePerOutput, BELT_RATE_LIMIT);
+                        edgeFlows.set(connUid, {
+                            connectionUid: connUid,
+                            itemId: inputItemId,
+                            rate,
+                            isCongested: false,
+                        });
+
+                        const downstream = nodeInputReceived.get(meta.targetDeviceUid);
+                        if (downstream)
+                            downstream.set(inputItemId, (downstream.get(inputItemId) ?? 0) + rate);
+                    }
+                } else {
+                    node.efficiency = 0;
+                }
+                continue;
+            }
+
             // 一般設備（D5 calcDeviceOutput）
             const received = nodeInputReceived.get(uid) ?? new Map();
             const recipe = getRecipeForNode(node.machineType, node.recipeIndex);
