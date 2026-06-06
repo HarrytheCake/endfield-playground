@@ -13,7 +13,8 @@
     "format": "prettier --write src/",
     "format-check": "prettier --check src/",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "validate-all": "concurrently -n type,lint,fmt,test -c blue,green,yellow,red \"pnpm type-check\" \"pnpm lint\" \"pnpm format\" \"pnpm test\""
   },
   "dependencies": {
     "@nuxt/ui": "^4.6.1",
@@ -35,6 +36,7 @@
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/tsconfig": "^0.9.1",
     "autoprefixer": "^10.5.0",
+    "concurrently": "^10.0.3",
     "eslint": "^10.2.1",
     "eslint-plugin-cypress": "^6.3.1",
     "eslint-plugin-vue": "^10.9.0",

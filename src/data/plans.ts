@@ -1,5 +1,14 @@
 import type { Plan } from '@/types/plan';
 
+/**
+ * 所有可選建造計畫資料（武陵 / 四號谷地 等）。  \
+ * 由 `editorStore.currentPlanId` 透過 `id` 引用對應計畫物件。  \
+ * 新增計畫時請保持 UUID 唯一，並補上完整的 material_rates / machine_limits / product_values。
+ *
+ * @example
+ * import { plans } from '@/data/plans'
+ * const wuling = plans.find((p) => p.name === '武陵')
+ */
 export const plans: Plan[] = [
     {
         id: '7dd94e87-a806-4035-9644-63eb99f76f75',

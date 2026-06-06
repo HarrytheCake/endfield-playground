@@ -27,3 +27,7 @@ dist-ssr
 # Nuxt UI
 auto-imports.d.ts
 components.d.ts
+
+
+# Claude Code: personal config symlinked to docs/dernoson/claude
+/.claude
