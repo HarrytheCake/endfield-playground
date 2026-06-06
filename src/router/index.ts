@@ -9,6 +9,40 @@ const router = createRouter({
             name: 'editor',
             component: MainLayout,
         },
+        // Dev-only routes (僅在開發環境可訪問)
+        {
+            path: '/dev',
+            component: () => import('@/app/dev/DevLayout.vue'),
+            beforeEnter: (_to, _from, next) => {
+                // 僅在開發環境允許訪問
+                if (import.meta.env.DEV) {
+                    next();
+                } else {
+                    next('/');
+                }
+            },
+            children: [
+                {
+                    path: '',
+                    redirect: '/dev/flow-engine',
+                },
+                {
+                    path: 'flow-engine',
+                    name: 'dev-flow-engine',
+                    component: () => import('@/app/dev/FlowEngineTest.vue'),
+                },
+                {
+                    path: 'graph-viz',
+                    name: 'dev-graph-viz',
+                    component: () => import('@/app/dev/GraphViz.vue'),
+                },
+                {
+                    path: 'history-replay',
+                    name: 'dev-history-replay',
+                    component: () => import('@/app/dev/HistoryReplay.vue'),
+                },
+            ],
+        },
         {
             path: '/:pathMatch(.*)*',
             redirect: '/',
