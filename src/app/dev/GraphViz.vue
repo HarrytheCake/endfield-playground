@@ -188,10 +188,10 @@ function analyzeGraph() {
         const nodes: FactoryNode[] = data.nodes;
         const edges: FactoryEdge[] = data.edges;
 
-        // 使用真實 FlowEngine 函數
+        // 使用真實 FlowEngine 函數（正確順序：先拓撲排序檢測環路，再驗證鏈路）
         const graph = buildGraph(nodes, edges);
-        validateChains(graph);
-        const topoOrder = topologicalSort(graph);
+        const topoOrder = topologicalSort(graph); // 先檢測環路
+        validateChains(graph); // 再驗證合法鏈路
 
         // 構建鄰接表
         const adjacencyList: Record<string, string[]> = {};

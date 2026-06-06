@@ -138,7 +138,14 @@ export function validateChains(graph: FlowGraph): void {
         if (node.isSink && node.isValid) {
             queue.push(uid);
             reachableSinks.add(uid);
+            if (import.meta.env.DEV) {
+                console.log(`[validateChains] 找到 Sink: ${uid}, machineType=${node.machineType}`);
+            }
         }
+    }
+
+    if (import.meta.env.DEV) {
+        console.log(`[validateChains] 共 ${queue.length} 個 Sink，開始反向 BFS`, Array.from(queue));
     }
 
     //  Step 2：反向 BFS，找出所有可以到達 sink 的節點
@@ -146,19 +153,42 @@ export function validateChains(graph: FlowGraph): void {
         const current = queue.shift()!;
         const incomingEdges = inEdges.get(current) ?? [];
 
+        if (import.meta.env.DEV && incomingEdges.length > 0) {
+            console.log(`[validateChains] 處理 ${current}, inEdges:`, incomingEdges);
+        }
+
         for (const connUid of incomingEdges) {
             const meta = edgeMeta.get(connUid);
-            if (!meta) continue;
+            if (!meta) {
+                if (import.meta.env.DEV) {
+                    console.log(`[validateChains] 邊 ${connUid} 無 meta，跳過`);
+                }
+                continue;
+            }
 
             const upstreamUid = meta.sourceDeviceUid;
             if (reachableSinks.has(upstreamUid)) continue; // 已訪問
 
             const upstreamNode = nodes.get(upstreamUid);
-            if (!upstreamNode || !upstreamNode.isValid) continue; // 已被 CR-03 或其他原因標記為非法
+            if (!upstreamNode || !upstreamNode.isValid) {
+                if (import.meta.env.DEV) {
+                    console.log(
+                        `[validateChains] 上游 ${upstreamUid} isValid=${upstreamNode?.isValid}，跳過`,
+                    );
+                }
+                continue; // 已被 CR-03 或其他原因標記為非法
+            }
 
+            if (import.meta.env.DEV) {
+                console.log(`[validateChains] 加入可達節點: ${upstreamUid}`);
+            }
             reachableSinks.add(upstreamUid);
             queue.push(upstreamUid);
         }
+    }
+
+    if (import.meta.env.DEV) {
+        console.log('[validateChains] 可達 Sink 的節點:', Array.from(reachableSinks));
     }
 
     //  Step 3：未被標記的節點加入 invalidSubgraphUids
@@ -174,6 +204,12 @@ export function validateChains(graph: FlowGraph): void {
         if (!node.isValid) continue; // 已非法，跳過
         if (node.isSource) continue; // source 節點不需要驗配方輸入
         if (node.isSink) continue; // sink 節點接受任意品項，不驗配方
+
+        // 檢查節點是否有配方（分流器、管道橋等無配方節點跳過驗證）
+        const recipe = getRecipeForNode(node.machineType, node.recipeIndex);
+        if (!recipe) {
+            continue; // 無配方的特殊節點（如分流器）不需要驗證
+        }
 
         // 蒐集上游所有邊傳入的品項（此時尚未計算速率，只看品項種類）
         const incomingEdgeUids = inEdges.get(uid) ?? [];
