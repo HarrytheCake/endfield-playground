@@ -316,7 +316,7 @@ const presets = [
     { id: 'h3', name: 'H3', description: '分流器均分：1→2 分流（各 50%）' },
     { id: 'h4', name: 'H4', description: '環路偵測：A → B → C → A' },
     { id: 'h5', name: 'H5', description: '懸空設備：無輸入輸出（效率 0%）' },
-    { id: 'h6', name: 'H6', description: '多級串聯：4 台設備串聯' },
+    { id: 'h6', name: 'H6', description: '多級串聯：藍鐵礦 → 粉碎 → 精煉 → 塑型 → 藍鐵瓶' },
 ];
 
 const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }> = {
@@ -529,7 +529,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 data: {
                     label: '物品輸出口',
                     machineType: '物品輸出口',
-                    recipeIndex: 0,
+                    recipeIndex: 2, // 藍鐵礦 30/min
                     rotation: 0,
                 },
             },
@@ -537,19 +537,19 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 id: 'c1',
                 type: 'default',
                 position: { x: 150, y: 100 },
-                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
+                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 1, rotation: 0 }, // 藍鐵粉末
             },
             {
                 id: 'c2',
                 type: 'default',
                 position: { x: 300, y: 100 },
-                data: { label: '精煉爐', machineType: '精煉爐', recipeIndex: 0, rotation: 0 },
+                data: { label: '精煉爐', machineType: '精煉爐', recipeIndex: 0, rotation: 0 }, // 藍鐵塊
             },
             {
                 id: 'c3',
                 type: 'default',
                 position: { x: 450, y: 100 },
-                data: { label: '配件機', machineType: '配件機', recipeIndex: 0, rotation: 0 },
+                data: { label: '塑型機', machineType: '塑型機', recipeIndex: 1, rotation: 0 }, // 藍鐵瓶
             },
             {
                 id: 'sink',
