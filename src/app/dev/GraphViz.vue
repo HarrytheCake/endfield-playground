@@ -3,8 +3,50 @@
         <div class="mb-6">
             <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">圖結構視覺化</h2>
             <p class="text-sm text-gray-600 dark:text-gray-400">
-                查看 buildGraph、topologicalSort 與環路偵測的結果
+                查看 buildGraph、topologicalSort 與 validateChains 的執行結果
             </p>
+        </div>
+
+        <!-- 使用說明 -->
+        <div
+            class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950"
+        >
+            <h3 class="mb-2 text-sm font-semibold text-blue-900 dark:text-blue-200">📖 使用說明</h3>
+            <ul class="space-y-1 text-xs text-blue-800 dark:text-blue-300">
+                <li>• 本頁面展示 FlowEngine 三大核心步驟的執行結果</li>
+                <li>• 鄰接表：顯示每個節點的下游連線</li>
+                <li>• 拓撲排序：使用 Kahn's Algorithm，偵測環路</li>
+                <li>• 合法鏈路：反向 BFS 找出無法到達 Sink 的節點</li>
+                <li>• 點擊預設按鈕載入測試情境，或貼上自訂 JSON</li>
+            </ul>
+        </div>
+
+        <!-- 預設情境按鈕 -->
+        <div class="mb-6">
+            <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                🎯 預設測試情境
+            </h3>
+            <div class="grid grid-cols-6 gap-2">
+                <button
+                    v-for="preset in presets"
+                    :key="preset.id"
+                    @click="loadPreset(preset.id)"
+                    :class="[
+                        'rounded-md px-3 py-2 text-xs font-medium transition-colors',
+                        selectedPreset === preset.id
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600',
+                    ]"
+                >
+                    {{ preset.name }}
+                </button>
+            </div>
+            <div
+                v-if="selectedPreset"
+                class="mt-2 rounded-md bg-gray-100 p-2 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+            >
+                {{ presets.find((p) => p.id === selectedPreset)?.description }}
+            </div>
         </div>
 
         <div class="grid grid-cols-2 gap-6">
@@ -175,6 +217,281 @@ const jsonInput = ref('');
 const graphData = ref<any>(null);
 const mermaidCode = ref('');
 const errorMessage = ref('');
+const selectedPreset = ref<string | null>(null);
+
+const presets = [
+    { id: 'h1', name: 'H1', description: '基礎單鏈路：Source → 粉碎機 → Sink（效率 100%）' },
+    {
+        id: 'h2',
+        name: 'H2',
+        description: '瓶頸測試：Source(15/min) → 粉碎機(需30/min) → Sink（效率 50%）',
+    },
+    { id: 'h3', name: 'H3', description: '分流器均分：1→2 分流（各 50%）' },
+    { id: 'h4', name: 'H4', description: '環路偵測：A → B → C → A' },
+    { id: 'h5', name: 'H5', description: '懸空設備：無輸入輸出（效率 0%）' },
+    { id: 'h6', name: 'H6', description: '多級串聯：藍鐵礦 → 粉碎 → 精煉 → 塑型 → 藍鐵瓶' },
+];
+
+const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }> = {
+    h1: {
+        nodes: [
+            {
+                id: 'src',
+                type: 'default',
+                position: { x: 0, y: 100 },
+                data: {
+                    label: '物品輸出口',
+                    machineType: '物品輸出口',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
+            },
+            {
+                id: 'crusher',
+                type: 'default',
+                position: { x: 200, y: 100 },
+                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
+            },
+            {
+                id: 'sink',
+                type: 'default',
+                position: { x: 400, y: 100 },
+                data: {
+                    label: '物品輸入口',
+                    machineType: '物品輸入口',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
+            },
+        ],
+        edges: [
+            {
+                id: 'e1',
+                source: 'src',
+                target: 'crusher',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+            {
+                id: 'e2',
+                source: 'crusher',
+                target: 'sink',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+        ],
+    },
+    h2: {
+        nodes: [
+            {
+                id: 'src',
+                type: 'default',
+                position: { x: 0, y: 100 },
+                data: {
+                    label: '物品輸出口',
+                    machineType: '物品輸出口',
+                    recipeIndex: 1,
+                    rotation: 0,
+                },
+            },
+            {
+                id: 'crusher',
+                type: 'default',
+                position: { x: 200, y: 100 },
+                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
+            },
+            {
+                id: 'sink',
+                type: 'default',
+                position: { x: 400, y: 100 },
+                data: {
+                    label: '物品輸入口',
+                    machineType: '物品輸入口',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
+            },
+        ],
+        edges: [
+            {
+                id: 'e1',
+                source: 'src',
+                target: 'crusher',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+            {
+                id: 'e2',
+                source: 'crusher',
+                target: 'sink',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+        ],
+    },
+    h3: {
+        nodes: [
+            {
+                id: 'src',
+                type: 'default',
+                position: { x: 0, y: 150 },
+                data: {
+                    label: '物品輸出口',
+                    machineType: '物品輸出口',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
+            },
+            {
+                id: 'splitter',
+                type: 'default',
+                position: { x: 200, y: 150 },
+                data: { label: '分流器', machineType: '分流器', recipeIndex: 0, rotation: 0 },
+            },
+            {
+                id: 'sink1',
+                type: 'default',
+                position: { x: 400, y: 100 },
+                data: {
+                    label: '物品輸入口1',
+                    machineType: '物品輸入口',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
+            },
+            {
+                id: 'sink2',
+                type: 'default',
+                position: { x: 400, y: 200 },
+                data: {
+                    label: '物品輸入口2',
+                    machineType: '物品輸入口',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
+            },
+        ],
+        edges: [
+            {
+                id: 'e1',
+                source: 'src',
+                target: 'splitter',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+            {
+                id: 'e2',
+                source: 'splitter',
+                target: 'sink1',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+            {
+                id: 'e3',
+                source: 'splitter',
+                target: 'sink2',
+                sourceHandle: 'out-1',
+                targetHandle: 'in-0',
+            },
+        ],
+    },
+    h4: {
+        nodes: [
+            {
+                id: 'a',
+                type: 'default',
+                position: { x: 0, y: 100 },
+                data: { label: '設備 A', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
+            },
+            {
+                id: 'b',
+                type: 'default',
+                position: { x: 200, y: 100 },
+                data: { label: '設備 B', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
+            },
+            {
+                id: 'c',
+                type: 'default',
+                position: { x: 400, y: 100 },
+                data: { label: '設備 C', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
+            },
+        ],
+        edges: [
+            { id: 'e1', source: 'a', target: 'b', sourceHandle: 'out-0', targetHandle: 'in-0' },
+            { id: 'e2', source: 'b', target: 'c', sourceHandle: 'out-0', targetHandle: 'in-0' },
+            { id: 'e3', source: 'c', target: 'a', sourceHandle: 'out-0', targetHandle: 'in-0' },
+        ],
+    },
+    h5: {
+        nodes: [
+            {
+                id: 'alone',
+                type: 'default',
+                position: { x: 200, y: 100 },
+                data: { label: '懸空設備', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
+            },
+        ],
+        edges: [],
+    },
+    h6: {
+        nodes: [
+            {
+                id: 'src',
+                type: 'default',
+                position: { x: 0, y: 100 },
+                data: {
+                    label: '物品輸出口',
+                    machineType: '物品輸出口',
+                    recipeIndex: 2,
+                    rotation: 0,
+                },
+            },
+            {
+                id: 'c1',
+                type: 'default',
+                position: { x: 150, y: 100 },
+                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 1, rotation: 0 },
+            },
+            {
+                id: 'c2',
+                type: 'default',
+                position: { x: 300, y: 100 },
+                data: { label: '精煉爐', machineType: '精煉爐', recipeIndex: 0, rotation: 0 },
+            },
+            {
+                id: 'c3',
+                type: 'default',
+                position: { x: 450, y: 100 },
+                data: { label: '塑型機', machineType: '塑型機', recipeIndex: 1, rotation: 0 },
+            },
+            {
+                id: 'sink',
+                type: 'default',
+                position: { x: 600, y: 100 },
+                data: {
+                    label: '物品輸入口',
+                    machineType: '物品輸入口',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
+            },
+        ],
+        edges: [
+            { id: 'e1', source: 'src', target: 'c1', sourceHandle: 'out-0', targetHandle: 'in-0' },
+            { id: 'e2', source: 'c1', target: 'c2', sourceHandle: 'out-0', targetHandle: 'in-0' },
+            { id: 'e3', source: 'c2', target: 'c3', sourceHandle: 'out-0', targetHandle: 'in-0' },
+            { id: 'e4', source: 'c3', target: 'sink', sourceHandle: 'out-0', targetHandle: 'in-0' },
+        ],
+    },
+};
+
+function loadPreset(id: string) {
+    selectedPreset.value = id;
+    jsonInput.value = JSON.stringify(presetData[id], null, 2);
+    errorMessage.value = '';
+    graphData.value = null;
+    mermaidCode.value = '';
+}
 
 function analyzeGraph() {
     try {
