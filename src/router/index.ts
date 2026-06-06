@@ -13,13 +13,9 @@ const router = createRouter({
         {
             path: '/dev',
             component: () => import('@/app/dev/DevLayout.vue'),
-            beforeEnter: (_to, _from, next) => {
+            beforeEnter: () => {
                 // 僅在開發環境允許訪問
-                if (import.meta.env.DEV) {
-                    next();
-                } else {
-                    next('/');
-                }
+                return import.meta.env.DEV ? true : '/';
             },
             children: [
                 {

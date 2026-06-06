@@ -371,7 +371,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 0, y: 100 },
                 data: {
                     label: '物品輸出口',
-                    machineType: 'item_source',
+                    machineType: '物品輸出口',
                     recipeIndex: 0,
                     rotation: 0,
                 },
@@ -380,7 +380,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 id: 'crusher',
                 type: 'default',
                 position: { x: 200, y: 100 },
-                data: { label: '粉碎機', machineType: 'crusher', recipeIndex: 0, rotation: 0 },
+                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
             },
         ],
         edges: [
@@ -401,7 +401,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 0, y: 100 },
                 data: {
                     label: '物品輸出口',
-                    machineType: 'item_source',
+                    machineType: '物品輸出口',
                     recipeIndex: 0,
                     rotation: 0,
                 },
@@ -410,7 +410,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 id: 'splitter',
                 type: 'default',
                 position: { x: 200, y: 100 },
-                data: { label: '分流器', machineType: 'splitter', recipeIndex: 0, rotation: 0 },
+                data: { label: '分流器', machineType: '分流器', recipeIndex: 0, rotation: 0 },
             },
             {
                 id: 'sink1',
@@ -418,7 +418,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 400, y: 50 },
                 data: {
                     label: '物品輸入口 1',
-                    machineType: 'item_sink',
+                    machineType: '物品輸入口',
                     recipeIndex: 0,
                     rotation: 0,
                 },
@@ -429,7 +429,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 400, y: 150 },
                 data: {
                     label: '物品輸入口 2',
-                    machineType: 'item_sink',
+                    machineType: '物品輸入口',
                     recipeIndex: 0,
                     rotation: 0,
                 },
@@ -465,19 +465,19 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 id: 'a',
                 type: 'default',
                 position: { x: 0, y: 100 },
-                data: { label: '設備 A', machineType: 'crusher', recipeIndex: 0, rotation: 0 },
+                data: { label: '設備 A', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
             },
             {
                 id: 'b',
                 type: 'default',
                 position: { x: 200, y: 100 },
-                data: { label: '設備 B', machineType: 'crusher', recipeIndex: 0, rotation: 0 },
+                data: { label: '設備 B', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
             },
             {
                 id: 'c',
                 type: 'default',
                 position: { x: 400, y: 100 },
-                data: { label: '設備 C', machineType: 'crusher', recipeIndex: 0, rotation: 0 },
+                data: { label: '設備 C', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
             },
         ],
         edges: [
@@ -492,7 +492,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 id: 'alone',
                 type: 'default',
                 position: { x: 200, y: 100 },
-                data: { label: '懸空設備', machineType: 'crusher', recipeIndex: 0, rotation: 0 },
+                data: { label: '懸空設備', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
             },
         ],
         edges: [],
@@ -505,7 +505,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 0, y: 100 },
                 data: {
                     label: '物品輸出口',
-                    machineType: 'item_source',
+                    machineType: '物品輸出口',
                     recipeIndex: 0,
                     rotation: 0,
                 },
@@ -514,19 +514,19 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 id: 'c1',
                 type: 'default',
                 position: { x: 150, y: 100 },
-                data: { label: '粉碎機', machineType: 'crusher', recipeIndex: 0, rotation: 0 },
+                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
             },
             {
                 id: 'c2',
                 type: 'default',
                 position: { x: 300, y: 100 },
-                data: { label: '熔爐', machineType: 'smelter', recipeIndex: 0, rotation: 0 },
+                data: { label: '精煉爐', machineType: '精煉爐', recipeIndex: 0, rotation: 0 },
             },
             {
                 id: 'c3',
                 type: 'default',
                 position: { x: 450, y: 100 },
-                data: { label: '組裝機', machineType: 'assembler', recipeIndex: 0, rotation: 0 },
+                data: { label: '配件機', machineType: '配件機', recipeIndex: 0, rotation: 0 },
             },
             {
                 id: 'sink',
@@ -534,7 +534,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 600, y: 100 },
                 data: {
                     label: '物品輸入口',
-                    machineType: 'item_sink',
+                    machineType: '物品輸入口',
                     recipeIndex: 0,
                     rotation: 0,
                 },
