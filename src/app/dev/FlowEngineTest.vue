@@ -369,7 +369,12 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 id: 'miner',
                 type: 'default',
                 position: { x: 0, y: 100 },
-                data: { label: '礦機', machineType: 'ore_source', recipeIndex: 0, rotation: 0 },
+                data: {
+                    label: '物品輸出口',
+                    machineType: 'item_source',
+                    recipeIndex: 0,
+                    rotation: 0,
+                },
             },
             {
                 id: 'crusher',
@@ -396,7 +401,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 0, y: 100 },
                 data: {
                     label: '物品輸出口',
-                    machineType: 'ore_source',
+                    machineType: 'item_source',
                     recipeIndex: 0,
                     rotation: 0,
                 },
@@ -500,7 +505,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
                 position: { x: 0, y: 100 },
                 data: {
                     label: '物品輸出口',
-                    machineType: 'ore_source',
+                    machineType: 'item_source',
                     recipeIndex: 0,
                     rotation: 0,
                 },
