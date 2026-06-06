@@ -19,8 +19,17 @@
                     <textarea
                         v-model="jsonInput"
                         class="h-96 w-full rounded-md border border-gray-300 bg-gray-50 p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-900"
-                        placeholder='{"devices": [...], "connections": [...]}'
+                        placeholder='{"nodes": [...], "edges": [...]}'
                     />
+
+                    <!-- 錯誤訊息 -->
+                    <div
+                        v-if="errorMessage"
+                        class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                    >
+                        ⚠️ {{ errorMessage }}
+                    </div>
+
                     <button
                         @click="analyzeGraph"
                         class="mt-3 w-full rounded-md bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-700"
@@ -159,60 +168,65 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { buildGraph, topologicalSort, validateChains } from '@/composables/useFlowEngine';
+import type { FactoryNode, FactoryEdge } from '@/types/graph';
 
 const jsonInput = ref('');
 const graphData = ref<any>(null);
 const mermaidCode = ref('');
+const errorMessage = ref('');
 
 function analyzeGraph() {
     try {
+        errorMessage.value = '';
         const data = JSON.parse(jsonInput.value);
-        const devices = data.devices || [];
-        const connections = data.connections || [];
 
-        // 模擬 buildGraph 結果（簡化版本）
+        if (!data.nodes || !data.edges) {
+            throw new Error('JSON 格式錯誤：需包含 nodes 和 edges 欄位');
+        }
+
+        const nodes: FactoryNode[] = data.nodes;
+        const edges: FactoryEdge[] = data.edges;
+
+        // 使用真實 FlowEngine 函數
+        const graph = buildGraph(nodes, edges);
+        validateChains(graph);
+        const topoOrder = topologicalSort(graph);
+
+        // 構建鄰接表
         const adjacencyList: Record<string, string[]> = {};
-        devices.forEach((d: any) => {
-            adjacencyList[d.uid] = [];
-        });
+        for (const [uid, outEdges] of graph.outEdges) {
+            adjacencyList[uid] = outEdges;
+        }
 
-        connections.forEach((c: any) => {
-            if (adjacencyList[c.source]) {
-                adjacencyList[c.source].push(c.target);
-            }
-        });
-
-        // 模擬 topologicalSort（簡化版本，實際應呼叫真實演算法）
-        const topoOrder = devices.map((d: any) => d.uid);
-        const hasCycle = false; // 簡化：實際需實作環路偵測
-
-        // 模擬 validateChains（簡化版本）
-        const invalidChainUids: string[] = [];
+        // 收集非合法節點
+        const invalidChainUids = Array.from(graph.invalidSubgraphUids);
 
         graphData.value = {
             adjacencyList,
             topoOrder,
-            hasCycle,
+            hasCycle: graph.hasCycle,
             invalidChainUids,
         };
 
         // 產生 Mermaid flowchart
-        generateMermaid(devices, connections);
-    } catch (error) {
+        generateMermaid(nodes, edges);
+    } catch (error: any) {
+        errorMessage.value = error?.message || '分析失敗';
         console.error('分析失敗：', error);
     }
 }
 
-function generateMermaid(devices: any[], connections: any[]) {
+function generateMermaid(nodes: FactoryNode[], edges: FactoryEdge[]) {
     let code = 'graph LR\n';
 
-    devices.forEach((d: any) => {
-        code += `  ${d.uid}["${d.machineType}"]\n`;
-    });
+    for (const node of nodes) {
+        code += `  ${node.id}["${node.data?.machineType || node.id}"]\n`;
+    }
 
-    connections.forEach((c: any) => {
-        code += `  ${c.source} --> ${c.target}\n`;
-    });
+    for (const edge of edges) {
+        code += `  ${edge.source} -->|${edge.id}| ${edge.target}\n`;
+    }
 
     mermaidCode.value = code;
 }
