@@ -1,7 +1,7 @@
 ## Version: 2026/06/08
 
 ## Target
-find all the objects that overlap each other
+Find all pairs of overlapping objects
 
 ---
 
@@ -75,7 +75,7 @@ n from 0 to N-1:
 ```
 
 For each dimension, chunks that object overlap with = $1+\frac{s}{C}$
-So, we have to execute $N(4 + (\frac{C+s}{C})^{dim})$
+So, we have to execute $N(2 dim + (\frac{C+s}{C})^{dim})$
 
 ### Step 2 — Check every pair in every chunk
 
@@ -97,5 +97,5 @@ Thus, each chunk has $N(\frac{C+s}{M})^{dim}$ objects
 and then requires to run $\frac{1}{2}(N(\frac{C+s}{M})^{dim})^{2}$ times `overlap()`
 
 Finally, we have to execute
-$$ N(4 + (\frac{C+s}{C})^{dim} + \frac{dim \cdot N}{2}(C+s)^{2dim}(C\cdot M)^{-dim}) $$
+$$ N(2dim + (\frac{C+s}{C})^{dim} + \frac{dim \cdot N}{2}(\frac{(C+s)^{2}}{C\cdot M})^{dim}) $$
 times
