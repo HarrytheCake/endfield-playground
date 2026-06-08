@@ -35,6 +35,7 @@ export function useValidation() {
     const editorStore = useEditorStore();
     const validationStore = useValidationStore();
     validationStore.registerDetector(E001_deviceOverlap);
+    console.log('[Validation] enabled detector E001_deviceOverlap');
 
     /**
      * 從目前的 editorStore 建立 ValidationContext。  \
@@ -50,7 +51,12 @@ export function useValidation() {
 
     /** 用當前藍圖狀態跑一次完整驗證；結果寫入 validationStore.alerts */
     function runValidation(): void {
+        console.log('[Validation] runValidation start', {
+            devices: editorStore.nodes.length,
+            connections: editorStore.edges.length,
+        });
         validationStore.run(buildContext());
+        console.log('[Validation] runValidation complete');
     }
 
     watch([() => editorStore.nodes, () => editorStore.edges], runValidation, {

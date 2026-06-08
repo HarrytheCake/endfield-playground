@@ -2,7 +2,7 @@ import type { Alert, Detector, ValidationContext } from '@/types/validation';
 import type { FactoryNode } from '@/types/graph';
 import type { Machine } from '@/types/machine';
 
-const GRID_CELL_SIZE = 40;
+const GRID_CELL_SIZE = 16;
 
 function gridCoordinate(value: number): number {
     return Math.round(value / GRID_CELL_SIZE);
@@ -72,14 +72,16 @@ export const E001_deviceOverlap: Detector = {
                     const firstLabel = firstNode?.data?.label ?? first;
                     const secondLabel = secondNode?.data?.label ?? second;
 
+                    const message = `設備重疊：${firstLabel} 與 ${secondLabel}`;
                     alerts.push({
                         uid: crypto.randomUUID(),
                         level: 'error',
                         code: 'E001',
-                        message: `設備重疊：${firstLabel} 與 ${secondLabel}`,
+                        message: message,
                         relatedDeviceUids: [first, second],
                         relatedConnectionUids: [],
                     });
+                    console.log('[E001]', message, { first, second });
                 }
             }
         }
