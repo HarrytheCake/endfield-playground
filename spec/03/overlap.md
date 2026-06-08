@@ -37,7 +37,7 @@ Execute $dim$ times per pair.
 | $s$ | avg object size (per axis) |
 | $C$ | chunk size (per axis) |
 
-In this case, $dim$ may be taken as $2$ since $z$-axis is small.
+In this case, $dim$ may be taken as $2$ since $z$-axis is relatively thin.
 
 ```
 class object 
@@ -94,8 +94,10 @@ for each chunk:
 
 We have $(\frac{M}{C})^{dim}$ chunks and "count" $N(\frac{C+s}{C})^{dim}$ times.
 Thus, each chunk has $N(\frac{C+s}{M})^{dim}$ objects 
-and then requires to run $\frac{1}{2}(N(\frac{C+s}{M})^{dim})^{2}$ times `overlap()`
+and then requires running $\frac{1}{2}(N(\frac{C+s}{M})^{dim})^{2}$ times `overlap()`
 
 Finally, we have to execute
 $$ N(2dim + (\frac{C+s}{C})^{dim} + \frac{dim \cdot N}{2}(\frac{(C+s)^{2}}{C\cdot M})^{dim}) $$
 times
+This function of $C$ attains extreme value when 
+$$(C+s)^{dim}(C-s) = \frac{2s \cdot M^{dim}}{dim \cdot N}$$
