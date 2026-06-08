@@ -97,7 +97,7 @@ Thus, each chunk has $N(\frac{C+s}{M})^{dim}$ objects
 and then requires running $\frac{1}{2}(N(\frac{C+s}{M})^{dim})^{2}$ times `overlap()`
 
 Finally, we have to execute
-$$ N(2dim + (\frac{C+s}{C})^{dim} + \frac{dim \cdot N}{2}(\frac{(C+s)^{2}}{C\cdot M})^{dim}) $$
+$$N(2dim + (\frac{C+s}{C})^{dim} + \frac{dim \cdot N}{2}(\frac{(C+s)^{2}}{C\cdot M})^{dim})$$
 times
 This function of $C$ attains extreme value when 
 $$(C+s)^{dim}(C-s) = \frac{2s \cdot M^{dim}}{dim \cdot N}$$

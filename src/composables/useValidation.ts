@@ -22,6 +22,7 @@ import { watch } from 'vue';
 import { useEditorStore } from '@/store/editorStore';
 import { useValidationStore } from '@/store/validationStore';
 import { getMachine } from '@/data/machines';
+import { E001_deviceOverlap } from '@/lib/validation/detectors/E001_deviceOverlap';
 import type { ValidationContext } from '@/types/validation';
 
 /**
@@ -33,6 +34,7 @@ import type { ValidationContext } from '@/types/validation';
 export function useValidation() {
     const editorStore = useEditorStore();
     const validationStore = useValidationStore();
+    validationStore.registerDetector(E001_deviceOverlap);
 
     /**
      * 從目前的 editorStore 建立 ValidationContext。  \
