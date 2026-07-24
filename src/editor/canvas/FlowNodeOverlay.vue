@@ -17,6 +17,9 @@ const efficiency = computed(() => nodeEfficiencies.value.get(props.id));
 /** 非合法鏈路 → 灰色虛線外框 */
 const isInvalid = computed(() => invalidChainUids.value.has(props.id));
 
+/** CR-01 旋轉畫面效果：rotation（0~3）換算成 CSS 旋轉角度 */
+const rotationDeg = computed(() => (props.data.rotation ?? 0) * 90);
+
 function efficiencyColorClass(eff: number): string {
     if (eff >= 1) return 'text-green-500';
     if (eff >= 0.5) return 'text-yellow-400';
@@ -29,6 +32,7 @@ function efficiencyColorClass(eff: number): string {
     <div
         class="relative min-w-[100px] rounded border bg-zinc-800 px-3 py-2 text-sm text-white"
         :class="isInvalid ? 'border-dashed border-gray-500 opacity-50' : 'border-zinc-600'"
+        :style="{ transform: `rotate(${rotationDeg}deg)` }"
     >
         <!-- target handle（左側） -->
         <Handle type="target" :position="Position.Left" />
