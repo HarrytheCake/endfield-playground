@@ -2,6 +2,7 @@
 
 關於專案使用的 tech stack 與資料夾架構，請參考根目錄 `README.md`。
 關於三層架構與每個人的職責分配，請參考 `docs/dernoson/` 下對應層級的文件（`L1/L1.md`、`L2/L2.md`、`L3/L3.md`）。
+關於專案的專有名詞與核心概念，請參考 `docs/dernoson/claude/CONTEXT.md`。
 
 ---
 
