@@ -292,14 +292,32 @@ import { runFlowEngine } from '@/composables/useFlowEngine';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
+import type { EdgeFlow, ItemSummary } from '@/types/flow';
+
+/** FlowEngineTest 頁面計算結果的顯示用結構，對應 flowStore 計算完成後讀出的欄位 */
+interface FlowEngineTestResult {
+    /** 管線流量：edge uid 對應的 EdgeFlow */
+    edgeFlows: [string, EdgeFlow][];
+    /** 設備效率：node uid 對應的效率值（0~1） */
+    nodeEfficiencies: [string, number][];
+    /** 品項產出/消耗統計 */
+    itemSummary: ItemSummary[];
+    /** 電力供需統計 */
+    powerBalance: {
+        /** 總電力需求（kW） */
+        demand: number;
+        /** 總電力供應（kW） */
+        supply: number;
+    };
+}
 
 const editorStore = useEditorStore();
 const flowStore = useFlowStore();
 
-const selectedPreset = ref<string | null>(null);
+const selectedPreset = ref<string>();
 const jsonInput = ref('');
 const isCalculating = ref(false);
-const result = ref<any>(null);
+const result = ref<FlowEngineTestResult>();
 const errorMessage = ref<string>('');
 
 // 保存原始畫布數據
@@ -616,8 +634,8 @@ async function runCalculation() {
         editorStore.edges = originalEdges;
 
         isCalculating.value = false;
-    } catch (error: any) {
-        errorMessage.value = error?.message || '計算失敗，請檢查 JSON 格式';
+    } catch (error) {
+        errorMessage.value = (error as Error)?.message || '計算失敗，請檢查 JSON 格式';
         console.error('計算失敗：', error);
 
         // 確保恢復原始數據

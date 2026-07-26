@@ -213,11 +213,23 @@ import { ref } from 'vue';
 import { buildGraph, topologicalSort, validateChains } from '@/composables/useFlowEngine';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
 
+/** GraphViz 頁面圖分析結果的顯示用結構，對應 buildGraph / topologicalSort / validateChains 的輸出 */
+interface GraphAnalysisResult {
+    /** 鄰接表：節點 uid 對應其下游節點 uid 列表 */
+    adjacencyList: Record<string, string[]>;
+    /** 拓撲排序後的節點 uid 順序 */
+    topoOrder: string[];
+    /** 是否偵測到環路 */
+    hasCycle: boolean;
+    /** 無法連接到任何 Sink 的節點 uid 列表 */
+    invalidChainUids: string[];
+}
+
 const jsonInput = ref('');
-const graphData = ref<any>(null);
+const graphData = ref<GraphAnalysisResult>();
 const mermaidCode = ref('');
 const errorMessage = ref('');
-const selectedPreset = ref<string | null>(null);
+const selectedPreset = ref<string>();
 
 const presets = [
     { id: 'h1', name: 'H1', description: '基礎單鏈路：Source → 粉碎機 → Sink（效率 100%）' },
@@ -489,7 +501,7 @@ function loadPreset(id: string) {
     selectedPreset.value = id;
     jsonInput.value = JSON.stringify(presetData[id], null, 2);
     errorMessage.value = '';
-    graphData.value = null;
+    graphData.value = undefined;
     mermaidCode.value = '';
 }
 
@@ -528,8 +540,8 @@ function analyzeGraph() {
 
         // 產生 Mermaid flowchart
         generateMermaid(nodes, edges);
-    } catch (error: any) {
-        errorMessage.value = error?.message || '分析失敗';
+    } catch (error) {
+        errorMessage.value = (error as Error)?.message || '分析失敗';
         console.error('分析失敗：', error);
     }
 }
