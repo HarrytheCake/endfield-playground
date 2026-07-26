@@ -1,11 +1,16 @@
 <template>
     <div class="stats-panel">
         <h2>右側統計面板你好貓毛貓 (StatsPanel)</h2>
-        <!-- 掛下面的檔案 -->
-        <PowerSummary />
-        <ItemSummaryTable />
-        <TicketEstimate />
-        <WarehouseEstimate />
+        <PowerSummary
+            :total-demand-kw="0"
+            :total-supply-kw="0"
+            :device-count="0"
+            :device-error-count="0"
+            :connection-count="0"
+        />
+        <ItemSummaryTable :rows="[]" />
+        <TicketEstimate :rows="[]" :total-ticket-per-hour="0" />
+        <WarehouseEstimate :capacity-cells="0" :rows="[]" />
     </div>
 </template>
 
