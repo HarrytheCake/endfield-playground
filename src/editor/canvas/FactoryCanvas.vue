@@ -32,8 +32,8 @@ const { nodes, edges, snapToGrid, activeTool, selectedEquipment, placementArmed 
     storeToRefs(editorStore);
 /** 解構 flowStore 的響應式參照，供流量標籤 overlay 讀取 */
 const { edgeFlows, congestedEdges } = storeToRefs(flowStore);
-/** Vue Flow 提供的座標轉換與節點操作 API；vfEdges 用於流量標籤 overlay 的定位計算 */
-const { screenToFlowCoordinate, addNodes, edges: vfEdges } = useVueFlow();
+/** Vue Flow 提供的座標轉換 API；vfEdges 用於流量標籤 overlay 的定位計算 */
+const { screenToFlowCoordinate, edges: vfEdges } = useVueFlow();
 
 /** 需要顯示流量標籤的管線（rate > 0 且已計算） */
 const labeledEdges = computed(() => vfEdges.value.filter((e) => edgeFlows.value.has(e.id)));
@@ -158,7 +158,8 @@ function buildFactoryNode(equipment: EquipmentType, clientX: number, clientY: nu
 }
 
 /**
- * 依指定螢幕座標，將設備節點放置到畫布上。
+ * 依指定螢幕座標，將設備節點放置到畫布上。  \
+ * 透過 editorStore.placeDevice() 放置，使其自動進入歷史堆疊（可 undo/redo）。
  * @param equipment 要放置的設備類型
  * @param clientX 螢幕座標 X
  * @param clientY 螢幕座標 Y
@@ -166,7 +167,7 @@ function buildFactoryNode(equipment: EquipmentType, clientX: number, clientY: nu
  * placeNodeAtPointer('crusher', 100, 200)
  */
 function placeNodeAtPointer(equipment: EquipmentType, clientX: number, clientY: number) {
-    addNodes([buildFactoryNode(equipment, clientX, clientY)]);
+    editorStore.placeDevice(buildFactoryNode(equipment, clientX, clientY));
 }
 
 /**
