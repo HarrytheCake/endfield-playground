@@ -1,5 +1,7 @@
 # 待指派任務：基地選擇 UI（`baseRegion`）設計、實作與對接
 
+**你是 toby，你要負責做內部邏輯對接**
+
 **狀態：** 待指派，尚未動工
 **類型：** 新功能（跨 L2 + L3，可能需要兩人協作或一人跨層）
 **相關 CR：** CR-01（畫布，spec `01_canvas_and_devices.md` §2.1 / §2.6）；為 CR-03 未來的 E003 detector 鋪路（spec `03_validation.md`）
@@ -19,15 +21,16 @@
 
 > **基地選擇（optional）：**
 > 使用者可選擇當前規劃的基地（武陵 / 四號谷地），選擇後：
+>
 > - 畫布疊加該基地實際格子尺寸的框線，作為擺放參考
 > - 允許在框線外擺放設備；超出框線的設備顯示 Error 警示（見 CR-03），不阻擋擺放
 > - 未選擇基地時，畫布無框線標示
 
 `spec/01_canvas_and_devices.md` §7 驗收標準也明列：
 
-| 驗收項目 | 內容 |
-|---|---|
-| 基地選擇顯示框線 | 選擇武陵 / 四號谷地，確認畫布疊加對應格子尺寸的框線 |
+| 驗收項目         | 內容                                                    |
+| ---------------- | ------------------------------------------------------- |
+| 基地選擇顯示框線 | 選擇武陵 / 四號谷地，確認畫布疊加對應格子尺寸的框線     |
 | 框線外擺放不阻擋 | 選擇基地後於框線外擺放設備，確認可放置且顯示 Error 警示 |
 
 對應的錯誤代碼是 `spec/03_validation.md` 的 **E003「超出基地框線」**：
@@ -72,7 +75,7 @@ function isDeviceWithinBaseRegion(device: FactoryNode, def: Machine, baseRegion:
 - 決定這個選擇器要放在哪裡（`InspectorPanel.vue`？`Navbar.vue`？工具列？—— 這是承接者要做的 UI/UX 決策，spec 沒有明講位置）
 - 選擇器 emit 事件時呼叫 `canvasStore.setBaseRegion()`
 - 依 `canvasStore.canvasSize`（`null` 時代表自由畫布不顯示框線）在畫布上疊加對應格子尺寸的框線視覺
-  - Vue Flow 疊加自訂圖層的方式需要調研（例如額外的 `<Background>` 變體、或自訂 SVG overlay 元件、或 `<Panel>`），這部分沒有現成範例可抄，需要花時間評估
+    - Vue Flow 疊加自訂圖層的方式需要調研（例如額外的 `<Background>` 變體、或自訂 SVG overlay 元件、或 `<Panel>`），這部分沒有現成範例可抄，需要花時間評估
 - 框線純粹是「擺放參考」，**不阻擋擺放**（放置到框線外要能成功放置，只是之後會顯示 Error，見下方 out of scope）
 
 ### 4.3 不在這個任務範圍內（out of scope，避免 scope creep）
