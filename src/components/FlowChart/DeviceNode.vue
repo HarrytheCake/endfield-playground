@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Handle, Position } from '@vue-flow/core'
+import { Handle, Position, type NodeProps } from '@vue-flow/core'
 import { getEfficiencyBg } from '@/utils/flowHelpers'
 
-const props = defineProps<{
-  data: { label: string; efficiency: number | null; iconUrl: string; recipeName: string | null }
-  selected?: boolean
-}>()
+const props = defineProps<NodeProps<{
+  label: string
+  efficiency: number | null
+  iconUrl: string
+  recipeName: string | null
+}>>()
 </script>
 
 <template>

@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { Handle, Position } from '@vue-flow/core'
-defineProps<{
-  data: { label: string; iconUrl: string; ratePerMin: number }
-  selected?: boolean
-}>()
+import { Handle, Position, type NodeProps } from '@vue-flow/core'
+const props = defineProps<NodeProps<{ label: string; iconUrl: string; ratePerMin: number }>>()
 </script>
 
 <template>
