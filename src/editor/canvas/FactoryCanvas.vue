@@ -26,12 +26,20 @@ const { screenToFlowCoordinate, addNodes, edges: vfEdges } = useVueFlow();
 /** 需要顯示流量標籤的管線（rate > 0 且已計算） */
 const labeledEdges = computed(() => vfEdges.value.filter((e) => edgeFlows.value.has(e.id)));
 
+/**
+ * 依管線是否堵塞，回傳流量標籤要套用的顏色 class。
+ * @param edgeId 管線 id
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = edgeLabelClass('edge-1')
+ */
 function edgeLabelClass(edgeId: string): string {
     return congestedEdges.value.has(edgeId)
         ? 'bg-orange-400/90 text-black'
         : 'bg-zinc-700/90 text-white';
 }
 
+/** 各設備類型對應的中文顯示名稱，供節點標籤與工具列共用 */
 const equipmentLabelMap: Record<EquipmentType, string> = {
     smelter: '精煉爐',
     crusher: '粉碎機',
@@ -39,12 +47,28 @@ const equipmentLabelMap: Record<EquipmentType, string> = {
     'conveyor-node': '輸送帶節點',
     'power-node': '電力節點',
 };
+/** 所有合法設備類型清單，由 equipmentLabelMap 的 key 推導，供 isEquipmentType 型別守衛使用 */
 const equipmentTypes = Object.keys(equipmentLabelMap) as EquipmentType[];
 
+/**
+ * VueFlow 選取範圍變化時，同步選取的節點 id 到 selectionStore。
+ * @param selection VueFlow 提供的選取變化事件內容
+ * @example
+ * handleSelectionChange({ nodes: [{ id: 'node-1' }] })
+ */
 function handleSelectionChange(selection: { nodes?: Array<{ id: string }> }) {
     selectionStore.setSelection((selection.nodes ?? []).map((node) => node.id));
 }
 
+/**
+ * 依螢幕座標與設備類型，組出一個可加入畫布的 FactoryNode。
+ * @param equipment 要放置的設備類型
+ * @param clientX 螢幕座標 X
+ * @param clientY 螢幕座標 Y
+ * @returns 可直接加入 VueFlow 的節點資料
+ * @example
+ * const node = buildFactoryNode('smelter', 100, 200)
+ */
 function buildFactoryNode(equipment: EquipmentType, clientX: number, clientY: number): FactoryNode {
     const position = screenToFlowCoordinate({ x: clientX, y: clientY });
 
@@ -59,14 +83,35 @@ function buildFactoryNode(equipment: EquipmentType, clientX: number, clientY: nu
     };
 }
 
+/**
+ * 依指定螢幕座標，將設備節點放置到畫布上。
+ * @param equipment 要放置的設備類型
+ * @param clientX 螢幕座標 X
+ * @param clientY 螢幕座標 Y
+ * @example
+ * placeNodeAtPointer('crusher', 100, 200)
+ */
 function placeNodeAtPointer(equipment: EquipmentType, clientX: number, clientY: number) {
     addNodes([buildFactoryNode(equipment, clientX, clientY)]);
 }
 
+/**
+ * 型別守衛：判斷字串是否為合法的 EquipmentType，用於過濾拖拉事件帶入的資料。
+ * @param value 待檢查的字串
+ * @returns 是否為合法設備類型
+ * @example
+ * if (isEquipmentType(raw)) { placeNodeAtPointer(raw, x, y) }
+ */
 function isEquipmentType(value: string): value is EquipmentType {
     return equipmentTypes.includes(value as EquipmentType);
 }
 
+/**
+ * 畫布點擊時，若已透過工具列武裝了放置模式，則在點擊處放置設備並解除武裝。
+ * @param event 滑鼠點擊事件
+ * @example
+ * handlePaneClick(mouseEvent)
+ */
 function handlePaneClick(event: MouseEvent) {
     if (!placementArmed.value || activeTool.value !== 'select') {
         return;
@@ -76,6 +121,12 @@ function handlePaneClick(event: MouseEvent) {
     editorStore.disarmPlacement();
 }
 
+/**
+ * 處理從工具列拖拉設備到畫布放開的事件，於放開處放置對應設備。
+ * @param event 拖放事件
+ * @example
+ * handleCanvasDrop(dragEvent)
+ */
 function handleCanvasDrop(event: DragEvent) {
     const droppedEquipment = event.dataTransfer?.getData('application/x-endfield-equipment') ?? '';
     if (!isEquipmentType(droppedEquipment)) {

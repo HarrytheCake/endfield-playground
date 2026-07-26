@@ -8,7 +8,9 @@ import InspectorSidebar from '@/editor/inspector/InspectorSidebar.vue';
 import { useFlowEngine } from '@/composables/useFlowEngine';
 import { useValidation } from '@/composables/useValidation';
 
+/** 左側專案選單目前是否展開，預設收合 */
 const sidebarOpen = ref(false);
+/** 右側 Inspector 面板目前是否展開，預設展開 */
 const inspectorOpen = ref(true);
 
 /**

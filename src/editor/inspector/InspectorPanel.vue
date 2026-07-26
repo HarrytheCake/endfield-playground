@@ -7,11 +7,13 @@ import ProductionStats from '@/editor/stats/ProductionStats.vue';
 const editorStore = useEditorStore();
 const { mapWidth, mapHeight, snapToGrid } = storeToRefs(editorStore);
 
+/** 工廠寬度輸入框的 model，寫入時同步呼叫 editorStore.setMapSize 更新地圖尺寸 */
 const mapWidthInput = computed({
     get: () => mapWidth.value,
     set: (value: number) => editorStore.setMapSize(Number(value), mapHeight.value),
 });
 
+/** 工廠高度輸入框的 model，寫入時同步呼叫 editorStore.setMapSize 更新地圖尺寸 */
 const mapHeightInput = computed({
     get: () => mapHeight.value,
     set: (value: number) => editorStore.setMapSize(mapWidth.value, Number(value)),

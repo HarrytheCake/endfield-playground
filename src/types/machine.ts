@@ -82,18 +82,26 @@ export interface Machine {
     // ── 靜態屬性 ──────────────────────────────────────────────────────────────
     /** 機器唯一識別碼，英文 snake_case，例如 `shaping_machine`、`crusher` */
     readonly id: string;
+    /** 機器顯示名稱 */
     readonly name: string;
+    /** 機器佔用格數（寬），0° 旋轉時的靜態尺寸 */
     readonly width: number;
+    /** 機器佔用格數（高），0° 旋轉時的靜態尺寸 */
     readonly height: number;
+    /** 輸入埠定義清單（0° 旋轉時的靜態座標） */
     readonly input_ports: readonly PortDef[];
+    /** 輸出埠定義清單（0° 旋轉時的靜態座標） */
     readonly output_ports: readonly PortDef[];
     /**
      * 耗電量（kW）。
      * 正值 = 耗電，0 = 無電力需求，負值 = 產電，-1 = 資料尚未定義
      */
     readonly power: number;
+    /** 機器分類標籤，供工具列 / 篩選使用 */
     readonly tags: readonly MachineCategory[];
+    /** 是否為地區資源輸出口（產線起點，不需輸入即可產出） */
     readonly is_source: boolean;
+    /** 是否為物品輸入口（產線終點，產值計算的 sink） */
     readonly is_sink: boolean;
     // ── 行為函式佔位（Phase 1 全為 null）─────────────────────────────────────
     onTick: MachineTickFn;

@@ -45,6 +45,11 @@ import { useDebounceFn } from '@vueuse/core';
 /**
  * 依設備類型與配方索引取得 RecipeDef。
  * 使用 getRecipesForMachine（依設備名）而非 getRecipe（依產品名）。
+ * @param machineType 設備類型名稱（對應 MachineDef.name）
+ * @param recipeIndex 選用的配方索引
+ * @returns 對應的配方定義，找不到時為 undefined
+ * @example
+ * const recipe = getRecipeForNode('粉碎機', 0)
  */
 function getRecipeForNode(machineType: string, recipeIndex: number): RecipeDef | undefined {
     return getRecipesForMachine(machineType)[recipeIndex];
@@ -53,6 +58,10 @@ function getRecipeForNode(machineType: string, recipeIndex: number): RecipeDef |
 /**
  * D4 — 計算單台設備的理論輸入 / 輸出速率（個/min）。
  * ratePerMin = quantity × (60 / timeSeconds)
+ * @param recipe 該設備目前選用的配方
+ * @returns 各輸入 / 輸出品項的理論速率（個/min）
+ * @example
+ * const { inputRates, outputRates } = calcDeviceRate(recipe)
  */
 function calcDeviceRate(recipe: RecipeDef): {
     inputRates: Map<string, number>;
@@ -256,6 +265,9 @@ export function validateChains(graph: FlowGraph): void {
 /**
  * 正向 BFS：將已標記為非法的節點，其所有下游節點也標記為非法。
  * 這確保配方不符節點不會「污染」下游計算。
+ * @param graph FlowEngine 有向圖，會直接修改其 invalidSubgraphUids
+ * @example
+ * _propagateInvalidDownstream(graph)
  */
 function _propagateInvalidDownstream(graph: FlowGraph): void {
     const { nodes, outEdges, edgeMeta } = graph;

@@ -17,6 +17,13 @@ const efficiency = computed(() => nodeEfficiencies.value.get(props.id));
 /** 非合法鏈路 → 灰色虛線外框 */
 const isInvalid = computed(() => invalidChainUids.value.has(props.id));
 
+/**
+ * 依節點效率高低回傳對應顏色 class。
+ * @param eff 效率（0~1 以上，>1 表示超額供給）
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = efficiencyColorClass(0.8)
+ */
 function efficiencyColorClass(eff: number): string {
     if (eff >= 1) return 'text-green-500';
     if (eff >= 0.5) return 'text-yellow-400';

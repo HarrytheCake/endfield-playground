@@ -40,6 +40,9 @@ export function useValidation() {
      * 從目前的 editorStore 建立 ValidationContext。  \
      * getDef 直接代理至 `getMachine`，提供 detector 取得設備靜態定義。
      * baseRegion 從 canvasStore 取得，用於 E002 / E006 等邊界檢查。
+     * @returns 供各 detector 讀取的驗證上下文
+     * @example
+     * const context = buildContext()
      */
     function buildContext(): ValidationContext {
         return {

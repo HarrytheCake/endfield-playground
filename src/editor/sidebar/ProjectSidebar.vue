@@ -2,11 +2,20 @@
 import type { NavigationMenuItem } from '@nuxt/ui';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
+/** 側邊欄目前是否展開，雙向綁定給父層控制 */
 const open = defineModel<boolean>('open', { required: true });
+/** 目前裝置是否支援「滑鼠 hover 展開」互動（大螢幕 + 有實體滑鼠才啟用，觸控裝置不啟用避免誤觸） */
 const canHoverExpand = ref(false);
 
+/** 偵測裝置是否支援 hover 的 media query，於 onMounted 建立、onBeforeUnmount 釋放 */
 let mediaQuery: MediaQueryList | null = null;
 
+/**
+ * 依目前 mediaQuery 是否匹配，同步 canHoverExpand 狀態。
+ * 供初次掛載與螢幕尺寸 / 輸入裝置變化時共用。
+ * @example
+ * updateHoverCapability()
+ */
 function updateHoverCapability() {
     if (!mediaQuery) {
         return;
@@ -15,6 +24,11 @@ function updateHoverCapability() {
     canHoverExpand.value = mediaQuery.matches;
 }
 
+/**
+ * 滑鼠移入側邊欄時，若裝置支援 hover 展開則自動展開選單。
+ * @example
+ * handleMouseEnter()
+ */
 function handleMouseEnter() {
     if (!canHoverExpand.value) {
         return;
@@ -23,6 +37,11 @@ function handleMouseEnter() {
     open.value = true;
 }
 
+/**
+ * 滑鼠移出側邊欄時，若裝置支援 hover 展開則自動收合選單。
+ * @example
+ * handleMouseLeave()
+ */
 function handleMouseLeave() {
     if (!canHoverExpand.value) {
         return;
@@ -31,12 +50,17 @@ function handleMouseLeave() {
     open.value = false;
 }
 
+/**
+ * 觸控裝置沒有穩定的 hover 狀態，需在掛載時才能取得 window 建立 media query，
+ * 藉此判斷當下裝置是否適合啟用「hover 展開」互動，並監聽裝置特性變化（如外接滑鼠）即時更新。
+ */
 onMounted(() => {
     mediaQuery = window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)');
     updateHoverCapability();
     mediaQuery.addEventListener('change', updateHoverCapability);
 });
 
+/** 元件卸載時移除 media query 監聽，避免記憶體洩漏 */
 onBeforeUnmount(() => {
     if (!mediaQuery) {
         return;
@@ -45,6 +69,7 @@ onBeforeUnmount(() => {
     mediaQuery.removeEventListener('change', updateHoverCapability);
 });
 
+/** 頂部「專案」選單的項目清單，各項目對應之後的新建／匯入／匯出流程 */
 const projectMenuItems: NavigationMenuItem[] = [
     {
         label: '新建專案',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import InspectorPanel from '@/editor/inspector/InspectorPanel.vue';
 
+/** 右側 Inspector 面板目前是否展開，雙向綁定給父層控制 */
 const open = defineModel<boolean>('open', { required: true });
 </script>
 

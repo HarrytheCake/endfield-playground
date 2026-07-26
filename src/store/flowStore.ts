@@ -1,14 +1,15 @@
-/**
- * CR-04 useFlowStore
- *
- * 儲存 FlowEngine 的所有計算結果。
- * 由 useFlowEngine composable 寫入，UI 元件唯讀。
- */
-
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { EdgeFlow, ItemSummary, FlowEngineResult } from '@/types/flow';
 
+/**
+ * CR-04 儲存 FlowEngine 的所有計算結果（管線流量、設備效率、電力統計等）。
+ * 由 useFlowEngine composable 寫入，UI 元件唯讀。
+ * @example
+ * const flowStore = useFlowStore()
+ * flowStore.applyResult(result)
+ * console.log(flowStore.hasResults)
+ */
 export const useFlowStore = defineStore('flow', () => {
     // ── 管線流量 ──────────────────────────────────────────────────────────────
     /** connectionUid → EdgeFlow（管線實際傳輸速率與堵塞狀態） */
@@ -126,6 +127,8 @@ export const useFlowStore = defineStore('flow', () => {
     /**
      * 清空所有計算結果，回到初始狀態。
      * 在 FlowEngine 重新計算前或畫布清空時調用。
+     * @example
+     * flowStore.reset()
      */
     function reset() {
         edgeFlows.value = new Map();
@@ -144,6 +147,10 @@ export const useFlowStore = defineStore('flow', () => {
     /**
      * 設定單一品項的調度券兌換率。
      * rate <= 0 時移除該品項設定（等同未設定）。
+     * @param itemId 品項 id
+     * @param rate 兌換率（券/hr per 個/min）
+     * @example
+     * flowStore.setTicketRate('iron_ingot', 2)
      */
     function setTicketRate(itemId: string, rate: number): void {
         if (rate > 0) {
@@ -155,6 +162,9 @@ export const useFlowStore = defineStore('flow', () => {
 
     /**
      * 設定倉庫容量（格數）。負數視同 0（未設定）。
+     * @param capacity 倉庫容量（格數）
+     * @example
+     * flowStore.setWarehouseCapacity(100)
      */
     function setWarehouseCapacity(capacity: number): void {
         warehouseCapacity.value = Math.max(0, capacity);
@@ -164,6 +174,9 @@ export const useFlowStore = defineStore('flow', () => {
      * 批次寫入 FlowEngine 計算結果。
      * 由 useFlowEngine.runFlowEngine() 在計算完成後一次性呼叫，
      * 避免多次個別賦值觸發多次 Vue 響應式更新。
+     * @param payload FlowEngine 的計算結果
+     * @example
+     * flowStore.applyResult(result)
      */
     function applyResult(payload: FlowEngineResult) {
         edgeFlows.value = payload.edgeFlows;
@@ -179,33 +192,96 @@ export const useFlowStore = defineStore('flow', () => {
     }
 
     return {
-        // state
+        /** connectionUid → EdgeFlow（管線實際傳輸速率與堵塞狀態） */
         edgeFlows,
+        /** deviceUid → 效率 0~1 */
         nodeEfficiencies,
+        /** 所有參與計算品項的 produced / consumed / net / efficiency */
         itemSummary,
+        /** itemId → 流入物品輸入口（sink）的速率（個/min），代表產線實際交付量 */
         sinkDeliveries,
+        /** 堵塞的 connectionUid 集合（isCongested = true 的邊） */
         congestedEdges,
+        /**
+         * 非合法鏈路 / 孤立節點的 deviceUid 集合。
+         * 這些節點不參與流量計算，畫布顯示灰色虛線。
+         */
         invalidChainUids,
+        /** 所有有效設備的總耗電量（kW）；power=-1 的設備暫計為 0 */
         totalPowerDemand,
+        /** 所有供電設備（isSource 且有 power_output）的總供電量（kW） */
         totalPowerSupply,
+        /** FlowEngine 計算中 flag，防止 UI 讀到中間狀態 */
         isCalculating,
+        /** 最後一次計算完成的 timestamp（ms），0 表示尚未計算過 */
         lastCalculatedAt,
+        /**
+         * 調度券兌換率，itemId → 券/hr per 個/min。
+         * 由使用者在統計面板手動設定；未設定的品項不顯示於調度券區塊。
+         * reset() 不清除此設定，保留跨計算的使用者偏好。
+         */
         ticketRates,
+        /**
+         * 倉庫容量（格數）。0 = 未設定，不顯示填滿預估。
+         * 由使用者在統計面板手動輸入；reset() 不清除。
+         */
         warehouseCapacity,
-        // computed
+        /** 電力盈餘（kW），正 = 盈餘，負 = 不足 */
         powerBalance,
+        /** 是否有電力不足 */
         hasPowerShortage,
+        /** 有效管線數量 */
         edgeFlowCount,
+        /** 堵塞管線數量 */
         congestedEdgeCount,
+        /** 非合法鏈路節點數量 */
         invalidChainCount,
+        /** 是否有任何計算結果（判斷畫布是否有合法鏈路） */
         hasResults,
+        /**
+         * 調度券元明細，itemId → 券/hr。
+         * 僅包含 net > 0 且已設定兌換率的品項。
+         */
         ticketOutput,
+        /** 調度券總產出（券/hr），所有 ticketOutput 元素加總 */
         ticketTotal,
+        /**
+         * 倉庫填滿預估，itemId → 小時。
+         * 僅包含 net > 0 的品項；warehouseCapacity <= 0 時回傳空 Map。
+         * fillTime(hr) = warehouseCapacity(格) / net(個/min) / 60
+         */
         warehouseEstimates,
-        // actions
+        /**
+         * 清空所有計算結果，回到初始狀態。
+         * 在 FlowEngine 重新計算前或畫布清空時調用。
+         * @example
+         * flowStore.reset()
+         */
         reset,
+        /**
+         * 批次寫入 FlowEngine 計算結果。
+         * 由 useFlowEngine.runFlowEngine() 在計算完成後一次性呼叫，
+         * 避免多次個別賦值觸發多次 Vue 響應式更新。
+         * @param payload FlowEngine 的計算結果
+         * @example
+         * flowStore.applyResult(result)
+         */
         applyResult,
+        /**
+         * 設定單一品項的調度券兌換率。
+         * rate <= 0 時移除該品項設定（等同未設定）。
+         * @param itemId 品項 id
+         * @param rate 兌換率（券/hr per 個/min）
+         * @example
+         * flowStore.setTicketRate('iron_ingot', 2)
+         */
         setTicketRate,
+        /**
+         * 設定倉庫容量（格數）。負數視同 0（未設定）。
+         * @param capacity 倉庫容量（格數）
+         * @example
+         * flowStore.setWarehouseCapacity(100)
+         */
         setWarehouseCapacity,
     };
 });

@@ -28,7 +28,12 @@ const {
 const { setTicketRate, setWarehouseCapacity } = flowStore;
 
 // ── V2-B：調度券 + 倉庫 local state ─────────────────────────────────────────
+/** 倉庫容量輸入框的顯示字串（與 store 的數值分離，避免使用者輸入過程被格式化打斷） */
 const capacityInput = ref('');
+/**
+ * store 的 warehouseCapacity 可能被其他來源（如載入計畫）改變，
+ * 需同步回輸入框顯示字串，否則輸入框會停留在舊值。
+ */
 watch(
     warehouseCapacity,
     (v) => {
@@ -37,26 +42,42 @@ watch(
     { immediate: true },
 );
 
+/**
+ * 倉庫容量輸入框失焦時，將輸入字串轉為數字寫回 store；非法輸入視為 0。
+ * @example
+ * onCapacityBlur()
+ */
 function onCapacityBlur(): void {
     const n = Number(capacityInput.value);
     setWarehouseCapacity(Number.isFinite(n) ? n : 0);
 }
 
+/** 有淨產出（net > 0）的品項清單，僅這些品項可設定調度券兌換率 */
 const ticketItems = computed(() => itemSummary.value.filter((s) => s.net > 0.001));
+/** 調度券預估區塊的明細是否展開 */
 const ticketDetailsOpen = ref(false);
 
 const { nodeCount, currentPlan, machineUsedCounts } = storeToRefs(editorStore);
 
 // G2：電力狀態文字
+/** 電力狀態顯示文字，依盈餘 / 不足呈現不同圖示與數值 */
 const powerStatusText = computed(() => {
     const abs = Math.abs(powerBalance.value).toFixed(1);
     return hasPowerShortage.value ? `⚠️ 不足 ${abs} kW` : `✅ 盈餘 ${abs} kW`;
 });
+/** 電力狀態文字顏色，不足為紅色、盈餘為綠色 */
 const powerStatusClass = computed(() =>
     hasPowerShortage.value ? 'text-red-400' : 'text-green-400',
 );
 
 // G3：淨產量顏色
+/**
+ * 依淨產量正負回傳顏色 class。
+ * @param net 淨產量
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = netClass(1.5)
+ */
 function netClass(net: number): string {
     if (net > 0.005) return 'text-green-400';
     if (net < -0.005) return 'text-red-400';
@@ -64,6 +85,13 @@ function netClass(net: number): string {
 }
 
 // G3：效率顏色
+/**
+ * 依效率高低回傳對應顏色 class。
+ * @param eff 效率（0~1 以上，>1 表示超額供給）
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = effClass(0.8)
+ */
 function effClass(eff: number): string {
     if (eff >= 1) return 'text-green-500';
     if (eff >= 0.5) return 'text-yellow-400';
