@@ -25,14 +25,14 @@ function getEfficiencyClass(efficiency: number) {
 </script>
 
 <template>
-    <div class="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
-        <h3 class="text-base font-bold text-gray-800">項目統計表格 (3.2 ItemSummaryTable)</h3>
+    <div class="space-y-3 rounded-lg border border-zinc-700 bg-zinc-950 p-4 text-white">
+        <h3 class="text-base font-bold text-white">項目統計表格 (3.2 ItemSummaryTable)</h3>
 
         <div class="overflow-x-auto">
             <table class="w-full border-collapse text-left">
                 <thead>
                     <tr
-                        class="border-b border-gray-200 text-xs tracking-wider text-gray-500 uppercase"
+                        class="border-b border-zinc-700 text-xs tracking-wider text-zinc-400 uppercase"
                     >
                         <th class="pb-2 font-medium">項目</th>
                         <th class="pb-2 text-right font-medium">生產 (/min)</th>
@@ -42,8 +42,8 @@ function getEfficiencyClass(efficiency: number) {
                     </tr>
                 </thead>
 
-                <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
-                    <tr v-for="row in rows" :key="row.itemId" class="hover:bg-gray-50">
+                <tbody class="divide-y divide-zinc-800 text-sm text-gray-200">
+                    <tr v-for="row in rows" :key="row.itemId" class="hover:bg-zinc-900">
                         <!-- 項目名稱與圖示 -->
                         <td class="flex items-center space-x-2 py-2.5">
                             <img :src="row.iconUrl" class="h-5 w-5 object-contain" alt="icon" />

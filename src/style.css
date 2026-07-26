@@ -42,17 +42,30 @@ body,
 
 .workspace-main {
     display: grid;
+    grid-template-columns: 1fr 320px;
     grid-template-rows: minmax(0, 1fr) 108px;
+    grid-template-areas:
+        "canvas stats"
+        "toolbar stats";
     flex: 1;
     min-height: 0;
     min-width: 0;
+    gap: 1rem;
 }
 
 .area-toolbar {
+    grid-area: toolbar;
     border-top: 1px solid #27272a;
 }
 
 .area-canvas {
+    grid-area: canvas;
+    min-height: 0;
+    min-width: 0;
+}
+
+.area-stats {
+    grid-area: stats;
     min-height: 0;
     min-width: 0;
 }
