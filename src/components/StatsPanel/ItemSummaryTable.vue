@@ -26,7 +26,7 @@ function getEfficiencyClass(efficiency: number) {
 
 <template>
     <div class="space-y-3 rounded-lg border border-zinc-700 bg-zinc-950 p-4 text-white">
-        <h3 class="text-base font-bold text-white">項目統計表格 (3.2 ItemSummaryTable)</h3>
+        <h3 class="text-base font-bold text-white">項目統計表格 ItemSummaryTable</h3>
 
         <div class="overflow-x-auto">
             <table class="w-full border-collapse text-left">

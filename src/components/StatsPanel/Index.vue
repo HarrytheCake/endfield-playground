@@ -1,6 +1,6 @@
 <template>
     <div class="stats-panel pt-4">
-        <h2 class="mb-4 text-lg font-semibold text-white">右側統計面板 (StatsPanel)</h2>
+        <h2 class="mb-4 text-lg font-semibold text-white">統計面板 </h2>
         <PowerSummary
             :total-demand-kw="0"
             :total-supply-kw="0"

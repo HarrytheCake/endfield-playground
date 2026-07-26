@@ -17,7 +17,7 @@ defineProps<Props>();
 <template>
     <div class="space-y-3 rounded-lg border border-zinc-700 bg-zinc-950 p-4 text-white">
         <div class="flex items-center justify-between">
-            <h3 class="text-base font-bold text-white">3.3 工單預估 (TicketEstimate)</h3>
+            <h3 class="text-base font-bold text-white">工單預估 TicketEstimate</h3>
            
         </div>
 
