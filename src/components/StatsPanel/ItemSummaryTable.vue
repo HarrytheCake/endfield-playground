@@ -16,14 +16,11 @@ interface Props {
 
 defineProps<Props>()
 
+import { getEfficiencyBg } from '@/utils/flowHelpers'
+
 // 2. 動態轉換效率顏色
 function getEfficiencyClass(efficiency: number) {
-  const percent = efficiency * 100 //
-  
-  if (percent === 100) return 'bg-green-500'               // 100%
-  if (percent >= 75 && percent <= 99) return 'bg-yellow-500' // 75~99%
-  if (percent >= 1 && percent <= 74) return 'bg-orange-500'  // 1~74%
-  return 'bg-neutral-400'                                  // 0% / N/A
+  return getEfficiencyBg(efficiency)
 }
 </script>
 
