@@ -3,8 +3,16 @@ import { E001_deviceOverlap } from '@/lib/validation/detectors/E001_deviceOverla
 import { getMachine } from '@/data/machines';
 import type { ValidationContext } from '@/types/validation';
 import type { FactoryNode } from '@/types/graph';
+import type { Rotation } from '@/types/editor';
 
-function makeNode(id: string, x: number, y: number, machineType: string, label?: string, rotation?: number): FactoryNode {
+function makeNode(
+    id: string,
+    x: number,
+    y: number,
+    machineType: string,
+    label?: string,
+    rotation?: Rotation,
+): FactoryNode {
     return {
         id,
         type: 'default',

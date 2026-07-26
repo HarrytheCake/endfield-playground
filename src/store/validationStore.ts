@@ -86,10 +86,9 @@ export const useValidationStore = defineStore('validation', () => {
             try {
                 const results = detector.run(ctx);
                 collected.push(...results);
-                console.log(
-                    `[ValidationStore] detector ${detector.code} complete`,
-                    { resultCount: results.length },
-                );
+                console.log(`[ValidationStore] detector ${detector.code} complete`, {
+                    resultCount: results.length,
+                });
             } catch (err) {
                 console.error(`[Detector ${detector.code}] 偵測失敗:`, err);
             } finally {
