@@ -72,8 +72,10 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 
+/** 目前路由，供左側導覽列判斷哪個測試頁面處於選取狀態 */
 const route = useRoute();
 
+/** 左側導覽列可切換的 dev 測試頁面清單 */
 const devPages = [
     {
         path: '/dev/flow-engine',

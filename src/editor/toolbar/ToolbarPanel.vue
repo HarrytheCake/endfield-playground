@@ -2,6 +2,7 @@
 import type { EquipmentType } from '@/types/editor';
 import { useEditorStore } from '@/store/editorStore';
 
+/** 藍圖 store：武裝放置模式與記錄目前選取設備類型 */
 const editorStore = useEditorStore();
 
 /** 工具列可選擇的設備清單，供點擊武裝放置與拖拉放置共用 */

@@ -21,12 +21,18 @@ const nodeTypes = { default: FlowNodeOverlay };
 /** 自訂邊型別：pipeline 依 bendPoints 畫出直角折線管線（CR-02 §2.3） */
 const edgeTypes = { pipeline: PipelineEdge };
 
+/** 藍圖 store：畫布上的節點 / 邊與工具狀態的唯一資料來源 */
 const editorStore = useEditorStore();
+/** 選取狀態 store：框選 / 點選的節點 uid 清單 */
 const selectionStore = useSelectionStore();
+/** FlowEngine 計算結果 store：管線流量與堵塞狀態 */
 const flowStore = useFlowStore();
+/** 解構 editorStore 的響應式參照，供 template 與 watch 直接使用 */
 const { nodes, edges, snapToGrid, activeTool, selectedEquipment, placementArmed } =
     storeToRefs(editorStore);
+/** 解構 flowStore 的響應式參照，供流量標籤 overlay 讀取 */
 const { edgeFlows, congestedEdges } = storeToRefs(flowStore);
+/** Vue Flow 提供的座標轉換與節點操作 API；vfEdges 用於流量標籤 overlay 的定位計算 */
 const { screenToFlowCoordinate, addNodes, edges: vfEdges } = useVueFlow();
 
 /** 需要顯示流量標籤的管線（rate > 0 且已計算） */
@@ -67,6 +73,7 @@ function handleSelectionChange(selection: { nodes?: Array<{ id: string }> }) {
     selectionStore.setSelection((selection.nodes ?? []).map((node) => node.id));
 }
 
+/** snap-to-grid 啟用時，座標吸附的格子邊長（像素），需與 VueFlow 的 snap-grid 設定一致 */
 const GRID_SIZE = 20;
 
 /** CR-01 拿起預覽中的旋轉狀態，僅存在於 placementArmed 期間，放置後隨即由 disarm 重置 */

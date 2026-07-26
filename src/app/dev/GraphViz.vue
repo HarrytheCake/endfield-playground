@@ -225,12 +225,18 @@ interface GraphAnalysisResult {
     invalidChainUids: string[];
 }
 
+/** JSON 輸入區的文字內容，執行分析時會被解析為 nodes / edges */
 const jsonInput = ref('');
+/** 最近一次圖分析的結果，null 代表尚未分析過 */
 const graphData = ref<GraphAnalysisResult | null>(null);
+/** 依目前 nodes / edges 產生的 Mermaid flowchart 原始碼，供複製使用 */
 const mermaidCode = ref('');
+/** JSON 解析或分析失敗時的錯誤訊息 */
 const errorMessage = ref('');
+/** 目前選取的 preset id，null 代表尚未選擇或使用自訂 JSON */
 const selectedPreset = ref<string | null>(null);
 
+/** 可一鍵載入的測試情境清單，對應 presetData 中的資料 */
 const presets = [
     { id: 'h1', name: 'H1', description: '基礎單鏈路：Source → 粉碎機 → Sink（效率 100%）' },
     {
@@ -244,6 +250,7 @@ const presets = [
     { id: 'h6', name: 'H6', description: '多級串聯：藍鐵礦 → 粉碎 → 精煉 → 塑型 → 藍鐵瓶' },
 ];
 
+/** 各 preset id 對應的完整 nodes / edges 測試資料，供 loadPreset 寫入 JSON 輸入區 */
 const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }> = {
     h1: {
         nodes: [
@@ -497,6 +504,12 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
 };
 
+/**
+ * 將指定 preset 的 nodes / edges 資料序列化寫入 JSON 輸入區，並清空前次分析結果。
+ * @param id preset 識別碼，對應 presetData 的 key
+ * @example
+ * loadPreset('h4')
+ */
 function loadPreset(id: string) {
     selectedPreset.value = id;
     jsonInput.value = JSON.stringify(presetData[id], null, 2);
@@ -505,6 +518,12 @@ function loadPreset(id: string) {
     mermaidCode.value = '';
 }
 
+/**
+ * 解析 JSON 輸入區內容，依序呼叫 buildGraph / topologicalSort / validateChains，
+ * 將鄰接表、拓撲排序結果與非合法節點整理為 graphData 供右側面板顯示，並產生對應的 Mermaid 圖。
+ * @example
+ * analyzeGraph()
+ */
 function analyzeGraph() {
     try {
         errorMessage.value = '';
@@ -546,6 +565,13 @@ function analyzeGraph() {
     }
 }
 
+/**
+ * 依 nodes / edges 產生一份 LR 方向的 Mermaid flowchart 原始碼，寫入 mermaidCode。
+ * @param nodes 圖中所有節點
+ * @param edges 圖中所有邊
+ * @example
+ * generateMermaid(nodes, edges)
+ */
 function generateMermaid(nodes: FactoryNode[], edges: FactoryEdge[]) {
     let code = 'graph LR\n';
 
@@ -560,6 +586,11 @@ function generateMermaid(nodes: FactoryNode[], edges: FactoryEdge[]) {
     mermaidCode.value = code;
 }
 
+/**
+ * 將目前產生的 Mermaid 原始碼複製到剪貼簿，方便貼到外部工具檢視流程圖。
+ * @example
+ * copyMermaid()
+ */
 function copyMermaid() {
     navigator.clipboard.writeText(mermaidCode.value);
     alert('已複製到剪貼簿！');

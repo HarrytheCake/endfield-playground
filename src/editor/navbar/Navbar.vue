@@ -13,6 +13,7 @@ defineEmits<{
     (event: 'toggle-sidebar'): void;
 }>();
 
+/** 藍圖 store：讀寫目前的工具模式，供右側工具切換按鈕使用 */
 const editorStore = useEditorStore();
 /** 目前開啟的檔案名稱，顯示於右側徽章（暫為寫死值，尚未接檔案系統） */
 const fileName = ref('factory-layout-001.json');

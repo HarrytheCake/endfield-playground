@@ -311,19 +311,29 @@ interface FlowEngineTestResult {
     };
 }
 
+/** 藍圖 store：測試期間會被暫時替換為 JSON 輸入資料，計算完成後還原 */
 const editorStore = useEditorStore();
+/** FlowEngine 計算結果 store：計算完成後從這裡讀出結果組成顯示用資料 */
 const flowStore = useFlowStore();
 
+/** 目前選取的 preset id，null 代表尚未選擇或使用自訂 JSON */
 const selectedPreset = ref<string | null>(null);
+/** JSON 輸入區的文字內容，執行計算時會被解析為 nodes / edges */
 const jsonInput = ref('');
+/** 是否正在執行計算，供按鈕 disabled 狀態與文字切換使用 */
 const isCalculating = ref(false);
+/** 最近一次計算完成的顯示用結果，null 代表尚未執行過 */
 const result = ref<FlowEngineTestResult | null>(null);
+/** JSON 解析或計算失敗時的錯誤訊息 */
 const errorMessage = ref<string>('');
 
 // 保存原始畫布數據
+/** 執行測試計算前暫存的原始 editorStore.nodes，計算完成或失敗後用於還原，避免污染主畫布 */
 let originalNodes: FactoryNode[] = [];
+/** 執行測試計算前暫存的原始 editorStore.edges，計算完成或失敗後用於還原，避免污染主畫布 */
 let originalEdges: FactoryEdge[] = [];
 
+/** 可一鍵載入的測試情境清單，對應 presetData 中的資料 */
 const presets = [
     { id: 'h1', name: 'H1', description: '基礎單鏈路：Source → 粉碎機 → Sink（效率 100%）' },
     {
@@ -337,6 +347,7 @@ const presets = [
     { id: 'h6', name: 'H6', description: '多級串聯：藍鐵礦 → 粉碎 → 精煉 → 塑型 → 藍鐵瓶' },
 ];
 
+/** 各 preset id 對應的完整 nodes / edges 測試資料，供 loadPreset 寫入 JSON 輸入區 */
 const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }> = {
     h1: {
         nodes: [
@@ -590,12 +601,24 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
 };
 
+/**
+ * 將指定 preset 的 nodes / edges 資料序列化寫入 JSON 輸入區，供使用者檢視或修改後執行計算。
+ * @param id preset 識別碼，對應 presetData 的 key
+ * @example
+ * loadPreset('h1')
+ */
 function loadPreset(id: string) {
     selectedPreset.value = id;
     jsonInput.value = JSON.stringify(presetData[id], null, 2);
     errorMessage.value = '';
 }
 
+/**
+ * 解析 JSON 輸入區內容，暫時替換 editorStore 的 nodes / edges 並執行一次 FlowEngine 計算，
+ * 讀取結果後立即還原原始畫布資料，確保本測試頁不會影響主編輯器狀態。
+ * @example
+ * await runCalculation()
+ */
 async function runCalculation() {
     try {
         isCalculating.value = true;
@@ -648,6 +671,13 @@ async function runCalculation() {
     }
 }
 
+/**
+ * 依設備效率高低回傳對應顏色 class。
+ * @param eff 效率（0~1）
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = getEfficiencyClass(0.8)
+ */
 function getEfficiencyClass(eff: number): string {
     if (eff === 1) return 'text-green-500';
     if (eff >= 0.5) return 'text-yellow-400';

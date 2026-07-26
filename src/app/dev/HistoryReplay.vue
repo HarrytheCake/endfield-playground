@@ -322,24 +322,47 @@ import { ref } from 'vue';
 import { useEditorStore } from '@/store/editorStore';
 import { useHistoryStore } from '@/store/historyStore';
 
+/** 藍圖 store：本頁所有測試操作（擺放 / 移動 / 刪除）皆透過此 store 觸發 */
 const editorStore = useEditorStore();
+/** 歷史紀錄 store：本頁展示其 undo / redo 堆疊內容 */
 const historyStore = useHistoryStore();
+/** 快速測試場景執行進度提示文字 */
 const scenarioMessage = ref('');
 
+/**
+ * 呼叫 historyStore 還原上一筆操作。
+ * @example
+ * undo()
+ */
 function undo() {
     historyStore.undo();
 }
 
+/**
+ * 呼叫 historyStore 取消還原上一筆 undo 的操作。
+ * @example
+ * redo()
+ */
 function redo() {
     historyStore.redo();
 }
 
+/**
+ * 使用者確認後清空所有歷史紀錄，避免誤觸清空後無法復原。
+ * @example
+ * clear()
+ */
 function clear() {
     if (confirm('確定要清空所有歷史記錄嗎？')) {
         historyStore.clear();
     }
 }
 
+/**
+ * 在畫布隨機座標擺放一台測試用粉碎機，用於驗證 placeDevice 是否正確進入歷史堆疊。
+ * @example
+ * testPlaceDevice()
+ */
 function testPlaceDevice() {
     editorStore.placeDevice({
         id: crypto.randomUUID(),
@@ -357,17 +380,32 @@ function testPlaceDevice() {
     });
 }
 
+/**
+ * 將畫布上所有設備往右移動 50 像素，用於驗證 moveDevices 的批次移動與單一歷史項目行為。
+ * @example
+ * testMoveDevices()
+ */
 function testMoveDevices() {
     const allUids = editorStore.nodes.map((n) => n.id);
     editorStore.moveDevices(allUids, { x: 50, y: 0 });
 }
 
+/**
+ * 刪除畫布上所有設備，用於驗證 removeDevices 的批次刪除與 undo 還原行為。
+ * @example
+ * testRemoveDevices()
+ */
 function testRemoveDevices() {
     const allUids = editorStore.nodes.map((n) => n.id);
     editorStore.removeDevices(allUids);
 }
 
 // 快速測試場景
+/**
+ * 連續呼叫 5 次 testPlaceDevice，驗證 Undo Stack 會累積對應筆數的獨立歷史項目。
+ * @example
+ * await runScenario1()
+ */
 async function runScenario1() {
     scenarioMessage.value = '執行中：連續擺放 5 台設備...';
     for (let i = 0; i < 5; i++) {
@@ -377,6 +415,11 @@ async function runScenario1() {
     scenarioMessage.value = '✓ 完成！Undo Stack 應有 5 筆記錄，試試 Undo 看看';
 }
 
+/**
+ * 依序執行擺放 3 台、移動、刪除，驗證多種操作類型混合入歷史堆疊時仍能正確 undo/redo。
+ * @example
+ * await runScenario2()
+ */
 async function runScenario2() {
     scenarioMessage.value = '執行中：擺放 → 移動 → 刪除...';
 
@@ -398,6 +441,11 @@ async function runScenario2() {
     scenarioMessage.value = '✓ 完成！Undo Stack 應有 5 筆記錄（3×擺放 + 1×移動 + 1×刪除）';
 }
 
+/**
+ * 連續擺放 51 次設備，驗證歷史堆疊在超過深度上限後是否僅保留最新 50 筆記錄。
+ * @example
+ * await runScenario3()
+ */
 async function runScenario3() {
     scenarioMessage.value = '執行中：測試深度限制（51 步）...';
     for (let i = 0; i < 51; i++) {

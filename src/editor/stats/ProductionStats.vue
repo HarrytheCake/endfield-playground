@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia';
 import { useFlowStore } from '@/store/flowStore';
 import { useEditorStore } from '@/store/editorStore';
 
+/** FlowEngine 計算結果 store：本面板所有統計數字的資料來源 */
 const flowStore = useFlowStore();
+/** 藍圖 store：讀取目前選定計畫與畫布設備數量 */
 const editorStore = useEditorStore();
 
 const {
@@ -25,6 +27,7 @@ const {
     warehouseEstimates,
 } = storeToRefs(flowStore);
 
+/** 解構 flowStore 的 action，供調度券兌換率與倉庫容量輸入框直接呼叫 */
 const { setTicketRate, setWarehouseCapacity } = flowStore;
 
 // ── V2-B：調度券 + 倉庫 local state ─────────────────────────────────────────
@@ -57,6 +60,7 @@ const ticketItems = computed(() => itemSummary.value.filter((s) => s.net > 0.001
 /** 調度券預估區塊的明細是否展開 */
 const ticketDetailsOpen = ref(false);
 
+/** 解構 editorStore 的響應式參照，供畫布概況與計畫相關區塊使用 */
 const { nodeCount, currentPlan, machineUsedCounts } = storeToRefs(editorStore);
 
 // G2：電力狀態文字
@@ -113,13 +117,26 @@ const materialUsage = computed(() => {
         });
 });
 
-/** remaining 文字：null = ∞ */
+/**
+ * 將剩餘原料配額格式化為顯示文字，無上限品項顯示為無限符號。
+ * @param remaining 剩餘配額，null 代表無上限
+ * @returns 顯示用文字
+ * @example
+ * const text = remainingText(12.5)
+ */
 function remainingText(remaining: number | null): string {
     if (remaining === null) return '∞';
     return remaining.toFixed(1);
 }
 
-/** remaining 顏色 */
+/**
+ * 依剩餘原料配額比例回傳警示顏色 class，越接近用罄顏色越偏紅。
+ * @param allocated 該原料的總配額，null 代表無上限
+ * @param remaining 剩餘配額，null 代表無上限
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = remainingClass(100, 5)
+ */
 function remainingClass(allocated: number | null, remaining: number | null): string {
     if (allocated === null || remaining === null) return 'text-zinc-400';
     if (remaining < -0.005) return 'text-red-400';
@@ -183,7 +200,14 @@ const machineUsage = computed(() => {
         .filter((m) => m.used > 0 || m.limit !== null);
 });
 
-/** 機器數量顏色 */
+/**
+ * 依機器已用數量相對於上限的比例回傳警示顏色 class，越接近上限顏色越偏紅。
+ * @param used 已使用台數
+ * @param limit 數量上限，null 代表無上限
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = machineCountClass(8, 10)
+ */
 function machineCountClass(used: number, limit: number | null): string {
     if (limit === null) return 'text-zinc-300';
     if (used >= limit) return 'text-red-400';

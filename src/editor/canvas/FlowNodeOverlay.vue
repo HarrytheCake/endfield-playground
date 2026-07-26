@@ -6,8 +6,10 @@ import { storeToRefs } from 'pinia';
 import type { FactoryNodeData } from '@/types/graph';
 import { useFlowStore } from '@/store/flowStore';
 
+/** Vue Flow 傳入的節點 props，data 為本節點的 FactoryNodeData（機型 / 配方 / 旋轉） */
 const props = defineProps<NodeProps<FactoryNodeData>>();
 
+/** FlowEngine 計算結果 store，讀取本節點的效率與是否為非合法鏈路 */
 const flowStore = useFlowStore();
 const { nodeEfficiencies, invalidChainUids } = storeToRefs(flowStore);
 
