@@ -12,6 +12,60 @@
 這是「明日方舟：終末地 集成工業模擬器」的 **CR-04 流量估算模組**。  
 你的任務是協助開發 **FlowEngine**：一個靜態流量分析引擎，計算產線穩態產能並顯示於畫布與右側統計面板。
 
+### L1 完成狀態（2026-06-01）
+
+**L1 基礎建設層已完成**，包含：
+- ✅ CR-04 FlowEngine 核心（V1–V4 完成）
+  - 靜態流量分析引擎
+  - 拓撲排序 + 環路偵測
+  - 效率計算 + 堵塞偵測
+  - 電力盈缺統計
+- ✅ CR-08 historyStore（Command Pattern）
+  - Undo/Redo 機制
+  - 8 個高階 actions 自動進歷史
+- ✅ CR-01 + CR-02 editorStore（8 個高階 actions）
+- ✅ CR-03 validationStore 骨架（detector 註冊機制）
+- ✅ Tests（197 個案例）
+  - FlowEngine：126 個
+  - historyStore：41 個
+  - editorStore：18 個
+  - validationStore：12 個
+
+**文件輸出**：
+- [L1 PR 總結](./L1_PR.md)
+- [L1 API Reference](./L1_API_REFERENCE.md)
+- [FlowEngine Guide](./FLOW_ENGINE_GUIDE.md)
+
+---
+
+### V5 開發者支援與測試基礎設施（2026-06-06）
+
+**目標**：為 L2/L3 開發者提供完整的開發輔助工具與文件
+
+**完成項目**：
+
+#### A 群組：Dev-Only 測試頁面
+- ✅ FlowEngine 測試頁面（H1–H6 preset）
+- ✅ 圖結構視覺化頁面（Mermaid 輸出）
+- ✅ 歷史回放頁面（undo/redo 測試）
+
+#### B 群組：幾何與驗證工具
+- ✅ geometryUtils 實作（getOccupiedCells、cellsOverlap、isWithinBaseRegion、isDeviceWithinBaseRegion）
+- ✅ ValidationContext 完整性（新增 baseRegion 欄位）
+- ✅ E001 Detector 範例（設備重疊檢測）
+
+#### C 群組：開發者文件與 API 說明
+- ✅ L1 API Reference（21 KB，6 個 stores 完整 API）
+- ✅ FlowEngine 使用指南（23 KB，含 4 個 L3 範例）
+- ✅ L2 README 更新（harry + toby 各 12 KB）
+
+#### D 群組：跨 CR 協調追蹤
+- ✅ CR-01 machineType 遷移追蹤（等待 CR-01）
+- ✅ History format-check 追蹤（等待 History CR）
+- ✅ Detector 開發 Checklist（給 shirone）
+
+**技術文件**：[dev_v5/](./dev/dev_v5/) 資料夾（15 份文件）
+
 ### 專案技術棧
 - **Vue 3** Composition API（`<script setup>`）
 - **Vite** + TypeScript
@@ -67,9 +121,9 @@ runFlowEngine()
 
 ## 🏗️ 型別速查
 
-```typescript
-// src/types/flow.ts
+### src/types/flow.ts
 
+```typescript
 interface EdgeFlow {
   connectionUid: string
   itemId: string
@@ -95,6 +149,20 @@ interface FlowStore {
   isCalculating: boolean
 }
 ```
+
+### src/types/validation.ts（V5-B2）
+
+```typescript
+interface ValidationContext {
+  devices: PlacedDevice[];          // 所有已擺放設備
+  connections: Connection[];        // 所有管線連接
+  getDef: (machineType: string) => MachineDef | undefined;  // 查詢設備定義
+  baseRegion: BaseRegion;           // 'wuling' | 'valley4' | null
+}
+```
+
+**組裝位置**：`src/composables/useValidation.ts`  
+**消費者**：所有 Detectors（E001–E006）
 
 ---
 
@@ -198,6 +266,21 @@ Phase 1 完成後再進行 Phase 2（調度券 / 倉庫預估）。
 
 ### 現有版本索引
 
-| 版本 | 主題 | 文件 |
-|------|------|------|
-| V1 | Machine 物件動態化重構 | [dev_v1.md](./dev/dev_v1.md) / [todolist_v1.md](./dev/todolist_v1.md) |
+| 版本 | 主題 | 文件 | 狀態 |
+|------|------|------|------|
+| V1 | Machine 物件動態化重構 | [dev_v1.md](./dev/dev_v1.md) / [todolist_v1.md](./dev/todolist_v1.md) | ✅ 完成 |
+| V2 | 調度券兌換效率與倉庫填滿預估 | [dev_v2.md](./dev/dev_v2.md) / [todolist_v2.md](./dev/todolist_v2.md) | ✅ 完成 |
+| V3 | 技術債修正 | [dev_v3.md](./dev/dev_v3.md) / [todolist_v3.md](./dev/todolist_v3.md) | ✅ 完成 |
+| V4 | 主編 0526 介面設計建議修正 | [dev_v4.md](./dev/dev_v4.md) / [todolist_v4.md](./dev/todolist_v4.md) | ✅ 完成 |
+| **V5** | **L1 完成後的開發者支援與測試基礎設施** | [todolist_v5.md](./dev/todolist_v5.md) / [dev_v5/](./dev/dev_v5/) | ⚠️ 進行中 |
+
+### 開發文件索引
+
+**L1 層 API 文件（必讀）**：
+- [L1 API Reference](./L1_API_REFERENCE.md) — 6 個 stores 完整 API
+- [FlowEngine Guide](./FLOW_ENGINE_GUIDE.md) — 流量引擎使用指南
+- [L1 PR 總結](./L1_PR.md) — L1 層完成總結
+
+**V5 開發者支援文件**：
+- [V5 總覽](./dev/todolist_v5.md) — V5 工項清單
+- [V5 開發文件資料夾](./dev/dev_v5/) — 15 份技術文件

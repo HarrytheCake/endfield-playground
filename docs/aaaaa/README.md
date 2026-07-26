@@ -1,14 +1,146 @@
 ﻿# CR-04｜FlowEngine 靜態流量分析引擎
 
 **負責人：** aaaaa  
-**階段：** Phase 1 完成 ✅ / Phase 2 完成 ✅ / V3 技術債修正完成 ✅  
+**階段：** L1 基礎建設完成 ✅ / V5 開發者支援進行中 ⚠️  
 **依賴 CR：** CR-01（設備擺放）、CR-02（管線連接）、CR-03（警示與 Error 狀態）  
-**文件版本：** v1.3  
-**最後更新：** 2026-05-22
+**文件版本：** v2.1  
+**最後更新：** 2026-06-06
 
 ---
 
-## 一、功能概述
+## 快速導覽
+
+**我是 L2/L3 開發者，我想：**
+- 📖 查詢 L1 API → [L1 API Reference](./L1_API_REFERENCE.md)
+- 🔧 使用 FlowEngine → [FlowEngine Guide](./FLOW_ENGINE_GUIDE.md)
+- 📝 查看工項進度 → [todolist_v5.md](./dev/todolist_v5.md)
+- 📂 瀏覽技術文件 → [dev_v5/](./dev/dev_v5/)
+- 🧪 測試 FlowEngine → `/dev/flow-engine`（開發環境）
+- 🎯 開發 Detector → [shirone/DETECTOR_CHECKLIST.md](../shirone/DETECTOR_CHECKLIST.md)
+
+---
+
+## 專案狀態
+
+### L1 基礎建設層（✅ 完成，2026-06-01）
+
+**完成項目**：
+- ✅ FlowEngine 核心引擎（V1–V4）
+  - 靜態流量分析
+  - 拓撲排序 + 環路偵測
+  - 效率計算 + 堵塞偵測
+  - 電力盈缺統計
+- ✅ historyStore（Command Pattern，Undo/Redo）
+- ✅ editorStore 高階 actions（8 個）
+- ✅ validationStore 骨架
+- ✅ 測試覆蓋（197 個案例）
+
+**文件輸出**：
+- [L1 PR 總結](./L1_PR.md)
+- [L1 API Reference](./L1_API_REFERENCE.md)（21 KB）
+- [FlowEngine Guide](./FLOW_ENGINE_GUIDE.md)（23 KB）
+
+---
+
+### V5 開發者支援與測試基礎設施（⚠️ 進行中，2026-06-06）
+
+**目標**：為 L2/L3 開發者提供完整的開發輔助工具與文件
+
+**完成項目**：
+- ✅ Dev-only 測試頁面（FlowEngine、圖視覺化、歷史回放）
+- ✅ geometryUtils 實作指南（4 個工具函式）
+- ✅ ValidationContext 完整化（新增 baseRegion）
+- ✅ L1 API 完整文件（56 KB，含 L2 README 更新）
+- ✅ 跨 CR 協調追蹤文件（3 份）
+
+**詳細清單**：[todolist_v5.md](./dev/todolist_v5.md)  
+**技術文件**：[dev_v5/](./dev/dev_v5/) 資料夾（15 份文件）
+
+---
+
+## 開發者文件索引
+
+### L1 層 API 文件（必讀）
+
+- **[L1 API Reference](./L1_API_REFERENCE.md)**  
+  完整的 L1 層 API 文件，涵蓋 6 個 stores（editorStore、historyStore、flowStore、validationStore、canvasStore、selectionStore）的所有 State / Actions / Getters。
+
+- **[FlowEngine Guide](./FLOW_ENGINE_GUIDE.md)**  
+  FlowEngine 流量計算引擎使用指南，包含觸發時機、計算流程、效率顏色規則、L3 消費範例。
+
+---
+
+### V5 開發者支援文件
+
+#### A 群組：Dev-Only 測試頁面
+| 文件 | 說明 |
+|------|------|
+| [A2_flow_engine_test.md](./dev/dev_v5/A2_flow_engine_test.md) | FlowEngine 手動測試頁面規格 |
+| [A3_graph_viz.md](./dev/dev_v5/A3_graph_viz.md) | 圖結構視覺化頁面規格 |
+| [A4_history_replay.md](./dev/dev_v5/A4_history_replay.md) | 歷史回放頁面規格 |
+
+#### B 群組：幾何與驗證工具
+| 文件 | 說明 |
+|------|------|
+| [B1_geometry_utils.md](./dev/dev_v5/B1_geometry_utils.md) | 幾何工具函式實作指南 |
+| [B2_validation_context.md](./dev/dev_v5/B2_validation_context.md) | ValidationContext 完整性檢查 |
+| [B3_e001_example.md](./dev/dev_v5/B3_e001_example.md) | E001 Detector 開發範例 |
+
+#### C 群組：開發者文件與 API 說明
+| 文件 | 說明 |
+|------|------|
+| [C1_api_reference.md](./dev/dev_v5/C1_api_reference.md) | L1 API Reference 建立計畫 |
+| [C2_flow_engine_guide.md](./dev/dev_v5/C2_flow_engine_guide.md) | FlowEngine Guide 建立計畫 |
+| [C3_l2_readme_update.md](./dev/dev_v5/C3_l2_readme_update.md) | L2 README 更新計畫 |
+
+#### D 群組：跨 CR 協調追蹤
+| 文件 | 說明 |
+|------|------|
+| [D1_cr01_migration_tracking.md](./dev/dev_v5/D1_cr01_migration_tracking.md) | CR-01 machineType 遷移追蹤 |
+| [D2_history_format_tracking.md](./dev/dev_v5/D2_history_format_tracking.md) | History format-check 追蹤 |
+| [D3_detector_checklist.md](./dev/dev_v5/D3_detector_checklist.md) | Detector 開發 Checklist（給 shirone） |
+
+#### E 群組：Agent 文件更新
+| 文件 | 說明 |
+|------|------|
+| [E1_agent_context_update.md](./dev/dev_v5/E1_agent_context_update.md) | AGENT_CONTEXT.md 更新計畫 |
+| [E2_agent_md_update.md](./dev/dev_v5/E2_agent_md_update.md) | CR04.agent.md 更新計畫 |
+| [E3_readme_update.md](./dev/dev_v5/E3_readme_update.md) | README.md 更新計畫（本文件） |
+
+---
+
+## 版本歷史
+
+| 版本 | 主題 | 狀態 | 完成時間 |
+|------|------|------|----------|
+| V1 | Machine 物件動態化重構 | ✅ 完成 | 2026-05-15 |
+| V2 | 調度券兌換效率與倉庫填滿預估 | ✅ 完成 | 2026-05-20 |
+| V3 | 技術債修正 | ✅ 完成 | 2026-05-25 |
+| V4 | 主編 0526 介面設計建議修正 | ✅ 完成 | 2026-05-30 |
+| **V5** | **L1 完成後的開發者支援與測試基礎設施** | ⚠️ **進行中** | **2026-06-06（預計）** |
+
+**V5 特點**：
+- 首次建立獨立技術文件資料夾 `dev/dev_v5/`
+- 15 份技術文件，分為 A/B/C/D/E 五個群組
+- 完整的 L1 API 文件輸出（56 KB）
+
+---
+
+## 一、開發階段
+
+| 版本 | 主題 | 狀態 |
+|------|------|------|
+| V1 | Machine 物件動態化重構 | ✅ 完成 |
+| V2 | 調度券兌換效率與倉庫填滿預估 | ✅ 完成 |
+| V3 | 技術債修正 | ✅ 完成 |
+| V4 | 主編 0526 介面設計建議修正 | ✅ 完成 |
+| **V5** | **L1 完成後的開發者支援與測試基礎設施** | 🚧 進行中 |
+
+詳細工項清單見 [todolist_v5.md](./dev/todolist_v5.md)。
+
+---
+
+## 二、功能概述
 
 CR-04 是模擬器的**核心計算引擎**，稱為 **FlowEngine**。
 
@@ -27,7 +159,7 @@ CR-04 是模擬器的**核心計算引擎**，稱為 **FlowEngine**。
 
 ---
 
-## 二、檔案結構
+## 三、檔案結構
 
 ```
 src/

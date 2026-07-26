@@ -53,6 +53,7 @@ const emptyCtx: ValidationContext = {
     devices: [],
     connections: [],
     getDef: () => undefined,
+    baseRegion: null,
 };
 
 // ─── 初始狀態 ─────────────────────────────────────────────────────────────────
