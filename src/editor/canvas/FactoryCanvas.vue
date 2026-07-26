@@ -12,6 +12,7 @@ import type { FactoryNode } from '@/types/graph';
 import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
 import { useFlowStore } from '@/store/flowStore';
+import { useCanvasStore } from '@/store/canvasStore';
 import FlowNodeOverlay from './FlowNodeOverlay.vue';
 import PipelineEdge from './PipelineEdge.vue';
 
@@ -27,11 +28,15 @@ const editorStore = useEditorStore();
 const selectionStore = useSelectionStore();
 /** FlowEngine 計算結果 store：管線流量與堵塞狀態 */
 const flowStore = useFlowStore();
+/** 畫布視圖狀態 store：格線大小為畫布格線與 snap-to-grid 的唯一數值來源 */
+const canvasStore = useCanvasStore();
 /** 解構 editorStore 的響應式參照，供 template 與 watch 直接使用 */
 const { nodes, edges, snapToGrid, activeTool, selectedEquipment, placementArmed } =
     storeToRefs(editorStore);
 /** 解構 flowStore 的響應式參照，供流量標籤 overlay 讀取 */
 const { edgeFlows, congestedEdges } = storeToRefs(flowStore);
+/** 解構 canvasStore 的響應式參照，供 template 綁定畫布格線 */
+const { gridSize } = storeToRefs(canvasStore);
 /** Vue Flow 提供的座標轉換 API；vfEdges 用於流量標籤 overlay 的定位計算 */
 const { screenToFlowCoordinate, edges: vfEdges } = useVueFlow();
 
@@ -72,9 +77,6 @@ const equipmentTypes = Object.keys(equipmentLabelMap) as EquipmentType[];
 function handleSelectionChange(selection: { nodes?: Array<{ id: string }> }) {
     selectionStore.setSelection((selection.nodes ?? []).map((node) => node.id));
 }
-
-/** snap-to-grid 啟用時，座標吸附的格子邊長（像素），需與 VueFlow 的 snap-grid 設定一致 */
-const GRID_SIZE = 20;
 
 /** CR-01 拿起預覽中的旋轉狀態，僅存在於 placementArmed 期間，放置後隨即由 disarm 重置 */
 const previewRotation = ref<Rotation>(0);
@@ -140,8 +142,8 @@ function buildFactoryNode(equipment: EquipmentType, clientX: number, clientY: nu
     const raw = screenToFlowCoordinate({ x: clientX, y: clientY });
     const position = snapToGrid.value
         ? {
-              x: Math.round(raw.x / GRID_SIZE) * GRID_SIZE,
-              y: Math.round(raw.y / GRID_SIZE) * GRID_SIZE,
+              x: Math.round(raw.x / gridSize.value) * gridSize.value,
+              y: Math.round(raw.y / gridSize.value) * gridSize.value,
           }
         : raw;
 
@@ -239,13 +241,13 @@ function handleCanvasDrop(event: DragEvent) {
             :pan-on-drag="activeTool === 'pan'"
             :selection-on-drag="activeTool === 'box-select'"
             :snap-to-grid="snapToGrid"
-            :snap-grid="[20, 20]"
+            :snap-grid="[gridSize, gridSize]"
             class="factory-flow"
             @selection-change="handleSelectionChange"
             @node-click="handleNodeClick"
             @pane-click="handlePaneClick"
         >
-            <Background variant="lines" :gap="20" :size="1" pattern-color="#3f3f46" />
+            <Background variant="lines" :gap="gridSize" :size="1" pattern-color="#3f3f46" />
             <Controls />
             <MiniMap />
 
