@@ -14,7 +14,7 @@
             >
                 <div class="flex items-start gap-3">
                     <svg
-                        class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
+                        class="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -314,10 +314,10 @@ interface FlowEngineTestResult {
 const editorStore = useEditorStore();
 const flowStore = useFlowStore();
 
-const selectedPreset = ref<string>();
+const selectedPreset = ref<string | null>(null);
 const jsonInput = ref('');
 const isCalculating = ref(false);
-const result = ref<FlowEngineTestResult>();
+const result = ref<FlowEngineTestResult | null>(null);
 const errorMessage = ref<string>('');
 
 // 保存原始畫布數據

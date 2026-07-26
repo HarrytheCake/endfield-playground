@@ -226,10 +226,10 @@ interface GraphAnalysisResult {
 }
 
 const jsonInput = ref('');
-const graphData = ref<GraphAnalysisResult>();
+const graphData = ref<GraphAnalysisResult | null>(null);
 const mermaidCode = ref('');
 const errorMessage = ref('');
-const selectedPreset = ref<string>();
+const selectedPreset = ref<string | null>(null);
 
 const presets = [
     { id: 'h1', name: 'H1', description: '基礎單鏈路：Source → 粉碎機 → Sink（效率 100%）' },
@@ -501,7 +501,7 @@ function loadPreset(id: string) {
     selectedPreset.value = id;
     jsonInput.value = JSON.stringify(presetData[id], null, 2);
     errorMessage.value = '';
-    graphData.value = undefined;
+    graphData.value = null;
     mermaidCode.value = '';
 }
 
