@@ -95,6 +95,12 @@ const devPages = [
         icon: '⏮️',
         description: '測試 undo/redo 機制',
     },
+    {
+        path: '/dev/validation-test',
+        name: '驗證系統測試',
+        icon: '🚨',
+        description: '測試 detector 註冊與警示顯示',
+    },
 ];
 </script>
 

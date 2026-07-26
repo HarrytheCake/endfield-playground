@@ -22,7 +22,11 @@
                         updateFacing
                     </li>
                     <li>• <strong>自動記錄</strong>：所有 editorStore 操作自動進入歷史堆疊</li>
-                    <li>• <strong>完整保留</strong>：所有操作依序保留在歷史堆疊中，可逐步復原至最初狀態</li>
+                    <li>
+                        •
+                        <strong>完整保留</strong
+                        >：所有操作依序保留在歷史堆疊中，可逐步復原至最初狀態
+                    </li>
                 </ul>
 
                 <p class="mt-3 font-semibold">測試流程：</p>

@@ -37,6 +37,11 @@ const router = createRouter({
                     name: 'dev-history-replay',
                     component: () => import('@/app/dev/HistoryReplay.vue'),
                 },
+                {
+                    path: 'validation-test',
+                    name: 'dev-validation-test',
+                    component: () => import('@/app/dev/ValidationTest.vue'),
+                },
             ],
         },
         {
