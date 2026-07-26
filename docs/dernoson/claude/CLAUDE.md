@@ -88,15 +88,9 @@
 
 ## 6. 提交流程
 
-- 採 branch 開發：`dev/<name>` 或 `dev/<feature>`
-- 開新 PR 前必須執行並通過：
+分支命名、PR 流程、驗證指令細節請見根目錄 `README.md`「開發者守則」。補充給 Claude Code 的規則：
 
-```bash
-pnpm type-check
-pnpm lint-check
-pnpm format-check
-```
-
+- push 前必須執行並通過 `pnpm type-check` / `lint-check` / `format-check` / `test`（可直接用 `validate-changes` skill 一次跑完，見第 9 節）
 - Commit 訊息簡潔、繁中為主；不加表情符號、不加 AI 生成字樣
 - 不擅自 push、不擅自建 PR、不擅自合併 master —— 這些動作須使用者明確指示
 
@@ -116,3 +110,19 @@ pnpm format-check
 - 嚴格禁止讀取 `.env`、`.env.*`、`.secrets`、任何 credentials 檔案
 - 不在程式碼、commit、PR 中留下任何金鑰、token、密碼
 - 對外部 API 的 request body 與 response 不假設安全，做 schema 驗證（Zod）
+
+---
+
+## 9. 可用 Skills 與 Agents
+
+專案特定的 skills / agents 放在 `docs/dernoson/claude/`，透過根目錄 `.claude/` symlink 生效（設定方式見 `docs/dernoson/README.md`）。完整規則見各自的 `SKILL.md` / agent 定義檔，此處僅列索引：
+
+**Skills**（`.claude/skills/`，用 `/<name>` 或符合觸發條件時自動使用）：
+
+- `add-jsdoc`：依第 3 節註解規則，為指定範圍的 TS / Vue 程式碼補齊 JSDoc
+- `validate-changes`：跑 format → lint → type-check → test 全套驗證；**改完程式碼、回報「完成」前必須跑**
+
+**Agents**（`.claude/agents/`，用 Task／Agent 呼叫）：
+
+- `dependency-grapher`：畫指定範圍的模組相依圖（Mermaid），只讀程式碼、只寫 markdown，不改原始碼
+- `test-writer`：建立或更新 Vitest 單元測試，測試檔鏡射到 `src/__tests__/`
