@@ -31,7 +31,7 @@ import type {
     FlowEngineResult,
 } from '@/types/flow';
 import { BELT_RATE_LIMIT } from '@/types/flow';
-import { getRecipesForMachine } from '@/data/devices';
+import { getRecipesForMachine } from '@/data/products';
 import { getMachine } from '@/data/machines';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';

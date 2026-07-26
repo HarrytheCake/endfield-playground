@@ -15,7 +15,7 @@ import {
     getRecipe,
     getAllProducts,
     getAllRecipes,
-} from '@/data/devices';
+} from '@/data/products';
 
 // ─── getRecipesForMachine() ──────────────────────────────────────────────────
 
