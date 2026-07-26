@@ -1,6 +1,6 @@
 <template>
     <div class="stats-panel">
-        <h2>右側統計面板 (StatsPanel)</h2>
+        <h2>右側統計面板你好貓毛貓 (StatsPanel)</h2>
         <!-- 掛下面的檔案 -->
         <PowerSummary />
         <ItemSummaryTable />
