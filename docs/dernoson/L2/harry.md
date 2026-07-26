@@ -46,7 +46,7 @@ harry 是 L2 的 PR Owner 與對外介面協調人。技術深度由 toby 補齊
 | **CR-01 工具列 → 畫布 拿起流程** | 點選工具列設備 → 呼叫 `editorStore.armPlacement(equipment)` → 滑鼠移動時於 L2 container 維護預覽座標與 snap → 單擊放置時呼叫 `editorStore.placeDevice(node: FactoryNode)`（該 action 內部自動產生 Command 進歷史）；Esc 呼叫 `editorStore.disarmPlacement()` |
 | **CR-01 R 鍵旋轉 / Esc 取消** | 用 `useMagicKeys` 綁定，旋轉於拿起預覽中以 L2 local state 處理（`Rotation = 0 \| 1 \| 2 \| 3`），放置時帶入 `FactoryNodeData.rotation` |
 | **CR-01 連續擺放** | 工具列拿起的設備放下後保持 armed 狀態（不呼叫 `disarmPlacement`），按 Esc 才結束 |
-| **CR-01 配方變更** | 點選已部署設備 → 左側面板顯示配方表（資料映射） → 切換時呼叫 `editorStore.setRecipe(uid, recipeIndex)`（action 自動進歷史） |
+| **CR-01 配方變更** | 點選已擺放設備 → 左側面板顯示配方表（資料映射） → 切換時呼叫 `editorStore.setRecipe(uid, recipeIndex)`（action 自動進歷史） |
 | **CR-01 左側面板資料映射** | 把 `Machine` 定義 + `FactoryNodeData.recipeIndex` 整理成 plain props 餵給 L3 的 `<InfoPanel>` |
 | **CR-01 / CR-02 共用 keymap** | Ctrl+Z / Ctrl+Y / Delete / Space 等預設快捷鍵**已由 L1 的 `useShortcuts()` composable 於 MainLayout 統一處理**，harry 不需重複註冊；新增的 P 鍵、Ctrl+C 等才需自行綁定 |
 | **CR-02 管線模式切換** | P 鍵 / 工具列按鈕呼叫 `editorStore.setActiveTool(tool: ToolMode)` 切到管線工具 |
@@ -169,14 +169,14 @@ harry **不需要也不應該**重複呼叫這些 composable。
 | `<Canvas>`（主） | 主畫布容器（格線、縮放、平移、互動接線）— **L2 自己寫** | `src/components/Canvas/Index.vue` |
 | ─ `DevicePreview` | 拿起狀態的半透明預覽（goodmorning） | `src/components/Canvas/DevicePreview.vue` |
 | ─ `DirectionPicker` | 長按朝向選擇菱形框（goodmorning） | `src/components/Canvas/DirectionPicker.vue` |
-| ─ `PlacedDeviceSprite` | 已部署設備視覺（goodmorning） | `src/components/Canvas/PlacedDeviceSprite.vue` |
+| ─ `PlacedDeviceSprite` | 已擺放設備視覺（goodmorning） | `src/components/Canvas/PlacedDeviceSprite.vue` |
 | ─ `GridBackground` | 格線背景（goodmorning） | `src/components/Canvas/GridBackground.vue` |
 | ─ `BaseRegionOverlay` | 武陵液體輸入方位標示（goodmorning） | `src/components/Canvas/BaseRegionOverlay.vue` |
 | ─ `PortDot` | 設備接口圓點（avery） | `src/components/Canvas/PortDot.vue` |
 | ─ `PipelineEdge` | 管線本體視覺（avery） | `src/components/Canvas/PipelineEdge.vue` |
 | ─ `PipelineDraft` | 繪製中管線預覽（avery） | `src/components/Canvas/PipelineDraft.vue` |
 | ─ `AutoNodeBadge` | 分流/匯流/物流橋圖示與切換按鈕（avery） | `src/components/Canvas/AutoNodeBadge.vue` |
-| `<DeviceNode>` | 單一已部署設備視覺 | `src/components/FlowChart/DeviceNode.vue` |
+| `<DeviceNode>` | 單一已擺放設備視覺 | `src/components/FlowChart/DeviceNode.vue` |
 | `<MaterialNode>` | 原料節點 | `src/components/FlowChart/MaterialNode.vue` |
 | `<ProductNode>` | 產品節點 | `src/components/FlowChart/ProductNode.vue` |
 | `<WarehouseNode>` | 倉儲節點 | `src/components/FlowChart/WarehouseNode.vue` |

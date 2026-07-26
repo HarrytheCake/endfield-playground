@@ -1,15 +1,15 @@
-# Feature Spec：產線設備與佈線警示
+# Feature Spec：產線擺設編輯區 - 擺設位置衝突
 # CR-03
 
-**所屬階段：** Phase 1（Error）/ Phase 2（Warning）
-**依賴：** CR-01（設備狀態）、CR-02（管線連接狀態）
-**文件版本：** v0.1
+- **所屬階段：** Phase 1
+- **依賴：** CR-01（設備狀態）、CR-02（管線連接狀態）
+- **文件版本：** v0.3
 
 ---
 
 ## 1. 功能定位
 
-警示模組持續監聽畫布狀態，偵測設備擺放與管線佈線的合法性問題，分 Error 與 Warning 兩級回饋給使用者。警示狀態同時影響 CR-04 流量估算的計算範圍（有 Error 的節點略過）。
+警示模組持續監聽畫布狀態，偵測設備擺放與管線佈線的合法性問題，以 Error 回饋給使用者。警示狀態同時影響 CR-04 流量估算的計算範圍（有 Error 的節點略過）。
 
 ---
 
@@ -20,7 +20,6 @@
 以下任一狀態變更後，自動重新執行全局驗證：
 - 設備擺放、移動、刪除、旋轉
 - 管線新增、刪除、修改
-- 設備配方變更
 
 驗證採同步計算，結果即時更新至 store，不需使用者手動觸發。
 
@@ -31,25 +30,37 @@
 
 | 代碼 | 名稱 | 觸發條件 |
 |------|------|----------|
-| E001 | 設備重疊 | 兩台（含）以上設備佔用相同格子 |
-| E002 | 接口 Type 不符 | 傳送帶接口與水管接口互連 |
-| E003 | 配方不符 | 接口輸入的品項與設備當前配方所需品項不符 |
-| E004 | 佈線違法 | 管線路徑穿越設備佔用的格子（非物流橋） |
-| E005 | 接口重複連接 | 單一輸出接口連接超過一條管線（未經分流器） |
-| E006 | 未在供電範圍內 | 設備所有佔用格子均不在任何供電樁的覆蓋範圍內 |
+| E001 | 設備重疊 | 兩個（含）以上物件佔用相同格子，且佔用層有交集（見 2.2.1） |
+| E002 | 佈線違法 | 管線路徑經過的格子上，與該格已佔用物件的佔用層有交集（非物流橋，見 2.2.1） |
+| E003 | 超出基地框線 | 設備或管線佔用格子超出當前基地可建造框線範圍 |
 
-**供電範圍計算方式：** 取所有已擺放供電樁的 n×n 覆蓋格子聯集（n 由 `devices.json` 定義），設備任一格在聯集內即視為供電成功。基地模式下不允許擺放中繼器，供電覆蓋僅由供電樁決定。
+#### 2.2.1 高度層與立體碰撞判定
 
-#### Warning（不阻斷估算）
-Warning 不影響流量估算，僅提醒使用者注意潛在問題。
+畫布上的「重疊」不只看 (x, y) 格子座標，還要看每個設備 / 管線佔用的**垂直高度**，才能正確區分「立體交叉、互不影響」與「真的擋到、算衝突」。每個物件帶有兩個屬性：
 
-| 代碼 | 名稱 | 觸發條件 |
-|------|------|----------|
-| W001 | 輸入缺失 | 設備有輸入接口但無任何管線連入 |
-| W002 | 輸出未接 | 設備有輸出接口但無任何管線接出 |
-| W003 | 堵塞風險 | 某管線的輸入速率持續超過輸出速率上限 |
-| W004 | 效率不足 | 設備因上游供料不足，估算效率低於 50% |
-| W005 | 總耗電超載 | 整區所有設備總耗電量超過總供電量上限 |
+- **z（物理層）**：物件本體實際所在的層，`0` 為地面層、`1` 為空中層
+- **h（貫穿旗標）**：`0` 表示只佔用自己的 `z` 層；`1` 表示不論本體在哪一層，都會同時貫穿佔滿 `z=0` 與 `z=1` 兩層（例如從地面直通到空中的一般設備）
+
+**碰撞判定公式：**
+
+```
+occupiedLayers(obj) = h === 1 ? {0, 1} : {z}
+```
+
+兩物件佔用同一格子時，只要 `occupiedLayers(A) ∩ occupiedLayers(B)` 不是空集合，即視為衝突（觸發 E001 或 E002）；交集為空則允許重疊、不算衝突。
+
+**各類物件的 (z, h)：**
+
+| 物件 | z | h | 佔用層 |
+|------|---|---|--------|
+| 一般設備（大部分設備） | 0 | 1 | {0, 1} |
+| 傳送帶本體 | 0 | 0 | {0} |
+| 水管本體 | 1 | 0 | {1} |
+| 貨物取出口 / 存入口、供貨源樁 | 0 | 0 | {0} |
+| 傳送帶的分流器 / 匯流器 / 物流橋 | 0 | 0 | {0} |
+| 水管的分流器 / 匯流器 / 物流橋（中介橋） | 0 | 1 | {0, 1} |
+
+依此公式：水管（{1}）與傳送帶、取貨口等（{0}）交集為空，可自由重疊；水管與一般設備（{0,1}）交集為 {1}，判定衝突。水管的分流器 / 匯流器 / 物流橋雖邏輯上屬於水管系統、介面可與水管直接相連，但因 h=1 佔用層為 {0,1}，判定規則與一般設備相同，**不享有水管本體的重疊豁免**。
 
 ### 2.3 畫布視覺警示
 
@@ -63,19 +74,18 @@ Warning 不影響流量估算，僅提醒使用者注意潛在問題。
 - **Warning**：管線顯示黃色邊框
 - 懸停管線時 tooltip 顯示警示代碼與說明
 
-### 2.4 右側警示列表
+### 2.4 物件資訊面板顯示
 
-右側統計面板包含獨立的警示列表區塊，依 Error → Warning 排序：
+點選有衝突的設備或管線時，物件資訊面板列出該物件當前所有衝突項目（代碼與說明），與畫布上的紅色高亮同步呈現。
+
+### 2.5 產線總覽面板警示列表
+
+產線總覽面板包含獨立的警示列表區塊，依 Error → Warning 排序：
 
 ```
-⛔ Errors (3)
+⛔ Errors (2)
   [E001] 設備重疊：精煉爐 #3 與配件機 #1
-  [E003] 配方不符：混合機 #2 輸入接口 (input_0) 品項不符
-  [E004] 佈線違法：管線 #7 穿越精煉爐 #1
-
-⚠️ Warnings (2)
-  [W001] 輸入缺失：電驅礦機 #2 無輸出管線
-  [W003] 堵塞風險：管線 #4 輸入速率超載
+  [E002] 佈線違法：管線 #7 穿越精煉爐 #1
 ```
 
 **點選任一警示項目：**
@@ -84,201 +94,21 @@ Warning 不影響流量估算，僅提醒使用者注意潛在問題。
 
 ---
 
-## 3. 狀態管理（Pinia Store）
-
-### `useValidationStore`
-
-```typescript
-{
-  alerts: Alert[]
-}
-
-// Alert
-{
-  uid: string,
-  level: 'error' | 'warning',
-  code: string,              // E001, W003 等
-  message: string,           // 人類可讀說明
-  relatedDeviceUids: string[],
-  relatedConnectionUids: string[]
-}
-```
-
-**Getter：**
-```typescript
-errorsByDevice: (deviceUid: string) => Alert[]
-warningsByDevice: (deviceUid: string) => Alert[]
-hasBlockingError: (deviceUid: string) => boolean  // 供 CR-04 查詢
-```
-
----
-
-## 4. 實作範例
-
-### 4.1 驗證主流程
-
-```typescript
-// 監聽相關 store 變動，觸發重新驗證
-watch(
-  [() => placedDeviceStore.devices, () => pipelineStore.connections],
-  () => runValidation(),
-  { deep: true }
-)
-
-const runValidation = () => {
-  const alerts: Alert[] = []
-  alerts.push(...checkDeviceOverlap())    // E001
-  alerts.push(...checkPortTypeMismatch()) // E002
-  alerts.push(...checkRecipeMismatch())   // E003
-  alerts.push(...checkIllegalRouting())   // E004
-  alerts.push(...checkDuplicateOutput())  // E005
-  alerts.push(...checkPowerCoverage())    // E006
-  // Phase 2:
-  // alerts.push(...checkMissingInput())       // W001
-  // alerts.push(...checkUnconnectedOutput())  // W002
-  // alerts.push(...checkBackpressure())       // W003
-  // alerts.push(...checkLowEfficiency())      // W004
-  // alerts.push(...checkTotalPowerExceeded()) // W005
-  validationStore.alerts = alerts
-}
-```
-
-### 4.2 設備重疊偵測（E001）
-
-```typescript
-const checkDeviceOverlap = (): Alert[] => {
-  const alerts: Alert[] = []
-  const allCells = new Map<string, string>()  // "x,y" -> deviceUid
-
-  for (const device of placedDeviceStore.devices) {
-    const cells = getOccupiedCells(device)
-    for (const cell of cells) {
-      const key = `${cell.x},${cell.y}`
-      if (allCells.has(key)) {
-        alerts.push({
-          uid: generateUid(),
-          level: 'error',
-          code: 'E001',
-          message: `設備重疊：${getDeviceName(device.uid)} 與 ${getDeviceName(allCells.get(key)!)}`,
-          relatedDeviceUids: [device.uid, allCells.get(key)!],
-          relatedConnectionUids: []
-        })
-      } else {
-        allCells.set(key, device.uid)
-      }
-    }
-  }
-  return alerts
-}
-```
-
-### 4.2 供電範圍偵測（E006）
-
-```typescript
-const checkPowerCoverage = (): Alert[] => {
-  const alerts: Alert[] = []
-
-  // 計算所有供電樁的覆蓋格子聯集
-  const coveredCells = new Set<string>()
-  const powerSupplies = placedDeviceStore.devices.filter(
-    d => getDeviceDef(d.deviceId).category === '電力' &&
-         getDeviceDef(d.deviceId).id !== 'relay'  // 基地模式排除中繼器
-  )
-
-  for (const supply of powerSupplies) {
-    const def = getDeviceDef(supply.deviceId)
-    const range = def.power_range  // n，從 devices.json 取得
-    const cx = supply.x + Math.floor(def.size.w / 2)
-    const cy = supply.y + Math.floor(def.size.h / 2)
-
-    for (let dx = -Math.floor(range / 2); dx <= Math.floor(range / 2); dx++) {
-      for (let dy = -Math.floor(range / 2); dy <= Math.floor(range / 2); dy++) {
-        coveredCells.add(`${cx + dx},${cy + dy}`)
-      }
-    }
-  }
-
-  // 檢查每台設備是否至少有一格在覆蓋範圍內
-  for (const device of placedDeviceStore.devices) {
-    if (getDeviceDef(device.deviceId).category === '電力') continue  // 供電設備本身不需供電
-    const cells = getOccupiedCells(device)
-    const isPowered = cells.some(c => coveredCells.has(`${c.x},${c.y}`))
-
-    if (!isPowered) {
-      alerts.push({
-        uid: generateUid(),
-        level: 'error',
-        code: 'E006',
-        message: `未在供電範圍內：${getDeviceName(device.uid)}`,
-        relatedDeviceUids: [device.uid],
-        relatedConnectionUids: []
-      })
-    }
-  }
-
-  return alerts
-}
-```
-
-### 4.3 總耗電超載偵測（W005，Phase 2）
-
-```typescript
-const checkTotalPowerExceeded = (): Alert[] => {
-  const totalDemand = placedDeviceStore.devices.reduce(
-    (sum, d) => sum + getDeviceDef(d.deviceId).power_cost, 0
-  )
-  const totalSupply = placedDeviceStore.devices
-    .filter(d => getDeviceDef(d.deviceId).category === '電力')
-    .reduce((sum, d) => sum + (getDeviceDef(d.deviceId).power_output ?? 0), 0)
-
-  if (totalDemand > totalSupply) {
-    return [{
-      uid: generateUid(),
-      level: 'warning',
-      code: 'W005',
-      message: `總耗電量超載：需求 ${totalDemand} kW，供給 ${totalSupply} kW`,
-      relatedDeviceUids: [],
-      relatedConnectionUids: []
-    }]
-  }
-  return []
-}
-```
-
-### 4.4 點選警示導覽至相應元素
-
-```typescript
-const navigateToAlert = (alert: Alert) => {
-  // 計算目標中心位置
-  const targetPos = getAlertCenter(alert)
-
-  // 平移並縮放畫布至目標位置
-  canvasStore.panToPosition(targetPos, { animate: true })
-
-  // 觸發閃爍高亮
-  highlightStore.flashElements({
-    deviceUids: alert.relatedDeviceUids,
-    connectionUids: alert.relatedConnectionUids,
-    duration: 1500
-  })
-}
-```
-
----
-
-## 5. 驗證方式
+## 3. 驗證方式
 
 | 驗證項目 | 方法 |
 |----------|------|
 | E001 設備重疊 | 移動設備至與另一台重疊，確認兩台均顯示紅框，警示列表出現 E001 |
-| E002 Type 不符 | 連接傳送帶接口至水管接口，確認管線顯示紅色，警示列表出現 E002 |
-| E003 配方不符 | 將輸出品項 A 的設備接入需要品項 B 的設備，確認出現 E003 |
-| E004 佈線違法 | 手動繪製穿越設備的路徑，確認出現 E004 |
-| E006 未在供電範圍 | 擺放設備但不在任何供電樁覆蓋範圍內，確認出現 E006 紅框 |
-| E006 供電覆蓋聯集 | 擺放兩個供電樁覆蓋不同區域，確認兩區域的設備均不出現 E006 |
-| W005 總耗電超載（Phase 2）| 耗電量超過總供電量，確認出現 W005 黃色警示 |
+| E001 旋轉觸發重疊 | 旋轉設備使其與另一台重疊，確認即時偵測並出現 E001 |
+| E002 佈線違法 | 手動繪製穿越設備的路徑，確認出現 E002 |
+| E003 超出基地框線 | 將設備或管線移至基地框線外，確認出現 E003 紅框 |
+| h=0 物件互不阻擋 | 將水管路徑繪製經過傳送帶、貨物取出口 / 存入口、供貨源樁所在格子，確認不觸發 E001 / E002 |
+| h=1 阻擋水管 | 將水管路徑繪製穿越一般設備所在格子，確認觸發 E002 |
+| 水管分匯流器歸為 h=1 | 將水管分流器 / 匯流器 / 物流橋擺放至與傳送帶或取貨口重疊的格子，確認觸發 E001（不享有水管本體的重疊豁免） |
 | Error 略過估算 | 製造 E001，確認重疊設備不出現在流量估算結果中 |
-| W001 輸入缺失（Phase 2）| 擺放設備但不接任何管線，確認出現 W001 黃色邊框 |
+| 管線 tooltip 顯示警示 | 懸停有 Error 的管線，確認 tooltip 顯示警示代碼與說明 |
+| Error 與 Warning 同時顯示優先權 | 令設備同時觸發 CR-03 的 Error 與其他來源的 Warning，確認以紅色 Error 樣式優先顯示 |
+| 物件資訊面板顯示衝突 | 點選有 Error 的設備，確認物件資訊面板列出對應衝突代碼與說明 |
 | 點選警示導覽 | 點選警示列表項目，確認畫布平移至相應設備並閃爍 |
 | 警示即時更新 | 修正重疊問題後，確認 E001 即時從列表消失 |
 

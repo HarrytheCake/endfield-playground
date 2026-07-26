@@ -6,8 +6,10 @@ import { storeToRefs } from 'pinia';
 import type { FactoryNodeData } from '@/types/graph';
 import { useFlowStore } from '@/store/flowStore';
 
+/** Vue Flow 傳入的節點 props，data 為本節點的 FactoryNodeData（機型 / 配方 / 旋轉） */
 const props = defineProps<NodeProps<FactoryNodeData>>();
 
+/** FlowEngine 計算結果 store，讀取本節點的效率與是否為非合法鏈路 */
 const flowStore = useFlowStore();
 const { nodeEfficiencies, invalidChainUids } = storeToRefs(flowStore);
 
@@ -17,6 +19,16 @@ const efficiency = computed(() => nodeEfficiencies.value.get(props.id));
 /** 非合法鏈路 → 灰色虛線外框 */
 const isInvalid = computed(() => invalidChainUids.value.has(props.id));
 
+/** CR-01 旋轉畫面效果：rotation（0~3）換算成 CSS 旋轉角度 */
+const rotationDeg = computed(() => (props.data.rotation ?? 0) * 90);
+
+/**
+ * 依節點效率高低回傳對應顏色 class。
+ * @param eff 效率（0~1 以上，>1 表示超額供給）
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = efficiencyColorClass(0.8)
+ */
 function efficiencyColorClass(eff: number): string {
     if (eff >= 1) return 'text-green-500';
     if (eff >= 0.5) return 'text-yellow-400';
@@ -27,8 +39,9 @@ function efficiencyColorClass(eff: number): string {
 
 <template>
     <div
-        class="relative min-w-[100px] rounded border bg-zinc-800 px-3 py-2 text-sm text-white"
+        class="relative min-w-25 rounded border bg-zinc-800 px-3 py-2 text-sm text-white"
         :class="isInvalid ? 'border-dashed border-gray-500 opacity-50' : 'border-zinc-600'"
+        :style="{ transform: `rotate(${rotationDeg}deg)` }"
     >
         <!-- target handle（左側） -->
         <Handle type="target" :position="Position.Left" />

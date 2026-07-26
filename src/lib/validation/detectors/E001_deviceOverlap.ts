@@ -39,6 +39,7 @@
  */
 
 import type { Alert, Detector, ValidationContext } from '@/types/validation';
+import { getOccupiedCells, cellsOverlap } from '@/utils/geometryUtils';
 
 /**
  * E001 detector 實例。  \
@@ -53,11 +54,42 @@ import type { Alert, Detector, ValidationContext } from '@/types/validation';
 export const E001_deviceOverlap: Detector = {
     code: 'E001',
     level: 'error',
-    run(_ctx: ValidationContext): Alert[] {
-        // TODO(shirone): 依檔頭的算法草稿實作 grid sweep
-        //   - 遍歷 _ctx.devices 計算每台設備佔用的格子
-        //   - 用 Map<"x,y", string[]> 找出 collision
-        //   - 對每組重疊產生一筆 Alert
-        return [];
+    run(ctx: ValidationContext): Alert[] {
+        const alerts: Alert[] = [];
+        const devices = ctx.devices;
+
+        // 使用兩層迴圈檢查所有設備對
+        for (let i = 0; i < devices.length; i++) {
+            for (let j = i + 1; j < devices.length; j++) {
+                const deviceA = devices[i];
+                const deviceB = devices[j];
+
+                // 取得設備定義
+                const defA = ctx.getDef(deviceA.data?.machineType ?? '');
+                const defB = ctx.getDef(deviceB.data?.machineType ?? '');
+
+                if (!defA || !defB) {
+                    continue; // 跳過無效定義的設備
+                }
+
+                // 計算佔據的格子
+                const cellsA = getOccupiedCells(deviceA, defA);
+                const cellsB = getOccupiedCells(deviceB, defB);
+
+                // 檢查重疊
+                if (cellsOverlap(cellsA, cellsB)) {
+                    alerts.push({
+                        uid: crypto.randomUUID(),
+                        level: 'error',
+                        code: 'E001',
+                        message: `設備「${defA.name}」與「${defB.name}」重疊`,
+                        relatedDeviceUids: [deviceA.id, deviceB.id],
+                        relatedConnectionUids: [],
+                    });
+                }
+            }
+        }
+
+        return alerts;
     },
 };

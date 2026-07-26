@@ -4,16 +4,21 @@ import { ref } from 'vue';
 import { useEditorStore } from '@/store/editorStore';
 
 defineProps<{
+    /** 左側專案選單目前是否展開，控制收合按鈕圖示與 aria-label */
     sidebarOpen: boolean;
 }>();
 
 defineEmits<{
+    /** 使用者點擊收合按鈕，請求上層切換左側選單開關狀態 */
     (event: 'toggle-sidebar'): void;
 }>();
 
+/** 藍圖 store：讀寫目前的工具模式，供右側工具切換按鈕使用 */
 const editorStore = useEditorStore();
+/** 目前開啟的檔案名稱，顯示於右側徽章（暫為寫死值，尚未接檔案系統） */
 const fileName = ref('factory-layout-001.json');
 
+/** 工具列可切換的編輯模式清單，對應 editorStore.activeTool */
 const tools: Array<{ id: ToolMode; label: string }> = [
     { id: 'select', label: '選取' },
     { id: 'pan', label: '移動畫布' },

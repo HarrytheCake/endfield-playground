@@ -93,13 +93,14 @@ export async function runFlowEngine(): Promise<void>
 
 **現況**：`buildGraph` 與 `topologicalSort` 已實作於 `src/composables/useFlowEngine.ts`，使用 `FlowGraph` 作為共同抽象（含 `FlowNode` 與 `EdgeMeta`），輸入採 Vue Flow 的 `FactoryNode[]` / `FactoryEdge[]`。
 
-**為什麼不抽出純粹的 `DirectedGraph`**：原本 doc 計劃為 CR-03 detector 與 CR-04 FlowEngine 抽出更純的 `DirectedGraph` 共用，但實際評估 CR-03 六個 detector（E001~E006）後發現**沒有任何一個需要 topological 結構**：
+**為什麼不抽出純粹的 `DirectedGraph`**：原本 doc 計劃為 CR-03 detector 與 CR-04 FlowEngine 抽出更純的 `DirectedGraph` 共用，但實際評估 CR-03、CR-09、CR-10 的 detector（E001~E005、W001~W005）後發現多數只需要 (z, h) 佔用層與 port / 配方定義，不需要 topological 結構：
 
-- E001 設備重疊、E006 供電範圍 → 只需 `devices[]`
-- E002 port type 不符、E004 佈線違法、E005 接口重複連接 → 只需 `connections[]` 與 port 定義
-- E003 配方不符 → 可用 FlowGraph 既有的 `inputRates` / `outputRates`
+- E001 設備重疊、E003 超出基地框線、W004 設備未供電、W005 總耗電量超過供電量 → 只需 `devices[]`
+- E002 佈線違法 → 只需 `connections[]` 與已佔用格子的佔用層資訊
+- E004 輸入缺失、E005 輸出缺失、W001 材料組合無法處理 → 只需 `connections[]` 與 port / 配方定義
+- W002 輸入不足、W003 輸出阻塞 → 需要 FlowEngine 算出的 `edgeFlows`，而非 graph topology 本身
 
-因此 detector 直接接 `(devices, connections)` 或 FlowGraph 即可，不需要中間抽象層。後續若有新 detector 真的需要 graph topology，再回頭重構不遲。
+因此 detector 直接接 `(devices, connections)`、FlowGraph 或 FlowEngine 結果即可，不需要中間抽象層。後續若有新 detector 真的需要 graph topology，再回頭重構不遲。
 
 **對齊規則**：未來新增 graph 演算法（cycle、DFS、reachability）若有需要，新增到 `src/composables/useFlowEngine.ts` 旁邊（或同資料夾下的新檔），不再強制搬到 `src/lib/graph/`。
 

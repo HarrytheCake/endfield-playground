@@ -1,15 +1,15 @@
 # Feature Spec：配方流程設計（Flow Chart 視角）
 # CR-05
 
-**所屬階段：** Phase 1（視角切換 + 基礎 Flow Chart）/ Phase 2（新增流程、中間產物選擇、一鍵導入）
-**依賴：** CR-01（設備與配方資料）、CR-04（流量估算結果）
-**文件版本：** v0.2
+- **所屬階段：** Phase 1（佈局 / 流程視角切換 + 基礎 Flow Chart）/ Phase 2（並列視角、新增流程配方、中間產物選擇、一鍵導入）
+- **依賴：** CR-01（佈局視角設備擺放，與流程視角共用同一份產線資料）、CR-02（佈局視角管線連接，與流程視角共用同一份產線資料）、CR-04（節點效率顏色編碼、調度券兌換量顯示）、CR-08（流程視角操作納入操作歷史）
+- **文件版本：** v0.3
 
 ---
 
 ## 1. 功能定位
 
-流程視角是模擬器的核心賣點之一，讓使用者可以在抽象的「產物流向圖」與具體的「設備擺放藍圖」之間自由切換，兩者共用同一份產線資料。使用者可在流程視角進行高層次的配方規劃，再一鍵轉換為藍圖中的具體設備配置。
+流程視角是模擬器的核心賣點之一，讓使用者可以在抽象的「產物流向圖」與具體的「佈局視角設備配置」之間自由切換，兩者共用同一份產線資料。使用者可在流程視角進行高層次的配方規劃，再一鍵轉換為佈局視角中的具體設備配置。
 
 ---
 
@@ -19,11 +19,13 @@
 
 | 模式 | 說明 |
 |------|------|
-| **藍圖視角** | 完整格子畫布，設備擺放與管線操作（CR-01、CR-02 的主操作介面） |
+| **佈局視角** | 完整格子畫布，設備擺放與管線操作（CR-01、CR-02 的主操作介面） |
 | **流程視角** | Flow Chart 呈現產物節點、設備節點、連線效率與配比 |
-| **並列視角** | 藍圖與流程並排顯示，支援左右並排或上下並排，兩側同步聯動 |
+| **並列視角** | 佈局視角與流程視角並排顯示，支援左右並排或上下並排，兩側同步聯動 |
 
 三種視角共用同一份 Pinia store 資料，切換時不需重新載入。
+
+> **Phase 範圍：** Phase 1 僅支援「佈局視角 / 流程視角」二態切換；「並列視角」為 Phase 2 功能，Phase 1 尚不存在此模式。
 
 ---
 
@@ -46,32 +48,34 @@ Flow Chart 的節點與邊定義：
 
 **視覺佈局：**
 - 自左向右排列（原料 → 設備 → 產物），可自動佈局
-- 最終產物（無下游）顯示於最右側，底部標示對應調度券兌換量
+- 最終產物（無下游）顯示於最右側，底部標示對應調度券兌換量（Phase 2：依賴 CR-04 調度券兌換效率計算，Phase 1 不顯示此數值）
 - 節點顏色對應效率（同 CR-04 的顏色編碼：綠 / 黃 / 橘 / 灰）
 
 ### 3.2 並列視角 — 聯動行為
 
-#### Phase 1：點選導覽聯動
-- 點選任一側的設備或產物節點，另一側自動導覽（Pan + Zoom）至相應位置並高亮
-- 點選藍圖側設備 → 流程側對應設備節點高亮
-- 點選流程側設備節點 → 藍圖側對應設備高亮並居中
+> 並列視角整體為 Phase 2 功能，以下兩項聯動行為（點選導覽、編輯聯動）皆屬 Phase 2，Phase 1 不提供並列視角。
 
-#### Phase 2：編輯聯動
-- 在藍圖側新增 / 刪除設備或管線，流程側即時更新 Flow Chart
-- 在流程側新增配方（見 3.3），藍圖側即時顯示「待導入」提示
+#### 點選導覽聯動
+- 點選任一側的設備或產物節點，另一側自動導覽（Pan + Zoom）至相應位置並高亮
+- 點選佈局側設備 → 流程側對應設備節點高亮
+- 點選流程側設備節點 → 佈局側對應設備高亮並居中
+
+#### 編輯聯動
+- 在佈局側新增 / 刪除設備或管線，流程側即時更新 Flow Chart
+- 在流程側新增配方（見 3.3），佈局側即時顯示「待導入」提示
 - 兩側的配方選擇、中間產物設定保持同步
 
 ### 3.3 流程視角編輯功能（Phase 2）
 
 #### 新增流程配方
-使用者可在流程視角直接新增一個尚未在藍圖中存在的配方節點：
+使用者可在流程視角直接新增一個尚未在佈局視角中存在的配方節點：
 1. 點選「+ 新增配方」，選擇目標產物
 2. 系統列出可生產該產物的所有配方供選擇
 3. 確認後在 Flow Chart 中插入對應的設備節點與連線
 4. 右上角出現「**切換視角以導入**」按鈕提示
 
 #### 切換視角以導入
-1. 使用者點選「切換視角以導入」，畫面切換至藍圖視角
+1. 使用者點選「切換視角以導入」，畫面切換至佈局視角
 2. 滑鼠自動拖曳一組對應設備（預設配置），跟隨游標移動
 3. 使用者移動至目標位置後點選確認擺放
 4. 擺放完成後，管線接口的預設連接建議以虛線高亮顯示，使用者確認或忽略
@@ -79,135 +83,27 @@ Flow Chart 的節點與邊定義：
 #### 中間產物選擇
 在流程視角中，每個中間產物節點右鍵可選擇：
 - **使用產線生產**：保留現有配方節點
-- **從倉庫直取**：將該節點替換為倉庫節點，上游配方節點從 Flow Chart 移除（但藍圖中的設備不自動刪除，僅解除連線關係並顯示 Warning）
+- **從倉庫直取**：將該節點替換為倉庫節點，上游配方節點從 Flow Chart 移除（但佈局視角中的設備不自動刪除，僅解除連線關係並顯示 Warning）
 
 ---
 
-## 4. 狀態管理（Pinia Store）
+## 4. UI 規格
 
-### `useViewStore`
-```typescript
-{
-  currentView: 'blueprint' | 'flow' | 'split',
-  splitDirection: 'horizontal' | 'vertical',  // horizontal = 左右並排，vertical = 上下並排
-  splitRatio: number  // 並列比例，預設 0.5
-}
-```
+### 4.1 視角切換控項
 
-### `useFlowChartStore`
-```typescript
-{
-  nodes: FlowChartNode[],
-  edges: FlowChartEdge[],
-  pendingImports: PendingImport[]  // 待導入至藍圖的配方組
-}
+- 切換控項位於**編輯區左下角**，按 **Tab 鍵輪替**切換
+- 目前所在視角需有明顯的選取狀態呈現
+- **Phase 1：** 僅支援佈局 / 流程兩種視角，Tab 鍵依序輪替：佈局 → 流程 → 佈局…
+- **Phase 2：** 新增並列視角，Tab 鍵依序輪替：佈局 → 流程 → 並列 → 佈局…
+- 支援直接點選切換至對應視角
 
-// FlowChartNode
-{
-  uid: string,
-  type: 'source' | 'device' | 'product' | 'warehouse',
-  label: string,
-  deviceUid: string | null,      // 對應 PlacedDevice uid（若已在藍圖中）
-  itemId: string | null,
-  rate: number | null,           // 個/min，來自 CR-04 估算
-  efficiency: number | null,     // 0~1，來自 CR-04 估算
-  position: { x: number, y: number }  // Flow Chart 中的座標
-}
+### 4.2 並列視角版型
 
-// FlowChartEdge
-{
-  uid: string,
-  fromNodeUid: string,
-  toNodeUid: string,
-  itemId: string,
-  rate: number  // 個/min
-}
+- 支援**左右並排**（預設）與**上下並排**兩種排列方向，使用者可在並列視角中切換
+- 提供可拖移的分隔線，用以調整兩側顯示比例
+- 排列方向切換入口位於並列視角的分隔線旁
 
-// PendingImport
-{
-  recipeId: string,
-  deviceCount: number,
-  suggestedDevices: PlacedDevice[]  // 預設擺放位置（未確認）
-}
-```
-
-### Flow Chart 自動同步
-
-`useFlowChartStore` 的 nodes / edges 由 getter 從 `usePlacedDeviceStore` + `usePipelineStore` + `useFlowStore` 衍生計算，不獨立維護——藍圖狀態是單一來源，Flow Chart 是其衍生視圖。
-
-```typescript
-// 衍生計算：從藍圖狀態生成 Flow Chart 節點
-const derivedNodes = computed(() => {
-  return buildFlowChartNodes(
-    placedDeviceStore.devices,
-    pipelineStore.connections,
-    flowStore.nodeEfficiencies,
-    flowStore.edgeFlows
-  )
-})
-```
-
----
-
-## 5. UI 規格
-
-### 5.1 視角切換控項
-
-切換控項位於**編輯區左下角**，以三個圖示按鈕呈現三種視角狀態，按 **Tab 鍵輪替**切換：
-
-```
-╔══════════╗
-║          ║
-║  編輯區  ║
-║          ║
-║ [🗺][📊][⊞] ║  ← 左下角視角切換圖示
-╚══════════╝
-```
-
-| 圖示 | 視角 |
-|------|------|
-| 🗺（藍圖圖示） | 藍圖視角 |
-| 📊（流程圖示） | 流程視角 |
-| ⊞（並列圖示） | 並列視角 |
-
-- 目前所在視角的圖示顯示為選取狀態（高亮）
-- 按 Tab 鍵依序輪替：藍圖 → 流程 → 並列 → 藍圖…
-- 直接點選圖示可跳至對應視角
-
-### 5.2 並列視角版型
-
-並列視角支援**左右並排**與**上下並排**兩種排列方向，使用者可在並列視角中切換：
-
-**左右並排（預設）：**
-```
-┌────────────────────┬────────────────────┐
-│                    │                    │
-│   藍圖視角         │   流程視角          │
-│   （格子畫布）      │   （Flow Chart）    │
-│                    │                    │
-│  點選設備          │  對應節點高亮       │
-│  ←──────────────── │ ─────────────────→ │
-│                    │                    │
-└────────────────────┴────────────────────┘
-          ↔ 可拖移垂直分隔線調整比例
-```
-
-**上下並排：**
-```
-┌────────────────────────────────────────┐
-│   藍圖視角（格子畫布）                  │
-│                                        │
-│  點選設備 ↕ 對應節點高亮               │
-├────────────────────────────────────────┤
-│   流程視角（Flow Chart）               │
-│                                        │
-└────────────────────────────────────────┘
-          ↕ 可拖移水平分隔線調整比例
-```
-
-排列方向切換按鈕顯示於並列視角的分隔線旁。
-
-### 5.3 Flow Chart 節點樣式
+### 4.3 Flow Chart 節點樣式
 
 | 節點類型 | 樣式 |
 |----------|------|
@@ -219,113 +115,35 @@ const derivedNodes = computed(() => {
 
 ---
 
-## 6. 實作範例
-
-### 6.1 視角切換
-
-```typescript
-// useViewStore
-const VIEW_ORDER = ['blueprint', 'flow', 'split'] as const
-
-const setView = (view: typeof VIEW_ORDER[number]) => {
-  currentView.value = view
-}
-
-const cycleView = () => {
-  const currentIndex = VIEW_ORDER.indexOf(currentView.value)
-  const nextIndex = (currentIndex + 1) % VIEW_ORDER.length
-  currentView.value = VIEW_ORDER[nextIndex]
-}
-
-const toggleSplitDirection = () => {
-  splitDirection.value = splitDirection.value === 'horizontal' ? 'vertical' : 'horizontal'
-}
-
-// vueUse Tab 鍵輪替
-const { tab } = useMagicKeys()
-watch(tab, (pressed) => { if (pressed) viewStore.cycleView() })
-```
-
-### 6.2 Flow Chart 從藍圖衍生
-
-```typescript
-const buildFlowChartNodes = (
-  devices: PlacedDevice[],
-  connections: Connection[],
-  efficiencies: Map<string, number>,
-  edgeFlows: Map<string, EdgeFlow>
-): FlowChartNode[] => {
-  const nodes: FlowChartNode[] = []
-
-  for (const device of devices) {
-    const recipe = getRecipe(device.activeRecipe)
-    nodes.push({
-      uid: `node_${device.uid}`,
-      type: 'device',
-      label: getDeviceName(device.deviceId),
-      deviceUid: device.uid,
-      itemId: null,
-      rate: null,
-      efficiency: efficiencies.get(device.uid) ?? null,
-      position: autoLayoutPosition(device.uid)
-    })
-
-    // 為每個輸入 / 輸出品項建立產物節點
-    if (recipe) {
-      for (const output of recipe.outputs) {
-        if (!nodes.find(n => n.itemId === output.item)) {
-          nodes.push(buildProductNode(output.item, edgeFlows))
-        }
-      }
-    }
-  }
-
-  return nodes
-}
-```
-
-### 6.3 並列視角點選導覽
-
-```typescript
-// 點選藍圖側設備，流程側對應節點高亮
-const onBlueprintDeviceClick = (deviceUid: string) => {
-  const flowNode = flowChartStore.nodes.find(n => n.deviceUid === deviceUid)
-  if (flowNode) {
-    flowChartStore.highlightNode(flowNode.uid)
-    flowChartStore.panToNode(flowNode.uid)
-  }
-}
-
-// 點選流程側節點，藍圖側對應設備高亮
-const onFlowNodeClick = (nodeUid: string) => {
-  const node = flowChartStore.nodes.find(n => n.uid === nodeUid)
-  if (node?.deviceUid) {
-    placedDeviceStore.selectDevice(node.deviceUid)
-    canvasStore.panToDevice(node.deviceUid)
-  }
-}
-```
-
----
-
-## 7. 驗證方式
+## 5. 驗證方式
 
 | 驗證項目 | 方法 |
 |----------|------|
-| Tab 鍵輪替視角 | 連按 Tab 三次，確認依序切換藍圖 → 流程 → 並列 → 藍圖 |
-| 左下角圖示顯示 | 確認三個視角圖示顯示於編輯區左下角，當前視角圖示高亮 |
-| 點選圖示直接切換 | 點選非當前視角的圖示，確認直接跳至對應視角 |
-| 切換時資料不遺失 | 在藍圖側新增設備後切換至流程視角，確認節點出現 |
-| 並列左右並排 | 進入並列視角，確認預設為左右排列，可拖移垂直分隔線 |
-| 並列上下並排切換 | 點選排列方向切換按鈕，確認切換為上下排列，分隔線變水平 |
-| 並列比例調整 | 拖移分隔線，確認兩側比例即時更新 |
+| Tab 鍵輪替視角（Phase 1）| 連按 Tab 兩次，確認依序切換佈局 → 流程 → 佈局（僅二態） |
+| Tab 鍵輪替視角（Phase 2）| 連按 Tab 三次，確認依序切換佈局 → 流程 → 並列 → 佈局 |
+| 切換控項顯示 | 確認當前 Phase 對應數量的視角切換控項顯示於編輯區左下角，當前視角呈現選取狀態 |
+| 點選控項直接切換 | 點選非當前視角的控項，確認直接跳至對應視角 |
+| 切換時資料不遺失 | 在佈局側新增設備後切換至流程視角，確認節點出現 |
+| 並列左右並排（Phase 2）| 進入並列視角，確認預設為左右排列，可拖移垂直分隔線 |
+| 並列上下並排切換（Phase 2）| 點選排列方向切換按鈕，確認切換為上下排列，分隔線變水平 |
+| 並列比例調整（Phase 2）| 拖移分隔線，確認兩側比例即時更新 |
 | Flow Chart 正確呈現 | 建立簡單兩台設備產線，切至流程視角，確認節點與邊正確對應 |
+| 原料節點正確呈現 | 建立含原料輸入的產線，切至流程視角，確認原料節點顯示並標示供給速率 |
+| 倉庫節點樣式正確（Phase 2）| 觸發倉庫節點生成後，確認顯示為虛線邊框樣式 |
+| 邊上品項與流量顯示 | 檢視 Flow Chart 任一邊，確認顯示品項名稱與流量（個/min） |
+| 自動佈局排列順序 | 建立含原料、設備、產物的產線，確認 Flow Chart 由左至右依序排列 |
 | 效率顏色正確 | 製造輸入不足情況，確認設備節點顏色對應效率等級 |
-| 並列視角點選導覽（Phase 1）| 點選藍圖側設備，確認流程側對應節點高亮；反向同樣測試 |
-| 並列視角編輯聯動（Phase 2）| 在藍圖側新增設備，確認流程側即時更新 |
+| 調度券兌換量顯示（Phase 2）| 設定兌換率後，確認最終產物節點底部顯示對應兌換量；Phase 1 確認不顯示此數值 |
+| 並列視角點選導覽（Phase 2）| 點選佈局側設備，確認流程側對應節點高亮；反向同樣測試 |
+| 並列視角編輯聯動（Phase 2）| 在佈局側新增設備，確認流程側即時更新 |
 | 新增配方出現待導入按鈕（Phase 2）| 在流程視角新增配方，確認出現「切換視角以導入」提示 |
-| 一鍵導入流程（Phase 2）| 點選導入，確認切換至藍圖視角且滑鼠拖曳對應設備組 |
-| 中間產物倉庫直取（Phase 2）| 右鍵中間產物節點選「從倉庫直取」，確認上游節點移除，藍圖設備顯示 Warning |
+| 新增配方可選清單正確（Phase 2）| 點選「+ 新增配方」並選擇目標產物，確認列出所有可生產該產物的配方供選擇 |
+| 待導入節點樣式（Phase 2）| 新增流程配方後，確認插入的節點以虛線邊框、半透明樣式顯示 |
+| 一鍵導入流程（Phase 2）| 點選「切換視角以導入」，確認切換至佈局視角且滑鼠拖曳對應設備組 |
+| 一鍵導入確認擺放（Phase 2）| 拖曳中的設備移動至目標位置後點選確認，確認設備成功擺放於佈局視角 |
+| 一鍵導入管線建議顯示（Phase 2）| 擺放完成後，確認管線接口的預設連接建議以虛線高亮顯示，且可確認或忽略 |
+| 中間產物使用產線生產（Phase 2）| 右鍵中間產物節點選「使用產線生產」，確認配方節點維持不變 |
+| 中間產物倉庫直取（Phase 2）| 右鍵中間產物節點選「從倉庫直取」，確認上游節點移除，佈局視角設備顯示 Warning |
 
 ---
 

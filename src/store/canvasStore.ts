@@ -22,8 +22,8 @@ const BASE_REGION_SIZES: Record<Exclude<BaseRegion, null>, { w: number; h: numbe
  * canvasStore.toggleGrid()
  */
 export const useCanvasStore = defineStore('canvas', () => {
-    /** 單格像素大小（隨縮放變化） */
-    const gridSize = ref(40);
+    /** 單格像素大小；同時是 FactoryCanvas 畫布格線與 snap-to-grid 的唯一數值來源 */
+    const gridSize = ref(20);
 
     /** 畫布平移偏移（像素） */
     const offset = ref({ x: 0, y: 0 });

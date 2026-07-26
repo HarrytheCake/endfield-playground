@@ -30,7 +30,9 @@ export interface RecipeItem {
 export interface RecipeDef {
     /** 配方唯一識別碼，格式：`<machineId>_<productId>_<recipeIndex>` */
     id: string;
+    /** 此配方消耗的輸入品項清單 */
     inputs: RecipeItem[];
+    /** 此配方產出的輸出品項清單 */
     outputs: RecipeItem[];
     /** 使用此配方的設備名稱（對應 Machine.name） */
     machine: string;
@@ -54,8 +56,11 @@ export interface ProductDef {
 
 /** 有向圖邊的元資料 */
 export interface EdgeMeta {
+    /** 對應 Vue Flow edge.id / Connection uid */
     connectionUid: string;
+    /** 邊的來源設備 deviceUid */
     sourceDeviceUid: string;
+    /** 邊的目標設備 deviceUid */
     targetDeviceUid: string;
 }
 

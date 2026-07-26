@@ -1,15 +1,15 @@
 # Feature Spec：多目標優化產能推導
 # CR-07
 
-**所屬階段：** Phase 3
-**依賴：** CR-01（設備與配方定義）、CR-05（導入擺放視角流程）
-**文件版本：** v0.1
+- **所屬階段：** Phase 3
+- **依賴：** CR-01（設備與配方定義）、CR-05（部署至佈局視角流程）
+- **文件版本：** v0.3
 
 ---
 
 ## 1. 功能定位
 
-多目標優化頁面讓使用者在不考慮具體設備擺放位置的情況下，先設定產能目標與原料限制，由系統以線性規劃（LP）推導最佳配方流量分配，再透過「切換視角以導入」將結果轉入藍圖。
+多目標優化頁面讓使用者在不考慮具體設備擺放位置的情況下，先設定產能目標與原料限制，由系統以線性規劃（LP）推導最佳配方流量分配，再透過「切換視角以導入」將結果部署至佈局視角。
 
 ---
 
@@ -68,7 +68,7 @@
 
 ### 3.2 LP 求解
 
-**求解器：** `glpk.js`（WebAssembly 版，無後端需求）
+以連續線性規劃（LP）求解器求解，純前端執行、無後端需求（求解套件選型見 `00_top_spec.md` 待確認事項）。
 
 **模型建立：**
 
@@ -122,173 +122,33 @@
 
 微調後若違反原料上限約束，對應原料列顯示紅色超出提示（不阻擋使用者操作）。
 
-### 3.5 導入藍圖
+### 3.5 部署至佈局視角
 
-使用者確認結果後，點選「**切換視角以導入**」：
-1. 切換至藍圖視角（或並列視角）
-2. 系統依優化結果的設備清單，滑鼠拖曳一組預設設備配置
+使用者確認結果後，點選「**切換視角以導入**」，將優化結果部署為佈局視角中的一串初始佈局：
+1. 切換至佈局視角（或並列視角）
+2. 系統依優化結果的設備清單，滑鼠拖曳一組對應設備配置
 3. 使用者選擇擺放位置後確認
-4. 後續管線連接由使用者在藍圖視角手動完成（或 Phase 3 自動路徑規劃輔助）
+4. 後續管線連接由使用者在佈局視角手動完成（或 Phase 3 自動路徑規劃輔助）
 
 ---
 
-## 4. 狀態管理（Pinia Store）
-
-### `useOptimizationStore`
-
-```typescript
-{
-  // 輸入設定
-  materialConstraints: MaterialConstraint[],
-  productRequirements: ProductRequirement[],
-  ticketRates: TicketRate[],
-
-  // 求解狀態
-  solveStatus: 'idle' | 'solving' | 'optimal' | 'infeasible' | 'error',
-  solveResult: SolveResult | null,
-
-  // 微調狀態
-  adjustments: Map<string, { flow: number, deviceCount: number }>
-}
-
-// MaterialConstraint
-{
-  itemId: string,
-  maxRate: number  // 個/min
-}
-
-// ProductRequirement
-{
-  itemId: string,
-  minRate: number  // 個/min
-}
-
-// SolveResult
-{
-  recipeAllocations: {
-    recipeId: string,
-    deviceId: string,
-    allocatedFlow: number,   // 個/min
-    deviceCount: number,     // 向上取整
-    efficiency: number       // 0~1
-  }[],
-  totalTicketRate: number,   // 券/hr
-  materialUsage: {
-    itemId: string,
-    used: number,
-    available: number
-  }[]
-}
-```
-
----
-
-## 5. 實作範例
-
-### 5.1 GLPK.js 求解
-
-```typescript
-import GLPK from 'glpk.js'
-
-const solve = async (
-  recipes: Recipe[],
-  materials: MaterialConstraint[],
-  requirements: ProductRequirement[],
-  ticketRates: TicketRate[]
-): Promise<SolveResult> => {
-  const glpk = await GLPK()
-
-  const lp = {
-    name: 'AIC_Optimization',
-    objective: {
-      direction: glpk.GLP_MAX,
-      name: 'ticket_output',
-      vars: recipes.map(r => ({
-        name: r.id,
-        coef: calcTicketCoef(r, ticketRates)  // 每單位流量對應的券/hr
-      }))
-    },
-    subjectTo: [
-      // 原料上限約束
-      ...materials.map(m => ({
-        name: `material_${m.itemId}`,
-        vars: recipes
-          .filter(r => r.inputs.some(i => i.item === m.itemId))
-          .map(r => ({
-            name: r.id,
-            coef: r.inputs.find(i => i.item === m.itemId)!.rate_per_min
-          })),
-        bnds: { type: glpk.GLP_UP, ub: m.maxRate, lb: 0 }
-      })),
-      // 產物下限約束
-      ...requirements.map(req => ({
-        name: `requirement_${req.itemId}`,
-        vars: recipes
-          .filter(r => r.outputs.some(o => o.item === req.itemId))
-          .map(r => ({
-            name: r.id,
-            coef: r.outputs.find(o => o.item === req.itemId)!.rate_per_min
-          })),
-        bnds: { type: glpk.GLP_LO, lb: req.minRate, ub: Infinity }
-      }))
-    ],
-    bounds: recipes.map(r => ({
-      name: r.id,
-      type: glpk.GLP_LO,
-      lb: 0
-    }))
-  }
-
-  const result = glpk.solve(lp)
-  return parseGlpkResult(result, recipes)
-}
-```
-
-### 5.2 台數與流量聯動微調
-
-```typescript
-// 使用者調整台數
-const adjustDeviceCount = (recipeId: string, newCount: number) => {
-  const recipe = getRecipe(recipeId)
-  const singleDeviceOutput = recipe.outputs[0].rate_per_min  // 單台產出
-  const newFlow = singleDeviceOutput * newCount
-
-  optimizationStore.adjustments.set(recipeId, {
-    flow: newFlow,
-    deviceCount: newCount
-  })
-  recalcTotals()
-}
-
-// 使用者調整流量
-const adjustFlow = (recipeId: string, newFlow: number) => {
-  const recipe = getRecipe(recipeId)
-  const singleDeviceOutput = recipe.outputs[0].rate_per_min
-  const suggestedCount = Math.ceil(newFlow / singleDeviceOutput)
-  const efficiency = newFlow / (singleDeviceOutput * suggestedCount)
-
-  optimizationStore.adjustments.set(recipeId, {
-    flow: newFlow,
-    deviceCount: suggestedCount
-  })
-  recalcTotals()
-}
-```
-
----
-
-## 6. 驗證方式
+## 4. 驗證方式
 
 | 驗證項目 | 方法 |
 |----------|------|
 | 單一原料單一配方 | 設定赤銅礦 60/min，僅啟用赤銅晶配方，確認求解結果為 2 條滿效率 |
 | 多配方競爭原料 | 設定一種原料，兩種消耗它的配方有不同調度券產出，確認求解優先分配高效配方 |
+| 設備台數為衍生結果 | 求解後確認設備台數為分配流量向上取整計算所得，而非使用者可直接指定的獨立輸入 |
+| 硬性需求為選填 | 不設定任何硬性需求，確認求解僅受原料上限約束 |
 | 硬性需求約束 | 設定最低需求，確認求解結果滿足下限 |
+| 次要目標權重（選填） | 設定次要目標權重（如最小化設備總數），確認同等調度券產出下優先選擇符合次要目標的分配 |
 | 無解情況 | 設定原料嚴重不足以滿足硬性需求，確認顯示「無法達成目標」提示 |
+| 調度券兌換率反映 | 調整某產物的調度券兌換率，確認預估調度券產出即時重新計算 |
+| 原料瓶頸標示 | 使某原料使用率達到 100%，確認該原料列標示 ⚠️ 瓶頸 |
 | 台數調整聯動 | 增加設備台數，確認流量自動更新，總票券估算即時重算 |
 | 流量調整聯動 | 輸入新流量，確認建議台數更新、效率標示正確 |
 | 超出原料上限警示 | 微調至超出原料限制，確認紅色警示出現但不阻擋操作 |
-| 導入藍圖流程 | 確認結果後點選導入，確認切換至藍圖視角且滑鼠拖曳對應設備 |
+| 部署至佈局視角流程 | 確認結果後點選導入，確認切換至佈局視角且滑鼠拖曳對應設備 |
 
 ---
 

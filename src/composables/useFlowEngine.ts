@@ -31,7 +31,7 @@ import type {
     FlowEngineResult,
 } from '@/types/flow';
 import { BELT_RATE_LIMIT } from '@/types/flow';
-import { getRecipesForMachine } from '@/data/devices';
+import { getRecipesForMachine } from '@/data/products';
 import { getMachine } from '@/data/machines';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
@@ -45,6 +45,11 @@ import { useDebounceFn } from '@vueuse/core';
 /**
  * 依設備類型與配方索引取得 RecipeDef。
  * 使用 getRecipesForMachine（依設備名）而非 getRecipe（依產品名）。
+ * @param machineType 設備類型名稱（對應 MachineDef.name）
+ * @param recipeIndex 選用的配方索引
+ * @returns 對應的配方定義，找不到時為 undefined
+ * @example
+ * const recipe = getRecipeForNode('粉碎機', 0)
  */
 function getRecipeForNode(machineType: string, recipeIndex: number): RecipeDef | undefined {
     return getRecipesForMachine(machineType)[recipeIndex];
@@ -53,6 +58,10 @@ function getRecipeForNode(machineType: string, recipeIndex: number): RecipeDef |
 /**
  * D4 — 計算單台設備的理論輸入 / 輸出速率（個/min）。
  * ratePerMin = quantity × (60 / timeSeconds)
+ * @param recipe 該設備目前選用的配方
+ * @returns 各輸入 / 輸出品項的理論速率（個/min）
+ * @example
+ * const { inputRates, outputRates } = calcDeviceRate(recipe)
  */
 function calcDeviceRate(recipe: RecipeDef): {
     inputRates: Map<string, number>;
@@ -138,7 +147,14 @@ export function validateChains(graph: FlowGraph): void {
         if (node.isSink && node.isValid) {
             queue.push(uid);
             reachableSinks.add(uid);
+            if (import.meta.env.DEV) {
+                console.log(`[validateChains] 找到 Sink: ${uid}, machineType=${node.machineType}`);
+            }
         }
+    }
+
+    if (import.meta.env.DEV) {
+        console.log(`[validateChains] 共 ${queue.length} 個 Sink，開始反向 BFS`, Array.from(queue));
     }
 
     //  Step 2：反向 BFS，找出所有可以到達 sink 的節點
@@ -146,19 +162,42 @@ export function validateChains(graph: FlowGraph): void {
         const current = queue.shift()!;
         const incomingEdges = inEdges.get(current) ?? [];
 
+        if (import.meta.env.DEV && incomingEdges.length > 0) {
+            console.log(`[validateChains] 處理 ${current}, inEdges:`, incomingEdges);
+        }
+
         for (const connUid of incomingEdges) {
             const meta = edgeMeta.get(connUid);
-            if (!meta) continue;
+            if (!meta) {
+                if (import.meta.env.DEV) {
+                    console.log(`[validateChains] 邊 ${connUid} 無 meta，跳過`);
+                }
+                continue;
+            }
 
             const upstreamUid = meta.sourceDeviceUid;
             if (reachableSinks.has(upstreamUid)) continue; // 已訪問
 
             const upstreamNode = nodes.get(upstreamUid);
-            if (!upstreamNode || !upstreamNode.isValid) continue; // 已被 CR-03 或其他原因標記為非法
+            if (!upstreamNode || !upstreamNode.isValid) {
+                if (import.meta.env.DEV) {
+                    console.log(
+                        `[validateChains] 上游 ${upstreamUid} isValid=${upstreamNode?.isValid}，跳過`,
+                    );
+                }
+                continue; // 已被 CR-03 或其他原因標記為非法
+            }
 
+            if (import.meta.env.DEV) {
+                console.log(`[validateChains] 加入可達節點: ${upstreamUid}`);
+            }
             reachableSinks.add(upstreamUid);
             queue.push(upstreamUid);
         }
+    }
+
+    if (import.meta.env.DEV) {
+        console.log('[validateChains] 可達 Sink 的節點:', Array.from(reachableSinks));
     }
 
     //  Step 3：未被標記的節點加入 invalidSubgraphUids
@@ -174,6 +213,12 @@ export function validateChains(graph: FlowGraph): void {
         if (!node.isValid) continue; // 已非法，跳過
         if (node.isSource) continue; // source 節點不需要驗配方輸入
         if (node.isSink) continue; // sink 節點接受任意品項，不驗配方
+
+        // 檢查節點是否有配方（分流器、管道橋等無配方節點跳過驗證）
+        const recipe = getRecipeForNode(node.machineType, node.recipeIndex);
+        if (!recipe) {
+            continue; // 無配方的特殊節點（如分流器）不需要驗證
+        }
 
         // 蒐集上游所有邊傳入的品項（此時尚未計算速率，只看品項種類）
         const incomingEdgeUids = inEdges.get(uid) ?? [];
@@ -220,6 +265,9 @@ export function validateChains(graph: FlowGraph): void {
 /**
  * 正向 BFS：將已標記為非法的節點，其所有下游節點也標記為非法。
  * 這確保配方不符節點不會「污染」下游計算。
+ * @param graph FlowEngine 有向圖，會直接修改其 invalidSubgraphUids
+ * @example
+ * _propagateInvalidDownstream(graph)
  */
 function _propagateInvalidDownstream(graph: FlowGraph): void {
     const { nodes, outEdges, edgeMeta } = graph;
@@ -449,6 +497,51 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
             for (const [itemId, rate] of received) node.inputRates.set(itemId, rate);
             node.efficiency = 1;
         } else {
+            // 檢查是否為分流器（無配方節點，需特殊處理）
+            const machineDef = getMachine(node.machineType);
+            const isSplitter =
+                machineDef && (machineDef.name === '分流器' || machineDef.name === '管道分流器');
+
+            if (isSplitter) {
+                // 分流器邏輯：輸入流量均分至所有輸出邊
+                const received = nodeInputReceived.get(uid) ?? new Map();
+                let totalInput = 0;
+                let inputItemId: string | undefined;
+
+                for (const [itemId, rate] of received) {
+                    totalInput += rate;
+                    inputItemId = itemId;
+                }
+
+                if (totalInput > 0 && inputItemId) {
+                    node.inputRates.set(inputItemId, totalInput);
+                    node.efficiency = 1;
+
+                    const outputCount = outEdgeUids.length;
+                    const ratePerOutput = outputCount > 0 ? totalInput / outputCount : 0;
+
+                    for (const connUid of outEdgeUids) {
+                        const meta = edgeMeta.get(connUid);
+                        if (!meta) continue;
+
+                        const rate = Math.min(ratePerOutput, BELT_RATE_LIMIT);
+                        edgeFlows.set(connUid, {
+                            connectionUid: connUid,
+                            itemId: inputItemId,
+                            rate,
+                            isCongested: false,
+                        });
+
+                        const downstream = nodeInputReceived.get(meta.targetDeviceUid);
+                        if (downstream)
+                            downstream.set(inputItemId, (downstream.get(inputItemId) ?? 0) + rate);
+                    }
+                } else {
+                    node.efficiency = 0;
+                }
+                continue;
+            }
+
             // 一般設備（D5 calcDeviceOutput）
             const received = nodeInputReceived.get(uid) ?? new Map();
             const recipe = getRecipeForNode(node.machineType, node.recipeIndex);

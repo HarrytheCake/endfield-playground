@@ -43,6 +43,8 @@ export interface ValidationContext {
     connections: FactoryEdge[];
     /** 取得設備靜態定義（耗電量、port 配置、tags 等） */
     getDef: (machineType: string) => Machine | undefined;
+    /** 目前選定的基地類型（用於邊界檢查，null = 自由畫布） */
+    baseRegion: import('@/store/canvasStore').BaseRegion;
 }
 
 /**

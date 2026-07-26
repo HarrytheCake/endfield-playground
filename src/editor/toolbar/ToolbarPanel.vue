@@ -2,8 +2,10 @@
 import type { EquipmentType } from '@/types/editor';
 import { useEditorStore } from '@/store/editorStore';
 
+/** 藍圖 store：武裝放置模式與記錄目前選取設備類型 */
 const editorStore = useEditorStore();
 
+/** 工具列可選擇的設備清單，供點擊武裝放置與拖拉放置共用 */
 const equipments: Array<{ id: EquipmentType; label: string }> = [
     { id: 'smelter', label: '精煉爐' },
     { id: 'crusher', label: '粉碎機' },
@@ -12,10 +14,24 @@ const equipments: Array<{ id: EquipmentType; label: string }> = [
     { id: 'power-node', label: '電力節點' },
 ];
 
+/**
+ * 點擊設備按鈕時武裝放置模式，之後點擊畫布即可放置該設備。
+ * @param equipment 選擇的設備類型
+ * @example
+ * handleEquipClick('smelter')
+ */
 function handleEquipClick(equipment: EquipmentType) {
     editorStore.armPlacement(equipment);
 }
 
+/**
+ * 開始拖拉設備按鈕時，記錄目前選取設備並將類型寫入 dataTransfer，
+ * 供畫布 drop 事件讀取以決定要放置的設備類型。
+ * @param event 拖拉開始事件
+ * @param equipment 被拖拉的設備類型
+ * @example
+ * handleEquipDragStart(dragEvent, 'crusher')
+ */
 function handleEquipDragStart(event: DragEvent, equipment: EquipmentType) {
     editorStore.setSelectedEquipment(equipment);
 

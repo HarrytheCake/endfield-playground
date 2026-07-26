@@ -20,6 +20,7 @@
 
 import { watch } from 'vue';
 import { useEditorStore } from '@/store/editorStore';
+import { useCanvasStore } from '@/store/canvasStore';
 import { useValidationStore } from '@/store/validationStore';
 import { getMachine } from '@/data/machines';
 import type { ValidationContext } from '@/types/validation';
@@ -32,17 +33,23 @@ import type { ValidationContext } from '@/types/validation';
  */
 export function useValidation() {
     const editorStore = useEditorStore();
+    const canvasStore = useCanvasStore();
     const validationStore = useValidationStore();
 
     /**
      * 從目前的 editorStore 建立 ValidationContext。  \
      * getDef 直接代理至 `getMachine`，提供 detector 取得設備靜態定義。
+     * baseRegion 從 canvasStore 取得，用於 E002 / E006 等邊界檢查。
+     * @returns 供各 detector 讀取的驗證上下文
+     * @example
+     * const context = buildContext()
      */
     function buildContext(): ValidationContext {
         return {
             devices: editorStore.nodes,
             connections: editorStore.edges,
             getDef: getMachine,
+            baseRegion: canvasStore.baseRegion,
         };
     }
 

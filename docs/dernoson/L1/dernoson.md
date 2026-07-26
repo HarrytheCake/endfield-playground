@@ -162,7 +162,7 @@ L3 不直接接觸 L1，但 dernoson 需確保：
 | Phase 1 啟動 | 先把 `useHistoryStore` + `createMacroCommand` + Detector 介面三件事凍結 |
 | Phase 1 中期 | 全力 review L1 各 store 的 high-level action：是否在內部自動產生並推入正確的 Command |
 | Phase 1 後期 | 開始 review L2 PR，確保 L2 都透過 L1 high-level action 操作、沒有自己包 Command 或繞過 L1 直接寫 state |
-| Phase 2 起 | 把 W001–W005 的觸發時機與 W003 / W004 與 FlowEngine 結果的依賴關係釐清 |
+| Phase 2 起 | 把 W001–W005 的觸發時機與 W002 / W003 與 FlowEngine 結果的依賴關係釐清 |
 
 ---
 

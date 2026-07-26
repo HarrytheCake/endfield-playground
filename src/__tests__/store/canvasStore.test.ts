@@ -14,9 +14,9 @@ import { useCanvasStore } from '@/store/canvasStore';
 describe('useCanvasStore — 初始狀態', () => {
     beforeEach(() => setActivePinia(createPinia()));
 
-    it('gridSize 預設為 40 像素', () => {
+    it('gridSize 預設為 20 像素（與 FactoryCanvas 的 snap-to-grid 一致）', () => {
         const store = useCanvasStore();
-        expect(store.gridSize).toBe(40);
+        expect(store.gridSize).toBe(20);
     });
 
     it('offset 預設為 (0, 0)', () => {

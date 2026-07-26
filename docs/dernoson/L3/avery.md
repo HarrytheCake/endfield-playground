@@ -33,7 +33,7 @@ avery 負責四個區塊的純展示元件。雖然元件數量比較多（13 �
 
 > **元件資料夾命名慣例**：每個元件對應一個 PascalCase 資料夾，主元件用 `Index.vue` 命名，該元件的子元件以 PascalCase 平鋪在同一資料夾下。範例：`src/components/DeviceToolbar/Index.vue`（主）、`src/components/DeviceToolbar/DeviceCard.vue`（子）。
 
-### 2.1 DeviceToolbar（下方設備工具列，CR-01 spec 5.3）
+### 2.1 DeviceToolbar（下方設備工具列，CR-11 §3.1）
 
 | 元件 | 路徑 | 複雜度 |
 |---|---|---|
@@ -42,7 +42,7 @@ avery 負責四個區塊的純展示元件。雖然元件數量比較多（13 �
 | `DeviceCard` | `src/components/DeviceToolbar/DeviceCard.vue` | 很簡單 |
 | `ToolbarSearch` | `src/components/DeviceToolbar/ToolbarSearch.vue` | 很簡單 |
 
-### 2.2 Canvas 管線類子元件（CR-02 §5.1～5.2、§2.3、§2.5）
+### 2.2 Canvas 管線類子元件（CR-02 §4.1～4.2、§2.3、§2.6）
 
 主畫布 `Canvas/Index.vue` 由 L2 harry / toby 寫，以下為其子元件，與 goodmorning 的 Canvas 設備類共用同一個資料夾 `src/components/Canvas/`。
 
@@ -53,7 +53,7 @@ avery 負責四個區塊的純展示元件。雖然元件數量比較多（13 �
 | `PipelineDraft` | `src/components/Canvas/PipelineDraft.vue` | 中（繪製中預覽路徑、90 度違規線段標紅） |
 | `AutoNodeBadge` | `src/components/Canvas/AutoNodeBadge.vue` | 簡單（分流/匯流/物流橋圖示，分流/匯流可切換截斷模式按鈕） |
 
-### 2.3 視角切換 UI（CR-05 §5.1～5.2）
+### 2.3 視角切換 UI（CR-05 §4.1～4.2）
 
 | 元件 | 路徑 | 複雜度 |
 |---|---|---|
@@ -61,7 +61,7 @@ avery 負責四個區塊的純展示元件。雖然元件數量比較多（13 �
 | `SplitLayout`（主） | `src/components/SplitLayout/Index.vue` | 中（拖移分隔線） |
 | `SplitOrientationToggle`（主） | `src/components/SplitOrientationToggle/Index.vue` | 簡單 |
 
-### 2.4 警示列表（CR-03 §2.4）
+### 2.4 警示列表（CR-03 §2.5）
 
 | 元件 | 路徑 | 複雜度 |
 |---|---|---|

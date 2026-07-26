@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia';
 import { useFlowStore } from '@/store/flowStore';
 import { useEditorStore } from '@/store/editorStore';
 
+/** FlowEngine 計算結果 store：本面板所有統計數字的資料來源 */
 const flowStore = useFlowStore();
+/** 藍圖 store：讀取目前選定計畫與畫布設備數量 */
 const editorStore = useEditorStore();
 
 const {
@@ -25,10 +27,16 @@ const {
     warehouseEstimates,
 } = storeToRefs(flowStore);
 
+/** 解構 flowStore 的 action，供調度券兌換率與倉庫容量輸入框直接呼叫 */
 const { setTicketRate, setWarehouseCapacity } = flowStore;
 
 // ── V2-B：調度券 + 倉庫 local state ─────────────────────────────────────────
+/** 倉庫容量輸入框的顯示字串（與 store 的數值分離，避免使用者輸入過程被格式化打斷） */
 const capacityInput = ref('');
+/**
+ * store 的 warehouseCapacity 可能被其他來源（如載入計畫）改變，
+ * 需同步回輸入框顯示字串，否則輸入框會停留在舊值。
+ */
 watch(
     warehouseCapacity,
     (v) => {
@@ -37,26 +45,43 @@ watch(
     { immediate: true },
 );
 
+/**
+ * 倉庫容量輸入框失焦時，將輸入字串轉為數字寫回 store；非法輸入視為 0。
+ * @example
+ * onCapacityBlur()
+ */
 function onCapacityBlur(): void {
     const n = Number(capacityInput.value);
     setWarehouseCapacity(Number.isFinite(n) ? n : 0);
 }
 
+/** 有淨產出（net > 0）的品項清單，僅這些品項可設定調度券兌換率 */
 const ticketItems = computed(() => itemSummary.value.filter((s) => s.net > 0.001));
+/** 調度券預估區塊的明細是否展開 */
 const ticketDetailsOpen = ref(false);
 
+/** 解構 editorStore 的響應式參照，供畫布概況與計畫相關區塊使用 */
 const { nodeCount, currentPlan, machineUsedCounts } = storeToRefs(editorStore);
 
 // G2：電力狀態文字
+/** 電力狀態顯示文字，依盈餘 / 不足呈現不同圖示與數值 */
 const powerStatusText = computed(() => {
     const abs = Math.abs(powerBalance.value).toFixed(1);
     return hasPowerShortage.value ? `⚠️ 不足 ${abs} kW` : `✅ 盈餘 ${abs} kW`;
 });
+/** 電力狀態文字顏色，不足為紅色、盈餘為綠色 */
 const powerStatusClass = computed(() =>
     hasPowerShortage.value ? 'text-red-400' : 'text-green-400',
 );
 
 // G3：淨產量顏色
+/**
+ * 依淨產量正負回傳顏色 class。
+ * @param net 淨產量
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = netClass(1.5)
+ */
 function netClass(net: number): string {
     if (net > 0.005) return 'text-green-400';
     if (net < -0.005) return 'text-red-400';
@@ -64,6 +89,13 @@ function netClass(net: number): string {
 }
 
 // G3：效率顏色
+/**
+ * 依效率高低回傳對應顏色 class。
+ * @param eff 效率（0~1 以上，>1 表示超額供給）
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = effClass(0.8)
+ */
 function effClass(eff: number): string {
     if (eff >= 1) return 'text-green-500';
     if (eff >= 0.5) return 'text-yellow-400';
@@ -85,13 +117,26 @@ const materialUsage = computed(() => {
         });
 });
 
-/** remaining 文字：null = ∞ */
+/**
+ * 將剩餘原料配額格式化為顯示文字，無上限品項顯示為無限符號。
+ * @param remaining 剩餘配額，null 代表無上限
+ * @returns 顯示用文字
+ * @example
+ * const text = remainingText(12.5)
+ */
 function remainingText(remaining: number | null): string {
     if (remaining === null) return '∞';
     return remaining.toFixed(1);
 }
 
-/** remaining 顏色 */
+/**
+ * 依剩餘原料配額比例回傳警示顏色 class，越接近用罄顏色越偏紅。
+ * @param allocated 該原料的總配額，null 代表無上限
+ * @param remaining 剩餘配額，null 代表無上限
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = remainingClass(100, 5)
+ */
 function remainingClass(allocated: number | null, remaining: number | null): string {
     if (allocated === null || remaining === null) return 'text-zinc-400';
     if (remaining < -0.005) return 'text-red-400';
@@ -155,7 +200,14 @@ const machineUsage = computed(() => {
         .filter((m) => m.used > 0 || m.limit !== null);
 });
 
-/** 機器數量顏色 */
+/**
+ * 依機器已用數量相對於上限的比例回傳警示顏色 class，越接近上限顏色越偏紅。
+ * @param used 已使用台數
+ * @param limit 數量上限，null 代表無上限
+ * @returns Tailwind class 字串
+ * @example
+ * const cls = machineCountClass(8, 10)
+ */
 function machineCountClass(used: number, limit: number | null): string {
     if (limit === null) return 'text-zinc-300';
     if (used >= limit) return 'text-red-400';
