@@ -1,8 +1,9 @@
 # History 模組 format-check 追蹤
 
-**狀態**：🔶 封鎖中（等待 History 模組 CR）  
+**狀態**：✅ 已結案  
 **優先級**：中  
 **建立日期**：2026-06-06  
+**結案日期**：2026-07-26  
 **負責人**：History CR (dernoson) + CR-04 (aaaaa)
 
 ---
@@ -77,12 +78,12 @@ pnpm test
 
 ## 完成標準
 
-- [ ] 4 支 history 檔案執行 `pnpm format`
-- [ ] `pnpm format-check` 通過（零錯誤）
-- [ ] `pnpm type-check` 通過
-- [ ] `pnpm lint-check` 通過
-- [ ] `pnpm test` 通過
-- [ ] PR 建立並通過 review
+- [x] 4 支 history 檔案執行 `pnpm format`
+- [x] `pnpm format-check` 通過（零錯誤）
+- [x] `pnpm type-check` 通過
+- [x] `pnpm lint-check` 通過
+- [x] `pnpm test` 通過
+- [x] PR 建立並通過 review
 
 ---
 
@@ -110,5 +111,5 @@ pnpm test
 
 ---
 
-**最後更新**：2026-06-06  
-**下次檢查**：等待 History CR 開工後每週確認
+**最後更新**：2026-07-26  
+**狀態備註**：4 支 history 檔案已完成格式化並通過完整驗證流程，本追蹤結案
