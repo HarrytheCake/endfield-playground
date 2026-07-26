@@ -76,6 +76,7 @@ const previewRotation = ref<Rotation>(0);
  */
 const rotateTargetUid = ref<string | null>(null);
 
+/** 監聽鍵盤按鍵狀態，供下方 R 鍵旋轉、Esc 取消放置的 watch 讀取 */
 const keys = useMagicKeys();
 
 /** 拿起狀態結束（放置或取消）時，重置預覽旋轉為 0，避免殘留到下一次拿起 */
@@ -185,10 +186,11 @@ function handlePaneClick(event: MouseEvent) {
     editorStore.disarmPlacement();
 }
 
-/*
- * 處理畫布上節點的點擊事件。
- * 記錄該節點為目前 R 鍵旋轉的目標。
- * @param param0 - VueFlow 節點點擊事件物件。
+/**
+ * 記錄被點擊的節點為目前 R 鍵旋轉的目標，讓 R 鍵 watch 知道要旋轉哪個已放置設備。
+ * @param event VueFlow 節點點擊事件，僅取用其中的 node
+ * @example
+ * handleNodeClick({ node, event: mouseEvent } as NodeMouseEvent)
  */
 function handleNodeClick({ node }: NodeMouseEvent) {
     rotateTargetUid.value = node.id;
