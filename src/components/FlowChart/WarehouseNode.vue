@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { Handle, Position, type NodeProps } from '@vue-flow/core'
-const props = defineProps<NodeProps<{ label: string; iconUrl: string; itemName: string }>>()
+import { Handle, Position, type NodeProps } from '@vue-flow/core';
+const props = defineProps<NodeProps<{ label: string; iconUrl: string; itemName: string }>>();
 </script>
 
 <template>
-  <div 
-    class="px-4 py-3 rounded-full bg-amber-50 border-2 border-dashed border-amber-400 text-sm shadow-sm flex flex-col items-center justify-center min-w-[12.5] aspect-ratio-4/3;"
-    :class="{ 'border-solid border-blue-500 ring-2 ring-blue-200': selected }"
-  >
-    <Handle type="target" :position="Position.Left" />
-    
-    <div class="text-xl mb-0.5">{{ data.iconUrl }}</div>
-    <div class="text-xs font-bold text-amber-900">{{ data.label }}</div>
-    <div class="text-[11px] text-amber-700">品項: {{ data.itemName }}</div>
-  </div>
+    <div
+        class="aspect-ratio-4/3; flex min-w-[12.5] flex-col items-center justify-center rounded-full border-2 border-dashed border-amber-400 bg-amber-50 px-4 py-3 text-sm shadow-sm"
+        :class="{ 'border-solid border-blue-500 ring-2 ring-blue-200': selected }"
+    >
+        <Handle type="target" :position="Position.Left" />
+
+        <div class="mb-0.5 text-xl">{{ data.iconUrl }}</div>
+        <div class="text-xs font-bold text-amber-900">{{ data.label }}</div>
+        <div class="text-[11px] text-amber-700">品項: {{ data.itemName }}</div>
+    </div>
 </template>
