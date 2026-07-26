@@ -22,7 +22,7 @@
                         updateFacing
                     </li>
                     <li>• <strong>自動記錄</strong>：所有 editorStore 操作自動進入歷史堆疊</li>
-                    <li>• <strong>深度限制</strong>：最多保留 50 步，超過自動刪除最舊記錄</li>
+                    <li>• <strong>完整保留</strong>：所有操作依序保留在歷史堆疊中，可逐步復原至最初狀態</li>
                 </ul>
 
                 <p class="mt-3 font-semibold">測試流程：</p>
@@ -121,7 +121,7 @@
                     @click="runScenario3"
                     class="rounded-md bg-purple-600 px-3 py-2 text-xs text-white hover:bg-purple-700"
                 >
-                    場景 3：測試深度限制（51 步）
+                    場景 3：連續 51 次操作
                 </button>
             </div>
             <div
@@ -161,7 +161,6 @@
                 </div>
                 <div class="text-sm text-gray-600 dark:text-gray-400">
                     Depth: <span class="font-mono font-semibold">{{ historyStore.undoDepth }}</span>
-                    / 50
                 </div>
             </div>
         </div>
@@ -442,12 +441,12 @@ async function runScenario2() {
 }
 
 /**
- * 連續擺放 51 次設備，驗證歷史堆疊在超過深度上限後是否僅保留最新 50 筆記錄。
+ * 連續擺放 51 次設備，驗證歷史堆疊完整保留每一筆操作，undoDepth 應等於實際操作次數。
  * @example
  * await runScenario3()
  */
 async function runScenario3() {
-    scenarioMessage.value = '執行中：測試深度限制（51 步）...';
+    scenarioMessage.value = '執行中：連續擺放 51 次設備...';
     for (let i = 0; i < 51; i++) {
         await new Promise((resolve) => setTimeout(resolve, 50));
         testPlaceDevice();
@@ -455,7 +454,7 @@ async function runScenario3() {
             scenarioMessage.value = `執行中：${i + 1} / 51 步...`;
         }
     }
-    scenarioMessage.value = `✓ 完成！Undo Stack 應只保留最新 50 筆（深度限制生效），當前 Depth: ${historyStore.undoDepth}`;
+    scenarioMessage.value = `✓ 完成！Undo Stack 完整保留 51 筆記錄，當前 Depth: ${historyStore.undoDepth}`;
 }
 </script>
 
