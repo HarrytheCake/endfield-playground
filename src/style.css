@@ -116,6 +116,15 @@ body,
     background: #0c0c0f;
 }
 
+/*
+ * Vue Flow 預設佈景（theme-default.css）會給 .vue-flow__node-default 外層加上白色背景，
+ * 但節點的實際背景已由 FlowNodeOverlay.vue 內層自繪；旋轉時內外層footprint 不再重疊，
+ * 若不清掉外層白色，旋轉後會露出外層未旋轉的白色背景。
+ */
+.vue-flow__node.vue-flow__node-default {
+    background-color: transparent;
+}
+
 .toolbar-bottom {
     display: flex;
     flex-direction: column;
