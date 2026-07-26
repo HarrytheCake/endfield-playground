@@ -1,6 +1,6 @@
-# harry 工作筆記 — L2 容器層 Owner (CR-01 + CR-02)
+# harry 工作筆記 — L2 容器層 Owner (CR-01 + CR-02 + CR-11)
 
-**角色：** L2 容器層 Owner（CR-01 畫布 + CR-02 管線 合併區塊）  
+**角色：** L2 容器層 Owner（CR-01 畫布 + CR-02 管線 + CR-11 工具列 合併區塊）  
 **配對：** 與 toby（Senior IC）共同負責 L2  
 **技術棧：** Vue 3 Composition API + Pinia + Vue Flow
 
@@ -328,10 +328,10 @@ const alertLevel = computed(() => {
 
 | 模組 | 工作內容 |
 |------|----------|
-| **CR-01 工具列 → 畫布 拿起流程** | 點選工具列設備 → 呼叫 `editorStore.armPlacement(equipment)` → 滑鼠移動時維護預覽座標 → 單擊放置時呼叫 `editorStore.placeDevice(node)` |
+| **CR-11 工具列 → 畫布 拿起流程** | 點選工具列設備 → 呼叫 `editorStore.armPlacement(equipment)` → 滑鼠移動時維護預覽座標 → 單擊放置時呼叫 `editorStore.placeDevice(node)` |
 | **CR-01 R 鍵旋轉 / Esc 取消** | 用 `useMagicKeys` 綁定，旋轉於拿起預覽中以 L2 local state 處理 |
 | **CR-01 連續擺放** | 工具列拿起的設備放下後保持 armed 狀態，按 Esc 才結束 |
-| **CR-01 配方變更** | 點選已部署設備 → 左側面板顯示配方表 → 切換時呼叫 `editorStore.setRecipe(uid, recipeIndex)` |
+| **CR-01 配方變更** | 點選已擺放設備 → 左側面板顯示配方表 → 切換時呼叫 `editorStore.setRecipe(uid, recipeIndex)` |
 | **CR-02 管線模式切換** | P 鍵 / 工具列按鈕呼叫 `editorStore.setActiveTool(tool)` 切到管線工具 |
 | **CR-02 起點選取與 type 判斷** | 點選 port → 從 machine 定義取 `PortType` → L2 container 內維護 draft 狀態 |
 | **CR-02 手動彎折點新增** | 繪製中點選空格 → 推入 L2 local draft 的 waypoints 陣列 |
@@ -369,6 +369,7 @@ const alertLevel = computed(() => {
 - 📗 [FlowEngine Guide](../aaaaa/FLOW_ENGINE_GUIDE.md) — FlowEngine 使用指南
 - 📄 [Spec: Canvas & Devices](../../spec/01_canvas_and_devices.md) — CR-01 規格
 - 📄 [Spec: Pipeline](../../spec/02_pipeline.md) — CR-02 規格
+- 📄 [Spec: Toolbar](../../spec/11_toolbar.md) — CR-11 規格
 - 📋 [角色定位](../dernoson/L2/harry.md) — 完整職責定義
 
 ### 開發工具

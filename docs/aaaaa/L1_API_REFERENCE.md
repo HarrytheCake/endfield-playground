@@ -62,7 +62,7 @@ L1 基礎建設層提供 **6 個 Pinia stores**，負責管理：
 
 | 欄位 | 類型 | 說明 |
 |------|------|------|
-| `nodes` | `FactoryNode[]` | 所有已部署設備 |
+| `nodes` | `FactoryNode[]` | 所有已擺放設備 |
 | `edges` | `FactoryEdge[]` | 所有管線連接 |
 | `currentPlan` | `Plan \| null` | 目前載入的藍圖方案 |
 | `activeTool` | `ToolMode` | 目前工具模式（'select' / 'place' / 'connect' / 'delete'） |
@@ -749,7 +749,7 @@ L2/L3 不需要自己寫 detector，由 shirone 負責。
 ### 跨 CR 協調
 
 - CR-01 遷移 `machineType` 為 `Machine.id`（V5-D1）
-- CR-03 補齊 E001–E006 detector（shirone）
+- CR-03 補齊 E001–E003 detector（shirone）
 - CR-02 補上分流 / 匯流 macro 邏輯
 
 ---

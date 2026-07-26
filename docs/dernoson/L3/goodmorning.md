@@ -57,7 +57,7 @@
 interface Props {
   /** 目前選取的設備靜態資料；null = 沒有選取，顯示空狀態 */
   device: DeviceInfo | null
-  /** 該設備在畫布上的部署實例（從工具列拿起時為 null） */
+  /** 該設備在畫布上的擺放實例（從工具列拿起時為 null） */
   placedInstance: PlacedDeviceInfo | null
   /** 預設 Tab */
   defaultTab?: 'recipe' | 'shape' | 'power'
@@ -83,7 +83,7 @@ interface RecipeView {
 
 interface Props {
   recipes: RecipeView[]
-  activeRecipeId: string | null      // 已部署設備才有值
+  activeRecipeId: string | null      // 已擺放設備才有值
   canSwitch: boolean                 // = placedInstance != null
 }
 
@@ -156,7 +156,7 @@ interface Props {
 
 1. **PowerInfoTab**（半天）— 最簡單，先熟悉 L3 規範與 Tailwind
 2. **RecipeListTab 靜態版**（1 天）— 接 mock data，先不處理切換配方 emit
-3. **RecipeListTab 加切換 emit**（半天）— 已部署設備可切換配方
+3. **RecipeListTab 加切換 emit**（半天）— 已擺放設備可切換配方
 4. **DeviceShapeDiagram**（1～2 天）— SVG 繪製、可獨立 Storybook 驗收
 5. **DeviceShapeTab**（半天）— 把 Diagram 包進 Tab、加文字說明
 6. **InfoPanel/Index.vue**（半天）— 包成 Tab 容器、處理空狀態

@@ -198,7 +198,7 @@ function efficiencyColor(e: number): string {
 ### 從 CR-01 讀取（設備資料）
 ```typescript
 // 預期從 useEditorStore 取得
-const devices: PlacedDevice[]   // 已部署設備列表
+const devices: PlacedDevice[]   // 已擺放設備列表
 // 預期從 src/data/devices.ts 取得
 const deviceDef = getDeviceDef(deviceId: string): DeviceDef
 // DeviceDef 必須含：power_cost, power_output?, ports[], recipes[]

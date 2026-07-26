@@ -60,11 +60,11 @@ pnpm test E001
 對每個新 detector：
 
 ```bash
-src/lib/validation/detectors/E002_portTypeMismatch.ts
-src/lib/validation/detectors/E003_recipeMismatch.ts
-src/lib/validation/detectors/E004_illegalRouting.ts
-src/lib/validation/detectors/E005_duplicateOutput.ts
-src/lib/validation/detectors/E006_powerCoverage.ts
+src/lib/validation/detectors/E002_illegalRouting.ts
+src/lib/validation/detectors/W004_powerCoverage.ts
+src/lib/validation/detectors/W001_unmatchedMaterial.ts
+src/lib/validation/detectors/E002_portTypeMismatch.ts  # deprecated：此情境依現行 spec 不會發生
+src/lib/validation/detectors/E005_duplicateOutput.ts   # deprecated：此情境依現行 spec 不會發生
 ```
 
 模板（直接 copy E001 那個檔案，把 code / level / 描述換掉）：
@@ -112,4 +112,4 @@ export const E00X_xxx: Detector = {
 1. 補完 E001 `run()` 邏輯 + 對應單元測試
 2. 跑一次 `pnpm validate-all` 確認通過
 3. 開 PR，dernoson 會 review detector 規則邏輯
-4. 接續 E002 → E006
+4. 依序完成清單中其餘 detector

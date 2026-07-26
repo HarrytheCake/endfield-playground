@@ -13,7 +13,7 @@
 - 更新 `useValidation.ts` 中 context 組裝邏輯
 
 **背景**：
-E006（供電範圍偵測）需要知道當前在哪個基地，以決定是否允許中繼器。
+供電範圍偵測需要知道當前在哪個基地，以套用對應的供電樁覆蓋範圍。
 
 ---
 
@@ -99,25 +99,23 @@ const ctx: ValidationContext = {
 
 ---
 
-### 4.3 更新 E006 detector 使用方式
+### 4.3 更新 W004 detector 使用方式
 
-**檔案**：`src/lib/validation/detectors/E006_powerCoverage.ts`（範例）
+**檔案**：`src/lib/validation/detectors/W004_powerCoverage.ts`（範例）
 
 ```typescript
-export const E006_powerCoverage: Detector = {
-  code: 'E006',
-  level: 'error',
+export const W004_powerCoverage: Detector = {
+  code: 'W004',
+  level: 'warning',
   run(ctx: ValidationContext): Alert[] {
     const alerts: Alert[] = [];
     
-    // 排除中繼器（僅基地模式）
+    // 中繼器不允許擺放，devices 中不會存在，此處僅作防禦性排除
     const powerSupplies = ctx.devices.filter(d => {
       const def = ctx.getDef(d.data.machineType);
       if (!def || def.category !== '電力') return false;
-      
-      // 基地模式排除中繼器
-      if (ctx.baseRegion !== null && def.id === 'relay') return false;
-      
+      if (def.id === 'relay') return false;
+
       return true;
     });
     
@@ -197,7 +195,7 @@ it('ctx.baseRegion 正確傳遞當前基地', async () => {
 **遷移計畫**：
 - 先更新 `validation.ts` 型別
 - 然後更新 `useValidation.ts` 組裝邏輯
-- 最後更新 E006 使用方式
+- 最後更新 W004 使用方式
 - 執行 `pnpm type-check` 確認無錯誤
 
 ---
@@ -208,7 +206,7 @@ it('ctx.baseRegion 正確傳遞當前基地', async () => {
 |------|------|
 | 型別檢查 | `pnpm type-check` 通過 |
 | 測試通過 | 所有 validation 相關測試不 break |
-| E006 正確 | 基地模式排除中繼器，自由畫布允許 |
+| W004 正確 | 中繼器一律不出現於 devices 中，供電範圍計算不受影響 |
 
 ---
 

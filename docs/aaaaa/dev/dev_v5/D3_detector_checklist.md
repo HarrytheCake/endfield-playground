@@ -37,11 +37,11 @@ graph LR
 ```
 src/lib/validation/detectors/
 ├── E001_deviceOverlap.ts       ✅ 範例
-├── E002_outOfBounds.ts          ⚠️ 待實作
-├── E003_invalidRecipe.ts        ⚠️ 待實作
-├── E004_portOccupied.ts         ⚠️ 待實作
-├── E005_incompatibleConnection.ts  ⚠️ 待實作
-├── E006_baseRegionViolation.ts  ⚠️ 待實作
+├── E003_outOfBaseRegion.ts      ⚠️ 待實作
+├── W001_unmatchedMaterial.ts    ⚠️ 待實作
+├── E004_portOccupied.ts         deprecated（此情境依現行 spec 不會發生）
+├── E005_incompatibleConnection.ts  deprecated（此情境依現行 spec 不會發生）
+├── E006_baseRegionViolation.ts  deprecated（與 `E003_outOfBaseRegion.ts` 指向同一現行代號）
 └── index.ts                     ✅ 匯出所有 detectors
 ```
 
@@ -253,17 +253,17 @@ function buildGraph() {
 import { useValidationStore } from '@/store/validationStore';
 import {
   E001_deviceOverlap,
-  E002_outOfBounds,
-  E003_invalidRecipe,
+  E003_outOfBaseRegion,
+  W001_unmatchedMaterial,
   // ...
 } from '@/lib/validation/detectors';
 
 const validationStore = useValidationStore();
 
-// 註冊所有 detectors
+// 註冊所有 detectors（deprecated 項目不註冊）
 validationStore.registerDetector(E001_deviceOverlap);
-validationStore.registerDetector(E002_outOfBounds);
-validationStore.registerDetector(E003_invalidRecipe);
+validationStore.registerDetector(E003_outOfBaseRegion);
+validationStore.registerDetector(W001_unmatchedMaterial);
 // ...
 ```
 
@@ -271,7 +271,7 @@ validationStore.registerDetector(E003_invalidRecipe);
 
 ```typescript
 console.log('已註冊 detectors:', validationStore.detectors.size);
-// 預期：6（E001 ~ E006）
+// 預期：3（E001、E003、W001）
 ```
 
 ---
@@ -300,7 +300,7 @@ console.log('已註冊 detectors:', validationStore.detectors.size);
 
 | 項目 | 標準 |
 |------|------|
-| 實作完整 | 6 個 Detectors 全部實作 |
+| 實作完整 | E001、E003、W001 detectors 全部實作（deprecated 項目免實作） |
 | 測試覆蓋 | 每個 Detector 至少 4 個測試案例 |
 | 型別正確 | `pnpm type-check` 無錯誤 |
 | 格式正確 | `pnpm lint-check` 無錯誤 |

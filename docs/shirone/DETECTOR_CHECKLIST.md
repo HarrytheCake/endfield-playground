@@ -41,11 +41,11 @@ graph LR
 ```
 src/lib/validation/detectors/
 ├── E001_deviceOverlap.ts       ✅ 範例實作（可參考）
-├── E002_outOfBounds.ts          ⚠️ 待實作
-├── E003_invalidRecipe.ts        ⚠️ 待實作
-├── E004_portOccupied.ts         ⚠️ 待實作
-├── E005_incompatibleConnection.ts  ⚠️ 待實作
-├── E006_baseRegionViolation.ts  ⚠️ 待實作
+├── E003_outOfBaseRegion.ts      ⚠️ 待實作
+├── W001_unmatchedMaterial.ts    ⚠️ 待實作
+├── E004_portOccupied.ts         deprecated（此情境依現行 spec 不會發生）
+├── E005_incompatibleConnection.ts  deprecated（此情境依現行 spec 不會發生）
+├── E006_baseRegionViolation.ts  deprecated（與 `E003_outOfBaseRegion.ts` 指向同一現行代號）
 └── index.ts                     ✅ 匯出檔案
 ```
 
@@ -54,11 +54,11 @@ src/lib/validation/detectors/
 | Code | 名稱 | 狀態 | 測試 | 文件 | 負責人 |
 |------|------|------|------|------|--------|
 | E001 | 設備重疊 | ✅ 完成 | ✅ 8 個案例 | ✅ | shirone |
-| E002 | 超出邊界 | ⚠️ 待實作 | ❌ | ❌ | shirone |
-| E003 | 配方錯誤 | ⚠️ 待實作 | ❌ | ❌ | shirone |
-| E004 | Port 佔用 | ⚠️ 待實作 | ❌ | ❌ | shirone |
-| E005 | 連接不相容 | ⚠️ 待實作 | ❌ | ❌ | shirone |
-| E006 | 基地範圍違規 | ⚠️ 待實作 | ❌ | ❌ | shirone |
+| E003 | 超出基地框線 | ⚠️ 待實作 | ❌ | ❌ | shirone |
+| W001 | 材料組合無法處理 | ⚠️ 待實作 | ❌ | ❌ | shirone |
+| E004 | Port 佔用 | deprecated | — | — | shirone |
+| E005 | 連接不相容 | deprecated | — | — | shirone |
+| E006 | 基地範圍違規 | deprecated（同 E003） | — | — | shirone |
 
 **更新方式**：完成一個 Detector 後，將狀態改為 ✅ 並填寫測試數量。
 
@@ -331,8 +331,8 @@ console.log(flowStore.nodeEfficiencies.has('device2'));    // false
 
 | 項目 | 標準 |
 |------|------|
-| **實作完整** | 6 個 Detectors 全部實作 |
-| **測試覆蓋** | 每個 Detector 至少 4 個案例，總計 24+ 個測試 |
+| **實作完整** | E001、E003、W001 detectors 全部實作（deprecated 項目免實作） |
+| **測試覆蓋** | 每個 Detector 至少 4 個案例，總計 12+ 個測試 |
 | **型別檢查** | `pnpm type-check` 無錯誤 |
 | **Lint 檢查** | `pnpm lint-check` 無警告 |
 | **格式檢查** | `pnpm format-check` 無錯誤 |
