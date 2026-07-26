@@ -13,9 +13,13 @@ import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
 import { useFlowStore } from '@/store/flowStore';
 import FlowNodeOverlay from './FlowNodeOverlay.vue';
+import PipelineEdge from './PipelineEdge.vue';
 
 /** 自訂節點型別：覆寫 default，加入效率 overlay */
 const nodeTypes = { default: FlowNodeOverlay };
+
+/** 自訂邊型別：pipeline 依 bendPoints 畫出直角折線管線（CR-02 §2.3） */
+const edgeTypes = { pipeline: PipelineEdge };
 
 const editorStore = useEditorStore();
 const selectionStore = useSelectionStore();
@@ -220,6 +224,7 @@ function handleCanvasDrop(event: DragEvent) {
             v-model:nodes="nodes"
             v-model:edges="edges"
             :node-types="nodeTypes"
+            :edge-types="edgeTypes"
             :fit-view-on-init="true"
             :nodes-draggable="true"
             :zoom-on-scroll="true"
