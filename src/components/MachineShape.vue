@@ -29,10 +29,22 @@ const props = defineProps<{
     unitSize: number;
 }>();
 
+/** 矩形實際寬度（像素），由格子寬度換算而來，供 SVG viewBox 與 rect 寬度共用 */
 const rectWidthPx = computed(() => props.machine.width * props.unitSize);
+
+/** 矩形實際高度（像素），由格子高度換算而來，供 SVG viewBox 與 rect 高度共用 */
 const rectHeightPx = computed(() => props.machine.height * props.unitSize);
 
-/** 依 PortDef 計算該 port 在畫布上的 1 單位線段座標 */
+/**
+ * 依 PortDef 的 side / offset 算出該 port 在矩形邊界上的線段座標（起訖點）。
+ * 僅處理 0° 旋轉時的絕對方位，旋轉後的 side / offset 需由外部先套用  \
+ * rotatePortSide / rotatePortOffset 換算好再傳入，本函式不處理旋轉。
+ * @param port 要計算座標的 port 定義
+ * @returns 該 port 的線段兩端座標與原始 side / type，供 template 畫 line 使用
+ * @example
+ * const { x1, y1, x2, y2 } = portLine({ side: 'top', offset: 0, type: 'input' })
+ * // x1, y1, x2, y2 為矩形上緣第 0 格的線段座標
+ */
 function portLine(port: PortDef) {
     const u = props.unitSize;
     const w = props.machine.width;
@@ -71,16 +83,25 @@ function portLine(port: PortDef) {
     return { x1, y1, x2, y2, side: port.side, type: port.type };
 }
 
+/** 所有 input_ports 換算好的線段座標，缺省時視為空陣列，供 template 畫綠色線段 */
 const inputLines = computed(() => (props.machine.input_ports || []).map(portLine));
 
+/** 所有 output_ports 換算好的線段座標，缺省時視為空陣列，供 template 畫紅色線段 */
 const outputLines = computed(() => (props.machine.output_ports || []).map(portLine));
 
-/** 字級依矩形較短邊自動縮放，避免長 id 溢出過多 */
+/**
+ * 顯示 id 用的字級（像素），依矩形較短邊的比例縮放，  \
+ * 避免小型機器把字級撐到超出矩形，同時設下限 10px 保持可讀性。
+ */
 const fontSize = computed(() =>
     Math.max(10, Math.min(rectWidthPx.value, rectHeightPx.value) * 0.16),
 );
 
-/** 若 id 過長，允許 SVG 自動壓縮字寬以塞入矩形內 */
+/**
+ * 當估算出的文字寬度超過矩形寬度的 90% 時，回傳一個壓縮後的目標寬度，  \
+ * 交給 SVG `textLength` + `lengthAdjust` 自動壓字距與字寬塞進矩形；  \
+ * 未超出時回傳 null，代表不需要壓縮，維持文字原始寬度。
+ */
 const idTextLength = computed(() => {
     const estimatedWidth = String(props.machine.id).length * fontSize.value * 0.62;
     return estimatedWidth > rectWidthPx.value * 0.9 ? rectWidthPx.value * 0.9 : null;
