@@ -201,11 +201,11 @@ describe('useValidation — runValidation()', () => {
             editor.edges = [];
 
             const vs = useValidationStore();
-
             const { runValidation } = useValidation();
 
             // 新增 detector 之後手動觸發（detector 註冊本身不會觸發 watch）
-            vs.registerDetector(makeSpyDetector('E001').detector);
+            vs.registerDetector(makeSpyDetector('spy_E001').detector);
+
             editor.nodes = [makeNode('n1')];
             runValidation();
 
