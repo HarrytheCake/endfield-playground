@@ -29,6 +29,35 @@ describe('getRecipesForMachine()', () => {
     it('不存在的機器名稱回傳空陣列', () => {
         expect(getRecipesForMachine('不存在的機器')).toEqual([]);
     });
+
+    it('modeId 過濾只回傳相符或未標 mode 的配方', () => {
+        const all = getRecipesForMachine('精煉爐');
+        const liquid = getRecipesForMachine('精煉爐', 'liquid_mode');
+        expect(liquid.length).toBeGreaterThan(0);
+        expect(liquid.length).toBeLessThanOrEqual(all.length);
+        for (const r of liquid) {
+            expect(r.machineMode == null || r.machineMode === 'liquid_mode').toBe(true);
+        }
+    });
+
+    it('氣態相關配方帶 machineMode', () => {
+        const gas = getAllRecipes().filter(
+            (r) =>
+                r.machineMode === 'gas_mode' ||
+                r.machineMode === 'solid_mode' ||
+                r.machineMode === 'gas_liquid_mode',
+        );
+        expect(gas.length).toBeGreaterThan(0);
+        for (const r of gas) {
+            expect(r.machineMode).toBeTruthy();
+            expect(r.environment).toBeTruthy();
+        }
+    });
+
+    it('固氣轉化機 solid_mode 可查息壤配方', () => {
+        const recipes = getRecipesForMachine('固氣轉化機', 'solid_mode');
+        expect(recipes.some((r) => r.outputs.some((o) => o.itemId === '息壤'))).toBe(true);
+    });
 });
 
 // ─── getRecipesByProduct() ───────────────────────────────────────────────────

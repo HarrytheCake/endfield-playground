@@ -40,6 +40,22 @@ describe('machineList', () => {
         expect(source?.is_source).toBe(true);
         expect(sink?.is_sink).toBe(true);
     });
+
+    it('每台機器都有非空 modes，且埠 media 為 belt|pipe', () => {
+        for (const m of machineList) {
+            expect(m.modes.length).toBeGreaterThan(0);
+            for (const mode of m.modes) {
+                for (const port of [...mode.input_ports, ...mode.output_ports]) {
+                    expect(['belt', 'pipe']).toContain(port.media);
+                }
+            }
+        }
+    });
+
+    it('塑型機含 gas_mode（多型態）', () => {
+        const m = machineList.find((x) => x.name === '塑型機');
+        expect(m?.modes.some((mode) => mode.id === 'gas_mode')).toBe(true);
+    });
 });
 
 // ─── machineMap ──────────────────────────────────────────────────────────────

@@ -40,9 +40,9 @@ const rectHeightPx = computed(() => props.machine.height * props.unitSize);
  * 僅處理 0° 旋轉時的絕對方位，旋轉後的 side / offset 需由外部先套用  \
  * rotatePortSide / rotatePortOffset 換算好再傳入，本函式不處理旋轉。
  * @param port 要計算座標的 port 定義
- * @returns 該 port 的線段兩端座標與原始 side / type，供 template 畫 line 使用
+ * @returns 該 port 的線段兩端座標與原始 side / media，供 template 畫 line 使用
  * @example
- * const { x1, y1, x2, y2 } = portLine({ side: 'top', offset: 0, type: 'input' })
+ * const { x1, y1, x2, y2 } = portLine({ side: 'top', offset: 0, media: 'belt' })
  * // x1, y1, x2, y2 為矩形上緣第 0 格的線段座標
  */
 function portLine(port: PortDef) {
@@ -80,7 +80,7 @@ function portLine(port: PortDef) {
             x1 = x2 = y1 = y2 = 0;
     }
 
-    return { x1, y1, x2, y2, side: port.side, type: port.type };
+    return { x1, y1, x2, y2, side: port.side, media: port.media };
 }
 
 /** 所有 input_ports 換算好的線段座標，缺省時視為空陣列，供 template 畫綠色線段 */

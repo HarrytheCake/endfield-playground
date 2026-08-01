@@ -1,8 +1,8 @@
 /**
- * Machine 型別定義
+ * Machine 型別定義（V7：對齊 docs/aaaaa/data schema v3）
  *
  * 機器物理特性（靜態）與行為函式佔位（Phase 1 全為 null）。
- * Port 採用「0° 旋轉時的絕對方位 + offset」格式；旋轉工具函式見本檔末尾。
+ * Port 採用「0° 旋轉時的絕對方位 + offset + media」格式。
  */
 
 // ─── 基礎型別 ─────────────────────────────────────────────────────────────────
@@ -11,15 +11,19 @@
 export type PortSide = 'top' | 'right' | 'bottom' | 'left';
 
 /**
- * Port 傳輸介質類型
+ * Port 傳輸媒質（對齊 data_1 `media`）
  *
- * - `'item'`   — 固體物品（由輸送帶連接）
- * - `'liquid'` — 液體 / 氣體（由管道連接）
+ * - `'belt'` — 輸送帶（固體）
+ * - `'pipe'` — 管線（液體／氣體）
  *
- * 同一台機器的輸入或輸出埠可同時存在兩種類型（例如：灌裝機的液體進料 + 固體工件進料）。
- * FlowEngine 與管線連接驗證應拒絕跨類型連接（item port ↔ liquid port）。
+ * FlowEngine 與連線驗證應拒絕跨媒質連接（belt ↔ pipe）。
  */
-export type PortType = 'item' | 'liquid';
+export type PortMedia = 'belt' | 'pipe';
+
+/**
+ * @deprecated V7 起改用 {@link PortMedia}（`belt`｜`pipe`）。保留別名僅供過渡閱讀。
+ */
+export type PortType = PortMedia;
 
 /** 機器分類標籤（對齊 docs/aaaaa/data/machine_tags.json） */
 export type MachineCategory = '物流設備' | '倉庫存取' | '基礎生產' | '合成製造' | '電力';
@@ -36,8 +40,34 @@ export interface PortDef {
     side: PortSide;
     /** 沿該方位邊緣的格子偏移 */
     offset: number;
-    /** 傳輸介質類型：固體物品或液體 */
-    type: PortType;
+    /** 傳輸媒質：belt（固體）／pipe（液體／氣體） */
+    media: PortMedia;
+}
+
+/**
+ * 機器運轉損耗（資料面；V7 FlowEngine 暫不納入計算）
+ */
+export interface MachineLoss {
+    /** 損耗物品名（材料或產品名） */
+    item: string;
+    /** 每台機器每分鐘消耗量 */
+    rate_per_min: number;
+}
+
+/**
+ * 機器型態（modes[] 為埠／損耗的權威來源）
+ */
+export interface MachineMode {
+    /** 型態 id，機器內唯一；配方 machineMode／layout 引用 */
+    id: string;
+    /** 顯示名稱 */
+    label: string;
+    /** 此型態的輸入埠 */
+    input_ports: readonly PortDef[];
+    /** 此型態的輸出埠 */
+    output_ports: readonly PortDef[];
+    /** 無損耗時為 null */
+    loss: MachineLoss | null;
 }
 
 // ─── 行為函式型別（Phase 1 全為 null 佔位）────────────────────────────────────
@@ -75,8 +105,7 @@ export type MachineEfficiencyFn = null | ((inputs: Map<string, number>) => numbe
  * 靜態屬性（readonly）描述機器的固有物理特性，不隨放置狀態改變。
  * 行為函式在 Phase 1 均為 null，Phase 2+ 依需逐台覆寫。
  *
- * 旋轉支援：PlacedDevice 持有 rotation: 0|1|2|3，
- * 使用本檔末尾的 rotatePortSide / rotatePortOffset 計算世界方位。
+ * `modes` 為埠／損耗權威來源；頂層 input_ports／output_ports 與 modes[0] 同步以相容舊邏輯。
  */
 export interface Machine {
     // ── 靜態屬性 ──────────────────────────────────────────────────────────────
@@ -88,9 +117,9 @@ export interface Machine {
     readonly width: number;
     /** 機器佔用格數（高），0° 旋轉時的靜態尺寸 */
     readonly height: number;
-    /** 輸入埠定義清單（0° 旋轉時的靜態座標） */
+    /** 輸入埠定義清單（相容欄位；權威見 modes[0]） */
     readonly input_ports: readonly PortDef[];
-    /** 輸出埠定義清單（0° 旋轉時的靜態座標） */
+    /** 輸出埠定義清單（相容欄位；權威見 modes[0]） */
     readonly output_ports: readonly PortDef[];
     /**
      * 耗電量（kW）。
@@ -103,9 +132,30 @@ export interface Machine {
     readonly is_source: boolean;
     /** 是否為物品輸入口（產線終點，產值計算的 sink） */
     readonly is_sink: boolean;
+    /** 設定是否已簽核（data v3） */
+    readonly config_signed_off?: boolean;
+    /** 多型態定義（非空）；埠與 loss 的權威來源 */
+    readonly modes: readonly MachineMode[];
     // ── 行為函式佔位（Phase 1 全為 null）─────────────────────────────────────
     onTick: MachineTickFn;
     onInput: MachineInputFn;
     onOutput: MachineOutputFn;
     calcEfficiency: MachineEfficiencyFn;
+}
+
+/**
+ * 取得機器指定型態；modeId 缺省或找不到時回退 modes[0]。
+ *
+ * @param machine 機器定義
+ * @param modeId 型態 id
+ * @returns 對應 MachineMode
+ * @example
+ * const mode = getMachineMode(crusher, 'gas_mode')
+ */
+export function getMachineMode(machine: Machine, modeId?: string): MachineMode {
+    if (modeId) {
+        const found = machine.modes.find((m) => m.id === modeId);
+        if (found) return found;
+    }
+    return machine.modes[0];
 }
