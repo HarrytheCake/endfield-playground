@@ -1,10 +1,10 @@
 ﻿# CR-04｜FlowEngine 靜態流量分析引擎
 
 **負責人：** aaaaa  
-**階段：** L1 基礎建設完成 ✅ / V5 開發者支援進行中 ⚠️  
+**階段：** L1 基礎建設完成 ✅ / V5 交付完成 / V6 已鎖定 / V7 完成 / V8 實作完成 / **V9 文件就緒（規劃）**  
 **依賴 CR：** CR-01（設備擺放）、CR-02（管線連接）、CR-03（警示與 Error 狀態）  
-**文件版本：** v2.1  
-**最後更新：** 2026-06-06
+**文件版本：** v3.0  
+**最後更新：** 2026-08-02
 
 ---
 
@@ -13,10 +13,20 @@
 **我是 L2/L3 開發者，我想：**
 - 📖 查詢 L1 API → [L1 API Reference](./L1_API_REFERENCE.md)
 - 🔧 使用 FlowEngine → [FlowEngine Guide](./FLOW_ENGINE_GUIDE.md)
-- 📝 查看工項進度 → [todolist_v5.md](./dev/todolist_v5.md)
-- 📂 瀏覽技術文件 → [dev_v5/](./dev/dev_v5/)
-- 🧪 測試 FlowEngine → `/dev/flow-engine`（開發環境）
+- 📝 查看工項進度 → [todolist_v9.md](./dev/todolist_v9.md)（現行規劃）｜[todolist_v8.md](./dev/todolist_v8.md)（A–G 完成）｜[todolist_v6.md](./dev/todolist_v6.md)（已鎖定）
+- 📂 瀏覽技術文件 → [dev_v9/](./dev/dev_v9/)｜[dev_v8/](./dev/dev_v8/)｜[dev_v7/](./dev/dev_v7/)｜[dev_v6/](./dev/dev_v6/)
+- 🧪 測試 FlowEngine → `/dev/flow-engine`（引擎／機器／產品分頁；H1–H11 + V7／V8）
 - 🎯 開發 Detector → [shirone/DETECTOR_CHECKLIST.md](../shirone/DETECTOR_CHECKLIST.md)
+- 🖱️ 拖曳 Undo 里程碑 → [MILESTONE_0726.md](./MILESTONE_0726.md)
+- 📦 資料版本 → [data_0/](./data_0/)（舊）｜[data_1/](./data_1/)（新來源）｜[data/](./data/)（工作副本）
+  - 同步：`pnpm sync:aaaaa-data`｜重產 `src/data`：`pnpm generate:src-data`
+
+**我是 Agent / 維護者，我想：**
+- 開發守則 → [claude/CLAUDE.md](./claude/CLAUDE.md)
+- 專有名詞 → [claude/CONTEXT.md](./claude/CONTEXT.md)
+- Agent 快速上下文 → [AGENT_CONTEXT.md](./AGENT_CONTEXT.md)
+- GitHub Agent 提示 → [CR04.agent.md](../../.github/agents/CR04.agent.md)
+- Skills / Agents 設定 → [claude/](./claude/)（`skills/`、`agents/`、`launch.json`）
 
 ---
 
@@ -42,7 +52,7 @@
 
 ---
 
-### V5 開發者支援與測試基礎設施（⚠️ 進行中，2026-06-06）
+### V5 開發者支援與測試基礎設施（CR-04 交付完成，2026-06-06）
 
 **目標**：為 L2/L3 開發者提供完整的開發輔助工具與文件
 
@@ -53,8 +63,84 @@
 - ✅ L1 API 完整文件（56 KB，含 L2 README 更新）
 - ✅ 跨 CR 協調追蹤文件（3 份）
 
+**剩餘封鎖（非 CR-04 可單方關閉）**：
+- V5-D1：等待 CR-01 `machineType` → `Machine.id` 遷移
+- V5-D2：等待 History 模組 format-check
+
 **詳細清單**：[todolist_v5.md](./dev/todolist_v5.md)  
-**技術文件**：[dev_v5/](./dev/dev_v5/) 資料夾（15 份文件）
+**技術總覽**：[dev_v5.md](./dev/dev_v5.md)  
+**細項文件**：[dev_v5/](./dev/dev_v5/)（15 份）  
+**初始化報告**：[V5_INIT_REPORT.md](./V5_INIT_REPORT.md)
+
+---
+
+### V7 資料 v3 遷移（✅ 完成，2026-08-01）
+
+**目標**：對齊 `data_1` schema；同版更新 types、`src/data`、FlowEngine 最小支援。
+
+**完成項目**：
+- ✅ `docs/aaaaa/data/` 由 `data_1` 原樣同步（`pnpm sync:aaaaa-data`）
+- ✅ `src/data` codegen（`pnpm generate:src-data`）：machines／products／plans／environments
+- ✅ `PortMedia: belt | pipe`；機器 `modes[]`；節點 `machineMode`
+- ✅ FlowEngine：mode 配方過濾 + belt↔pipe 媒質檢查；`loss` 不算進 summary
+- ✅ 測試與 `/dev/flow-engine` V7 preset（G1–G3／L1）
+- ✅ 對外文件更新（本 README、AGENT_CONTEXT、FLOW_ENGINE_GUIDE、claude CONTEXT）
+
+**詳細清單**：[todolist_v7.md](./dev/todolist_v7.md)  
+**細項文件**：[dev_v7/](./dev/dev_v7/)
+
+---
+
+### V8 Dev 預覽＋FlowEngine 埠／媒質／速率（✅ 實作完成 A–G，2026-08-02）
+
+**目標**：flow-engine 內機器／產品分頁；引擎側單埠單線、belt 30／pipe 60、`form` 物態；H8 改匯流堵塞；拓樸跟 ports。
+
+**完成項目**：
+- ✅ `/dev/flow-engine` 機器／產品分頁（JSON＋placeholder）
+- ✅ 單埠單線；`PIPE_RATE_LIMIT=60`；`form`↔belt／pipe；H8 匯流堵塞 15／15
+- ✅ 拓樸依 `machineMode.ports`；切 mode 更新標籤
+- ✅ 測試：`flowEngine.v8.*`、`itemForm`、`topologyPortUtils`（全庫約 250）
+
+**定案摘要**：
+- V6 維持鎖定；驗證僅 FlowEngine（CR-04 先行）
+- 本版不做：CR-02 UI 拒絕、正式圖像、loss→summary
+
+**詳細清單**：[todolist_v8.md](./dev/todolist_v8.md)  
+**細項文件**：[dev_v8/](./dev/dev_v8/)
+
+### V6 拖曳進歷史（🔒 已鎖定）
+
+- 實作完成：`commitDeviceMove` + FactoryCanvas 接線；單元測試通過
+- **尚未完成**：手動 M1–M7 驗收（見 [todolist_v6.md](./dev/todolist_v6.md)／[D2](./dev/dev_v6/D2_manual_test_plan.md)）
+- 不開新功能；管線跟隨屬 CR-02
+
+### V9 強化視覺化預覽工具（📋 文件就緒，2026-08-02）
+
+**目標**：modes-only 埠、產品／材料分離、基礎材料輸出點、tag 分頁、WxH 格點拓樸、反向最短鏈路、引擎依輸入匹配配方、案例盤點後演示。
+
+**定案摘要**：
+- `products.json`／`materials.json` 分冊；停止假產品注入
+- 新建「基礎材料輸出點」（依 form→belt／pipe）；物品輸出口僅固體
+- 引擎：輸入不齊無產出；齊全後自動匹配配方
+- 最短鏈路＝回推至基礎材料之最少配方步數（無循環）
+- F2 演示等待 F1 盤點
+
+**詳細清單**：[todolist_v9.md](./dev/todolist_v9.md)  
+**細項文件**：[dev_v9/](./dev/dev_v9/)
+
+---
+
+## Agent 開發設定（claude/）
+
+| 路徑 | 說明 |
+|------|------|
+| [claude/CLAUDE.md](./claude/CLAUDE.md) | CR-04 開發守則（版本工作流、邊界、提交門檻） |
+| [claude/CONTEXT.md](./claude/CONTEXT.md) | FlowEngine 專有名詞 |
+| [claude/launch.json](./claude/launch.json) | 本地 dev 啟動設定 |
+| [claude/skills/](./claude/skills/) | `validate-changes`、`add-jsdoc`、`flow-engine-test` |
+| [claude/agents/](./claude/agents/) | `test-writer`、`dependency-grapher` |
+
+套用方式見 [CLAUDE.md §13](./claude/CLAUDE.md)。
 
 ---
 
@@ -107,6 +193,35 @@
 | [E2_agent_md_update.md](./dev/dev_v5/E2_agent_md_update.md) | CR04.agent.md 更新計畫 |
 | [E3_readme_update.md](./dev/dev_v5/E3_readme_update.md) | README.md 更新計畫（本文件） |
 
+### V7 資料遷移文件
+
+| 文件 | 說明 |
+|------|------|
+| [todolist_v7.md](./dev/todolist_v7.md) | V7 工項清單（A–G 完成） |
+| [dev_v7/](./dev/dev_v7/) | 差異分析、定案、腳本、types、FlowEngine、測試、文件 |
+
+### V8（實作完成）
+
+| 文件 | 說明 |
+|------|------|
+| [todolist_v8.md](./dev/todolist_v8.md) | V8 工項清單（A–G） |
+| [dev_v8/](./dev/dev_v8/) | Dev 預覽、埠基數、速率、H8、拓樸、form |
+
+### V9（文件就緒／規劃）
+
+| 文件 | 說明 |
+|------|------|
+| [todolist_v9.md](./dev/todolist_v9.md) | V9 工項清單 |
+| [dev_v9/](./dev/dev_v9/) | modes-only、材料源、tag／格點、反向鏈、配方匹配、案例 |
+
+### V6（已鎖定）
+
+| 文件 | 說明 |
+|------|------|
+| [todolist_v6.md](./dev/todolist_v6.md) | V6 工項；剩餘手動 M1–M7 |
+| [dev_v6/](./dev/dev_v6/) | commitDeviceMove／Canvas／測試計畫 |
+| [MILESTONE_0726.md](./MILESTONE_0726.md) | 來源里程碑 |
+
 ---
 
 ## 版本歷史
@@ -117,12 +232,34 @@
 | V2 | 調度券兌換效率與倉庫填滿預估 | ✅ 完成 | 2026-05-20 |
 | V3 | 技術債修正 | ✅ 完成 | 2026-05-25 |
 | V4 | 主編 0526 介面設計建議修正 | ✅ 完成 | 2026-05-30 |
-| **V5** | **L1 完成後的開發者支援與測試基礎設施** | ⚠️ **進行中** | **2026-06-06（預計）** |
+| **V5** | **L1 完成後的開發者支援與測試基礎設施** | ✅ CR-04 交付完成（跨 CR 封鎖追蹤中） | **2026-06-06** |
+| V6 | 拖曳移動進歷史堆疊（MILESTONE_0726） | 🔒 已鎖定（待手動 M1–M7） | 2026-08 |
+| **V7** | **資料 v3 遷移（modes／belt·pipe／machineMode）** | ✅ 完成（A–G） | **2026-08-01** |
+| **V8** | **Dev 預覽＋埠一對一／pipe60／H8／form** | ✅ 實作完成（A–G） | **2026-08-02** |
+| **V9** | **強化視覺化預覽工具** | 📋 文件就緒（實作未開始） | **2026-08-02** |
 
 **V5 特點**：
 - 首次建立獨立技術文件資料夾 `dev/dev_v5/`
 - 15 份技術文件，分為 A/B/C/D/E 五個群組
 - 完整的 L1 API 文件輸出（56 KB）
+
+**V7 特點**：
+- `docs/aaaaa/data/` 由 `data_1` 原樣同步；`src/data` 由 codegen 重產
+- Port `media: belt | pipe`；機器 `modes[]`（含 loss 資料面）
+- FlowEngine：`machineMode` 配方過濾 + belt↔pipe 媒質檢查；**loss 不算進 summary**
+- 指令：`pnpm sync:aaaaa-data`、`pnpm generate:src-data`
+- 細項：[todolist_v7.md](./dev/todolist_v7.md)｜[dev_v7/](./dev/dev_v7/)
+
+**V8 特點**：
+- `/dev/flow-engine` 機器／產品分頁（JSON＋placeholder）
+- 單埠單線；H8 匯流堵塞回推；`BELT_RATE_LIMIT=30`／`PIPE_RATE_LIMIT=60`
+- 拓樸跟 `machineMode.ports`；`form`（ItemForm）↔belt／pipe（引擎側）
+- 細項：[todolist_v8.md](./dev/todolist_v8.md)｜[dev_v8/](./dev/dev_v8/)
+
+**V9 特點**（規劃）：
+- modes-only 埠；產品／材料分冊；基礎材料輸出點
+- 機器 tag 分頁；WxH 格點拓樸；反向最短鏈路；輸入匹配配方
+- 細項：[todolist_v9.md](./dev/todolist_v9.md)｜[dev_v9/](./dev/dev_v9/)
 
 ---
 
@@ -134,7 +271,7 @@
 | V2 | 調度券兌換效率與倉庫填滿預估 | ✅ 完成 |
 | V3 | 技術債修正 | ✅ 完成 |
 | V4 | 主編 0526 介面設計建議修正 | ✅ 完成 |
-| **V5** | **L1 完成後的開發者支援與測試基礎設施** | 🚧 進行中 |
+| **V5** | **L1 完成後的開發者支援與測試基礎設施** | ✅ CR-04 交付完成（跨 CR 封鎖追蹤中） |
 
 詳細工項清單見 [todolist_v5.md](./dev/todolist_v5.md)。
 
@@ -164,19 +301,33 @@ CR-04 是模擬器的**核心計算引擎**，稱為 **FlowEngine**。
 ```
 src/
 ├── composables/
-│   └── useFlowEngine.ts        ← 核心演算法（D2–D9）+ watch 觸發（E1）
+│   └── useFlowEngine.ts        ← 核心演算法 + watch；V7：machineMode／媒質檢查
 ├── store/
 │   └── flowStore.ts            ← Pinia store，唯一寫入點
 ├── data/
-│   ├── devices.ts              ← 設備定義 + 配方查詢 API（CR-04 暫維護）
-│   └── plans.ts                ← 建造計畫資料（計畫原料 / 機器限制 / 產物價格）
+│   ├── machines.ts             ← 機器定義（含 modes；codegen）
+│   ├── products.ts             ← 配方（含 machineMode／environment；codegen）
+│   ├── plans.ts                ← 建造計畫（codegen）
+│   └── environments.ts         ← 環境標籤（codegen）
 ├── editor/
 │   └── stats/
 │       └── ProductionStats.vue ← 右側統計面板（唯讀 flowStore + editorStore）
 ├── types/
-│   └── flow.ts                 ← FlowEngine 相關型別（EdgeFlow, ItemSummary, FlowGraph…）
+│   ├── flow.ts                 ← FlowEngine 型別
+│   ├── machine.ts              ← PortMedia／MachineMode／loss
+│   ├── graph.ts                ← FactoryNodeData.machineMode
+│   └── environment.ts          ← Environment
 └── app/layouts/
-    └── MainLayout.vue          ← 掛載 useFlowEngine()（E2）
+    └── MainLayout.vue          ← 掛載 useFlowEngine()
+```
+
+資料來源與重產：
+
+```text
+docs/aaaaa/data_1  ──(pnpm sync:aaaaa-data)──►  docs/aaaaa/data
+                                                      │
+                                                      ▼ pnpm generate:src-data
+                                                 src/data/*.ts
 ```
 
 ---
@@ -220,6 +371,7 @@ src/
 ### 常數
 ```typescript
 export const BELT_RATE_LIMIT = 30; // 傳送帶每條連線上限（個/min）
+export const PIPE_RATE_LIMIT = 60; // 管道每條連線上限（個/min）
 ```
 
 ### 圖結構型別
@@ -257,7 +409,7 @@ interface FlowGraph {
 interface EdgeFlow {
   connectionUid: string;
   itemId:        string;
-  rate:          number;       // 個/min，已套用 BELT_RATE_LIMIT 截斷
+  rate:          number;       // 個/min，已依媒質套用 belt30／pipe60 截斷
   isCongested:   boolean;      // 上游供給 > 下游需求
 }
 
@@ -385,7 +537,7 @@ Step 5  _propagateInvalidDownstream(graph)
 ```
 source 節點：
   outputRates 取自 buildGraph 初始化值（理論速率）
-  每條 outEdge：rate = Math.min(recipeRate, BELT_RATE_LIMIT)
+  每條 outEdge：rate = Math.min(recipeRate, rateLimitForMedia(edgeMedia))
 
 sink 節點：
   inputRates = 接收到的所有品項速率加總
@@ -400,7 +552,7 @@ sink 節點：
   出邊品項配對：
     優先配對下游 recipe.inputs 中的 itemId
     fallback：取 outputAvailable 中第一個有量的品項
-  edge.rate = Math.min(actual_output, BELT_RATE_LIMIT)
+  edge.rate = Math.min(actual_output, rateLimitForMedia(edgeMedia))
 ```
 
 ---

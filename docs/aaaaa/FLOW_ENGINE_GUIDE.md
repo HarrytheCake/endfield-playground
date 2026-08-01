@@ -1,7 +1,8 @@
 # FlowEngine 使用指南 — L2/L3 開發者手冊
 
-**版本：** V5  
+**版本：** V7  
 **建立日期：** 2026-06-06  
+**最後更新：** 2026-08-01  
 **負責人：** aaaaa (CR-04)  
 **適用對象：** L2 容器層（harry, toby）、L3 元件層（avery, goodmorning, MBD）
 
@@ -16,6 +17,7 @@
 5. [在 L3 中使用 flowStore](#在-l3-中使用-flowstore)
 6. [驗證情境速查](#驗證情境速查)
 7. [常見問題 FAQ](#常見問題-faq)
+8. [V7：machineMode 與媒質](#v7machinemode-與媒質)
 
 ---
 
@@ -185,6 +187,7 @@ function buildGraph(
 ```
 
 - 過濾有 `validationStore.hasBlockingError(uid) === true` 的設備與管線
+- 將節點 `data.machineMode` 寫入 `FlowNode`（缺省則於配方解析時用 `modes[0]`）
 - 建立有向圖結構：
   - `nodes: Map<uid, FlowNode>`
   - `edges: Map<uid, EdgeMeta>`
@@ -200,11 +203,13 @@ function validateChains(graph: FlowGraph): void
 - 能追溯到的節點標記為 `isValid = true`
 - 無法追溯到的節點（孤立 / 無 sink 下游）標記為 `isValid = false`
 - 結果儲存於 `graph.invalidSubgraphUids`
+- **V7**：當邊的 source／target handle 齊全時，比對兩端 `PortMedia`（`belt`｜`pipe`）；belt↔pipe 錯接則兩端視為非法
 
 **範例：**
 ```
 礦機 → 熔爐 → （無連線）    // 熔爐無 sink 下游 → invalid
 礦機 → 熔爐 → sink         // 正常鏈路 → valid
+belt 口 → pipe 口          // V7 媒質錯接 → invalid
 ```
 
 #### 3. topologicalSort — 拓撲排序與環路偵測
@@ -812,7 +817,7 @@ if (flowStore.hasPowerShortage) {
 
 使用 `/dev/flow-engine` 測試頁：
 
-1. 貼入 H1–H6 preset JSON
+1. 貼入 H1–H11 或 V7（G1–G3／L1）preset JSON
 2. 點選「執行計算」
 3. 檢視 edgeFlows / nodeEfficiencies / itemSummary
 
@@ -822,6 +827,49 @@ http://localhost:5173/dev/flow-engine
 ```
 
 僅在 `import.meta.env.DEV` 時可訪問。
+
+---
+
+## V7：machineMode 與媒質
+
+### machineMode
+
+- 節點欄位：`FactoryNode.data.machineMode?: string`
+- 缺省：該機器 `modes[0].id`（`resolveMachineMode`）
+- 配方解析：`getRecipesForMachine(machineType, machineMode)[recipeIndex]`
+- `recipeIndex` 是 **mode 過濾後**列表的索引，不是全機器配方表索引
+
+### PortMedia（belt｜pipe）
+
+- `PortDef.media`: `'belt'`（固體／傳送帶）或 `'pipe'`（液體／氣體／管線）
+- `validateChains`：當邊的 source／target handle **皆有值**時比對兩端媒質；belt↔pipe → 非法
+- handle 缺省（抽象測試邊）則**跳過**媒質合法性檢查；速率仍可依品項 `form` 套用上限
+- 速率：`belt` → 30／min，`pipe` → 60／min（`PIPE_RATE_LIMIT`）
+
+### loss
+
+- `MachineMode.loss` 僅在資料／型別存在
+- FlowEngine **不**把 loss 算進 `itemSummary`（刻意延後）
+
+### 手動驗證
+
+`/dev/flow-engine` → V7 群組：G1（氣態＋mode）、G2（錯誤 mode）、G3（belt↔pipe）、L1（loss 不進 summary）
+
+### V8：埠基數／form／速率／H8（已實作）
+
+定案與工項：[todolist_v8.md](./dev/todolist_v8.md)／[A1_scope_decision.md](./dev/dev_v8/A1_scope_decision.md)。
+
+| 項 | 說明 |
+|----|------|
+| Dev | `/dev/flow-engine` 機器／產品分頁（JSON＋placeholder） |
+| 埠 | 每埠最多一條邊；複數埠依 `modes[].ports`；無 handle 且該方向僅一埠時，多條抽象邊亦非法 |
+| 速率 | `BELT_RATE_LIMIT=30`；`PIPE_RATE_LIMIT=60`（埠媒質優先，否則依品項 `form`，皆未知則 30） |
+| H8 | 雙鏈→匯流器→Sink；滿速 belt 匯入後出口 30 → 反向堵塞（上游約 15／15） |
+| form | `ItemForm`：`solid`→belt，`liquid`／`gas`→pipe；錯配 → `isItemFormMediaMismatch` 標非法 |
+| 驗證 | **僅 FlowEngine**（CR-04 先行；CR-02 UI 拒絕後續） |
+| 拓樸 | `DevTopologySvg`／graph-viz 依當前 mode ports；點節點可切 `machineMode` |
+
+測試：`src/__tests__/flowEngine.v8.*.test.ts`、`itemForm.test.ts`。
 
 ---
 
@@ -860,11 +908,13 @@ const purifier: Machine = {
 - **L1 API Reference** — [docs/aaaaa/L1_API_REFERENCE.md](./L1_API_REFERENCE.md)
 - **FlowEngine 原始碼** — [src/composables/useFlowEngine.ts](../../src/composables/useFlowEngine.ts)
 - **FlowEngine 測試** — [src/__tests__/composables/useFlowEngine.test.ts](../../src/__tests__/composables/useFlowEngine.test.ts)
+- **V7 mode／媒質測試** — [src/__tests__/flowEngine.v7.modeMedia.test.ts](../../src/__tests__/flowEngine.v7.modeMedia.test.ts)
+- **V8 埠／速率／H8／form** — `src/__tests__/flowEngine.v8.*.test.ts`
 - **開發測試頁** — `/dev/flow-engine`
 
 ---
 
-**文件版本：** V5  
-**最後更新：** 2026-06-06  
+**文件版本：** V8  
+**最後更新：** 2026-08-02  
 **維護者：** aaaaa (CR-04)  
-**問題回報：** 見 `docs/aaaaa/TODOLIST.md` 封鎖項目追蹤
+**問題回報：** 見 `docs/aaaaa/dev/todolist_v8.md`
