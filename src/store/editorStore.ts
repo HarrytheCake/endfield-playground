@@ -1,7 +1,7 @@
 import { computed, ref, shallowRef } from 'vue';
 import { defineStore } from 'pinia';
 import type { FactoryEdge, FactoryNode } from '@/types/graph';
-import type { EquipmentType, Rotation, ToolMode } from '@/types/editor';
+import type { DevicePositionSnapshot, EquipmentType, Rotation, ToolMode } from '@/types/editor';
 import { plans } from '@/data/plans';
 import type { Plan } from '@/types/plan';
 import { useHistoryStore } from '@/store/historyStore';
@@ -348,6 +348,69 @@ export const useEditorStore = defineStore('editor', () => {
     }
 
     /**
+     * 確認「畫面上已是最終位置」的移動並寫入歷史。  \
+     * 供 Vue Flow 拖曳（v-model 已先改寫 position）使用；不會再次套用位移。  \
+     * before 與目前座標相同（零位移）時不進歷史。  \
+     * 管線端點跟隨尚未實作，留待 CR-02（TODO）。
+     *
+     * @param uids 本次移動的設備 uid 陣列
+     * @param before 拖曳開始時的位置快照
+     * @example
+     * editorStore.commitDeviceMove(['a'], { a: { x: 0, y: 0 } })
+     */
+    function commitDeviceMove(uids: string[], before: DevicePositionSnapshot): void {
+        if (uids.length === 0) return;
+
+        const after: DevicePositionSnapshot = {};
+        for (const uid of uids) {
+            const node = nodes.value.find((n) => n.id === uid);
+            const prev = before[uid];
+            if (!node || !prev) continue;
+            after[uid] = { x: node.position.x, y: node.position.y };
+        }
+
+        const movedUids = Object.keys(after).filter((uid) => {
+            const a = after[uid];
+            const b = before[uid];
+            return Math.abs(a.x - b.x) > 1e-6 || Math.abs(a.y - b.y) > 1e-6;
+        });
+        if (movedUids.length === 0) return;
+
+        const beforeCaptured: DevicePositionSnapshot = {};
+        const afterCaptured: DevicePositionSnapshot = {};
+        for (const uid of movedUids) {
+            beforeCaptured[uid] = { x: before[uid].x, y: before[uid].y };
+            afterCaptured[uid] = { x: after[uid].x, y: after[uid].y };
+        }
+
+        /**
+         * 將指定快照中的座標寫回 nodes（僅動到快照內的 uid）。
+         * @param snapshot 目標座標快照
+         */
+        const applyPositions = (snapshot: DevicePositionSnapshot) => {
+            nodes.value = nodes.value.map((n) => {
+                const pos = snapshot[n.id];
+                if (!pos) return n;
+                return { ...n, position: { x: pos.x, y: pos.y } };
+            });
+        };
+
+        const historyStore = useHistoryStore();
+        historyStore.execute({
+            id: crypto.randomUUID(),
+            type: HistoryRecordType.MachineMovement,
+            label: `移動 ${movedUids.length} 台設備`,
+            execute() {
+                // 首次呼叫時畫面通常已是 after，寫入等價於 no-op；redo 時真正重套用
+                applyPositions(afterCaptured);
+            },
+            undo() {
+                applyPositions(beforeCaptured);
+            },
+        });
+    }
+
+    /**
      * 旋轉單一設備。
      *
      * @param uid 設備 uid
@@ -620,6 +683,16 @@ export const useEditorStore = defineStore('editor', () => {
          * editorStore.moveDevices(['a', 'b'], { x: 40, y: 0 })
          */
         moveDevices,
+        /**
+         * 確認拖曳後已套用的位置並寫入歷史（不重複位移）。  \
+         * 零位移不進歷史。管線跟隨留待 CR-02。
+         *
+         * @param uids 本次移動的設備 uid 陣列
+         * @param before 拖曳開始時的位置快照
+         * @example
+         * editorStore.commitDeviceMove(['a'], { a: { x: 0, y: 0 } })
+         */
+        commitDeviceMove,
         /**
          * 旋轉單一設備。
          *

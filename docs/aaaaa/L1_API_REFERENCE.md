@@ -105,7 +105,7 @@ editorStore.placeDevice({
 
 #### 2. moveDevices(uids, delta)
 
-批次移動設備。
+批次移動設備（**主動套用位移**，例如快捷鍵微調、Dev 測試頁）。
 
 ```typescript
 moveDevices(uids: string[], delta: { x: number; y: number }): void
@@ -122,6 +122,33 @@ editorStore.moveDevices(['dev-a', 'dev-b'], { x: 40, y: -20 })
 - 傳入空陣列會靜默返回（無操作）
 - 一次 undo 可還原整組移動
 - `delta` 為像素單位（非格子）
+- **不要**在 Vue Flow 拖曳結束時呼叫本 API（會造成位移套用兩次）；拖曳請用下方 `commitDeviceMove`
+
+---
+
+#### 2b. commitDeviceMove(uids, before)（V6）
+
+確認「畫面上已是最終位置」的移動並寫入歷史（供拖曳）。
+
+```typescript
+import type { DevicePositionSnapshot } from '@/types/editor'
+
+commitDeviceMove(uids: string[], before: DevicePositionSnapshot): void
+// DevicePositionSnapshot = Record<string, { x: number; y: number }>
+```
+
+**說明：** Vue Flow `v-model:nodes` 拖曳期間已改寫 `position`。拖曳結束時呼叫本 action：不再套用位移，只把 before→after 記成單一歷史項目。零位移不進歷史。管線跟隨留待 CR-02。
+
+**範例：**
+```typescript
+// node-drag-start 記錄 before；node-drag-stop：
+editorStore.commitDeviceMove(['dev-a'], { 'dev-a': { x: 0, y: 0 } })
+```
+
+**注意事項：**
+- L2 不得自行 `historyStore.execute` 組移動 Command
+- before 與目前座標相同 → 靜默不進歷史
+- undo / redo 使用絕對座標快照，避免漂移
 
 ---
 

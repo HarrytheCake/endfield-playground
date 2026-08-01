@@ -29,3 +29,9 @@ export interface MapSettings {
     /** 是否啟用 snap-to-grid */
     snapToGrid: boolean;
 }
+
+/**
+ * 設備位置快照：uid → 畫布像素座標。  \
+ * 供 `commitDeviceMove` 在拖曳確認時還原／重做使用。
+ */
+export type DevicePositionSnapshot = Record<string, { x: number; y: number }>;

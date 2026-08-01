@@ -1,8 +1,11 @@
 # 待討論：拖曳移動設備目前沒有進歷史堆疊
 
-**狀態：** 待與 harry / toby 討論決定方案，尚未動工
+**狀態：** 🔒 V6 已鎖定 — 實作完成（`commitDeviceMove` + Canvas）；**待協作者手動 M1–M7 驗收**  
+**V6 追蹤：** [todolist_v6.md](./dev/todolist_v6.md)／[dev_v6/](./dev/dev_v6/)（最後更新 2026-08-02）  
 **相關檔案：** `src/editor/canvas/FactoryCanvas.vue`、`src/store/editorStore.ts`、`src/store/historyStore.ts`
 **相關規則：** `CLAUDE.md` §5 Store 操作規範（Command Pattern）、`L2.md` §4.7 Command 歸屬規則
+
+> 現行功能開發走 **V8**；V6 僅保留驗收／debug 紀錄，不開新功能。
 
 ---
 
