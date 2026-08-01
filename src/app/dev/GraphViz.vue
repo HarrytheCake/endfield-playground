@@ -198,20 +198,64 @@
                             @click="copyMermaid"
                             class="mt-2 rounded-md bg-gray-200 px-3 py-1 text-xs text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                         >
-                            📋 複製 Mermaid 代碼
+                            複製 Mermaid 代碼
                         </button>
                     </div>
                     <p v-else class="text-xs text-gray-400">尚未分析</p>
                 </div>
             </div>
         </div>
+
+        <!-- V8-D1：埠示意拓樸（依 machineMode） -->
+        <div
+            class="mt-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+        >
+            <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                5. 埠示意拓樸（machineMode）
+            </h3>
+            <DevTopologySvg
+                v-if="vizNodes.length"
+                :nodes="vizNodes"
+                :edges="vizEdges"
+                :node-style="vizNodeStyle"
+                :selected-node-id="selectedTopoNodeId"
+                @select-node="selectedTopoNodeId = $event"
+            />
+            <p v-else class="text-xs text-gray-400">載入 preset 或貼上 JSON 後顯示</p>
+            <div
+                v-if="selectedTopoNode"
+                class="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs dark:border-blue-800 dark:bg-blue-950/40"
+            >
+                <span class="font-semibold text-blue-900 dark:text-blue-100">
+                    {{ selectedTopoNode.data?.label || selectedTopoNode.id }}
+                </span>
+                <span class="text-gray-500">machineMode</span>
+                <button
+                    v-for="mode in selectedTopoModes"
+                    :key="mode.id"
+                    type="button"
+                    class="rounded px-2 py-1 font-medium"
+                    :class="
+                        (selectedTopoNode.data?.machineMode ?? selectedTopoModes[0]?.id) === mode.id
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200'
+                    "
+                    @click="setTopoNodeMode(selectedTopoNode.id, mode.id)"
+                >
+                    {{ mode.label }}
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { buildGraph, topologicalSort, validateChains } from '@/composables/useFlowEngine';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
+import DevTopologySvg from '@/app/dev/DevTopologySvg.vue';
+import { getMachine } from '@/data/machines';
+import { modePortSummaryLabel, resolveNodeMode } from '@/app/dev/topologyPortUtils';
 
 /** GraphViz 頁面圖分析結果的顯示用結構，對應 buildGraph / topologicalSort / validateChains 的輸出 */
 interface GraphAnalysisResult {
@@ -235,6 +279,64 @@ const mermaidCode = ref('');
 const errorMessage = ref('');
 /** 目前選取的 preset id，null 代表尚未選擇或使用自訂 JSON */
 const selectedPreset = ref<string | null>(null);
+/** 拓樸選取節點（切 mode） */
+const selectedTopoNodeId = ref<string | null>(null);
+
+const vizParsed = computed<{ nodes: FactoryNode[]; edges: FactoryEdge[] } | null>(() => {
+    if (!jsonInput.value.trim()) return null;
+    try {
+        const data = JSON.parse(jsonInput.value) as {
+            nodes?: FactoryNode[];
+            edges?: FactoryEdge[];
+        };
+        if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) return null;
+        return { nodes: data.nodes, edges: data.edges };
+    } catch {
+        return null;
+    }
+});
+
+const vizNodes = computed(() => vizParsed.value?.nodes ?? []);
+const vizEdges = computed(() => vizParsed.value?.edges ?? []);
+
+const vizNodeStyle = computed(() => {
+    const map: Record<string, { fill?: string; invalid?: boolean; subtitleExtra?: string }> = {};
+    const invalid = new Set(graphData.value?.invalidChainUids ?? []);
+    for (const n of vizNodes.value) {
+        const isInvalid = invalid.has(n.id);
+        map[n.id] = {
+            fill: isInvalid ? '#71717a' : '#52525b',
+            invalid: isInvalid,
+            subtitleExtra: n.id,
+        };
+    }
+    return map;
+});
+
+const selectedTopoNode = computed(() => {
+    const id = selectedTopoNodeId.value;
+    if (!id) return null;
+    return vizNodes.value.find((n) => n.id === id) ?? null;
+});
+
+const selectedTopoModes = computed(() => {
+    const type = selectedTopoNode.value?.data?.machineType as string | undefined;
+    if (!type) return [];
+    return getMachine(type)?.modes ?? [];
+});
+
+function setTopoNodeMode(nodeId: string, modeId: string) {
+    const g = vizParsed.value;
+    if (!g) return;
+    const nodes = g.nodes.map((n) =>
+        n.id === nodeId
+            ? { ...n, data: { ...n.data, machineMode: modeId, label: n.data?.label ?? n.id } }
+            : n,
+    );
+    jsonInput.value = JSON.stringify({ nodes, edges: g.edges }, null, 2);
+    // 切 mode 後重跑分析以更新非法標記
+    if (graphData.value) analyzeGraph();
+}
 
 /** 可一鍵載入的測試情境清單，對應 presetData 中的資料 */
 const presets = [
@@ -512,6 +614,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
  */
 function loadPreset(id: string) {
     selectedPreset.value = id;
+    selectedTopoNodeId.value = null;
     jsonInput.value = JSON.stringify(presetData[id], null, 2);
     errorMessage.value = '';
     graphData.value = null;
@@ -576,7 +679,13 @@ function generateMermaid(nodes: FactoryNode[], edges: FactoryEdge[]) {
     let code = 'graph LR\n';
 
     for (const node of nodes) {
-        code += `  ${node.id}["${node.data?.machineType || node.id}"]\n`;
+        const machineType = (node.data?.machineType as string) || node.id;
+        const mode = resolveNodeMode(
+            node.data?.machineType as string | undefined,
+            node.data?.machineMode as string | undefined,
+        );
+        const portHint = modePortSummaryLabel(mode).replace(/"/g, "'");
+        code += `  ${node.id}["${machineType}<br/>${portHint}"]\n`;
     }
 
     for (const edge of edges) {
