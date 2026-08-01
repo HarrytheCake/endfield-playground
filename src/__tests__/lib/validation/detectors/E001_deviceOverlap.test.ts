@@ -21,6 +21,15 @@ describe('E001_deviceOverlap', () => {
         tags: [],
         is_source: false,
         is_sink: false,
+        modes: [
+            {
+                id: 'base_mode',
+                label: '基礎模式',
+                input_ports: [],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
