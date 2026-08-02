@@ -191,13 +191,13 @@ describe('V7-F1 G2 — 錯誤 machineMode', () => {
 
     it('validateRecipeMatch：正確 liquid_mode 通過，錯 mode 失敗', () => {
         const idx = recipeIndexOf('精煉爐', '赤銅塊', 'liquid_mode', { 赤銅礦: 1, 清水: 1 });
-        expect(
-            validateRecipeMatch('精煉爐', idx, new Set(['赤銅礦', '清水']), 'liquid_mode'),
-        ).toBe(true);
+        expect(validateRecipeMatch('精煉爐', idx, new Set(['赤銅礦', '清水']), 'liquid_mode')).toBe(
+            true,
+        );
         // 同一 index 在 base_mode 列表上通常不是赤銅塊配方
-        expect(
-            validateRecipeMatch('精煉爐', idx, new Set(['赤銅礦', '清水']), 'base_mode'),
-        ).toBe(false);
+        expect(validateRecipeMatch('精煉爐', idx, new Set(['赤銅礦', '清水']), 'base_mode')).toBe(
+            false,
+        );
     });
 });
 

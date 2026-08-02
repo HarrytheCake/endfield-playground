@@ -50,10 +50,7 @@ import { useDebounceFn } from '@vueuse/core';
  * @param machineType 設備中文名
  * @param machineMode 節點上的 machineMode（可缺）
  */
-export function resolveMachineMode(
-    machineType: string,
-    machineMode?: string,
-): string | undefined {
+export function resolveMachineMode(machineType: string, machineMode?: string): string | undefined {
     const machine = getMachine(machineType);
     if (!machine?.modes.length) return machineMode;
     return getMachineMode(machine, machineMode).id;
@@ -229,11 +226,7 @@ function resolvePortMedia(
 /**
  * 解析邊上應套用的媒質（優先來源出埠，其次目標入埠）。
  */
-function resolveEdgeMedia(
-    source: FlowNode,
-    target: FlowNode,
-    meta: EdgeMeta,
-): PortMedia | null {
+function resolveEdgeMedia(source: FlowNode, target: FlowNode, meta: EdgeMeta): PortMedia | null {
     const srcMedia = resolvePortMedia(
         source.machineType,
         source.machineMode,
@@ -268,11 +261,7 @@ function edgeRateLimit(
  * 兩邊皆能解析媒質且不一致時回傳 true（belt ↔ pipe）。
  * handle 缺省（抽象測試邊）時不檢查。
  */
-function isPortMediaMismatch(
-    source: FlowNode,
-    target: FlowNode,
-    meta: EdgeMeta,
-): boolean {
+function isPortMediaMismatch(source: FlowNode, target: FlowNode, meta: EdgeMeta): boolean {
     if (meta.sourceHandle == null || meta.targetHandle == null) return false;
     const srcMedia = resolvePortMedia(
         source.machineType,
@@ -294,11 +283,7 @@ function isPortMediaMismatch(
  * 上游配方產出物態與線路媒質全數不符時回傳 true。
  * handle 缺省或無配方產出時略過。
  */
-function isItemFormMediaMismatch(
-    source: FlowNode,
-    target: FlowNode,
-    meta: EdgeMeta,
-): boolean {
+function isItemFormMediaMismatch(source: FlowNode, target: FlowNode, meta: EdgeMeta): boolean {
     if (meta.sourceHandle == null || meta.targetHandle == null) return false;
     const media = resolveEdgeMedia(source, target, meta);
     if (!media) return false;
@@ -752,9 +737,7 @@ export function buildGraph(
         const primaryOutput = node.data?.primaryOutput;
         if (isSource && primaryOutput) {
             /** 基礎材料／物品輸出：不依賴 products 假配方 */
-            const rate =
-                node.data?.sourceRatePerMin ??
-                (recipeIndex === 1 ? 15 : 30);
+            const rate = node.data?.sourceRatePerMin ?? (recipeIndex === 1 ? 15 : 30);
             outputRates = new Map([[primaryOutput, rate]]);
         }
         // V9-E1：一般機器速率改由 validateChains／propagateFlows 依輸入匹配後填入
@@ -900,9 +883,7 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
                 for (const [itemId, recipeRate] of node.outputRates) {
                     const limit = target
                         ? edgeRateLimit(node, target, meta, itemId)
-                        : rateLimitForMedia(
-                              itemId ? formToPortMedia(getItemForm(itemId)) : null,
-                          );
+                        : rateLimitForMedia(itemId ? formToPortMedia(getItemForm(itemId)) : null);
                     const rate = Math.min(recipeRate, limit);
                     edgeFlows.set(connUid, {
                         connectionUid: connUid,
@@ -951,9 +932,7 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
                         const target = nodes.get(meta.targetDeviceUid);
                         const limit = target
                             ? edgeRateLimit(node, target, meta, inputItemId)
-                            : rateLimitForMedia(
-                                  formToPortMedia(getItemForm(inputItemId)),
-                              );
+                            : rateLimitForMedia(formToPortMedia(getItemForm(inputItemId)));
 
                         const rate = Math.min(ratePerOutput, limit);
                         edgeFlows.set(connUid, {
@@ -988,9 +967,10 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
                 if (totalInput > 0 && inputItemId && outEdgeUids.length > 0) {
                     const meta = edgeMeta.get(outEdgeUids[0]!);
                     const target = meta ? nodes.get(meta.targetDeviceUid) : undefined;
-                    const limit = meta && target
-                        ? edgeRateLimit(node, target, meta, inputItemId)
-                        : rateLimitForMedia(formToPortMedia(getItemForm(inputItemId)));
+                    const limit =
+                        meta && target
+                            ? edgeRateLimit(node, target, meta, inputItemId)
+                            : rateLimitForMedia(formToPortMedia(getItemForm(inputItemId)));
                     const outRate = Math.min(totalInput, limit);
 
                     node.inputRates.set(inputItemId, outRate);
@@ -1006,7 +986,10 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
                         });
                         const downstream = nodeInputReceived.get(meta.targetDeviceUid);
                         if (downstream)
-                            downstream.set(inputItemId, (downstream.get(inputItemId) ?? 0) + outRate);
+                            downstream.set(
+                                inputItemId,
+                                (downstream.get(inputItemId) ?? 0) + outRate,
+                            );
                     }
                 } else {
                     node.efficiency = 0;
@@ -1090,10 +1073,7 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
                 let chosenRate = 0;
 
                 // V9-H1-2：優先主產出（演示鏈／多輸出時避免副產佔邊）
-                if (
-                    node.primaryOutput &&
-                    (outputAvailable.get(node.primaryOutput) ?? 0) > 0
-                ) {
+                if (node.primaryOutput && (outputAvailable.get(node.primaryOutput) ?? 0) > 0) {
                     chosenItemId = node.primaryOutput;
                     chosenRate = Math.min(
                         outputAvailable.get(node.primaryOutput)!,

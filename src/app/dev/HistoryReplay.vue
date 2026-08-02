@@ -146,16 +146,16 @@
             <div class="mb-3 space-y-2 text-xs text-amber-800 dark:text-amber-300">
                 <p>
                     <strong>目的：</strong>驗證「拖曳結束」會正確寫入歷史（模擬改座標 →
-                    <code class="rounded bg-white/60 px-1 dark:bg-black/30">commitDeviceMove</code>）。
-                    與下方 <strong>Undo／Redo／Clear</strong>、<strong>Undo Stack</strong>
+                    <code class="rounded bg-white/60 px-1 dark:bg-black/30">commitDeviceMove</code
+                    >）。 與下方 <strong>Undo／Redo／Clear</strong>、<strong>Undo Stack</strong>
                     是<strong>同一套</strong>
                     <code class="rounded bg-white/60 px-1 dark:bg-black/30">historyStore</code
                     >——一鍵腳本跑完後，可直接用下方 Undo 再驗一次。
                 </p>
                 <p>
                     <strong>建議路徑（最快）：</strong>按
-                    <span class="font-semibold">「一鍵 M1→M4」</span
-                    >（會自動清場並擺設備）→ 看綠／紅結果 → checklist 會自動勾選通過項。
+                    <span class="font-semibold">「一鍵 M1→M4」</span>（會自動清場並擺設備）→
+                    看綠／紅結果 → checklist 會自動勾選通過項。
                 </p>
                 <p>
                     <strong>手動路徑：</strong>右側「➕ 擺放設備」至少 1～2 台 → 再按上方模擬按鈕 →
@@ -169,9 +169,7 @@
                 </p>
             </div>
 
-            <div
-                class="mb-3 overflow-x-auto rounded-md bg-white/80 p-2 dark:bg-gray-900/80"
-            >
+            <div class="mb-3 overflow-x-auto rounded-md bg-white/80 p-2 dark:bg-gray-900/80">
                 <table class="w-full text-left text-xs text-amber-900 dark:text-amber-200">
                     <thead>
                         <tr class="border-b border-amber-200 dark:border-amber-800">
@@ -299,7 +297,13 @@
             <div
                 v-if="v6Message"
                 class="mb-3 rounded-md bg-white p-2 font-mono text-xs whitespace-pre-wrap text-amber-900 dark:bg-gray-900 dark:text-amber-200"
-                :class="v6Pass === false ? 'border border-red-400' : v6Pass ? 'border border-green-500' : ''"
+                :class="
+                    v6Pass === false
+                        ? 'border border-red-400'
+                        : v6Pass
+                          ? 'border border-green-500'
+                          : ''
+                "
             >
                 {{ v6Message }}
             </div>
@@ -318,7 +322,11 @@
                     </button>
                 </div>
                 <ul class="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
-                    <li v-for="item in v6ChecklistItems" :key="item.id" class="flex items-start gap-2">
+                    <li
+                        v-for="item in v6ChecklistItems"
+                        :key="item.id"
+                        class="flex items-start gap-2"
+                    >
                         <input
                             :id="`v6-${item.id}`"
                             v-model="v6Checklist[item.id]"
@@ -634,7 +642,10 @@ function snapshotPositions(uids: string[]): DevicePositionSnapshot {
  * @param delta 位移
  * @returns 改寫前的 before 快照
  */
-function applyDragPositions(uids: string[], delta: { x: number; y: number }): DevicePositionSnapshot {
+function applyDragPositions(
+    uids: string[],
+    delta: { x: number; y: number },
+): DevicePositionSnapshot {
     const before = snapshotPositions(uids);
     const uidSet = new Set(uids);
     editorStore.nodes = editorStore.nodes.map((n) =>
@@ -667,8 +678,7 @@ function fmtPos(uid: string): string {
 function simulateDragCommitSingle(): void {
     const node = editorStore.nodes[0];
     if (!node) {
-        v6Message.value =
-            '無法執行：畫布無設備。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
+        v6Message.value = '無法執行：畫布無設備。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
         v6Pass.value = false;
         return;
     }
@@ -721,8 +731,7 @@ function simulateDragCommitMulti(): void {
 function simulateZeroDisplacement(): void {
     const node = editorStore.nodes[0];
     if (!node) {
-        v6Message.value =
-            '無法執行：畫布無設備。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
+        v6Message.value = '無法執行：畫布無設備。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
         v6Pass.value = false;
         return;
     }
@@ -822,9 +831,7 @@ async function runV6ScriptM1toM4(): Promise<void> {
         allOk &&= m4Ok;
 
         v6Pass.value = allOk;
-        v6Message.value = ['一鍵 M1→M4 完成', ...lines, allOk ? '全部通過' : '有失敗項'].join(
-            '\n',
-        );
+        v6Message.value = ['一鍵 M1→M4 完成', ...lines, allOk ? '全部通過' : '有失敗項'].join('\n');
     } finally {
         v6Busy.value = false;
     }
@@ -904,8 +911,7 @@ async function runV6ScriptM6(): Promise<void> {
         const movedOk = Math.abs(mid.x - (before.x + 50)) < 1e-6;
         historyStore.undo();
         const after = editorStore.nodes.find((n) => n.id === uid)!.position;
-        const undoOk =
-            Math.abs(after.x - before.x) < 1e-6 && Math.abs(after.y - before.y) < 1e-6;
+        const undoOk = Math.abs(after.x - before.x) < 1e-6 && Math.abs(after.y - before.y) < 1e-6;
         const ok = movedOk && undoOk;
         v6Pass.value = ok;
         v6Checklist.value.M6 = ok;

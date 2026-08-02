@@ -33,9 +33,14 @@
             <div
                 class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
             >
-                <h3 class="mb-2 text-sm font-semibold text-blue-900 dark:text-blue-200">使用說明</h3>
+                <h3 class="mb-2 text-sm font-semibold text-blue-900 dark:text-blue-200">
+                    使用說明
+                </h3>
                 <ul class="space-y-1 text-xs text-blue-800 dark:text-blue-300">
-                    <li>• 點擊 <strong>H1–H11</strong>／<strong>G*</strong>／<strong>V9</strong> 載入情境並<strong>自動執行計算</strong></li>
+                    <li>
+                        • 點擊 <strong>H1–H11</strong>／<strong>G*</strong>／<strong>V9</strong>
+                        載入情境並<strong>自動執行計算</strong>
+                    </li>
                     <li>• 中間拓撲圖：節點依效率著色，管線顯示流量；橘色邊 = 堵塞</li>
                     <li>• 「預期結果」清單可對照右側實際數值做目視驗證</li>
                     <li>• V9：基礎材料輸出點、E1 輸入匹配配方、D1 最短鏈套用</li>
@@ -44,357 +49,371 @@
                 </ul>
             </div>
 
-        <div
-            class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-        >
-            <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Preset 測試情境</h3>
-            <div class="mb-3 flex flex-wrap gap-2">
-                <span class="text-xs font-medium text-gray-500">基礎</span>
-                <button
-                    v-for="preset in presetsByGroup('basic')"
-                    :key="preset.id"
-                    type="button"
-                    class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-                    :class="presetButtonClass(preset.id)"
-                    @click="loadPreset(preset.id)"
-                >
-                    {{ preset.name }}
-                </button>
-            </div>
-            <div class="mb-3 flex flex-wrap gap-2">
-                <span class="text-xs font-medium text-gray-500">進階</span>
-                <button
-                    v-for="preset in presetsByGroup('advanced')"
-                    :key="preset.id"
-                    type="button"
-                    class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-                    :class="presetButtonClass(preset.id)"
-                    @click="loadPreset(preset.id)"
-                >
-                    {{ preset.name }}
-                </button>
-            </div>
-            <div class="mb-3 flex flex-wrap gap-2">
-                <span class="text-xs font-medium text-gray-500">V7 mode／媒質</span>
-                <button
-                    v-for="preset in presetsByGroup('v7')"
-                    :key="preset.id"
-                    type="button"
-                    class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-                    :class="presetButtonClass(preset.id)"
-                    @click="loadPreset(preset.id)"
-                >
-                    {{ preset.name }}
-                </button>
-            </div>
-            <div class="mb-3 flex flex-wrap gap-2">
-                <span class="text-xs font-medium text-gray-500">V9 演示</span>
-                <button
-                    v-for="preset in presetsByGroup('v9')"
-                    :key="preset.id"
-                    type="button"
-                    class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-                    :class="presetButtonClass(preset.id)"
-                    @click="loadPreset(preset.id)"
-                >
-                    {{ preset.name }}
-                </button>
-            </div>
             <div
-                class="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50/80 p-2 dark:border-emerald-900 dark:bg-emerald-950/30"
+                class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
             >
-                <span class="text-[10px] font-medium text-emerald-800 dark:text-emerald-200">
-                    D1 最短鏈套用
-                </span>
-                <select
-                    v-model="chainProduct"
-                    class="rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-900"
-                >
-                    <option v-for="name in chainProductOptions" :key="name" :value="name">
-                        {{ name }}
-                    </option>
-                </select>
-                <button
-                    type="button"
-                    class="rounded bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
-                    @click="applyReverseChainDemo"
-                >
-                    產生演示圖
-                </button>
-            </div>
-            <p v-if="activePresetMeta" class="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                <span class="font-semibold text-gray-800 dark:text-gray-200">{{
-                    activePresetMeta.name
-                }}</span>
-                — {{ activePresetMeta.description }}
-            </p>
-        </div>
-
-        <div
-            v-if="activePresetMeta"
-            class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
-        >
-            <h3 class="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
-                預期結果（目視對照）
-            </h3>
-            <ul class="list-inside list-disc space-y-1 text-xs text-amber-900 dark:text-amber-200">
-                <li v-for="(hint, i) in activePresetMeta.expected" :key="i">{{ hint }}</li>
-            </ul>
-        </div>
-
-        <div
-            class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-        >
-            <div class="mb-3 flex items-center justify-between gap-2">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">拓撲視覺化</h3>
-                <div class="flex flex-wrap gap-3 text-[10px] text-gray-500">
-                    <span class="inline-flex items-center gap-1">
-                        <span class="inline-block h-2.5 w-2.5 rounded-sm bg-green-500" />100%
-                    </span>
-                    <span class="inline-flex items-center gap-1">
-                        <span class="inline-block h-2.5 w-2.5 rounded-sm bg-yellow-400" />50–99%
-                    </span>
-                    <span class="inline-flex items-center gap-1">
-                        <span class="inline-block h-2.5 w-2.5 rounded-sm bg-orange-400" />1–49%
-                    </span>
-                    <span class="inline-flex items-center gap-1">
-                        <span class="inline-block h-2.5 w-2.5 rounded-sm bg-zinc-400" />0% / 非法
-                    </span>
-                    <span class="inline-flex items-center gap-1">
-                        <span class="inline-block h-0.5 w-4 bg-orange-500" />堵塞邊
-                    </span>
-                </div>
-            </div>
-            <DevTopologySvg
-                v-if="parsedGraph"
-                :nodes="parsedGraph.nodes"
-                :edges="parsedGraph.edges"
-                :node-style="topologyNodeStyle"
-                :edge-style="topologyEdgeStyle"
-                :selected-node-id="selectedTopoNodeId"
-                @select-node="selectedTopoNodeId = $event"
-            />
-            <div
-                v-if="selectedTopoNode"
-                class="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs dark:border-blue-800 dark:bg-blue-950/40"
-            >
-                <span class="font-semibold text-blue-900 dark:text-blue-100">
-                    {{ selectedTopoNode.data?.label || selectedTopoNode.id }}
-                </span>
-                <span class="text-gray-500">machineMode</span>
-                <button
-                    v-for="mode in selectedTopoModes"
-                    :key="mode.id"
-                    type="button"
-                    class="rounded px-2 py-1 font-medium"
-                    :class="
-                        (selectedTopoNode.data?.machineMode ?? selectedTopoModes[0]?.id) === mode.id
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200'
-                    "
-                    @click="setTopoNodeMode(selectedTopoNode.id, mode.id)"
-                >
-                    {{ mode.label }}
-                </button>
-                <span v-if="!selectedTopoModes.length" class="text-gray-500">無 modes 資料</span>
-            </div>
-            <p v-else-if="!parsedGraph" class="text-xs text-gray-400">
-                載入 Preset 或貼上合法 JSON 後顯示拓撲
-            </p>
-            <p v-else class="mt-2 text-[10px] text-gray-400">點選節點可切換 machineMode，埠示意會更新</p>
-        </div>
-
-        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <div class="space-y-4">
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        JSON 輸入
-                    </h3>
-                    <textarea
-                        v-model="jsonInput"
-                        class="h-80 w-full rounded-md border border-gray-300 bg-gray-50 p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-900"
-                        placeholder='{"nodes": [...], "edges": [...]}'
-                        @input="selectedPreset = null"
-                    />
-                    <div
-                        v-if="errorMessage"
-                        class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400"
-                    >
-                        {{ errorMessage }}
-                    </div>
+                <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                    Preset 測試情境
+                </h3>
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-medium text-gray-500">基礎</span>
                     <button
+                        v-for="preset in presetsByGroup('basic')"
+                        :key="preset.id"
                         type="button"
-                        class="mt-3 w-full rounded-md bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        :disabled="isCalculating || !jsonInput"
-                        @click="runCalculation"
+                        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="presetButtonClass(preset.id)"
+                        @click="loadPreset(preset.id)"
                     >
-                        {{ isCalculating ? '計算中...' : '執行計算' }}
+                        {{ preset.name }}
                     </button>
                 </div>
-            </div>
-
-            <div class="space-y-4">
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        1. edgeFlows（管線流量）
-                    </h3>
-                    <div v-if="result" class="max-h-48 space-y-2 overflow-y-auto">
-                        <div
-                            v-for="[uid, flow] in result.edgeFlows"
-                            :key="uid"
-                            class="rounded p-2 text-xs"
-                            :class="
-                                flow.isCongested
-                                    ? 'bg-orange-50 dark:bg-orange-950/40'
-                                    : 'bg-gray-50 dark:bg-gray-900'
-                            "
-                        >
-                            <span class="font-mono text-gray-500">{{ uid }}</span>
-                            <span class="ml-2 text-blue-600 dark:text-blue-400">{{
-                                flow.itemId
-                            }}</span>
-                            <span class="ml-2 font-semibold text-green-600 dark:text-green-400">
-                                {{ flow.rate.toFixed(2) }}/min
-                            </span>
-                            <span
-                                v-if="flow.isCongested"
-                                class="ml-2 font-semibold text-orange-600"
-                            >
-                                堵塞
-                            </span>
-                        </div>
-                        <p v-if="result.edgeFlows.length === 0" class="text-xs text-gray-400">
-                            （無有效管線流量）
-                        </p>
-                    </div>
-                    <p v-else class="text-xs text-gray-400">尚未執行計算</p>
-                </div>
-
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        2. nodeEfficiencies（設備效率）
-                    </h3>
-                    <div v-if="result" class="max-h-40 space-y-2 overflow-y-auto">
-                        <div
-                            v-for="[uid, eff] in result.nodeEfficiencies"
-                            :key="uid"
-                            class="flex items-center justify-between rounded bg-gray-50 p-2 text-xs dark:bg-gray-900"
-                        >
-                            <span class="font-mono text-gray-500">
-                                {{ uid }}
-                                <span
-                                    v-if="result.invalidChainUids.includes(uid)"
-                                    class="ml-1 text-zinc-400"
-                                    >非法</span
-                                >
-                            </span>
-                            <span :class="getEfficiencyClass(eff)" class="font-semibold">
-                                {{ (eff * 100).toFixed(1) }}%
-                            </span>
-                        </div>
-                    </div>
-                    <p v-else class="text-xs text-gray-400">尚未執行計算</p>
-                </div>
-
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        3. itemSummary / sinkDeliveries
-                    </h3>
-                    <table
-                        v-if="result && result.itemSummary.length > 0"
-                        class="mb-3 w-full text-xs"
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-medium text-gray-500">進階</span>
+                    <button
+                        v-for="preset in presetsByGroup('advanced')"
+                        :key="preset.id"
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="presetButtonClass(preset.id)"
+                        @click="loadPreset(preset.id)"
                     >
-                        <thead>
-                            <tr class="text-left text-gray-500">
-                                <th class="pb-2">品項</th>
-                                <th class="pb-2">產出</th>
-                                <th class="pb-2">消耗</th>
-                                <th class="pb-2">淨值</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="item in result.itemSummary"
-                                :key="item.itemId"
-                                class="border-t border-gray-200 dark:border-gray-700"
-                            >
-                                <td class="py-1.5">{{ item.name }}</td>
-                                <td class="py-1.5 text-green-600">{{ item.produced.toFixed(2) }}</td>
-                                <td class="py-1.5 text-red-600">{{ item.consumed.toFixed(2) }}</td>
-                                <td
-                                    class="py-1.5 font-semibold"
-                                    :class="item.net >= 0 ? 'text-green-600' : 'text-red-600'"
-                                >
-                                    {{ item.net.toFixed(2) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div v-if="result" class="space-y-1 text-xs">
-                        <div
-                            v-for="[itemId, rate] in result.sinkDeliveries"
-                            :key="itemId"
-                            class="rounded bg-blue-50 p-2 dark:bg-blue-950/30"
-                        >
-                            Sink 交付
-                            <span class="font-semibold">{{ itemId }}</span>
-                            ：{{ rate.toFixed(2) }}/min
-                        </div>
-                        <p v-if="result.sinkDeliveries.length === 0" class="text-gray-400">
-                            （無 sink 交付）
-                        </p>
+                        {{ preset.name }}
+                    </button>
+                </div>
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-medium text-gray-500">V7 mode／媒質</span>
+                    <button
+                        v-for="preset in presetsByGroup('v7')"
+                        :key="preset.id"
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="presetButtonClass(preset.id)"
+                        @click="loadPreset(preset.id)"
+                    >
+                        {{ preset.name }}
+                    </button>
+                </div>
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-medium text-gray-500">V9 演示</span>
+                    <button
+                        v-for="preset in presetsByGroup('v9')"
+                        :key="preset.id"
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="presetButtonClass(preset.id)"
+                        @click="loadPreset(preset.id)"
+                    >
+                        {{ preset.name }}
+                    </button>
+                </div>
+                <div
+                    class="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50/80 p-2 dark:border-emerald-900 dark:bg-emerald-950/30"
+                >
+                    <span class="text-[10px] font-medium text-emerald-800 dark:text-emerald-200">
+                        D1 最短鏈套用
+                    </span>
+                    <select
+                        v-model="chainProduct"
+                        class="rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-900"
+                    >
+                        <option v-for="name in chainProductOptions" :key="name" :value="name">
+                            {{ name }}
+                        </option>
+                    </select>
+                    <button
+                        type="button"
+                        class="rounded bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+                        @click="applyReverseChainDemo"
+                    >
+                        產生演示圖
+                    </button>
+                </div>
+                <p v-if="activePresetMeta" class="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">{{
+                        activePresetMeta.name
+                    }}</span>
+                    — {{ activePresetMeta.description }}
+                </p>
+            </div>
+
+            <div
+                v-if="activePresetMeta"
+                class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+            >
+                <h3 class="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    預期結果（目視對照）
+                </h3>
+                <ul
+                    class="list-inside list-disc space-y-1 text-xs text-amber-900 dark:text-amber-200"
+                >
+                    <li v-for="(hint, i) in activePresetMeta.expected" :key="i">{{ hint }}</li>
+                </ul>
+            </div>
+
+            <div
+                class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+            >
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">拓撲視覺化</h3>
+                    <div class="flex flex-wrap gap-3 text-[10px] text-gray-500">
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2.5 w-2.5 rounded-sm bg-green-500" />100%
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2.5 w-2.5 rounded-sm bg-yellow-400" />50–99%
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2.5 w-2.5 rounded-sm bg-orange-400" />1–49%
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2.5 w-2.5 rounded-sm bg-zinc-400" />0% /
+                            非法
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-0.5 w-4 bg-orange-500" />堵塞邊
+                        </span>
                     </div>
-                    <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+                </div>
+                <DevTopologySvg
+                    v-if="parsedGraph"
+                    :nodes="parsedGraph.nodes"
+                    :edges="parsedGraph.edges"
+                    :node-style="topologyNodeStyle"
+                    :edge-style="topologyEdgeStyle"
+                    :selected-node-id="selectedTopoNodeId"
+                    @select-node="selectedTopoNodeId = $event"
+                />
+                <div
+                    v-if="selectedTopoNode"
+                    class="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs dark:border-blue-800 dark:bg-blue-950/40"
+                >
+                    <span class="font-semibold text-blue-900 dark:text-blue-100">
+                        {{ selectedTopoNode.data?.label || selectedTopoNode.id }}
+                    </span>
+                    <span class="text-gray-500">machineMode</span>
+                    <button
+                        v-for="mode in selectedTopoModes"
+                        :key="mode.id"
+                        type="button"
+                        class="rounded px-2 py-1 font-medium"
+                        :class="
+                            (selectedTopoNode.data?.machineMode ?? selectedTopoModes[0]?.id) ===
+                            mode.id
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200'
+                        "
+                        @click="setTopoNodeMode(selectedTopoNode.id, mode.id)"
+                    >
+                        {{ mode.label }}
+                    </button>
+                    <span v-if="!selectedTopoModes.length" class="text-gray-500"
+                        >無 modes 資料</span
+                    >
+                </div>
+                <p v-else-if="!parsedGraph" class="text-xs text-gray-400">
+                    載入 Preset 或貼上合法 JSON 後顯示拓撲
+                </p>
+                <p v-else class="mt-2 text-[10px] text-gray-400">
+                    點選節點可切換 machineMode，埠示意會更新
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div class="space-y-4">
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            JSON 輸入
+                        </h3>
+                        <textarea
+                            v-model="jsonInput"
+                            class="h-80 w-full rounded-md border border-gray-300 bg-gray-50 p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-900"
+                            placeholder='{"nodes": [...], "edges": [...]}'
+                            @input="selectedPreset = null"
+                        />
+                        <div
+                            v-if="errorMessage"
+                            class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                        >
+                            {{ errorMessage }}
+                        </div>
+                        <button
+                            type="button"
+                            class="mt-3 w-full rounded-md bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="isCalculating || !jsonInput"
+                            @click="runCalculation"
+                        >
+                            {{ isCalculating ? '計算中...' : '執行計算' }}
+                        </button>
+                    </div>
                 </div>
 
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        4. 電力 / 非法 / 堵塞摘要
-                    </h3>
-                    <div v-if="result" class="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                            <span class="text-gray-500">需求：</span>
-                            <span class="font-semibold text-red-600"
-                                >{{ result.powerBalance.demand.toFixed(0) }} kW</span
+                <div class="space-y-4">
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            1. edgeFlows（管線流量）
+                        </h3>
+                        <div v-if="result" class="max-h-48 space-y-2 overflow-y-auto">
+                            <div
+                                v-for="[uid, flow] in result.edgeFlows"
+                                :key="uid"
+                                class="rounded p-2 text-xs"
+                                :class="
+                                    flow.isCongested
+                                        ? 'bg-orange-50 dark:bg-orange-950/40'
+                                        : 'bg-gray-50 dark:bg-gray-900'
+                                "
                             >
+                                <span class="font-mono text-gray-500">{{ uid }}</span>
+                                <span class="ml-2 text-blue-600 dark:text-blue-400">{{
+                                    flow.itemId
+                                }}</span>
+                                <span class="ml-2 font-semibold text-green-600 dark:text-green-400">
+                                    {{ flow.rate.toFixed(2) }}/min
+                                </span>
+                                <span
+                                    v-if="flow.isCongested"
+                                    class="ml-2 font-semibold text-orange-600"
+                                >
+                                    堵塞
+                                </span>
+                            </div>
+                            <p v-if="result.edgeFlows.length === 0" class="text-xs text-gray-400">
+                                （無有效管線流量）
+                            </p>
                         </div>
-                        <div>
-                            <span class="text-gray-500">供應：</span>
-                            <span class="font-semibold text-green-600"
-                                >{{ result.powerBalance.supply.toFixed(0) }} kW</span
-                            >
-                        </div>
-                        <div class="col-span-2 text-xs">
-                            <span class="text-gray-500">堵塞邊：</span>
-                            <span class="font-mono">{{
-                                result.congestedEdges.length
-                                    ? result.congestedEdges.join(', ')
-                                    : '無'
-                            }}</span>
-                        </div>
-                        <div class="col-span-2 text-xs">
-                            <span class="text-gray-500">非法節點：</span>
-                            <span class="font-mono">{{
-                                result.invalidChainUids.length
-                                    ? result.invalidChainUids.join(', ')
-                                    : '無'
-                            }}</span>
-                        </div>
+                        <p v-else class="text-xs text-gray-400">尚未執行計算</p>
                     </div>
-                    <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            2. nodeEfficiencies（設備效率）
+                        </h3>
+                        <div v-if="result" class="max-h-40 space-y-2 overflow-y-auto">
+                            <div
+                                v-for="[uid, eff] in result.nodeEfficiencies"
+                                :key="uid"
+                                class="flex items-center justify-between rounded bg-gray-50 p-2 text-xs dark:bg-gray-900"
+                            >
+                                <span class="font-mono text-gray-500">
+                                    {{ uid }}
+                                    <span
+                                        v-if="result.invalidChainUids.includes(uid)"
+                                        class="ml-1 text-zinc-400"
+                                        >非法</span
+                                    >
+                                </span>
+                                <span :class="getEfficiencyClass(eff)" class="font-semibold">
+                                    {{ (eff * 100).toFixed(1) }}%
+                                </span>
+                            </div>
+                        </div>
+                        <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+                    </div>
+
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            3. itemSummary / sinkDeliveries
+                        </h3>
+                        <table
+                            v-if="result && result.itemSummary.length > 0"
+                            class="mb-3 w-full text-xs"
+                        >
+                            <thead>
+                                <tr class="text-left text-gray-500">
+                                    <th class="pb-2">品項</th>
+                                    <th class="pb-2">產出</th>
+                                    <th class="pb-2">消耗</th>
+                                    <th class="pb-2">淨值</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="item in result.itemSummary"
+                                    :key="item.itemId"
+                                    class="border-t border-gray-200 dark:border-gray-700"
+                                >
+                                    <td class="py-1.5">{{ item.name }}</td>
+                                    <td class="py-1.5 text-green-600">
+                                        {{ item.produced.toFixed(2) }}
+                                    </td>
+                                    <td class="py-1.5 text-red-600">
+                                        {{ item.consumed.toFixed(2) }}
+                                    </td>
+                                    <td
+                                        class="py-1.5 font-semibold"
+                                        :class="item.net >= 0 ? 'text-green-600' : 'text-red-600'"
+                                    >
+                                        {{ item.net.toFixed(2) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="result" class="space-y-1 text-xs">
+                            <div
+                                v-for="[itemId, rate] in result.sinkDeliveries"
+                                :key="itemId"
+                                class="rounded bg-blue-50 p-2 dark:bg-blue-950/30"
+                            >
+                                Sink 交付
+                                <span class="font-semibold">{{ itemId }}</span>
+                                ：{{ rate.toFixed(2) }}/min
+                            </div>
+                            <p v-if="result.sinkDeliveries.length === 0" class="text-gray-400">
+                                （無 sink 交付）
+                            </p>
+                        </div>
+                        <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+                    </div>
+
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            4. 電力 / 非法 / 堵塞摘要
+                        </h3>
+                        <div v-if="result" class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span class="text-gray-500">需求：</span>
+                                <span class="font-semibold text-red-600"
+                                    >{{ result.powerBalance.demand.toFixed(0) }} kW</span
+                                >
+                            </div>
+                            <div>
+                                <span class="text-gray-500">供應：</span>
+                                <span class="font-semibold text-green-600"
+                                    >{{ result.powerBalance.supply.toFixed(0) }} kW</span
+                                >
+                            </div>
+                            <div class="col-span-2 text-xs">
+                                <span class="text-gray-500">堵塞邊：</span>
+                                <span class="font-mono">{{
+                                    result.congestedEdges.length
+                                        ? result.congestedEdges.join(', ')
+                                        : '無'
+                                }}</span>
+                            </div>
+                            <div class="col-span-2 text-xs">
+                                <span class="text-gray-500">非法節點：</span>
+                                <span class="font-mono">{{
+                                    result.invalidChainUids.length
+                                        ? result.invalidChainUids.join(', ')
+                                        : '無'
+                                }}</span>
+                            </div>
+                        </div>
+                        <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+                    </div>
                 </div>
             </div>
-        </div>
         </template>
     </div>
 </template>
@@ -411,10 +430,7 @@ import MachineCatalogPanel from '@/app/dev/MachineCatalogPanel.vue';
 import ProductCatalogPanel from '@/app/dev/ProductCatalogPanel.vue';
 import DevTopologySvg from '@/app/dev/DevTopologySvg.vue';
 import { getMachine } from '@/data/machines';
-import {
-    findShortestReverseChain,
-    type ChainNode,
-} from '@/utils/reverseChain';
+import { findShortestReverseChain, type ChainNode } from '@/utils/reverseChain';
 
 type PageTab = 'engine' | 'machines' | 'products';
 
@@ -522,8 +538,7 @@ function makeNode(
             machineMode = materialSourceMode(options.primaryOutput);
         }
         recipeIndex = options.recipePick ?? recipeIndex;
-        const sourceRatePerMin =
-            options.sourceRatePerMin ?? (recipeIndex === 1 ? 15 : 30);
+        const sourceRatePerMin = options.sourceRatePerMin ?? (recipeIndex === 1 ? 15 : 30);
         return {
             id,
             type: 'default',
@@ -716,11 +731,7 @@ const presets: PresetMeta[] = [
         name: 'G2',
         group: 'v7',
         description: 'E1：精煉爐 base_mode 接赤銅礦＋清水（liquid 配方不在此 mode）',
-        expected: [
-            'base_mode 下無匹配配方 → 精煉爐非法／無產出',
-            '無赤銅塊交付',
-            '拓撲節點偏灰',
-        ],
+        expected: ['base_mode 下無匹配配方 → 精煉爐非法／無產出', '無赤銅塊交付', '拓撲節點偏灰'],
     },
     {
         id: 'g3',
@@ -777,11 +788,7 @@ const presets: PresetMeta[] = [
         name: 'V9-息壤鏈',
         group: 'v9',
         description: 'D1 最短鏈：芽針→碳塊；碳塊＋清水→息壤（stable）→Sink',
-        expected: [
-            '天有洪爐 environment=stable',
-            'Sink 有息壤交付',
-            '不走緻密碳長鏈',
-        ],
+        expected: ['天有洪爐 environment=stable', 'Sink 有息壤交付', '不走緻密碳長鏈'],
     },
 ];
 
@@ -844,7 +851,9 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     h6: {
         nodes: [
-            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', { primaryOutput: '紫晶礦' }),
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', {
+                primaryOutput: '紫晶礦',
+            }),
             makeNode('c1', 200, 100, '精煉爐', '精煉爐', {
                 machineMode: 'base_mode',
                 primaryOutput: '紫晶纖維',
@@ -1264,9 +1273,7 @@ async function applyReverseChainDemo() {
 
     const rootId = visit(root);
     const sinkId = `sink_${seq++}`;
-    nodes.push(
-        makeNode(sinkId, (productIds.size + 1) * 200, 80, '物品輸入口', '物品輸入口'),
-    );
+    nodes.push(makeNode(sinkId, (productIds.size + 1) * 200, 80, '物品輸入口', '物品輸入口'));
     edges.push(makeEdgeLoose(`e_${rootId}_${sinkId}`, rootId, sinkId));
 
     selectedPreset.value = null;

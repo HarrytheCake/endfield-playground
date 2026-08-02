@@ -3,12 +3,7 @@
  * V9-C1／C2：機器目錄 — tag 分頁／WxH 格點埠示意／JSON
  */
 import { computed, ref, watch } from 'vue';
-import {
-    getAllMachines,
-    getMachineMode,
-    getMachinesByTag,
-    MACHINE_TAGS,
-} from '@/data/machines';
+import { getAllMachines, getMachineMode, getMachinesByTag, MACHINE_TAGS } from '@/data/machines';
 import {
     listGridLines,
     listModePortMarkers,
@@ -219,7 +214,9 @@ function selectMachine(id: string) {
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
                         {{ selected.name }}
                     </h3>
-                    <span class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <span
+                        class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                    >
                         {{ selected.id }}
                     </span>
                     <span class="text-[10px] text-gray-500">
@@ -248,15 +245,24 @@ function selectMachine(id: string) {
 
                 <div class="mb-2 flex flex-wrap gap-3 text-[10px] text-gray-500">
                     <span class="inline-flex items-center gap-1">
-                        <span class="inline-block h-2.5 w-2.5 rounded-sm" style="background: #f59e0b" />
+                        <span
+                            class="inline-block h-2.5 w-2.5 rounded-sm"
+                            style="background: #f59e0b"
+                        />
                         belt
                     </span>
                     <span class="inline-flex items-center gap-1">
-                        <span class="inline-block h-2.5 w-2.5 rounded-sm" style="background: #0ea5e9" />
+                        <span
+                            class="inline-block h-2.5 w-2.5 rounded-sm"
+                            style="background: #0ea5e9"
+                        />
                         pipe
                     </span>
                     <span>{{ selected.width }}×{{ selected.height }} 格</span>
-                    <span>入 {{ activeMode.input_ports.length }} · 出 {{ activeMode.output_ports.length }}</span>
+                    <span
+                        >入 {{ activeMode.input_ports.length }} · 出
+                        {{ activeMode.output_ports.length }}</span
+                    >
                     <span v-if="activeMode.loss">
                         loss: {{ activeMode.loss.item }} {{ activeMode.loss.rate_per_min }}/min
                     </span>
@@ -330,7 +336,8 @@ function selectMachine(id: string) {
                 <h4 class="mb-2 text-xs font-semibold text-gray-900 dark:text-white">JSON</h4>
                 <pre
                     class="max-h-[360px] overflow-auto rounded bg-zinc-900 p-3 text-[11px] leading-relaxed text-zinc-100"
-                >{{ jsonText }}</pre>
+                    >{{ jsonText }}</pre
+                >
             </div>
         </div>
     </div>

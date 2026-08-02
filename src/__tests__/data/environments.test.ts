@@ -3,11 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-    environmentList,
-    getEnvironment,
-    getAllEnvironments,
-} from '@/data/environments';
+import { environmentList, getEnvironment, getAllEnvironments } from '@/data/environments';
 
 describe('environmentList', () => {
     it('包含內建 none', () => {

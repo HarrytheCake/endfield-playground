@@ -192,7 +192,12 @@ describe('validateRecipeMatch()', () => {
 
     it('V9-E1：超集不合法（須完全吻合）', () => {
         expect(
-            validateRecipeMatch('粉碎機', yuanPowderIdx, new Set(['源礦', '其他無關品項']), 'default'),
+            validateRecipeMatch(
+                '粉碎機',
+                yuanPowderIdx,
+                new Set(['源礦', '其他無關品項']),
+                'default',
+            ),
         ).toBe(false);
     });
 
@@ -218,9 +223,9 @@ describe('validateRecipeMatch()', () => {
 
     it('liquid_mode 下可匹配赤銅塊配方', () => {
         const idx = recipeIndexOf('精煉爐', '赤銅塊', 'liquid_mode');
-        expect(
-            validateRecipeMatch('精煉爐', idx, new Set(['赤銅礦', '清水']), 'liquid_mode'),
-        ).toBe(true);
+        expect(validateRecipeMatch('精煉爐', idx, new Set(['赤銅礦', '清水']), 'liquid_mode')).toBe(
+            true,
+        );
     });
 });
 
@@ -267,6 +272,8 @@ describe('validateChains — belt/pipe 媒質', () => {
         const graph = buildGraph(nodes, edges);
         validateChains(graph);
         // 無 handle → 不因媒質判非法（仍可能因配方不符）
-        expect(graph.invalidSubgraphUids.has('src') || graph.nodes.get('src')!.isValid).toBeTruthy();
+        expect(
+            graph.invalidSubgraphUids.has('src') || graph.nodes.get('src')!.isValid,
+        ).toBeTruthy();
     });
 });

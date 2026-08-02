@@ -143,13 +143,7 @@ describe('getAllMachines()', () => {
 
 describe('MACHINE_TAGS / getMachinesByTag()', () => {
     it('MACHINE_TAGS 對齊 machine_tags.json 五類', () => {
-        expect([...MACHINE_TAGS]).toEqual([
-            '物流設備',
-            '倉庫存取',
-            '基礎生產',
-            '合成製造',
-            '電力',
-        ]);
+        expect([...MACHINE_TAGS]).toEqual(['物流設備', '倉庫存取', '基礎生產', '合成製造', '電力']);
     });
 
     it('all 回傳全部機器', () => {

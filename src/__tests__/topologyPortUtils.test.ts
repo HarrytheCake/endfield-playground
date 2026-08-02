@@ -116,14 +116,7 @@ describe('V9-C2 格點定位', () => {
 
     it('90° 旋轉後顯示格數寬高對調', () => {
         expect(resolveDisplayGrid(6, 4, 1)).toEqual({ widthCells: 4, heightCells: 6 });
-        const pos = portPositionOnRect(
-            { key: 'in-0', side: 'top', offset: 0 },
-            6,
-            4,
-            40,
-            60,
-            1,
-        );
+        const pos = portPositionOnRect({ key: 'in-0', side: 'top', offset: 0 }, 6, 4, 40, 60, 1);
         // top@0 → right@0 on 4×6 display
         expect(pos.x).toBe(40);
         expect(pos.y).toBeCloseTo(0.5 * (60 / 6));

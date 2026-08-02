@@ -22,10 +22,7 @@ const props = withDefaults(
         nodes: FactoryNode[];
         edges: FactoryEdge[];
         /** 節點填色／非法等視覺覆寫 */
-        nodeStyle?: Record<
-            string,
-            { fill?: string; invalid?: boolean; subtitleExtra?: string }
-        >;
+        nodeStyle?: Record<string, { fill?: string; invalid?: boolean; subtitleExtra?: string }>;
         /** 邊流量標籤／堵塞 */
         edgeStyle?: Record<string, { label?: string; congested?: boolean }>;
         selectedNodeId?: string | null;

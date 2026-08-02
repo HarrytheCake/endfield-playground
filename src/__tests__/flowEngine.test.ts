@@ -53,18 +53,14 @@ const RI = {
     crusherSandLeafPowder: () => recipeIndexOf('粉碎機', '砂葉粉末', undefined, 'default'),
     crusherRedCopperPowder: () => recipeIndexOf('粉碎機', '赤銅粉末', undefined, 'default'),
     /** 藍鐵粉末×2＋砂葉粉末×1 → 緻密藍鐵粉末（time=2s → 理論 30/min） */
-    grinderDenseBlueIron: () =>
-        recipeIndexOf('研磨機', '緻密藍鐵粉末', undefined, 'default'),
+    grinderDenseBlueIron: () => recipeIndexOf('研磨機', '緻密藍鐵粉末', undefined, 'default'),
     refineryRedCopper: () =>
         recipeIndexOf('精煉爐', '赤銅塊', { 赤銅礦: 1, 清水: 1 }, 'liquid_mode'),
-    reactorRedCopperSolution: () =>
-        recipeIndexOf('反應池', '赤銅溶液', { 赤銅粉末: 1 }, 'default'),
+    reactorRedCopperSolution: () => recipeIndexOf('反應池', '赤銅溶液', { 赤銅粉末: 1 }, 'default'),
     reactorHueCopper: () => recipeIndexOf('反應池', '赫銅塊', { 赫銅溶液: 2 }, 'default'),
-    purifierHueSolution: () =>
-        recipeIndexOf('提純機', '赫銅溶液', { 赤銅溶液: 4 }, 'liquid_mode'),
+    purifierHueSolution: () => recipeIndexOf('提純機', '赫銅溶液', { 赤銅溶液: 4 }, 'liquid_mode'),
     partsHueCopper: () => recipeIndexOf('配件機', '赫銅零件', undefined, 'default'),
 };
-
 
 /** 建立空白 FlowGraph */
 function makeGraph(): FlowGraph {

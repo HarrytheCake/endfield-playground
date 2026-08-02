@@ -12,26 +12,26 @@ import type { Environment } from '@/types/environment';
 /** 全部環境標籤 */
 export const environmentList: readonly Environment[] = [
     {
-        "id": "none",
-        "label": "無環境（預設）",
-        "builtin": true
+        id: 'none',
+        label: '無環境（預設）',
+        builtin: true,
     },
     {
-        "id": "stable",
-        "label": "穩定環境"
+        id: 'stable',
+        label: '穩定環境',
     },
     {
-        "id": "acidic",
-        "label": "酸性環境"
+        id: 'acidic',
+        label: '酸性環境',
     },
     {
-        "id": "humid",
-        "label": "濕潤環境"
+        id: 'humid',
+        label: '濕潤環境',
     },
     {
-        "id": "xisang",
-        "label": "息壤環境"
-    }
+        id: 'xisang',
+        label: '息壤環境',
+    },
 ];
 
 const _envMap = new Map<string, Environment>(environmentList.map((e) => [e.id, e]));

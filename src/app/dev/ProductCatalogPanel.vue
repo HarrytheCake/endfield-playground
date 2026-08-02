@@ -70,9 +70,7 @@ const filtered = computed(() => {
     return rows.value.filter((r) => {
         if (!q) return true;
         return (
-            r.name.toLowerCase().includes(q) ||
-            r.id.toLowerCase().includes(q) ||
-            r.form.includes(q)
+            r.name.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || r.form.includes(q)
         );
     });
 });
@@ -88,9 +86,7 @@ const reverseChain = computed((): ChainNode | null => {
     return findShortestReverseChain(selected.value.name);
 });
 
-const chainSteps = computed(() =>
-    reverseChain.value ? countRecipeSteps(reverseChain.value) : 0,
-);
+const chainSteps = computed(() => (reverseChain.value ? countRecipeSteps(reverseChain.value) : 0));
 
 const chainLeaves = computed(() =>
     reverseChain.value ? collectLeafMaterials(reverseChain.value) : [],
@@ -120,11 +116,8 @@ function chainLines(node: ChainNode, depth = 0): string[] {
     }
     const mode = node.recipe?.machineMode ? `/${node.recipe.machineMode}` : '';
     const env = node.recipe?.environment ? ` · env=${node.recipe.environment}` : '';
-    const rate =
-        node.ratePerMin != null ? ` · ${node.ratePerMin}/min` : '';
-    const lines = [
-        `${pad}• ${node.itemId} ← ${node.recipe?.machine ?? '?'}${mode}${rate}${env}`,
-    ];
+    const rate = node.ratePerMin != null ? ` · ${node.ratePerMin}/min` : '';
+    const lines = [`${pad}• ${node.itemId} ← ${node.recipe?.machine ?? '?'}${mode}${rate}${env}`];
     for (const child of node.inputs ?? []) {
         lines.push(...chainLines(child, depth + 1));
     }
@@ -174,11 +167,7 @@ const chainText = computed(() =>
                     <button
                         type="button"
                         class="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
-                        :class="
-                            selectedKey === r.key
-                                ? 'bg-blue-50 dark:bg-blue-950'
-                                : ''
-                        "
+                        :class="selectedKey === r.key ? 'bg-blue-50 dark:bg-blue-950' : ''"
                         @click="selectRow(r.key)"
                     >
                         <span
@@ -225,13 +214,17 @@ const chainText = computed(() =>
                     <h4 class="mb-1 text-xs font-semibold text-emerald-900 dark:text-emerald-100">
                         最短反向鏈路（V9-D1）
                     </h4>
-                    <p v-if="reverseChain" class="mb-2 text-[10px] text-emerald-800/80 dark:text-emerald-200/70">
+                    <p
+                        v-if="reverseChain"
+                        class="mb-2 text-[10px] text-emerald-800/80 dark:text-emerald-200/70"
+                    >
                         {{ chainSteps }} 步配方 · 葉材料：{{ chainLeaves.join('、') || '—' }}
                     </p>
                     <pre
                         v-if="reverseChain"
-                        class="max-h-48 overflow-auto whitespace-pre-wrap rounded bg-white/80 p-2 text-[11px] leading-relaxed text-gray-800 dark:bg-zinc-900 dark:text-zinc-100"
-                    >{{ chainText }}</pre>
+                        class="max-h-48 overflow-auto rounded bg-white/80 p-2 text-[11px] leading-relaxed whitespace-pre-wrap text-gray-800 dark:bg-zinc-900 dark:text-zinc-100"
+                        >{{ chainText }}</pre
+                    >
                     <p v-else class="text-[11px] text-amber-700 dark:text-amber-300">
                         無法推演（無可用配方或循環阻擋）
                     </p>

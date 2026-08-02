@@ -17,10 +17,7 @@ describe('matchRecipeByEdgeCandidates()', () => {
     it('提純多輸出＋藍鐵粉末 → 仍匹配反應池赫銅塊（忽略沉積酸）', () => {
         const matched = matchRecipeByEdgeCandidates(
             '反應池',
-            [
-                ['赫銅溶液', '沉積酸'],
-                ['藍鐵粉末'],
-            ],
+            [['赫銅溶液', '沉積酸'], ['藍鐵粉末']],
             'default',
             'none',
         );

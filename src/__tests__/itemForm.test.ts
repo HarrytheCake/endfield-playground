@@ -2,12 +2,7 @@
  * V8：品項 form（solid｜liquid｜gas）與媒質／上限
  */
 import { describe, expect, it } from 'vitest';
-import {
-    BELT_RATE_LIMIT,
-    PIPE_RATE_LIMIT,
-    formToPortMedia,
-    rateLimitForMedia,
-} from '@/types/flow';
+import { BELT_RATE_LIMIT, PIPE_RATE_LIMIT, formToPortMedia, rateLimitForMedia } from '@/types/flow';
 import { getItemForm, getItemPortMedia, getProduct } from '@/data/products';
 import { getMaterial, getAllMaterials } from '@/data/materials';
 

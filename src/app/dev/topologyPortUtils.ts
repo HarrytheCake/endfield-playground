@@ -166,15 +166,10 @@ export function portPositionOnRect(
         rotation,
     );
     const grid = resolveDisplayGrid(machineWidth, machineHeight, rotation);
-    return portPositionOnGrid(
-        side,
-        offset,
-        grid.widthCells,
-        grid.heightCells,
-        rectW,
-        rectH,
-        { warnOnClamp: options?.warnOnClamp, warnLabel: marker.key },
-    );
+    return portPositionOnGrid(side, offset, grid.widthCells, grid.heightCells, rectW, rectH, {
+        warnOnClamp: options?.warnOnClamp,
+        warnLabel: marker.key,
+    });
 }
 
 /**
@@ -276,9 +271,10 @@ export function modePortSummaryLabel(mode: MachineMode | null): string {
 /**
  * 解析機器格數；未知機器預設 2×2。
  */
-export function resolveMachineCells(
-    machineType: string | undefined,
-): { width: number; height: number } {
+export function resolveMachineCells(machineType: string | undefined): {
+    width: number;
+    height: number;
+} {
     if (!machineType) return { width: 2, height: 2 };
     const m = getMachine(machineType);
     if (!m) return { width: 2, height: 2 };

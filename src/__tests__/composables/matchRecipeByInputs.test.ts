@@ -39,15 +39,9 @@ describe('matchRecipeByInputs()', () => {
     });
 
     it('精煉爐 liquid_mode：僅赤銅礦不匹配；齊全後匹配', () => {
-        expect(
-            matchRecipeByInputs('精煉爐', new Set(['赤銅礦']), 'liquid_mode'),
-        ).toBeNull();
+        expect(matchRecipeByInputs('精煉爐', new Set(['赤銅礦']), 'liquid_mode')).toBeNull();
 
-        const ok = matchRecipeByInputs(
-            '精煉爐',
-            new Set(['赤銅礦', '清水']),
-            'liquid_mode',
-        );
+        const ok = matchRecipeByInputs('精煉爐', new Set(['赤銅礦', '清水']), 'liquid_mode');
         expect(ok).not.toBeNull();
         expect(ok!.recipe.outputs.some((o) => o.itemId === '赤銅塊')).toBe(true);
     });
@@ -65,12 +59,7 @@ describe('matchRecipeByInputs()', () => {
     });
 
     it('environment 不符則不匹配（息壤 stable）', () => {
-        const none = matchRecipeByInputs(
-            '天有洪爐',
-            new Set(['碳塊', '清水']),
-            'default',
-            'none',
-        );
+        const none = matchRecipeByInputs('天有洪爐', new Set(['碳塊', '清水']), 'default', 'none');
         expect(none).toBeNull();
 
         const stable = matchRecipeByInputs(
@@ -83,9 +72,7 @@ describe('matchRecipeByInputs()', () => {
     });
 
     it('超集／空集合不匹配', () => {
-        expect(
-            matchRecipeByInputs('粉碎機', new Set(['源礦', '砂葉']), 'default'),
-        ).toBeNull();
+        expect(matchRecipeByInputs('粉碎機', new Set(['源礦', '砂葉']), 'default')).toBeNull();
         expect(matchRecipeByInputs('粉碎機', new Set(), 'default')).toBeNull();
     });
 });
