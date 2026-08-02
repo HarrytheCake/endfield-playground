@@ -141,69 +141,159 @@
             class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950"
         >
             <h3 class="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
-                V6 拖曳驗收（commitDeviceMove）
+                V6 拖曳驗收
             </h3>
-            <p class="mb-3 text-xs text-amber-800 dark:text-amber-300">
-                此區模擬 Vue Flow 拖曳結束路徑：先改寫
-                <code class="rounded bg-white/60 px-1 dark:bg-black/30">position</code
-                >，再呼叫
-                <code class="rounded bg-white/60 px-1 dark:bg-black/30">commitDeviceMove</code
-                >（不重複位移）。右側「移動所有設備」測的是
-                <code class="rounded bg-white/60 px-1 dark:bg-black/30">moveDevices</code>（M6）。M7
-                跟手需到
-                <RouterLink class="underline" to="/">主編輯畫布</RouterLink>
-                目視。
-            </p>
+            <div class="mb-3 space-y-2 text-xs text-amber-800 dark:text-amber-300">
+                <p>
+                    <strong>目的：</strong>驗證「拖曳結束」會正確寫入歷史（模擬改座標 →
+                    <code class="rounded bg-white/60 px-1 dark:bg-black/30">commitDeviceMove</code>）。
+                    與下方 <strong>Undo／Redo／Clear</strong>、<strong>Undo Stack</strong>
+                    是<strong>同一套</strong>
+                    <code class="rounded bg-white/60 px-1 dark:bg-black/30">historyStore</code
+                    >——一鍵腳本跑完後，可直接用下方 Undo 再驗一次。
+                </p>
+                <p>
+                    <strong>建議路徑（最快）：</strong>按
+                    <span class="font-semibold">「一鍵 M1→M4」</span
+                    >（會自動清場並擺設備）→ 看綠／紅結果 → checklist 會自動勾選通過項。
+                </p>
+                <p>
+                    <strong>手動路徑：</strong>右側「➕ 擺放設備」至少 1～2 台 → 再按上方模擬按鈕 →
+                    用下方 Undo／Redo 觀察座標。M7（跟手）請到
+                    <RouterLink class="underline" to="/">主編輯畫布</RouterLink>
+                    真拖曳後手動勾選。
+                </p>
+                <p class="text-amber-700 dark:text-amber-400">
+                    目前畫布：{{ nodeCount }} 台設備
+                    <span v-if="v6Busy" class="ml-2 font-semibold">· 腳本執行中…</span>
+                </p>
+            </div>
 
-            <div class="mb-3 flex flex-wrap gap-2">
+            <div
+                class="mb-3 overflow-x-auto rounded-md bg-white/80 p-2 dark:bg-gray-900/80"
+            >
+                <table class="w-full text-left text-xs text-amber-900 dark:text-amber-200">
+                    <thead>
+                        <tr class="border-b border-amber-200 dark:border-amber-800">
+                            <th class="py-1 pr-3 font-semibold">項</th>
+                            <th class="py-1 pr-3 font-semibold">怎麼測</th>
+                            <th class="py-1 font-semibold">通過長相</th>
+                        </tr>
+                    </thead>
+                    <tbody class="align-top">
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M1</td>
+                            <td class="py-1 pr-3">模擬拖曳（單）→ 下方 Undo</td>
+                            <td class="py-1">座標回到拖曳前</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M2</td>
+                            <td class="py-1 pr-3">接 M1 → 下方 Redo</td>
+                            <td class="py-1">座標回到拖曳後</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M3</td>
+                            <td class="py-1 pr-3">模擬拖曳（多）→ Undo 一次</td>
+                            <td class="py-1">兩台都還原（需 ≥2 台）</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M4</td>
+                            <td class="py-1 pr-3">模擬零位移</td>
+                            <td class="py-1">undoDepth 不變</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M5</td>
+                            <td class="py-1 pr-3">一鍵 M5（交錯）</td>
+                            <td class="py-1">拖曳／旋轉／刪除交錯 Undo 合理</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M6</td>
+                            <td class="py-1 pr-3">一鍵 M6 或右側「移動所有設備」</td>
+                            <td class="py-1">moveDevices 路徑 Undo 正常</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M7</td>
+                            <td class="py-1 pr-3">
+                                <RouterLink class="underline" to="/">主畫布</RouterLink> 真拖曳
+                            </td>
+                            <td class="py-1">跟手無抖動（此頁無法代替）</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mb-2 flex flex-wrap gap-2">
                 <button
                     type="button"
-                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:opacity-50"
-                    :disabled="v6Busy || editorStore.nodes.length === 0"
-                    @click="simulateDragCommitSingle"
-                >
-                    模擬拖曳（單）
-                </button>
-                <button
-                    type="button"
-                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:opacity-50"
-                    :disabled="v6Busy || editorStore.nodes.length < 2"
-                    @click="simulateDragCommitMulti"
-                >
-                    模擬拖曳（多）
-                </button>
-                <button
-                    type="button"
-                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:opacity-50"
-                    :disabled="v6Busy || editorStore.nodes.length === 0"
-                    @click="simulateZeroDisplacement"
-                >
-                    模擬零位移
-                </button>
-                <button
-                    type="button"
-                    class="rounded-md bg-amber-800 px-3 py-2 text-xs text-white hover:bg-amber-900 disabled:opacity-50"
+                    class="rounded-md bg-amber-800 px-3 py-2 text-xs text-white hover:bg-amber-900 disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="v6Busy"
+                    :title="v6Busy ? '腳本執行中' : '推薦：自動清場、擺設備並驗 M1–M4'"
                     @click="runV6ScriptM1toM4"
                 >
-                    一鍵 M1→M4
+                    一鍵 M1→M4（推薦）
                 </button>
                 <button
                     type="button"
-                    class="rounded-md bg-amber-800 px-3 py-2 text-xs text-white hover:bg-amber-900 disabled:opacity-50"
+                    class="rounded-md bg-amber-800 px-3 py-2 text-xs text-white hover:bg-amber-900 disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="v6Busy"
+                    :title="v6Busy ? '腳本執行中' : '自動驗 M5 交錯 Undo'"
                     @click="runV6ScriptM5"
                 >
                     一鍵 M5（交錯）
                 </button>
                 <button
                     type="button"
-                    class="rounded-md bg-blue-700 px-3 py-2 text-xs text-white hover:bg-blue-800 disabled:opacity-50"
-                    :disabled="v6Busy || editorStore.nodes.length === 0"
+                    class="rounded-md bg-blue-700 px-3 py-2 text-xs text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy || nodeCount === 0"
+                    :title="v6NeedNodesHint(1) || '對現有設備跑 moveDevices'"
                     @click="runV6ScriptM6"
                 >
                     一鍵 M6（moveDevices）
                 </button>
+                <span
+                    class="mx-1 hidden h-8 w-px self-center bg-amber-300 sm:inline-block dark:bg-amber-700"
+                    aria-hidden="true"
+                />
+                <button
+                    type="button"
+                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy || nodeCount === 0"
+                    :title="v6NeedNodesHint(1) || 'M1：單機模擬拖曳結束'"
+                    @click="simulateDragCommitSingle"
+                >
+                    模擬拖曳（單）
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy || nodeCount < 2"
+                    :title="v6NeedNodesHint(2) || 'M3：多機同一筆 commit'"
+                    @click="simulateDragCommitMulti"
+                >
+                    模擬拖曳（多）
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy || nodeCount === 0"
+                    :title="v6NeedNodesHint(1) || 'M4：零位移不應進歷史'"
+                    @click="simulateZeroDisplacement"
+                >
+                    模擬零位移
+                </button>
+            </div>
+            <p
+                v-if="v6ButtonHint"
+                class="mb-3 text-xs font-medium text-amber-700 dark:text-amber-400"
+            >
+                {{ v6ButtonHint }}
+            </p>
+
+            <div
+                v-if="v6Busy"
+                class="mb-3 rounded-md border border-amber-400 bg-amber-100 p-2 text-xs font-semibold text-amber-900 dark:bg-amber-900 dark:text-amber-100"
+            >
+                腳本執行中，請稍候（按鈕暫時鎖定）…
             </div>
 
             <div
@@ -217,7 +307,7 @@
             <div class="rounded-md bg-white p-3 dark:bg-gray-900">
                 <div class="mb-2 flex items-center justify-between">
                     <h4 class="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                        M1–M7 Checklist
+                        驗收勾選（通過後勾；一鍵腳本會自動勾）
                     </h4>
                     <button
                         type="button"
@@ -252,15 +342,19 @@
             </div>
         </div>
 
-        <!-- 控制面板 -->
+        <!-- 控制面板：與上方 V6 共用 historyStore -->
         <div
             class="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
         >
+            <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                歷史控制（與上方 V6 驗收<strong>同一</strong> Undo／Redo 堆疊）
+            </p>
             <div class="flex items-center justify-between">
                 <div class="flex space-x-3">
                     <button
                         @click="undo"
                         :disabled="!historyStore.canUndo"
+                        :title="historyStore.canUndo ? '還原上一筆' : '目前沒有可 Undo 的紀錄'"
                         class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         ⏮️ Undo
@@ -268,6 +362,7 @@
                     <button
                         @click="redo"
                         :disabled="!historyStore.canRedo"
+                        :title="historyStore.canRedo ? '重做' : '目前沒有可 Redo 的紀錄'"
                         class="rounded-md bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         ⏭️ Redo
@@ -292,9 +387,12 @@
                 <div
                     class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                 >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                    <h3 class="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
                         Undo Stack（{{ historyStore.undoStack.length }}）
                     </h3>
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                        V6 一鍵腳本與手動模擬拖曳寫入的紀錄也在這裡
+                    </p>
                     <div class="max-h-96 space-y-2 overflow-y-auto">
                         <div
                             v-for="(command, index) in historyStore.undoStack"
@@ -437,7 +535,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
 import { RouterLink } from 'vue-router';
 import { useEditorStore } from '@/store/editorStore';
@@ -458,16 +556,44 @@ const v6Message = ref('');
 /** V6 最近一次腳本是否全部通過（null = 僅手動操作） */
 const v6Pass = ref<boolean | null>(null);
 
+/** 目前畫布設備數（供 V6 按鈕啟用條件） */
+const nodeCount = computed(() => editorStore.nodes.length);
+
+/**
+ * 手動模擬按鈕缺設備時的提示（一鍵 M1→M4／M5 不需預先擺放）。
+ * @param need 至少需要的設備數
+ */
+function v6NeedNodesHint(need: number): string {
+    if (v6Busy.value) return '腳本執行中';
+    if (nodeCount.value >= need) return '';
+    if (need <= 1) {
+        return '需先有設備：請按右側「➕ 擺放設備」，或改用「一鍵 M1→M4（推薦）」';
+    }
+    return `需至少 ${need} 台設備（目前 ${nodeCount.value}）：請再擺放，或改用「一鍵 M1→M4（推薦）」`;
+}
+
+/** 常駐顯示的按鈕狀態說明（有禁用原因時） */
+const v6ButtonHint = computed(() => {
+    if (v6Busy.value) return '';
+    if (nodeCount.value === 0) {
+        return '提示：模擬拖曳／零位移／M6 目前無法點——畫布是空的。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
+    }
+    if (nodeCount.value < 2) {
+        return '提示：「模擬拖曳（多）」需要 ≥2 台。可再擺一台，或只用一鍵腳本／單機模擬。';
+    }
+    return '';
+});
+
 type V6CheckId = 'M1' | 'M2' | 'M3' | 'M4' | 'M5' | 'M6' | 'M7';
 
 const v6ChecklistItems: { id: V6CheckId; label: string }[] = [
-    { id: 'M1', label: '單機模擬拖曳 → Undo 回到拖曳前座標' },
-    { id: 'M2', label: '接 M1 → Redo 回到拖曳後座標' },
-    { id: 'M3', label: '多機同一筆 commit → 一次 Undo 全還原' },
-    { id: 'M4', label: '零位移 commit → undoDepth 不變' },
-    { id: 'M5', label: '拖曳後旋轉／刪除交錯 Undo，座標堆疊合理' },
-    { id: 'M6', label: 'moveDevices（移動所有設備）→ Undo 仍正常' },
-    { id: 'M7', label: '真拖曳過程畫面跟手（無抖動／跳回）' },
+    { id: 'M1', label: '模擬拖曳（單）後，下方 Undo 回到拖曳前座標' },
+    { id: 'M2', label: '接 M1 後，下方 Redo 回到拖曳後座標' },
+    { id: 'M3', label: '模擬拖曳（多）後，一次 Undo 兩台都還原' },
+    { id: 'M4', label: '模擬零位移後，Depth 不變（不寫入歷史）' },
+    { id: 'M5', label: '一鍵 M5：拖曳／旋轉／刪除交錯 Undo 合理' },
+    { id: 'M6', label: '一鍵 M6 或「移動所有設備」後 Undo 正常' },
+    { id: 'M7', label: '主畫布真拖曳跟手（無抖動／跳回）' },
 ];
 
 /** M1–M6 勾選狀態（持久化）；M7 僅展示不可勾選通過 */
@@ -541,7 +667,8 @@ function fmtPos(uid: string): string {
 function simulateDragCommitSingle(): void {
     const node = editorStore.nodes[0];
     if (!node) {
-        v6Message.value = '無節點：請先擺放設備';
+        v6Message.value =
+            '無法執行：畫布無設備。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
         v6Pass.value = false;
         return;
     }
@@ -570,7 +697,8 @@ function simulateDragCommitSingle(): void {
 function simulateDragCommitMulti(): void {
     const uids = editorStore.nodes.map((n) => n.id);
     if (uids.length < 2) {
-        v6Message.value = '請至少擺放 2 台設備';
+        v6Message.value =
+            '無法執行：需要至少 2 台設備。請再擺放一台，或改用「一鍵 M1→M4（推薦）」。';
         v6Pass.value = false;
         return;
     }
@@ -593,7 +721,8 @@ function simulateDragCommitMulti(): void {
 function simulateZeroDisplacement(): void {
     const node = editorStore.nodes[0];
     if (!node) {
-        v6Message.value = '無節點：請先擺放設備';
+        v6Message.value =
+            '無法執行：畫布無設備。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
         v6Pass.value = false;
         return;
     }
