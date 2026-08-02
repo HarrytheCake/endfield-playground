@@ -746,7 +746,7 @@ export function buildGraph(
         const isSource = machineDef?.is_source ?? false;
         const isSink = machineDef?.is_sink ?? false;
 
-        let inputRates = new Map<string, number>();
+        const inputRates = new Map<string, number>();
         let outputRates = new Map<string, number>();
 
         const primaryOutput = node.data?.primaryOutput;
