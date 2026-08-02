@@ -18,11 +18,9 @@
 | `is_source` | `boolean` | 建議 | `true`＝純物品輸出口（可設 placement `source_item`） |
 | `is_sink` | `boolean` | 建議 | `true`＝純物品接收口 |
 | `config_signed_off` | `boolean` | 建議 | 設定已簽核；本專案 UI 未簽核禁存 |
-| `modes` | `Mode[]` | 是 | **非空**；型態定義（權威埠／損耗來源） |
-| `input_ports` | `Port[]` | 相容 | 與 `modes[0].input_ports` 同步 |
-| `output_ports` | `Port[]` | 相容 | 與 `modes[0].output_ports` 同步 |
+| `modes` | `Mode[]` | 是 | **非空**；型態定義（**唯一**埠／損耗來源）；預設＝`modes[0]` |
 
-轉換時請以 `modes` 為準，並可選擇同步寫入頂層 ports。
+V9-B1 起：**不**再於 Machine 頂層放置 `input_ports`／`output_ports`。單形態機器使用一元素 `modes`（通常 `id: "default"`）。
 
 ---
 
@@ -36,7 +34,7 @@
 | `output_ports` | `Port[]` | 是 | 可為空陣列（如純接收機） |
 | `loss` | `Loss \| null` | 是 | 無損耗時為 `null` |
 
-遷移舊資料時：若無 `modes`，可建單一型態 `id="default"`、`label="預設"`，埠由頂層 ports 填入，`loss=null`。
+遷移舊資料時：若仍見頂層 ports，應併入 `modes[0]`（或 `default`）後刪除頂層欄位。
 
 ---
 

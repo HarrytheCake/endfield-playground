@@ -105,7 +105,7 @@ export type MachineEfficiencyFn = null | ((inputs: Map<string, number>) => numbe
  * 靜態屬性（readonly）描述機器的固有物理特性，不隨放置狀態改變。
  * 行為函式在 Phase 1 均為 null，Phase 2+ 依需逐台覆寫。
  *
- * `modes` 為埠／損耗權威來源；頂層 input_ports／output_ports 與 modes[0] 同步以相容舊邏輯。
+ * V9-B1：埠／損耗**僅**存在於 `modes[]`；預設型態為 `modes[0]`（見 {@link getMachineMode}）。
  */
 export interface Machine {
     // ── 靜態屬性 ──────────────────────────────────────────────────────────────
@@ -117,10 +117,6 @@ export interface Machine {
     readonly width: number;
     /** 機器佔用格數（高），0° 旋轉時的靜態尺寸 */
     readonly height: number;
-    /** 輸入埠定義清單（相容欄位；權威見 modes[0]） */
-    readonly input_ports: readonly PortDef[];
-    /** 輸出埠定義清單（相容欄位；權威見 modes[0]） */
-    readonly output_ports: readonly PortDef[];
     /**
      * 耗電量（kW）。
      * 正值 = 耗電，0 = 無電力需求，負值 = 產電，-1 = 資料尚未定義
@@ -134,7 +130,7 @@ export interface Machine {
     readonly is_sink: boolean;
     /** 設定是否已簽核（data v3） */
     readonly config_signed_off?: boolean;
-    /** 多型態定義（非空）；埠與 loss 的權威來源 */
+    /** 多型態定義（非空）；埠與 loss 的唯一權威來源；預設＝modes[0] */
     readonly modes: readonly MachineMode[];
     // ── 行為函式佔位（Phase 1 全為 null）─────────────────────────────────────
     onTick: MachineTickFn;

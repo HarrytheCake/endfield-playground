@@ -2,9 +2,9 @@
 /**
  * MachineShape.vue
  *
- * 依照 machine.ts 中定義的 Machine 物件（或其子集）繪製：
+ * 依照 machine.ts 中定義的 Machine 物件繪製：
  *   1. 一個實心橘色長方形，尺寸依 width / height 決定，正中央標示 id
- *   2. input_ports / output_ports 各自在對應邊上以 1 單位長度的線段標示
+ *   2. 當前 machineMode 的 input_ports / output_ports 以線段標示
  *      - input_ports  → 綠色
  *      - output_ports → 紅色
  *
@@ -17,17 +17,22 @@
  *       top / bottom  → 由左往右數 (0 = 最左方格)
  */
 import type { Machine, PortDef } from '@/types/machine';
+import { getMachineMode } from '@/types/machine';
 import { computed } from 'vue';
 
 const props = defineProps<{
     /**
-     * 符合 machine.ts 定義的機器物件，至少需包含：
-     * id, width, height, input_ports, output_ports
+     * 機器定義；埠取自 modes（見 machineMode）
      */
     machine: Machine;
     /** 每一格代表的像素大小 */
     unitSize: number;
+    /** 機器型態 id；缺省為 modes[0] */
+    machineMode?: string;
 }>();
+
+/** 當前型態（埠權威來源） */
+const activeMode = computed(() => getMachineMode(props.machine, props.machineMode));
 
 /** 矩形實際寬度（像素），由格子寬度換算而來，供 SVG viewBox 與 rect 寬度共用 */
 const rectWidthPx = computed(() => props.machine.width * props.unitSize);
@@ -83,11 +88,11 @@ function portLine(port: PortDef) {
     return { x1, y1, x2, y2, side: port.side, media: port.media };
 }
 
-/** 所有 input_ports 換算好的線段座標，缺省時視為空陣列，供 template 畫綠色線段 */
-const inputLines = computed(() => (props.machine.input_ports || []).map(portLine));
+/** 當前 mode 的 input_ports 線段座標 */
+const inputLines = computed(() => activeMode.value.input_ports.map(portLine));
 
-/** 所有 output_ports 換算好的線段座標，缺省時視為空陣列，供 template 畫紅色線段 */
-const outputLines = computed(() => (props.machine.output_ports || []).map(portLine));
+/** 當前 mode 的 output_ports 線段座標 */
+const outputLines = computed(() => activeMode.value.output_ports.map(portLine));
 
 /**
  * 顯示 id 用的字級（像素），依矩形較短邊的比例縮放，  \

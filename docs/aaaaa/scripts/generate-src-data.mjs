@@ -6,8 +6,8 @@
  *   node docs/aaaaa/scripts/generate-src-data.mjs --dry-run
  *
  * 產物：
- *   - src/data/machines.ts（含物品輸出口／入口 stub）
- *   - src/data/products.ts（全量配方 + 材料 source 配方 + 測試 stub；含 form）
+ *   - src/data/machines.ts（含物品輸出口／入口 stub；基礎材料輸出點在 JSON）
+ *   - src/data/products.ts（僅 products.json + 測試 stub；含 form；不注入材料假產品）
  *   - src/data/materials.ts（基礎材料 + form）
  *   - src/data/plans.ts
  *   - src/data/environments.ts
@@ -73,6 +73,7 @@ const MACHINE_ID_BY_NAME = {
     固氣轉化機: 'solid_gas_converter',
     氣體反應爐: 'gas_reactor',
     氣體散布機: 'gas_disperser',
+    基礎材料輸出點: 'material_source',
 };
 
 /** 產品中文名 → 英文 id（已知項保留；其餘穩定 hash） */
@@ -87,7 +88,6 @@ const PRODUCT_ID_BY_NAME = {
     紫晶粉末: 'purple_crystal_powder',
     赤銅粉末: 'red_copper_powder',
     碳粉末: 'carbon_powder',
-    研製合成粉末方塊: 'research_compound_block',
     藍鐵塊: 'blue_iron_ingot',
     紫晶纖維: 'purple_crystal_fiber',
     赤銅塊: 'red_copper_ingot',
@@ -162,6 +162,7 @@ ${i}}`;
 function renderMachine(m, level) {
     const i = indent(level);
     const id = machineId(m.name);
+    /** V9-B1：埠僅存在於 modes[]；缺 modes 時才從舊外層欄位合成 default */
     const modes = m.modes?.length
         ? m.modes
         : [
@@ -173,15 +174,14 @@ function renderMachine(m, level) {
                   loss: null,
               },
           ];
-    const inputPorts = m.input_ports?.length ? m.input_ports : modes[0].input_ports;
-    const outputPorts = m.output_ports?.length ? m.output_ports : modes[0].output_ports;
+    if (!modes.length) {
+        throw new Error(`machine "${m.name}" has empty modes`);
+    }
     return `${i}{
 ${i}    id: ${esc(id)},
 ${i}    name: ${esc(m.name)},
 ${i}    width: ${m.width},
 ${i}    height: ${m.height},
-${i}    input_ports: ${renderPorts(inputPorts, level + 1)},
-${i}    output_ports: ${renderPorts(outputPorts, level + 1)},
 ${i}    power: ${m.power ?? -1},
 ${i}    tags: ${JSON.stringify(m.tags ?? [])},
 ${i}    is_source: ${Boolean(m.is_source)},
@@ -258,61 +258,11 @@ ${i}    form: ${esc(normalizeForm(mat.form))},
 ${i}}`;
 }
 
-function buildSourceProducts(materials) {
-    return materials.map((mat) => {
-        const recipes = [
-            {
-                machine: '物品輸出口',
-                inputs: [],
-                outputs: [{ name: mat.name, quantity: 1 }],
-                time_seconds: 2,
-                machine_mode: 'default',
-                environment: 'none',
-            },
-        ];
-        // 源礦半速配方：FlowEngine 瓶頸測試沿用
-        if (mat.name === '源礦') {
-            recipes.push({
-                machine: '物品輸出口',
-                inputs: [],
-                outputs: [{ name: mat.name, quantity: 1 }],
-                time_seconds: 4,
-                machine_mode: 'default',
-                environment: 'none',
-            });
-        }
-        return { name: mat.name, form: normalizeForm(mat.form), recipes };
-    });
-}
-
-/** FlowEngine H2/H3 測試用合成配方（不在正式 products.json） */
-const TEST_STUB_PRODUCTS = [
-    {
-        name: '研製合成粉末方塊',
-        form: 'solid',
-        recipes: [
-            {
-                machine: '研磨機',
-                inputs: [
-                    { name: '源石粉末', quantity: 1 },
-                    { name: '藍鐵粉末', quantity: 1 },
-                ],
-                outputs: [{ name: '研製合成粉末方塊', quantity: 1 }],
-                time_seconds: 1,
-                machine_mode: 'default',
-                environment: 'none',
-            },
-        ],
-    },
-];
-
 const SOURCE_SINK_STUBS = [
     {
         name: '物品輸出口',
         width: 1,
         height: 3,
-        input_ports: [],
-        output_ports: [{ side: 'right', offset: 1, media: 'belt' }],
         power: 0,
         tags: ['物流設備'],
         is_source: true,
@@ -332,8 +282,6 @@ const SOURCE_SINK_STUBS = [
         name: '物品輸入口',
         width: 1,
         height: 3,
-        input_ports: [{ side: 'right', offset: 1, media: 'belt' }],
-        output_ports: [],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
@@ -355,22 +303,31 @@ const SOURCE_SINK_STUBS = [
 MACHINE_ID_BY_NAME['物品輸出口'] = 'item_source';
 MACHINE_ID_BY_NAME['物品輸入口'] = 'item_sink';
 
-function generateMachinesTs(machinesJson) {
+function generateMachinesTs(machinesJson, machineTags) {
     const all = [...machinesJson, ...SOURCE_SINK_STUBS];
     for (const m of all) machineId(m.name); // 提早驗證對映
+    const tagsJson = JSON.stringify(machineTags);
 
     return `/**
  * 機器靜態定義資料（由 docs/aaaaa/scripts/generate-src-data.mjs 產生）
  *
- * 來源：docs/aaaaa/data/machines.json
- * 另附 FlowEngine 專用節點：物品輸出口（is_source）、物品輸入口（is_sink）。
+ * 來源：docs/aaaaa/data/machines.json（含基礎材料輸出點）
+ *       docs/aaaaa/data/machine_tags.json（分類標籤）
+ * 另附 FlowEngine stub：物品輸出口（固體）、物品輸入口（sink；總產值只計此處交付）。
  *
  * 請勿手改本檔資料區；改 JSON 後重新執行：
  *   pnpm generate:src-data
  */
 
-import type { Machine } from '@/types/machine';
+import type { Machine, MachineCategory } from '@/types/machine';
 export { getMachineMode } from '@/types/machine';
+
+// ─── 分類標籤（V9-C1）──────────────────────────────────────────────────────────
+
+/** 機器 tag 分頁順序；對齊 machine_tags.json */
+export const MACHINE_TAGS: readonly MachineCategory[] = ${tagsJson};
+
+const _knownTagSet = new Set<string>(MACHINE_TAGS);
 
 // ─── 機器定義陣列 ─────────────────────────────────────────────────────────────
 
@@ -416,6 +373,19 @@ export function getMachineById(id: string): Machine | undefined {
  */
 export function getAllMachines(): Machine[] {
     return [...machineList];
+}
+
+/**
+ * 依 tag 篩選機器（一機多 tag 可出現在多個分頁）。
+ *
+ * @param tag \`all\`＝全部；\`untagged\`＝無已知 tag；其餘為 MachineCategory
+ */
+export function getMachinesByTag(tag: MachineCategory | 'all' | 'untagged'): Machine[] {
+    if (tag === 'all') return [...machineList];
+    if (tag === 'untagged') {
+        return machineList.filter((m) => !m.tags.some((t) => _knownTagSet.has(t)));
+    }
+    return machineList.filter((m) => m.tags.includes(tag));
 }
 `;
 }
@@ -485,65 +455,29 @@ function generateProductsTs(productsJson, materialsJson) {
         formByName.set(p.name, f);
     }
 
-    const sourceProducts = buildSourceProducts(materialsJson);
-    // 材料若已出現在 products.json，以 products 為準並在其 recipes 前插入 source 配方
+    /** V9-B2／H1-3：僅 products.json；不注入 materials 假產品、不注入測試 stub */
     const byName = new Map();
-    for (const sp of sourceProducts) {
-        byName.set(sp.name, {
-            name: sp.name,
-            form: formByName.get(sp.name) ?? 'solid',
-            recipes: [...sp.recipes],
+    for (const p of productsJson) {
+        byName.set(p.name, {
+            name: p.name,
+            form: formByName.get(p.name) ?? 'solid',
+            recipes: [...p.recipes],
         });
     }
-    for (const p of productsJson) {
-        const existing = byName.get(p.name);
-        if (existing) {
-            existing.form = formByName.get(p.name) ?? existing.form;
-            existing.recipes.push(...p.recipes);
-        } else {
-            byName.set(p.name, {
-                name: p.name,
-                form: formByName.get(p.name) ?? 'solid',
-                recipes: [...p.recipes],
-            });
-        }
-    }
-    for (const stub of TEST_STUB_PRODUCTS) {
-        if (!byName.has(stub.name)) {
-            byName.set(stub.name, {
-                ...stub,
-                form: normalizeForm(stub.form),
-            });
-        }
-    }
 
-    // 穩定順序：先 materials 順序的 source 品，再其餘 products.json 順序，再 stub
     const ordered = [];
     const seen = new Set();
-    for (const mat of materialsJson) {
-        const p = byName.get(mat.name);
-        if (p) {
-            ordered.push(p);
-            seen.add(mat.name);
-        }
-    }
     for (const p of productsJson) {
         if (seen.has(p.name)) continue;
         ordered.push(byName.get(p.name));
         seen.add(p.name);
     }
-    for (const stub of TEST_STUB_PRODUCTS) {
-        if (seen.has(stub.name)) continue;
-        ordered.push(byName.get(stub.name));
-        seen.add(stub.name);
-    }
 
     return `/**
  * 產品與配方資料（由 docs/aaaaa/scripts/generate-src-data.mjs 產生）
  *
- * 來源：docs/aaaaa/data/products.json + materials.json（物品輸出口配方）
- * 另附 FlowEngine 測試 stub：研製合成粉末方塊。
- * 每個產品含 form（solid｜liquid｜gas）。
+ * 來源：docs/aaaaa/data/products.json（不含 materials 假產品、不含測試 stub）
+ * 每個產品含 form（solid｜liquid｜gas）。基礎材料請查 materials.ts。
  *
  * 請勿手改本檔資料區；改 JSON 後重新執行：
  *   pnpm generate:src-data
@@ -713,12 +647,13 @@ const products = loadJson('products.json');
 const plans = loadJson('plans.json');
 const environments = loadJson('environments.json');
 const materials = loadJson('materials.json');
+const machineTags = loadJson('machine_tags.json');
 
 console.log(
-    `input: machines=${machines.length} products=${products.length} plans=${plans.length} envs=${environments.length} materials=${materials.length}`,
+    `input: machines=${machines.length} products=${products.length} plans=${plans.length} envs=${environments.length} materials=${materials.length} tags=${machineTags.length}`,
 );
 
-writeOut('machines.ts', generateMachinesTs(machines));
+writeOut('machines.ts', generateMachinesTs(machines, machineTags));
 writeOut('materials.ts', generateMaterialsTs(materials));
 writeOut('products.ts', generateProductsTs(products, materials));
 writeOut('plans.ts', generatePlansTs(plans));

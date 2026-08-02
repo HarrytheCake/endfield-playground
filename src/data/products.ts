@@ -1,9 +1,8 @@
 /**
  * 產品與配方資料（由 docs/aaaaa/scripts/generate-src-data.mjs 產生）
  *
- * 來源：docs/aaaaa/data/products.json + materials.json（物品輸出口配方）
- * 另附 FlowEngine 測試 stub：研製合成粉末方塊。
- * 每個產品含 form（solid｜liquid｜gas）。
+ * 來源：docs/aaaaa/data/products.json（不含 materials 假產品、不含測試 stub）
+ * 每個產品含 form（solid｜liquid｜gas）。基礎材料請查 materials.ts。
  *
  * 請勿手改本檔資料區；改 JSON 後重新執行：
  *   pnpm generate:src-data
@@ -17,339 +16,6 @@ import { getMaterialForm } from '@/data/materials';
 // ─── 產品定義 ─────────────────────────────────────────────────────────────────
 
 const productList: ProductDef[] = [
-    {
-        id: "yuan_ore",
-        name: "源礦",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_yuan_ore_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "源礦", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-            {
-                id: "item_source_yuan_ore_1",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "源礦", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 4,
-            },
-        ],
-    },
-
-    {
-        id: "p_292f416660",
-        name: "紫晶礦",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_p_292f416660_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "紫晶礦", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "blue_iron_ore",
-        name: "藍鐵礦",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_blue_iron_ore_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "藍鐵礦", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "red_copper_ore",
-        name: "赤銅礦",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_red_copper_ore_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "赤銅礦", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "p_aeb7fa2d20",
-        name: "蕎花",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_p_aeb7fa2d20_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "蕎花", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "p_d74a8aaae0",
-        name: "柑實",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_p_d74a8aaae0_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "柑實", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "p_7bb34ef875",
-        name: "砂葉",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_p_7bb34ef875_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "砂葉", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "p_2c867eee25",
-        name: "酮化灌木",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_p_2c867eee25_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "酮化灌木", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "p_864f2688dd",
-        name: "錦草",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_p_864f2688dd_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "錦草", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "p_d4b2255964",
-        name: "芽針",
-        form: "solid",
-        recipes: [
-            {
-                id: "item_source_p_d4b2255964_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "芽針", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "clean_water",
-        name: "清水",
-        form: "liquid",
-        recipes: [
-            {
-                id: "item_source_clean_water_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "清水", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "deposit_acid",
-        name: "沉積酸",
-        form: "liquid",
-        recipes: [
-            {
-                id: "item_source_deposit_acid_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "沉積酸", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "p_468e8d31ba",
-        name: "惰氣",
-        form: "gas",
-        recipes: [
-            {
-                id: "item_source_p_468e8d31ba_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "惰氣", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "p_b471ae5777",
-        name: "息壤氣",
-        form: "gas",
-        recipes: [
-            {
-                id: "item_source_p_b471ae5777_0",
-                inputs: [
-
-                ],
-                outputs: [
-                    { itemId: "息壤氣", quantity: 1 },
-                ],
-                machine: "物品輸出口",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 2,
-            },
-            {
-                id: "liquid_gas_converter_p_b471ae5777_1",
-                inputs: [
-                    { itemId: "液化息壤", quantity: 1 },
-                ],
-                outputs: [
-                    { itemId: "息壤氣", quantity: 1 },
-                ],
-                machine: "液氣轉化機",
-                machineMode: "gas_mode",
-                environment: "none",
-                timeSeconds: 2,
-            },
-            {
-                id: "solid_gas_converter_p_b471ae5777_2",
-                inputs: [
-                    { itemId: "息壤", quantity: 1 },
-                ],
-                outputs: [
-                    { itemId: "息壤氣", quantity: 1 },
-                ],
-                machine: "固氣轉化機",
-                machineMode: "gas_mode",
-                environment: "none",
-                timeSeconds: 2,
-            },
-        ],
-    },
-
     {
         id: "p_357bc568a0",
         name: "錦草溶液",
@@ -2547,6 +2213,40 @@ const productList: ProductDef[] = [
     },
 
     {
+        id: "p_b471ae5777",
+        name: "息壤氣",
+        form: "gas",
+        recipes: [
+            {
+                id: "liquid_gas_converter_p_b471ae5777_0",
+                inputs: [
+                    { itemId: "液化息壤", quantity: 1 },
+                ],
+                outputs: [
+                    { itemId: "息壤氣", quantity: 1 },
+                ],
+                machine: "液氣轉化機",
+                machineMode: "gas_mode",
+                environment: "none",
+                timeSeconds: 2,
+            },
+            {
+                id: "solid_gas_converter_p_b471ae5777_1",
+                inputs: [
+                    { itemId: "息壤", quantity: 1 },
+                ],
+                outputs: [
+                    { itemId: "息壤氣", quantity: 1 },
+                ],
+                machine: "固氣轉化機",
+                machineMode: "gas_mode",
+                environment: "none",
+                timeSeconds: 2,
+            },
+        ],
+    },
+
+    {
         id: "p_3589a67152",
         name: "分離芯",
         form: "solid",
@@ -2822,28 +2522,6 @@ const productList: ProductDef[] = [
                 machineMode: "gas_mode",
                 environment: "none",
                 timeSeconds: 2,
-            },
-        ],
-    },
-
-    {
-        id: "research_compound_block",
-        name: "研製合成粉末方塊",
-        form: "solid",
-        recipes: [
-            {
-                id: "grinder_research_compound_block_0",
-                inputs: [
-                    { itemId: "源石粉末", quantity: 1 },
-                    { itemId: "藍鐵粉末", quantity: 1 },
-                ],
-                outputs: [
-                    { itemId: "研製合成粉末方塊", quantity: 1 },
-                ],
-                machine: "研磨機",
-                machineMode: "default",
-                environment: "none",
-                timeSeconds: 1,
             },
         ],
     },

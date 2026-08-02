@@ -1,15 +1,23 @@
 /**
  * 機器靜態定義資料（由 docs/aaaaa/scripts/generate-src-data.mjs 產生）
  *
- * 來源：docs/aaaaa/data/machines.json
- * 另附 FlowEngine 專用節點：物品輸出口（is_source）、物品輸入口（is_sink）。
+ * 來源：docs/aaaaa/data/machines.json（含基礎材料輸出點）
+ *       docs/aaaaa/data/machine_tags.json（分類標籤）
+ * 另附 FlowEngine stub：物品輸出口（固體）、物品輸入口（sink；總產值只計此處交付）。
  *
  * 請勿手改本檔資料區；改 JSON 後重新執行：
  *   pnpm generate:src-data
  */
 
-import type { Machine } from '@/types/machine';
+import type { Machine, MachineCategory } from '@/types/machine';
 export { getMachineMode } from '@/types/machine';
+
+// ─── 分類標籤（V9-C1）──────────────────────────────────────────────────────────
+
+/** 機器 tag 分頁順序；對齊 machine_tags.json */
+export const MACHINE_TAGS: readonly MachineCategory[] = ["物流設備","倉庫存取","基礎生產","合成製造","電力"];
+
+const _knownTagSet = new Set<string>(MACHINE_TAGS);
 
 // ─── 機器定義陣列 ─────────────────────────────────────────────────────────────
 
@@ -22,16 +30,6 @@ export const machineList: Machine[] = [
         name: "塑型機",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-        ],
         power: 10,
         tags: ["基礎生產"],
         is_source: false,
@@ -81,22 +79,6 @@ export const machineList: Machine[] = [
         name: "灌裝機",
         width: 6,
         height: 4,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "top", offset: 4, media: "belt" },
-            { side: "top", offset: 5, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-            { side: "bottom", offset: 4, media: "belt" },
-            { side: "bottom", offset: 5, media: "belt" },
-        ],
         power: 20,
         tags: ["合成製造"],
         is_source: false,
@@ -158,16 +140,6 @@ export const machineList: Machine[] = [
         name: "精煉爐",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-        ],
         power: 5,
         tags: ["基礎生產"],
         is_source: false,
@@ -218,16 +190,6 @@ export const machineList: Machine[] = [
         name: "粉碎機",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-        ],
         power: 5,
         tags: ["基礎生產"],
         is_source: false,
@@ -261,16 +223,6 @@ export const machineList: Machine[] = [
         name: "配件機",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-        ],
         power: 20,
         tags: ["基礎生產"],
         is_source: false,
@@ -304,22 +256,6 @@ export const machineList: Machine[] = [
         name: "裝備原件機",
         width: 4,
         height: 6,
-        input_ports: [
-            { side: "left", offset: 0, media: "belt" },
-            { side: "left", offset: 1, media: "belt" },
-            { side: "left", offset: 2, media: "belt" },
-            { side: "left", offset: 3, media: "belt" },
-            { side: "left", offset: 4, media: "belt" },
-            { side: "left", offset: 5, media: "belt" },
-        ],
-        output_ports: [
-            { side: "right", offset: 0, media: "belt" },
-            { side: "right", offset: 1, media: "belt" },
-            { side: "right", offset: 2, media: "belt" },
-            { side: "right", offset: 3, media: "belt" },
-            { side: "right", offset: 4, media: "belt" },
-            { side: "right", offset: 5, media: "belt" },
-        ],
         power: 10,
         tags: ["合成製造"],
         is_source: false,
@@ -359,22 +295,6 @@ export const machineList: Machine[] = [
         name: "封裝機",
         width: 6,
         height: 4,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "top", offset: 4, media: "belt" },
-            { side: "top", offset: 5, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-            { side: "bottom", offset: 4, media: "belt" },
-            { side: "bottom", offset: 5, media: "belt" },
-        ],
         power: 20,
         tags: ["合成製造"],
         is_source: false,
@@ -414,22 +334,6 @@ export const machineList: Machine[] = [
         name: "研磨機",
         width: 6,
         height: 4,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "top", offset: 4, media: "belt" },
-            { side: "top", offset: 5, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-            { side: "bottom", offset: 4, media: "belt" },
-            { side: "bottom", offset: 5, media: "belt" },
-        ],
         power: 50,
         tags: ["合成製造"],
         is_source: false,
@@ -469,18 +373,6 @@ export const machineList: Machine[] = [
         name: "反應池",
         width: 5,
         height: 5,
-        input_ports: [
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "left", offset: 1, media: "belt" },
-            { side: "left", offset: 3, media: "belt" },
-        ],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-            { side: "right", offset: 3, media: "pipe" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-        ],
         power: 50,
         tags: ["合成製造"],
         is_source: false,
@@ -516,21 +408,6 @@ export const machineList: Machine[] = [
         name: "天有洪爐",
         width: 5,
         height: 5,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "top", offset: 4, media: "belt" },
-            { side: "left", offset: 2, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-            { side: "bottom", offset: 4, media: "belt" },
-        ],
         power: 50,
         tags: ["合成製造"],
         is_source: false,
@@ -569,14 +446,6 @@ export const machineList: Machine[] = [
         name: "提純機",
         width: 5,
         height: 5,
-        input_ports: [
-            { side: "left", offset: 1, media: "pipe" },
-            { side: "left", offset: 3, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-            { side: "right", offset: 3, media: "pipe" },
-        ],
         power: 50,
         tags: ["合成製造"],
         is_source: false,
@@ -625,23 +494,6 @@ export const machineList: Machine[] = [
         name: "拆解機",
         width: 6,
         height: 4,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "top", offset: 4, media: "belt" },
-            { side: "top", offset: 5, media: "belt" },
-        ],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-            { side: "bottom", offset: 4, media: "belt" },
-            { side: "bottom", offset: 5, media: "belt" },
-        ],
         power: 20,
         tags: ["合成製造"],
         is_source: false,
@@ -682,12 +534,6 @@ export const machineList: Machine[] = [
         name: "物品准入口",
         width: 1,
         height: 1,
-        input_ports: [
-            { side: "left", offset: 0, media: "belt" },
-        ],
-        output_ports: [
-            { side: "right", offset: 0, media: "belt" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -717,14 +563,6 @@ export const machineList: Machine[] = [
         name: "分流器",
         width: 1,
         height: 1,
-        input_ports: [
-            { side: "left", offset: 0, media: "belt" },
-        ],
-        output_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "right", offset: 0, media: "belt" },
-            { side: "bottom", offset: 0, media: "belt" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -756,14 +594,6 @@ export const machineList: Machine[] = [
         name: "物流橋",
         width: 1,
         height: 1,
-        input_ports: [
-            { side: "left", offset: 0, media: "belt" },
-            { side: "bottom", offset: 0, media: "belt" },
-        ],
-        output_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "right", offset: 0, media: "belt" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -795,14 +625,6 @@ export const machineList: Machine[] = [
         name: "匯流器",
         width: 1,
         height: 1,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "left", offset: 0, media: "belt" },
-            { side: "bottom", offset: 0, media: "belt" },
-        ],
-        output_ports: [
-            { side: "right", offset: 0, media: "belt" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -834,12 +656,6 @@ export const machineList: Machine[] = [
         name: "管道准入口",
         width: 1,
         height: 1,
-        input_ports: [
-            { side: "left", offset: 0, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "right", offset: 0, media: "pipe" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -869,14 +685,6 @@ export const machineList: Machine[] = [
         name: "管道分流器",
         width: 1,
         height: 1,
-        input_ports: [
-            { side: "left", offset: 0, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "top", offset: 0, media: "pipe" },
-            { side: "right", offset: 0, media: "pipe" },
-            { side: "bottom", offset: 0, media: "pipe" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -908,14 +716,6 @@ export const machineList: Machine[] = [
         name: "管道橋",
         width: 1,
         height: 1,
-        input_ports: [
-            { side: "left", offset: 0, media: "pipe" },
-            { side: "bottom", offset: 0, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "top", offset: 0, media: "pipe" },
-            { side: "right", offset: 0, media: "pipe" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -947,14 +747,6 @@ export const machineList: Machine[] = [
         name: "管道匯流器",
         width: 1,
         height: 1,
-        input_ports: [
-            { side: "top", offset: 0, media: "pipe" },
-            { side: "left", offset: 0, media: "pipe" },
-            { side: "bottom", offset: 0, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "right", offset: 0, media: "pipe" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -986,16 +778,6 @@ export const machineList: Machine[] = [
         name: "協議儲存箱",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-        ],
         power: 5,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1029,10 +811,6 @@ export const machineList: Machine[] = [
         name: "倉庫存貨口",
         width: 3,
         height: 1,
-        input_ports: [
-            { side: "top", offset: 1, media: "belt" },
-        ],
-        output_ports:         [],
         power: 0,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1060,10 +838,6 @@ export const machineList: Machine[] = [
         name: "倉庫取貨口",
         width: 3,
         height: 1,
-        input_ports:         [],
-        output_ports: [
-            { side: "top", offset: 1, media: "belt" },
-        ],
         power: 0,
         tags: ["倉庫存取"],
         is_source: true,
@@ -1091,12 +865,6 @@ export const machineList: Machine[] = [
         name: "儲液罐",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "left", offset: 1, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-        ],
         power: 0,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1126,8 +894,6 @@ export const machineList: Machine[] = [
         name: "倉庫存取線基段",
         width: 4,
         height: 8,
-        input_ports:         [],
-        output_ports:         [],
         power: 0,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1153,8 +919,6 @@ export const machineList: Machine[] = [
         name: "倉庫存取線源樁",
         width: 4,
         height: 4,
-        input_ports:         [],
-        output_ports:         [],
         power: 0,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1180,10 +944,6 @@ export const machineList: Machine[] = [
         name: "暗管入口",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "left", offset: 1, media: "pipe" },
-        ],
-        output_ports:         [],
         power: 0,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1211,10 +971,6 @@ export const machineList: Machine[] = [
         name: "暗管出口",
         width: 3,
         height: 3,
-        input_ports:         [],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-        ],
         power: 0,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1242,11 +998,6 @@ export const machineList: Machine[] = [
         name: "多口暗管入口",
         width: 3,
         height: 5,
-        input_ports: [
-            { side: "left", offset: 1, media: "pipe" },
-            { side: "left", offset: 3, media: "pipe" },
-        ],
-        output_ports:         [],
         power: 0,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1275,11 +1026,6 @@ export const machineList: Machine[] = [
         name: "多口暗管出口",
         width: 3,
         height: 5,
-        input_ports:         [],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-            { side: "right", offset: 3, media: "pipe" },
-        ],
         power: 0,
         tags: ["倉庫存取"],
         is_source: false,
@@ -1308,20 +1054,6 @@ export const machineList: Machine[] = [
         name: "採種機",
         width: 5,
         height: 5,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "top", offset: 4, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-            { side: "bottom", offset: 4, media: "belt" },
-        ],
         power: 10,
         tags: ["基礎生產"],
         is_source: false,
@@ -1359,20 +1091,6 @@ export const machineList: Machine[] = [
         name: "種植機",
         width: 5,
         height: 5,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "top", offset: 4, media: "belt" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 0, media: "belt" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-            { side: "bottom", offset: 4, media: "belt" },
-        ],
         power: 20,
         tags: ["基礎生產"],
         is_source: false,
@@ -1430,10 +1148,6 @@ export const machineList: Machine[] = [
         name: "廢水處理機",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "left", offset: 1, media: "pipe" },
-        ],
-        output_ports:         [],
         power: 50,
         tags: ["基礎生產"],
         is_source: false,
@@ -1461,22 +1175,6 @@ export const machineList: Machine[] = [
         name: "擴容反應池",
         width: 6,
         height: 5,
-        input_ports: [
-            { side: "top", offset: 1, media: "belt" },
-            { side: "top", offset: 2, media: "belt" },
-            { side: "top", offset: 3, media: "belt" },
-            { side: "top", offset: 4, media: "belt" },
-            { side: "left", offset: 1, media: "pipe" },
-            { side: "left", offset: 3, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-            { side: "right", offset: 3, media: "pipe" },
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 2, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-            { side: "bottom", offset: 4, media: "belt" },
-        ],
         power: 100,
         tags: ["合成製造"],
         is_source: false,
@@ -1516,8 +1214,6 @@ export const machineList: Machine[] = [
         name: "供電樁",
         width: 2,
         height: 2,
-        input_ports:         [],
-        output_ports:         [],
         power: 0,
         tags: ["電力"],
         is_source: false,
@@ -1543,8 +1239,6 @@ export const machineList: Machine[] = [
         name: "息壤供電樁",
         width: 2,
         height: 2,
-        input_ports:         [],
-        output_ports:         [],
         power: 0,
         tags: ["電力"],
         is_source: false,
@@ -1570,8 +1264,6 @@ export const machineList: Machine[] = [
         name: "中繼器",
         width: 3,
         height: 3,
-        input_ports:         [],
-        output_ports:         [],
         power: 0,
         tags: ["電力"],
         is_source: false,
@@ -1597,8 +1289,6 @@ export const machineList: Machine[] = [
         name: "息壤中繼器",
         width: 3,
         height: 3,
-        input_ports:         [],
-        output_ports:         [],
         power: 0,
         tags: ["電力"],
         is_source: false,
@@ -1624,11 +1314,6 @@ export const machineList: Machine[] = [
         name: "熱能池",
         width: 2,
         height: 2,
-        input_ports: [
-            { side: "top", offset: 0, media: "belt" },
-            { side: "top", offset: 1, media: "belt" },
-        ],
-        output_ports:         [],
         power: 0,
         tags: ["電力"],
         is_source: false,
@@ -1657,15 +1342,6 @@ export const machineList: Machine[] = [
         name: "液氣轉化機",
         width: 5,
         height: 5,
-        input_ports: [
-            { side: "top", offset: 2, media: "pipe" },
-            { side: "left", offset: 1, media: "pipe" },
-            { side: "left", offset: 3, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-            { side: "right", offset: 3, media: "pipe" },
-        ],
         power: 50,
         tags: ["合成製造"],
         is_source: false,
@@ -1712,15 +1388,6 @@ export const machineList: Machine[] = [
         name: "固氣轉化機",
         width: 5,
         height: 5,
-        input_ports: [
-            { side: "top", offset: 2, media: "pipe" },
-            { side: "left", offset: 1, media: "pipe" },
-            { side: "left", offset: 3, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "bottom", offset: 1, media: "belt" },
-            { side: "bottom", offset: 3, media: "belt" },
-        ],
         power: 50,
         tags: ["合成製造"],
         is_source: false,
@@ -1767,14 +1434,6 @@ export const machineList: Machine[] = [
         name: "氣體反應爐",
         width: 5,
         height: 5,
-        input_ports: [
-            { side: "left", offset: 1, media: "pipe" },
-            { side: "left", offset: 3, media: "pipe" },
-        ],
-        output_ports: [
-            { side: "right", offset: 1, media: "pipe" },
-            { side: "right", offset: 3, media: "pipe" },
-        ],
         power: 50,
         tags: ["合成製造"],
         is_source: false,
@@ -1806,10 +1465,6 @@ export const machineList: Machine[] = [
         name: "氣體散布機",
         width: 3,
         height: 3,
-        input_ports: [
-            { side: "left", offset: 1, media: "pipe" },
-        ],
-        output_ports:         [],
         power: -1,
         tags: ["合成製造"],
         is_source: false,
@@ -1833,14 +1488,46 @@ export const machineList: Machine[] = [
     },
 
     {
+        id: "material_source",
+        name: "基礎材料輸出點",
+        width: 1,
+        height: 3,
+        power: 0,
+        tags: ["倉庫存取"],
+        is_source: true,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: "solid_belt",
+                label: "固體輸送帶",
+                input_ports:                 [],
+                output_ports: [
+                    { side: "right", offset: 1, media: "belt" },
+                ],
+                loss: null,
+            },
+            {
+                id: "fluid_pipe",
+                label: "液氣管道",
+                input_ports:                 [],
+                output_ports: [
+                    { side: "right", offset: 1, media: "pipe" },
+                ],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
+    {
         id: "item_source",
         name: "物品輸出口",
         width: 1,
         height: 3,
-        input_ports:         [],
-        output_ports: [
-            { side: "right", offset: 1, media: "belt" },
-        ],
         power: 0,
         tags: ["物流設備"],
         is_source: true,
@@ -1868,10 +1555,6 @@ export const machineList: Machine[] = [
         name: "物品輸入口",
         width: 1,
         height: 3,
-        input_ports: [
-            { side: "right", offset: 1, media: "belt" },
-        ],
-        output_ports:         [],
         power: 0,
         tags: ["物流設備"],
         is_source: false,
@@ -1930,4 +1613,17 @@ export function getMachineById(id: string): Machine | undefined {
  */
 export function getAllMachines(): Machine[] {
     return [...machineList];
+}
+
+/**
+ * 依 tag 篩選機器（一機多 tag 可出現在多個分頁）。
+ *
+ * @param tag `all`＝全部；`untagged`＝無已知 tag；其餘為 MachineCategory
+ */
+export function getMachinesByTag(tag: MachineCategory | 'all' | 'untagged'): Machine[] {
+    if (tag === 'all') return [...machineList];
+    if (tag === 'untagged') {
+        return machineList.filter((m) => !m.tags.some((t) => _knownTagSet.has(t)));
+    }
+    return machineList.filter((m) => m.tags.includes(tag));
 }
