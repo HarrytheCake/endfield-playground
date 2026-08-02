@@ -1,9 +1,9 @@
 ﻿# CR-04｜FlowEngine 靜態流量分析引擎
 
 **負責人：** aaaaa  
-**階段：** L1 基礎建設完成 ✅ / V5 交付完成 / V6 已鎖定 / V7 完成 / V8 實作完成 / **V9 文件就緒（規劃）**  
+**階段：** L1 基礎建設完成 ✅ / V5～**V9＋H1 驗收補強完成**  
 **依賴 CR：** CR-01（設備擺放）、CR-02（管線連接）、CR-03（警示與 Error 狀態）  
-**文件版本：** v3.0  
+**文件版本：** v3.2  
 **最後更新：** 2026-08-02
 
 ---
@@ -11,14 +11,17 @@
 ## 快速導覽
 
 **我是 L2/L3 開發者，我想：**
+- 🚀 **使用成果／下一步** → [CR04_FOR_COLLABORATORS.md](./CR04_FOR_COLLABORATORS.md)（**建議先讀**）
+- 📊 **V6～V9 里程碑報告** → [MILESTONE_0802_V6_V9_REPORT.md](./MILESTONE_0802_V6_V9_REPORT.md)
+- 📦 **資料格式（產品／機器／物態）** → [DATA_FORMAT_GUIDE.md](./DATA_FORMAT_GUIDE.md)
 - 📖 查詢 L1 API → [L1 API Reference](./L1_API_REFERENCE.md)
 - 🔧 使用 FlowEngine → [FlowEngine Guide](./FLOW_ENGINE_GUIDE.md)
-- 📝 查看工項進度 → [todolist_v9.md](./dev/todolist_v9.md)（現行規劃）｜[todolist_v8.md](./dev/todolist_v8.md)（A–G 完成）｜[todolist_v6.md](./dev/todolist_v6.md)（已鎖定）
+- 📝 查看工項進度 → [todolist_v9.md](./dev/todolist_v9.md)（現行）｜[todolist_v8.md](./dev/todolist_v8.md)｜[todolist_v6.md](./dev/todolist_v6.md)
 - 📂 瀏覽技術文件 → [dev_v9/](./dev/dev_v9/)｜[dev_v8/](./dev/dev_v8/)｜[dev_v7/](./dev/dev_v7/)｜[dev_v6/](./dev/dev_v6/)
-- 🧪 測試 FlowEngine → `/dev/flow-engine`（引擎／機器／產品分頁；H1–H11 + V7／V8）
+- 🧪 測試 FlowEngine → `/dev/flow-engine`（引擎／機器／產品；H／V7／V9；D1 最短鏈）
 - 🎯 開發 Detector → [shirone/DETECTOR_CHECKLIST.md](../shirone/DETECTOR_CHECKLIST.md)
-- 🖱️ 拖曳 Undo 里程碑 → [MILESTONE_0726.md](./MILESTONE_0726.md)
-- 📦 資料版本 → [data_0/](./data_0/)（舊）｜[data_1/](./data_1/)（新來源）｜[data/](./data/)（工作副本）
+- 🖱️ 拖曳 Undo 原文 → [MILESTONE_0726.md](./MILESTONE_0726.md)（已結案）
+- 📦 資料版本 → [data_0/](./data_0/)（舊）｜[data_1/](./data_1/)（來源）｜[data/](./data/)（工作副本）
   - 同步：`pnpm sync:aaaaa-data`｜重產 `src/data`：`pnpm generate:src-data`
 
 **我是 Agent / 維護者，我想：**
@@ -27,6 +30,28 @@
 - Agent 快速上下文 → [AGENT_CONTEXT.md](./AGENT_CONTEXT.md)
 - GitHub Agent 提示 → [CR04.agent.md](../../.github/agents/CR04.agent.md)
 - Skills / Agents 設定 → [claude/](./claude/)（`skills/`、`agents/`、`launch.json`）
+
+---
+
+## CR-04 開發進展總覽（給協作者）
+
+| 階段 | 狀態 | 協作者要點 |
+|------|------|------------|
+| L1 引擎＋stores | ✅ | 讀 `flowStore`；寫藍圖只走 `editorStore` |
+| V5 Dev／文件 | ✅ | `/dev/*`；graph-viz 後於 V9-H1-4 **退役** |
+| **V6 拖曳 Undo** | ✅ | `commitDeviceMove`；見 [MILESTONE_0726](./MILESTONE_0726.md) §0 |
+| **V7 資料 v3** | ✅ | modes／belt·pipe／`machineMode`；codegen |
+| **V8 埠／速率** | ✅ | 單埠單線；30／60；H8 匯流堵塞 |
+| **V9 預覽＋E1＋D1** | ✅ | 材料源、輸入匹配、最短鏈；H1 驗收補強 |
+
+**本階段建議入口：**
+
+1. [CR04_FOR_COLLABORATORS.md](./CR04_FOR_COLLABORATORS.md) — 怎麼接、下一步誰做  
+2. [DATA_FORMAT_GUIDE.md](./DATA_FORMAT_GUIDE.md) — 改 JSON 前  
+3. [MILESTONE_0802_V6_V9_REPORT.md](./MILESTONE_0802_V6_V9_REPORT.md) — V6～V9 彙總  
+4. 本地 `/dev/flow-engine` 手測  
+
+**跨 CR 仍開放（非 CR-04 單方可關）：** CR-02 管線跟隨與連線 UI 拒絕；CR-01 `machineType`→id 遷移（見 V5-D 追蹤）。
 
 ---
 
@@ -102,30 +127,31 @@
 - ✅ 測試：`flowEngine.v8.*`、`itemForm`、`topologyPortUtils`（全庫約 250）
 
 **定案摘要**：
-- V6 維持鎖定；驗證僅 FlowEngine（CR-04 先行）
+- 驗證僅 FlowEngine（CR-04 先行）
 - 本版不做：CR-02 UI 拒絕、正式圖像、loss→summary
 
 **詳細清單**：[todolist_v8.md](./dev/todolist_v8.md)  
 **細項文件**：[dev_v8/](./dev/dev_v8/)
 
-### V6 拖曳進歷史（🔒 已鎖定）
+### V6 拖曳進歷史（✅ 完成／已解鎖，2026-08-02）
 
-- 實作完成：`commitDeviceMove` + FactoryCanvas 接線；單元測試通過
-- **尚未完成**：手動 M1–M7 驗收（見 [todolist_v6.md](./dev/todolist_v6.md)／[D2](./dev/dev_v6/D2_manual_test_plan.md)）
-- 不開新功能；管線跟隨屬 CR-02
+- `commitDeviceMove` + FactoryCanvas；HistoryReplay M1–M6；editorStore 測試通過
+- M7 主畫布跟手＝已知 UX 觀察；管線跟隨屬 CR-02
+- 詳見 [todolist_v6.md](./dev/todolist_v6.md)
 
-### V9 強化視覺化預覽工具（📋 文件就緒，2026-08-02）
+### V9 強化視覺化預覽工具（✅ A–G＋H1 驗收補強完成，2026-08-02）
 
-**目標**：modes-only 埠、產品／材料分離、基礎材料輸出點、tag 分頁、WxH 格點拓樸、反向最短鏈路、引擎依輸入匹配配方、案例盤點後演示。
+**交付**：modes-only 埠、產品／材料分離、基礎材料輸出點、tag 分頁、WxH 格點拓樸、反向最短鏈路、引擎依輸入匹配配方、F1 盤點＋F2 演示。
 
-**定案摘要**：
-- `products.json`／`materials.json` 分冊；停止假產品注入
-- 新建「基礎材料輸出點」（依 form→belt／pipe）；物品輸出口僅固體
-- 引擎：輸入不齊無產出；齊全後自動匹配配方
-- 最短鏈路＝回推至基礎材料之最少配方步數（無循環）
-- F2 演示等待 F1 盤點
+**要點**：
+- `products.json`／`materials.json` 分冊；codegen 不再注入材料假產品
+- 「基礎材料輸出點」（form→belt／pipe）；物品輸出口僅固體；總產值只計物品輸入口
+- 引擎：`matchRecipeByInputs`（輸入種類集合完全吻合）；不齊無產出；`recipeIndex` 為匹配結果
+- `findShortestReverseChain`：回推至材料、最少配方步數、無循環（息壤選短鏈）
+- `/dev/flow-engine`：**V9 演示** preset＋D1 最短鏈「產生演示圖」
 
 **詳細清單**：[todolist_v9.md](./dev/todolist_v9.md)  
+**驗收回饋**：[dev_v9/H1_acceptance_followups.md](./dev/dev_v9/H1_acceptance_followups.md)（H1-1～H1-5 已落地）  
 **細項文件**：[dev_v9/](./dev/dev_v9/)
 
 ---
@@ -146,13 +172,22 @@
 
 ## 開發者文件索引
 
+### 協作者／里程碑（V6～V9）
+
+| 文件 | 說明 |
+|------|------|
+| [CR04_FOR_COLLABORATORS.md](./CR04_FOR_COLLABORATORS.md) | 如何使用成果＋下一步建議 |
+| [DATA_FORMAT_GUIDE.md](./DATA_FORMAT_GUIDE.md) | 產品／材料／機器 JSON 與物態 |
+| [MILESTONE_0802_V6_V9_REPORT.md](./MILESTONE_0802_V6_V9_REPORT.md) | V6～V9 開發彙總報告 |
+| [MILESTONE_0726.md](./MILESTONE_0726.md) | 拖曳 Undo 原文＋§0 結案回應 |
+
 ### L1 層 API 文件（必讀）
 
 - **[L1 API Reference](./L1_API_REFERENCE.md)**  
   完整的 L1 層 API 文件，涵蓋 6 個 stores（editorStore、historyStore、flowStore、validationStore、canvasStore、selectionStore）的所有 State / Actions / Getters。
 
 - **[FlowEngine Guide](./FLOW_ENGINE_GUIDE.md)**  
-  FlowEngine 流量計算引擎使用指南，包含觸發時機、計算流程、效率顏色規則、L3 消費範例。
+  FlowEngine 流量計算引擎使用指南，包含觸發時機、計算流程、效率顏色規則、**Dev 頁操作**、L3 消費範例。
 
 ---
 
@@ -207,18 +242,18 @@
 | [todolist_v8.md](./dev/todolist_v8.md) | V8 工項清單（A–G） |
 | [dev_v8/](./dev/dev_v8/) | Dev 預覽、埠基數、速率、H8、拓樸、form |
 
-### V9（文件就緒／規劃）
+### V9（實作完成）
 
 | 文件 | 說明 |
 |------|------|
 | [todolist_v9.md](./dev/todolist_v9.md) | V9 工項清單 |
 | [dev_v9/](./dev/dev_v9/) | modes-only、材料源、tag／格點、反向鏈、配方匹配、案例 |
 
-### V6（已鎖定）
+### V6（完成）
 
 | 文件 | 說明 |
 |------|------|
-| [todolist_v6.md](./dev/todolist_v6.md) | V6 工項；剩餘手動 M1–M7 |
+| [todolist_v6.md](./dev/todolist_v6.md) | V6 工項（已解鎖） |
 | [dev_v6/](./dev/dev_v6/) | commitDeviceMove／Canvas／測試計畫 |
 | [MILESTONE_0726.md](./MILESTONE_0726.md) | 來源里程碑 |
 
@@ -233,10 +268,10 @@
 | V3 | 技術債修正 | ✅ 完成 | 2026-05-25 |
 | V4 | 主編 0526 介面設計建議修正 | ✅ 完成 | 2026-05-30 |
 | **V5** | **L1 完成後的開發者支援與測試基礎設施** | ✅ CR-04 交付完成（跨 CR 封鎖追蹤中） | **2026-06-06** |
-| V6 | 拖曳移動進歷史堆疊（MILESTONE_0726） | 🔒 已鎖定（待手動 M1–M7） | 2026-08 |
+| V6 | 拖曳移動進歷史堆疊（MILESTONE_0726） | ✅ 完成／已解鎖 | **2026-08-02** |
 | **V7** | **資料 v3 遷移（modes／belt·pipe／machineMode）** | ✅ 完成（A–G） | **2026-08-01** |
 | **V8** | **Dev 預覽＋埠一對一／pipe60／H8／form** | ✅ 實作完成（A–G） | **2026-08-02** |
-| **V9** | **強化視覺化預覽工具** | 📋 文件就緒（實作未開始） | **2026-08-02** |
+| **V9** | **強化視覺化預覽工具** | ✅ A–G＋H1 | **2026-08-02** |
 
 **V5 特點**：
 - 首次建立獨立技術文件資料夾 `dev/dev_v5/`
@@ -256,9 +291,10 @@
 - 拓樸跟 `machineMode.ports`；`form`（ItemForm）↔belt／pipe（引擎側）
 - 細項：[todolist_v8.md](./dev/todolist_v8.md)｜[dev_v8/](./dev/dev_v8/)
 
-**V9 特點**（規劃）：
+**V9 特點**：
 - modes-only 埠；產品／材料分冊；基礎材料輸出點
 - 機器 tag 分頁；WxH 格點拓樸；反向最短鏈路；輸入匹配配方
+- Dev：V9 preset（換料／缺清水／息壤鏈／無 Sink）＋最短鏈套用
 - 細項：[todolist_v9.md](./dev/todolist_v9.md)｜[dev_v9/](./dev/dev_v9/)
 
 ---
@@ -385,13 +421,15 @@ interface EdgeMeta {
 interface FlowNode {
   deviceUid:   string;
   machineType: string;
-  recipeIndex: number;         // 對應 devices.ts 中的配方索引
-  isSource:    boolean;        // 物品輸出口
-  isSink:      boolean;        // 物品輸入口
+  machineMode?: string;
+  environment?: string;        // 缺省 "none"；E1 匹配須與配方一致
+  recipeIndex: number;         // V9：由輸入匹配寫回（mode 過濾後索引）
+  isSource:    boolean;        // 基礎材料輸出點／物品輸出口
+  isSink:      boolean;        // 物品輸入口（總產值只計此處）
   isValid:     boolean;        // false = Error / 非合法鏈路 / 配方不符 / 環路
   efficiency:  number;         // 0~1，正向傳播後由 detectCongestion 修正
-  outputRates: Map<string, number>; // itemId → 個/min（已套用 detectCongestion 修正）
-  inputRates:  Map<string, number>; // itemId → 個/min（同上）
+  outputRates: Map<string, number>; // itemId → 個/min
+  inputRates:  Map<string, number>; // itemId → 個/min
 }
 
 interface FlowGraph {
@@ -500,19 +538,19 @@ Step 1  收集所有 isSink && isValid 的節點加入 BFS 佇列
 Step 2  反向 BFS（沿 inEdges 往上游走）
         → 標記所有可到達 sink 的節點至 reachableSinks
 Step 3  未被標記的節點：node.isValid = false，加入 invalidSubgraphUids
-Step 4  對合法且非 source/sink 節點：
-        從上游節點的 outputRates 推斷 incomingItemIds
-        呼叫 validateRecipeMatch(machineType, recipeIndex, incomingItemIds)
-        不符 → node.isValid = false，加入 invalidSubgraphUids
+Step 3.5  _resolveRecipesByInputs：依上游品項匹配配方，寫入理論 rates
+Step 4  對有配方且非 source/sink 節點：
+        matchRecipeByInputs(machineType, incomingItemIds, mode, environment)
+        無匹配 → node.isValid = false（輸入不齊／種類不符）
 Step 5  _propagateInvalidDownstream(graph)
-        正向 BFS，配方不符節點的下游連帶標記非法（sink 不繼續傳播）
 ```
 
-**validateRecipeMatch 規則：**
+**V9-E1 matchRecipeByInputs 規則：**
 ```typescript
-// 1. 找不到配方           → false
-// 2. recipe.inputs 為空  → true（source 節點永遠合法）
-// 3. recipe.inputs.every(input => incomingItemIds.has(input.itemId))
+// 1. 限定 machineType＋machineMode 配方子集；environment 須一致
+// 2. 接入品項種類集合 === 配方 inputs 名稱集合（完全吻合）
+// 3. 多候選 → products 資料順序第一條
+// 4. recipeIndex 僅提示；引擎以匹配結果為準
 ```
 
 ---
@@ -785,13 +823,17 @@ CR-04 透過 `useEditorStore` 讀取畫布狀態，要求如下：
 ```typescript
 // FactoryNode.data 必須包含：
 interface FactoryNodeData {
-  machineType: string;    // 設備類型名稱（對應 devices.ts 的 MachineDef.name）
-  recipeIndex?: number;   // 使用者選定的配方索引，預設 0
-  label?: string;         // fallback 顯示名（machineType 找不到時使用）
+  machineType: string;       // 設備類型名稱（對應 Machine.name）
+  machineMode?: string;      // 缺省 modes[0]
+  environment?: string;      // 缺省 "none"
+  recipeIndex?: number;      // 提示用；引擎以輸入匹配覆寫
+  primaryOutput?: string;    // Source：基礎材料／物品輸出口產出
+  sourceRatePerMin?: number; // Source 速率（缺省 30／半速 15）
+  label?: string;
 }
 ```
-- `machineType` 是 CR-04 呼叫 `getRecipesForMachine(machineType)` 的查詢鍵
-- `recipeIndex` 決定使用哪個配方計算速率，UI 需提供使用者切換介面
+- `machineType` 是查詢鍵；一般機器配方由 **實際輸入** 匹配（V9-E1）
+- Source 用 `primaryOutput`（勿再依賴假產品配方）
 
 #### N1-02 — `edges` 的 id 與方向
 ```typescript

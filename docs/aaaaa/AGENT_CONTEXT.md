@@ -85,7 +85,6 @@
 
 ### V8 Dev 預覽＋引擎規則（✅ 實作完成 A–G，2026-08-02）
 
-- **V6 維持鎖定**（手動 M1–M7 仍待驗收，見 [todolist_v6.md](./dev/todolist_v6.md)）
 - `/dev/flow-engine` 機器／產品分頁（placeholder 視覺）
 - 單埠單線；H8 匯流＋堵塞回推 15／15；belt 30／pipe 60
 - `form`（ItemForm）：solid→belt、liquid／gas→pipe；引擎 `isItemFormMediaMismatch`
@@ -94,14 +93,14 @@
 
 **技術文件**：[todolist_v8.md](./dev/todolist_v8.md)｜[dev_v8/](./dev/dev_v8/)
 
-### V9 強化視覺化預覽工具（📋 文件就緒，2026-08-02）
+### V9 強化視覺化預覽工具（✅ 實作完成 A–G，2026-08-02）
 
+- **V6 已完成／解鎖**
 - modes-only 埠；`products.json`／`materials.json` 分離；停止假產品注入
-- 新建「基礎材料輸出點」（form→belt／pipe）；物品輸出口僅固體
-- 反向最短鏈路（回推至材料、無循環）；效率＝quantity×60／timeSeconds
-- 引擎依輸入匹配配方；不齊無產出
-- 機器 tag 分頁；WxH 格點拓樸；F1 案例盤點後 F2 演示
-- V6 維持鎖定
+- 「基礎材料輸出點」（form→belt／pipe）；物品輸出口僅固體；總產值＝物品輸入口
+- `findShortestReverseChain`（`src/utils/reverseChain.ts`）；息壤選短鏈
+- `matchRecipeByInputs`：輸入種類完全吻合；不齊無產出；同集合取資料順序第一
+- 機器 tag 分頁；WxH 格點拓樸；F1 盤點＋F2（V9 preset／最短鏈套用）
 
 **技術文件**：[todolist_v9.md](./dev/todolist_v9.md)｜[dev_v9/](./dev/dev_v9/)
 
@@ -117,18 +116,21 @@
 
 | 檔案 | 說明 |
 |------|------|
-| `src/composables/useFlowEngine.ts` | **CR-04 主責**：FlowEngine 核心邏輯 |
+| `src/composables/useFlowEngine.ts` | **CR-04 主責**：FlowEngine（含 `matchRecipeByInputs`） |
+| `src/utils/reverseChain.ts` | **CR-04 主責**：V9 最短反向鏈路 |
 | `src/store/flowStore.ts` | **CR-04 主責**：Pinia store，儲存計算結果 |
 | `src/types/flow.ts` | **CR-04 主責**：FlowEngine 型別定義 |
 | `src/editor/stats/ProductionStats.vue` | **CR-04 主責**：右側統計面板 |
 | `src/editor/canvas/FactoryCanvas.vue` | **CR-04 參與**：管線 / 設備 overlay 顯示 |
-| `src/data/machines.ts` | **CR-04 暫維護（codegen）**：機器定義（含 modes／ports.media） |
-| `src/data/products.ts` | **CR-04 暫維護（codegen）**：配方（含 machineMode／environment） |
+| `src/data/machines.ts` | **CR-04 暫維護（codegen）**：機器（modes-only 埠） |
+| `src/data/products.ts` | **CR-04 暫維護（codegen）**：產品配方（不含材料假產品） |
+| `src/data/materials.ts` | **CR-04 暫維護（codegen）**：基礎材料＋form |
 | `src/data/environments.ts` | **CR-04 暫維護（codegen）**：環境標籤 |
 | `src/types/machine.ts` | **CR-04 主責**：`PortMedia`、`MachineMode`、`loss` |
 | `src/store/editorStore.ts` | **CR-01 主責，CR-04 監聽**：畫布設備與管線狀態 |
-| `src/types/graph.ts` | 通用圖節點型別（Vue Flow；含 `machineMode`） |
+| `src/types/graph.ts` | 通用圖節點（`machineMode`／`primaryOutput`／`environment`） |
 | `src/types/editor.ts` | 編輯器通用型別 |
+| `src/app/dev/FlowEngineTest.vue` | Dev 引擎測試（H／V7／V9 preset） |
 
 ### 不可修改的邊界
 
@@ -146,14 +148,14 @@
 
 ```
 runFlowEngine()
-  ├─ buildGraph()         過濾 Error 節點；帶入 machineMode
-  ├─ validateChains()     反向 BFS + 配方匹配 + V7 PortMedia（belt｜pipe）
+  ├─ buildGraph()         過濾 Error；Source 用 primaryOutput；一般機不預填 rates
+  ├─ validateChains()     反向 BFS + matchRecipeByInputs + PortMedia／form
   ├─ topologicalSort()    Kahn's Algorithm；偵測環路則略過該子圖
-  ├─ propagateFlows()     正向傳播（配方依 getRecipesForMachine(type, mode)）
-  │    ├─ source nodes    直接輸出 recipe.output_rate_per_min
-  │    ├─ normal device   efficiency = min(supplied/required); output = recipe_rate × efficiency
-  │    ├─ splitter        input ÷ output_count（或依比例）
-  │    └─ merger          Σ inputs
+  ├─ propagateFlows()     正向傳播（V9：依正流量品項再匹配配方）
+  │    ├─ source          primaryOutput × sourceRatePerMin（預設 30）
+  │    ├─ normal device   match → efficiency = min(supplied/required)
+  │    ├─ splitter／merger 透傳／匯流
+  │    └─ 無匹配          efficiency=0、無產出
   └─ calcItemSummary()    produced / consumed / net（不含 mode.loss）
 ```
 
@@ -320,10 +322,10 @@ Phase 1 完成後再進行 Phase 2（調度券 / 倉庫預估）。
 | V3 | 技術債修正 | [dev_v3.md](./dev/dev_v3.md) / [todolist_v3.md](./dev/todolist_v3.md) | ✅ 完成 |
 | V4 | 主編 0526 介面設計建議修正 | [dev_v4.md](./dev/dev_v4.md) / [todolist_v4.md](./dev/todolist_v4.md) | ✅ 完成 |
 | V5 | L1 完成後的開發者支援與測試基礎設施 | [todolist_v5.md](./dev/todolist_v5.md) / [dev_v5/](./dev/dev_v5/) | ✅ CR-04 交付完成（跨 CR 封鎖追蹤中） |
-| V6 | 拖曳移動進歷史堆疊（MILESTONE_0726） | [todolist_v6.md](./dev/todolist_v6.md) / [dev_v6/](./dev/dev_v6/) | 🔒 已鎖定（待手動 M1–M7） |
+| V6 | 拖曳移動進歷史堆疊（MILESTONE_0726） | [todolist_v6.md](./dev/todolist_v6.md) / [dev_v6/](./dev/dev_v6/) | ✅ 完成／已解鎖 |
 | **V7** | **資料 v3 遷移（modes／belt·pipe／machineMode）** | [todolist_v7.md](./dev/todolist_v7.md) / [dev_v7/](./dev/dev_v7/) | ✅ 完成 |
 | **V8** | **Dev 預覽＋埠一對一／pipe60／H8／form** | [todolist_v8.md](./dev/todolist_v8.md) / [dev_v8/](./dev/dev_v8/) | ✅ 實作完成（A–G） |
-| **V9** | **強化視覺化預覽工具** | [todolist_v9.md](./dev/todolist_v9.md) / [dev_v9/](./dev/dev_v9/) | 📋 文件就緒 |
+| **V9** | **強化視覺化預覽工具** | [todolist_v9.md](./dev/todolist_v9.md) / [dev_v9/](./dev/dev_v9/) | ✅ 實作完成（A–G） |
 
 ### 開發文件索引
 
@@ -346,11 +348,17 @@ Phase 1 完成後再進行 Phase 2（調度券 / 倉庫預估）。
 - [V8 開發文件資料夾](./dev/dev_v8/) — A–G 細項
 - 定案：[A1_scope_decision.md](./dev/dev_v8/A1_scope_decision.md)
 
-**V9（現行規劃）**：
-- [V9 總覽](./dev/todolist_v9.md) — 工項清單
-- [V9 開發文件資料夾](./dev/dev_v9/) — A–G 細項
+**V9（實作完成＋H1）**：
+- [V9 總覽](./dev/todolist_v9.md) — 工項清單（A–G＋H1）
+- [V9 開發文件資料夾](./dev/dev_v9/) — A–G／H1 細項
 - 定案：[A1_scope_decision.md](./dev/dev_v9/A1_scope_decision.md)
+- 關鍵碼：`src/utils/reverseChain.ts`、`matchRecipeByInputs`／`matchRecipeByEdgeCandidates`（`useFlowEngine.ts`）
 
-**V6（已鎖定）**：
-- [V6 總覽](./dev/todolist_v6.md) — 剩餘手動 M1–M7
-- [MILESTONE_0726.md](./MILESTONE_0726.md)
+**V6～V9 協作者文件（2026-08-02）**：
+- [MILESTONE_0802_V6_V9_REPORT.md](./MILESTONE_0802_V6_V9_REPORT.md) — 彙總報告
+- [CR04_FOR_COLLABORATORS.md](./CR04_FOR_COLLABORATORS.md) — 使用方式＋下一步
+- [DATA_FORMAT_GUIDE.md](./DATA_FORMAT_GUIDE.md) — 資料格式
+
+**V6（完成）**：
+- [V6 總覽](./dev/todolist_v6.md) — 已解鎖
+- [MILESTONE_0726.md](./MILESTONE_0726.md) — §0 結案回應

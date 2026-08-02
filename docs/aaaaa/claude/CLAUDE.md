@@ -151,16 +151,16 @@ docs/aaaaa/dev/
 | V3 | 技術債修正 | [todolist_v3.md](../dev/todolist_v3.md) / [dev_v3.md](../dev/dev_v3.md) | 完成 |
 | V4 | Machine id 欄位化 | [todolist_v4.md](../dev/todolist_v4.md) / [dev_v4.md](../dev/dev_v4.md) | 完成 |
 | V5 | L1 完成後的開發者支援與測試基礎設施 | [todolist_v5.md](../dev/todolist_v5.md) / [dev_v5.md](../dev/dev_v5.md) / [dev_v5/](../dev/dev_v5/) | CR-04 交付完成（跨 CR 封鎖追蹤中） |
-| V6 | 拖曳移動進歷史堆疊（MILESTONE_0726） | [todolist_v6.md](../dev/todolist_v6.md) / [dev_v6/](../dev/dev_v6/) | 已鎖定（待手動 M1–M7） |
+| V6 | 拖曳移動進歷史堆疊（MILESTONE_0726） | [todolist_v6.md](../dev/todolist_v6.md) / [dev_v6/](../dev/dev_v6/) | **完成／已解鎖** |
 | V7 | 資料 v3 遷移（data_1 → data → src/data） | [todolist_v7.md](../dev/todolist_v7.md) / [dev_v7/](../dev/dev_v7/) | **完成**（A–G） |
 | V8 | Dev 預覽＋埠一對一／pipe60／H8／form | [todolist_v8.md](../dev/todolist_v8.md) / [dev_v8/](../dev/dev_v8/) | **實作完成**（A–G） |
-| V9 | 強化視覺化預覽工具 | [todolist_v9.md](../dev/todolist_v9.md) / [dev_v9/](../dev/dev_v9/) | **文件就緒**（實作未開始） |
+| V9 | 強化視覺化預覽工具 | [todolist_v9.md](../dev/todolist_v9.md) / [dev_v9/](../dev/dev_v9/) | **實作完成**（A–G） |
 
 V5 相關入口：`V5_INIT_REPORT.md`、`todolist_v5.md`、`dev_v5.md`、`dev_v5/`。  
 V6 相關入口：`MILESTONE_0726.md`、`todolist_v6.md`、`dev_v6/`。  
 V7 相關入口：`data_0/`、`data_1/`、`data/`、`todolist_v7.md`、`dev_v7/`；指令 `pnpm sync:aaaaa-data`、`pnpm generate:src-data`。  
-V8 相關入口：`todolist_v8.md`、`dev_v8/`（V6 維持鎖定）。  
-V9 相關入口：`todolist_v9.md`、`dev_v9/`（現行規劃）。  
+V8 相關入口：`todolist_v8.md`、`dev_v8/`。  
+V9 相關入口：`todolist_v9.md`、`dev_v9/`（**實作完成**）。
 最新功能完成報告：`docs/aaaaa/report_v4.md`（V4；後續版本應新增對應 `report_vN.md`）。
 
 ---
@@ -297,13 +297,13 @@ CR-04 專用 skills / agents 放在 `docs/aaaaa/claude/`，透過根目錄 `.cla
 | [todolist_v5.md](../dev/todolist_v5.md) | V5 工項清單 |
 | [dev_v5.md](../dev/dev_v5.md) | V5 技術總覽 |
 | [dev_v5/](../dev/dev_v5/) | V5 細項文件 |
-| [todolist_v6.md](../dev/todolist_v6.md) | V6 工項清單（拖曳進歷史，已鎖定） |
+| [todolist_v6.md](../dev/todolist_v6.md) | V6 工項清單（拖曳進歷史，已完成） |
 | [dev_v6/](../dev/dev_v6/) | V6 細項文件 |
 | [todolist_v7.md](../dev/todolist_v7.md) | V7 工項清單（資料 v3 遷移，**完成**） |
 | [dev_v7/](../dev/dev_v7/) | V7 細項文件 |
 | [todolist_v8.md](../dev/todolist_v8.md) | V8 工項清單（Dev 預覽＋引擎規則，A–G 完成） |
 | [dev_v8/](../dev/dev_v8/) | V8 細項文件 |
-| [todolist_v9.md](../dev/todolist_v9.md) | V9 工項清單（強化視覺化預覽，文件就緒） |
+| [todolist_v9.md](../dev/todolist_v9.md) | V9 工項清單（強化視覺化預覽，A–G 完成） |
 | [dev_v9/](../dev/dev_v9/) | V9 細項文件 |
 | [MILESTONE_0726.md](../MILESTONE_0726.md) | V6 來源里程碑 |
 | [CONTEXT.md](./CONTEXT.md) | CR-04 專有名詞（PortMedia／machineMode／form／埠一對一） |

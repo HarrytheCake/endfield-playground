@@ -72,7 +72,10 @@
 - **Machine.id**：設備穩定識別鍵（如 `refinery`、`crusher`）。**方案 B（已定案）**：`PlacedDevice.machineType` / 節點 `data.machineType` 應存此 id。
 - **Machine.name**：中文顯示名稱（如「精煉爐」）；不得再作為 `machineType` 查詢鍵（遷移完成後）。
 - **MachineMode**：機器運作型態（如固體／氣態）；含該 mode 下的 `ports` 與可選 `loss`。
-- **machineMode**：節點 `data.machineMode`；缺省該機器 `modes[0].id`。配方以 `machine` + `machineMode` 過濾後再取 `recipeIndex`。
+- **machineMode**：節點 `data.machineMode`；缺省該機器 `modes[0].id`。配方先以 `machine` + `machineMode` 過濾。
+- **matchRecipeByInputs（V9）**：以實際接入品項種類集合與配方 inputs **完全吻合**選配方；不齊無產出；多候選取資料順序第一。`recipeIndex` 為匹配結果／除錯提示，非唯一真相。
+- **基礎材料輸出點**：`is_source`；依材料 `form` 用 `solid_belt`／`fluid_pipe`；節點 `primaryOutput`＋可選 `sourceRatePerMin`。
+- **findShortestReverseChain（V9）**：從產品回推至「僅 materials、非 products」葉節點；最少配方步數、去循環；效率＝`quantity×60/timeSeconds`。
 - **PortMedia**：埠口媒質，`'belt'`｜`'pipe'`（固體傳送帶／液體氣體管線）。belt↔pipe 錯接視為非法鏈。
 - **單埠單線（V8）**：同一機器埠（handle）最多一條邊；多線進單口必經匯流器。複數出入口＝`modes[].ports` 多筆，非單埠多線。無 handle 且該方向僅一埠時，多條抽象邊亦非法（引擎側先行）。
 - **form（ItemForm）**：品項物態 `'solid' | 'liquid' | 'gas'`（JSON 欄位名 `form`）。solid→belt，liquid／gas→pipe。已進 materials／products 與 `src/data`。
@@ -135,6 +138,5 @@
 - loss 納入流量／summary 計算（刻意延後）
 - 動態模擬（若未來 Phase 擴充）與現行靜態分析的差異說明
 - CR-02／CR-03 對齊埠一對一與媒質拒絕（V8 引擎側已完成；UI／Detector 後續）
-- V6 手動 M1–M7 畫布驗收（程式已鎖定；見 `todolist_v6.md`）
 - 可選：`report_v8.md` 正式關閉報告
-- V9 規劃中：modes-only 埠、基礎材料輸出點、反向最短鏈路、輸入匹配配方（見 `todolist_v9.md`）
+- V9 實作完成：modes-only、基礎材料輸出點、tag／WxH 預覽、反向最短鏈路、輸入匹配配方、V9 演示（見 `todolist_v9.md`）

@@ -703,8 +703,8 @@ function getEfficiencyClass(efficiency: number): string {
 
 開發時可使用 `/dev/*` 測試頁面：
 
-- `/dev/flow-engine` — FlowEngine 手動測試（H1–H6 preset）
-- `/dev/graph-viz` — 圖結構可視化（環路偵測）
+- `/dev/flow-engine` — FlowEngine 手動測試（preset／拓樸／環路；含原 graph-viz 能力）
+- `/dev/graph-viz` — **已退役**（轉址至 `/dev/flow-engine`，V9-H1-4）
 - `/dev/history-replay` — 歷史記錄回放（undo/redo 測試）
 
 僅在 `import.meta.env.DEV` 時可訪問，production build 不包含。

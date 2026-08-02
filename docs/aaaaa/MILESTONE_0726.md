@@ -1,11 +1,45 @@
 # 待討論：拖曳移動設備目前沒有進歷史堆疊
 
-**狀態：** 🔒 V6 已鎖定 — 實作完成（`commitDeviceMove` + Canvas）；**待協作者手動 M1–M7 驗收**  
+**狀態：** ✅ V6 **已完成／已解鎖**（`commitDeviceMove` + Canvas + HistoryReplay M1–M6）  
 **V6 追蹤：** [todolist_v6.md](./dev/todolist_v6.md)／[dev_v6/](./dev/dev_v6/)（最後更新 2026-08-02）  
 **相關檔案：** `src/editor/canvas/FactoryCanvas.vue`、`src/store/editorStore.ts`、`src/store/historyStore.ts`
 **相關規則：** `CLAUDE.md` §5 Store 操作規範（Command Pattern）、`L2.md` §4.7 Command 歸屬規則
 
-> 現行功能開發走 **V8**；V6 僅保留驗收／debug 紀錄，不開新功能。
+> 現行功能開發走 **V9**。M7 主畫布跟手為已知 UX 觀察；管線跟隨仍屬 CR-02。  
+> **里程碑結案報告（V6～V9）：** [MILESTONE_0802_V6_V9_REPORT.md](./MILESTONE_0802_V6_V9_REPORT.md)  
+> **協作者使用說明：** [CR04_FOR_COLLABORATORS.md](./CR04_FOR_COLLABORATORS.md)
+
+---
+
+## 0. 結案回應（2026-08-02）— 給協作者
+
+本檔原為「待討論」；下列為定案與交付說明，細節仍保留於下文供溯源。
+
+### 討論結論（對照原文 §7）
+
+| 原討論項 | 結論 |
+|----------|------|
+| 改簽名 vs 新 action | **新增** `commitDeviceMove(uids, before)`；**保留** `moveDevices(uids, delta)` |
+| delta | 主動路徑保留；拖曳路徑用起始快照，不重複位移 |
+| 管線跟隨 | 預留 L1 入口；**本版不做**（CR-02） |
+| 範圍 | **先讓移動可 Undo**；跟隨後做 |
+
+### 開發工項（已完成）
+
+- L1：`commitDeviceMove`、零位移不進歷史、單元測試  
+- L2：`FactoryCanvas` drag-start 快照／drag-stop commit  
+- Dev：`/dev/history-replay` V6 區（一鍵 M1→M4 等；H1-5 文案強化）  
+
+### 協作者如何驗證
+
+1. 主畫布拖曳後 Ctrl+Z  
+2. `/dev/history-replay` →「一鍵 M1→M4（推薦）」  
+3. API 契約見 [CR04_FOR_COLLABORATORS.md](./CR04_FOR_COLLABORATORS.md) §A3  
+
+### 仍非本里程碑範圍
+
+- M7 真拖曳跟手 polish  
+- CR-02 管線端點跟隨／連線 UI 拒絕  
 
 ---
 
