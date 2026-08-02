@@ -15,8 +15,6 @@ describe('E001_deviceOverlap', () => {
         name: '測試設備',
         width: 2,
         height: 2,
-        input_ports: [],
-        output_ports: [],
         power: 10,
         tags: [],
         is_source: false,

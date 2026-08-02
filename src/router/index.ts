@@ -28,9 +28,10 @@ const router = createRouter({
                     component: () => import('@/app/dev/FlowEngineTest.vue'),
                 },
                 {
+                    /** V9-H1-4：退役；拓樸／preset 以 FlowEngine 測試頁為準 */
                     path: 'graph-viz',
                     name: 'dev-graph-viz',
-                    component: () => import('@/app/dev/GraphViz.vue'),
+                    redirect: { name: 'dev-flow-engine' },
                 },
                 {
                     path: 'history-replay',
