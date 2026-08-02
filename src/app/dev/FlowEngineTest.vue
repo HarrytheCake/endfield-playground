@@ -35,11 +35,11 @@
             >
                 <h3 class="mb-2 text-sm font-semibold text-blue-900 dark:text-blue-200">使用說明</h3>
                 <ul class="space-y-1 text-xs text-blue-800 dark:text-blue-300">
-                    <li>• 點擊 <strong>H1–H11</strong>／<strong>G1–G3、L1</strong> 載入情境並<strong>自動執行計算</strong></li>
+                    <li>• 點擊 <strong>H1–H11</strong>／<strong>G*</strong>／<strong>V9</strong> 載入情境並<strong>自動執行計算</strong></li>
                     <li>• 中間拓撲圖：節點依效率著色，管線顯示流量；橘色邊 = 堵塞</li>
                     <li>• 「預期結果」清單可對照右側實際數值做目視驗證</li>
-                    <li>• V7／V8：mode、belt↔pipe、form、單埠單線、H8 匯流堵塞</li>
-                    <li>• 「機器」「產品／材料」分頁可預覽資料 JSON 與埠／物態 placeholder</li>
+                    <li>• V9：基礎材料輸出點、E1 輸入匹配配方、D1 最短鏈套用</li>
+                    <li>• 「機器」「產品／材料」分頁可預覽資料 JSON 與埠／物態</li>
                     <li>• 可修改 JSON 後按「執行計算」；此頁不永久改動主畫布</li>
                 </ul>
             </div>
@@ -87,7 +87,42 @@
                     {{ preset.name }}
                 </button>
             </div>
-            <p v-if="activePresetMeta" class="text-xs text-gray-600 dark:text-gray-400">
+            <div class="mb-3 flex flex-wrap gap-2">
+                <span class="text-xs font-medium text-gray-500">V9 演示</span>
+                <button
+                    v-for="preset in presetsByGroup('v9')"
+                    :key="preset.id"
+                    type="button"
+                    class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                    :class="presetButtonClass(preset.id)"
+                    @click="loadPreset(preset.id)"
+                >
+                    {{ preset.name }}
+                </button>
+            </div>
+            <div
+                class="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50/80 p-2 dark:border-emerald-900 dark:bg-emerald-950/30"
+            >
+                <span class="text-[10px] font-medium text-emerald-800 dark:text-emerald-200">
+                    D1 最短鏈套用
+                </span>
+                <select
+                    v-model="chainProduct"
+                    class="rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-900"
+                >
+                    <option v-for="name in chainProductOptions" :key="name" :value="name">
+                        {{ name }}
+                    </option>
+                </select>
+                <button
+                    type="button"
+                    class="rounded bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+                    @click="applyReverseChainDemo"
+                >
+                    產生演示圖
+                </button>
+            </div>
+            <p v-if="activePresetMeta" class="mt-2 text-xs text-gray-600 dark:text-gray-400">
                 <span class="font-semibold text-gray-800 dark:text-gray-200">{{
                     activePresetMeta.name
                 }}</span>
@@ -371,11 +406,15 @@ import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
 import type { EdgeFlow, ItemSummary } from '@/types/flow';
-import { getRecipesForMachine } from '@/data/products';
+import { getItemForm, getRecipesForMachine } from '@/data/products';
 import MachineCatalogPanel from '@/app/dev/MachineCatalogPanel.vue';
 import ProductCatalogPanel from '@/app/dev/ProductCatalogPanel.vue';
 import DevTopologySvg from '@/app/dev/DevTopologySvg.vue';
 import { getMachine } from '@/data/machines';
+import {
+    findShortestReverseChain,
+    type ChainNode,
+} from '@/utils/reverseChain';
 
 type PageTab = 'engine' | 'machines' | 'products';
 
@@ -402,7 +441,7 @@ interface FlowEngineTestResult {
 interface PresetMeta {
     id: string;
     name: string;
-    group: 'basic' | 'advanced' | 'v7';
+    group: 'basic' | 'advanced' | 'v7' | 'v9';
     description: string;
     expected: string[];
 }
@@ -440,11 +479,25 @@ function recipeIndexOf(
 
 interface MakeNodeOpts {
     machineMode?: string;
-    /** 以主要產出品項解析 recipeIndex；與 recipeIndex 二選一 */
+    /** 主產出品項：Source 寫入產出；加工機供 E1／出邊優先（H1-2）並可解析 recipeIndex */
     primaryOutput?: string;
     recipeIndex?: number;
-    /** 同一產出品有多個配方時取第 N 個（0-based） */
+    /** 同一產出品有多個配方時取第 N 個；Source 時 0→30/min、1→15/min */
     recipePick?: number;
+    sourceRatePerMin?: number;
+    /** 節點環境（E1 匹配用）；缺省 none */
+    environment?: string;
+}
+
+const MATERIAL_SOURCE = '基礎材料輸出點';
+const ITEM_SOURCE = '物品輸出口';
+
+/**
+ * 依品項 form 選擇基礎材料輸出點 mode。
+ */
+function materialSourceMode(itemName: string): string {
+    const form = getItemForm(itemName);
+    return form === 'solid' ? 'solid_belt' : 'fluid_pipe';
 }
 
 /**
@@ -459,8 +512,35 @@ function makeNode(
     opts: MakeNodeOpts | number = {},
 ): FactoryNode {
     const options: MakeNodeOpts = typeof opts === 'number' ? { recipeIndex: opts } : opts;
-    const machineMode = options.machineMode;
+    let machineMode = options.machineMode;
     let recipeIndex = options.recipeIndex ?? 0;
+    const isMaterialSource = machineType === MATERIAL_SOURCE;
+    const isItemSource = machineType === ITEM_SOURCE;
+
+    if (options.primaryOutput && (isMaterialSource || isItemSource)) {
+        if (isMaterialSource && !machineMode) {
+            machineMode = materialSourceMode(options.primaryOutput);
+        }
+        recipeIndex = options.recipePick ?? recipeIndex;
+        const sourceRatePerMin =
+            options.sourceRatePerMin ?? (recipeIndex === 1 ? 15 : 30);
+        return {
+            id,
+            type: 'default',
+            position: { x, y },
+            data: {
+                label,
+                machineType,
+                recipeIndex,
+                machineMode,
+                primaryOutput: options.primaryOutput,
+                sourceRatePerMin,
+                environment: options.environment ?? 'none',
+                rotation: 0,
+            },
+        };
+    }
+
     if (options.primaryOutput) {
         recipeIndex = recipeIndexOf(
             machineType,
@@ -473,7 +553,16 @@ function makeNode(
         id,
         type: 'default',
         position: { x, y },
-        data: { label, machineType, recipeIndex, machineMode, rotation: 0 },
+        data: {
+            label,
+            machineType,
+            recipeIndex,
+            machineMode,
+            environment: options.environment ?? 'none',
+            rotation: 0,
+            /** V9-H1-2：加工機主產出（多輸出時匹配／出邊優先） */
+            ...(options.primaryOutput ? { primaryOutput: options.primaryOutput } : {}),
+        },
     };
 }
 
@@ -490,8 +579,19 @@ function makeEdge(id: string, source: string, target: string): FactoryEdge {
     };
 }
 
+/** 指定 handle 的邊 */
+function makeEdgePorts(
+    id: string,
+    source: string,
+    target: string,
+    sourceHandle: string,
+    targetHandle: string,
+): FactoryEdge {
+    return { id, source, target, sourceHandle, targetHandle };
+}
+
 /**
- * 抽象邊：不帶 handle，略過 belt/pipe 媒質檢查（氣態／跨媒質資料鏈用）。
+ * 抽象邊：不帶 handle，略過 belt/pipe 媒質檢查（跨媒質／資料鏈用）。
  */
 function makeEdgeLoose(id: string, source: string, target: string): FactoryEdge {
     return { id, source, target };
@@ -552,22 +652,23 @@ const presets: PresetMeta[] = [
         id: 'h7',
         name: 'H7',
         group: 'advanced',
-        description: '堵塞：雙 Source 灌同一粉碎機（供過於求）',
+        description:
+            '堵塞：雙 Source 分接粉碎機 in-0／in-1（源礦共 60＞機速 30 → 入邊平分約 15／15）',
         expected: [
-            '粉碎機效率仍可到 100%（需求被滿足）',
-            '至少一條入邊 isCongested = true（橘色）',
-            '摘要區「堵塞邊」非空',
+            '兩入邊分接不同入埠（非單埠雙線）',
+            '粉碎機效率 ≈ 100%；源石粉末出邊 ≈ 30/min（通常不堵）',
+            '兩條源礦入邊堵塞（橘）約各 15/min；摘要「堵塞邊」非空',
         ],
     },
     {
         id: 'h8',
         name: 'H8',
         group: 'advanced',
-        description: '雙鏈 → 匯流器 → Sink：滿速 belt 匯入後出口限 30，反向堵塞約 15／15',
+        description: '堵塞：雙鏈 → 匯流器 → Sink：滿速 belt 匯入後出口限 30，反向堵塞約 15／15',
         expected: [
             '圖含匯流器；不雙線直連同一 Sink 口',
             '匯流器→Sink 約 30/min',
-            '兩條入匯流器邊堵塞回推約各 15/min',
+            '兩條入匯流器邊堵塞（橘）回推約各 15/min；摘要「堵塞邊」非空',
         ],
     },
     {
@@ -581,8 +682,12 @@ const presets: PresetMeta[] = [
         id: 'h10',
         name: 'H10',
         group: 'advanced',
-        description: '配方不符：紫晶礦 Source 灌入「源石粉末」粉碎配方',
-        expected: ['粉碎機／下游被標為非法鏈', '有效 edgeFlows 減少或為空', '拓撲節點虛線灰框'],
+        description: 'E1：紫晶礦灌粉碎機（無匹配配方）→ 非法／無產出',
+        expected: [
+            '粉碎機輸入種類無法匹配任何配方',
+            '粉碎機／下游非法或無有效交付',
+            '拓撲節點虛線灰框',
+        ],
     },
     {
         id: 'h11',
@@ -599,19 +704,23 @@ const presets: PresetMeta[] = [
         id: 'g1',
         name: 'G1',
         group: 'v7',
-        description: '氣態：息壤氣 → 固氣轉化機(solid_mode) → 息壤 → Sink（抽象邊略過媒質）',
+        description: '氣態：息壤氣(pipe) → 固氣轉化機(solid_mode) → 息壤 → Sink',
         expected: [
-            '固氣轉化機效率 ≈ 100%',
-            'itemSummary 有「息壤」產出',
-            '配方 machineMode = solid_mode',
+            '材料源 fluid_pipe → 固氣 pipe 入（合法媒質）',
+            '固氣轉化機效率 ≈ 100%；有「息壤」產出',
+            'E1 依息壤氣匹配 solid_mode 配方',
         ],
     },
     {
         id: 'g2',
         name: 'G2',
         group: 'v7',
-        description: '錯誤 mode：精煉爐設 base_mode 卻用 liquid 赤銅塊配方 index',
-        expected: ['精煉爐被標為非法鏈', '有效流量中斷或無赤銅塊交付', '拓撲節點偏灰'],
+        description: 'E1：精煉爐 base_mode 接赤銅礦＋清水（liquid 配方不在此 mode）',
+        expected: [
+            'base_mode 下無匹配配方 → 精煉爐非法／無產出',
+            '無赤銅塊交付',
+            '拓撲節點偏灰',
+        ],
     },
     {
         id: 'g3',
@@ -631,12 +740,55 @@ const presets: PresetMeta[] = [
             '確認 V7 不算 loss',
         ],
     },
+    {
+        id: 'v9-no-sink',
+        name: 'V9-無Sink',
+        group: 'v9',
+        description: '非法：源礦→粉碎機但無物品輸入口',
+        expected: ['粉碎機無法連到有效 Sink → 非法鏈', '無 sink 交付', '拓撲偏灰'],
+    },
+    {
+        id: 'v9-missing-water',
+        name: 'V9-缺清水',
+        group: 'v9',
+        description: 'E1：精煉爐 liquid_mode 僅赤銅礦（缺清水）→ 無產出',
+        expected: [
+            '輸入集合不齊 → 精煉爐非法／無赤銅塊',
+            '對照「齊全」請用產品鏈或手動加清水源',
+            '拓撲節點偏灰',
+        ],
+    },
+    {
+        id: 'v9-swap-ore',
+        name: 'V9-換料源礦',
+        group: 'v9',
+        description: 'E1 換料：源礦→粉碎機→源石粉末（不預選配方）',
+        expected: ['粉碎機依輸入匹配源石粉末', '效率 ≈ 100%', 'Sink 有源石粉末'],
+    },
+    {
+        id: 'v9-swap-sand',
+        name: 'V9-換料砂葉',
+        group: 'v9',
+        description: 'E1 換料：砂葉→粉碎機→砂葉粉末（同機不同產）',
+        expected: ['粉碎機依輸入匹配砂葉粉末', '效率 ≈ 100%', 'Sink 有砂葉粉末'],
+    },
+    {
+        id: 'v9-xi-rang',
+        name: 'V9-息壤鏈',
+        group: 'v9',
+        description: 'D1 最短鏈：芽針→碳塊；碳塊＋清水→息壤（stable）→Sink',
+        expected: [
+            '天有洪爐 environment=stable',
+            'Sink 有息壤交付',
+            '不走緻密碳長鏈',
+        ],
+    },
 ];
 
 const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }> = {
     h1: {
         nodes: [
-            makeNode('src', 0, 100, '物品輸出口', '物品輸出口', { primaryOutput: '源礦' }),
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', { primaryOutput: '源礦' }),
             makeNode('crusher', 200, 100, '粉碎機', '粉碎機', { primaryOutput: '源石粉末' }),
             makeNode('sink', 400, 100, '物品輸入口', '物品輸入口'),
         ],
@@ -644,7 +796,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     h2: {
         nodes: [
-            makeNode('miner', 0, 100, '物品輸出口(半速)', '物品輸出口', {
+            makeNode('miner', 0, 100, '基礎材料輸出點(半速)', '基礎材料輸出點', {
                 primaryOutput: '源礦',
                 recipePick: 1,
             }),
@@ -655,7 +807,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     h3: {
         nodes: [
-            makeNode('src', 0, 100, '物品輸出口', '物品輸出口', { primaryOutput: '源礦' }),
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', { primaryOutput: '源礦' }),
             makeNode('splitter', 200, 100, '分流器', '分流器'),
             makeNode('sink1', 400, 40, '物品輸入口 1', '物品輸入口'),
             makeNode('sink2', 400, 160, '物品輸入口 2', '物品輸入口'),
@@ -692,7 +844,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     h6: {
         nodes: [
-            makeNode('src', 0, 100, '物品輸出口', '物品輸出口', { primaryOutput: '紫晶礦' }),
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', { primaryOutput: '紫晶礦' }),
             makeNode('c1', 200, 100, '精煉爐', '精煉爐', {
                 machineMode: 'base_mode',
                 primaryOutput: '紫晶纖維',
@@ -711,21 +863,21 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     h7: {
         nodes: [
-            makeNode('src1', 0, 40, 'Source A', '物品輸出口', { primaryOutput: '源礦' }),
-            makeNode('src2', 0, 160, 'Source B', '物品輸出口', { primaryOutput: '源礦' }),
-            makeNode('crusher', 220, 100, '粉碎機', '粉碎機', { primaryOutput: '源石粉末' }),
+            makeNode('src1', 0, 40, 'Source A', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('src2', 0, 160, 'Source B', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
             makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
         ],
         edges: [
-            makeEdge('e_a', 'src1', 'crusher'),
-            makeEdge('e_b', 'src2', 'crusher'),
+            makeEdgePorts('e_a', 'src1', 'crusher', 'out-0', 'in-0'),
+            makeEdgePorts('e_b', 'src2', 'crusher', 'out-0', 'in-1'),
             makeEdge('e_out', 'crusher', 'sink'),
         ],
     },
     h8: {
         nodes: [
-            makeNode('src1', 0, 40, 'Source A', '物品輸出口', { primaryOutput: '源礦' }),
-            makeNode('src2', 0, 180, 'Source B', '物品輸出口', { primaryOutput: '源礦' }),
+            makeNode('src1', 0, 40, 'Source A', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('src2', 0, 180, 'Source B', '基礎材料輸出點', { primaryOutput: '源礦' }),
             makeNode('c1', 200, 40, '粉碎機 A', '粉碎機', { primaryOutput: '源石粉末' }),
             makeNode('c2', 200, 180, '粉碎機 B', '粉碎機', { primaryOutput: '源石粉末' }),
             makeNode('merger', 380, 110, '匯流器', '匯流器'),
@@ -754,10 +906,10 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     h9: {
         nodes: [
-            makeNode('srcA', 0, 40, 'Source A', '物品輸出口', { primaryOutput: '源礦' }),
+            makeNode('srcA', 0, 40, 'Source A', '基礎材料輸出點', { primaryOutput: '源礦' }),
             makeNode('cA', 200, 40, '粉碎機 A', '粉碎機', { primaryOutput: '源石粉末' }),
             makeNode('sinkA', 400, 40, 'Sink A', '物品輸入口'),
-            makeNode('srcB', 0, 180, 'Source B', '物品輸出口', { primaryOutput: '紫晶礦' }),
+            makeNode('srcB', 0, 180, 'Source B', '基礎材料輸出點', { primaryOutput: '紫晶礦' }),
             makeNode('cB', 200, 180, '精煉爐 B', '精煉爐', {
                 machineMode: 'base_mode',
                 primaryOutput: '紫晶纖維',
@@ -773,17 +925,15 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     h10: {
         nodes: [
-            makeNode('src', 0, 100, '紫晶礦 Source', '物品輸出口', { primaryOutput: '紫晶礦' }),
-            makeNode('crusher', 220, 100, '粉碎機(源石粉末配方)', '粉碎機', {
-                primaryOutput: '源石粉末',
-            }),
+            makeNode('src', 0, 100, '紫晶礦 Source', '基礎材料輸出點', { primaryOutput: '紫晶礦' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
             makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
         ],
         edges: [makeEdge('e1', 'src', 'crusher'), makeEdge('e2', 'crusher', 'sink')],
     },
     h11: {
         nodes: [
-            makeNode('src', 0, 100, '半速 Source', '物品輸出口', {
+            makeNode('src', 0, 100, '半速 Source', '基礎材料輸出點', {
                 primaryOutput: '源礦',
                 recipePick: 1,
             }),
@@ -811,24 +961,24 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     g1: {
         nodes: [
-            makeNode('src', 0, 100, '息壤氣 Source', '物品輸出口', { primaryOutput: '息壤氣' }),
+            makeNode('src', 0, 100, '息壤氣 Source', '基礎材料輸出點', { primaryOutput: '息壤氣' }),
             makeNode('converter', 220, 100, '固氣轉化機', '固氣轉化機', {
                 machineMode: 'solid_mode',
-                primaryOutput: '息壤',
             }),
             makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
         ],
-        // 抽象邊：Source belt ↔ 固氣 pipe in，略過媒質以驗證氣態配方
-        edges: [makeEdgeLoose('e1', 'src', 'converter'), makeEdgeLoose('e2', 'converter', 'sink')],
+        // pipe→pipe in；belt out→sink
+        edges: [
+            makeEdgePorts('e1', 'src', 'converter', 'out-0', 'in-0'),
+            makeEdgePorts('e2', 'converter', 'sink', 'out-0', 'in-0'),
+        ],
     },
     g2: {
         nodes: [
-            makeNode('srcOre', 0, 40, '赤銅礦', '物品輸出口', { primaryOutput: '赤銅礦' }),
-            makeNode('srcWater', 0, 160, '清水', '物品輸出口', { primaryOutput: '清水' }),
-            makeNode('refinery', 220, 100, '精煉爐(錯 mode)', '精煉爐', {
-                // 故意：base_mode + liquid 配方 index
+            makeNode('srcOre', 0, 40, '赤銅礦', '基礎材料輸出點', { primaryOutput: '赤銅礦' }),
+            makeNode('srcWater', 0, 160, '清水', '基礎材料輸出點', { primaryOutput: '清水' }),
+            makeNode('refinery', 220, 100, '精煉爐(base_mode)', '精煉爐', {
                 machineMode: 'base_mode',
-                recipeIndex: recipeIndexOf('精煉爐', '赤銅塊', 'liquid_mode'),
             }),
             makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
         ],
@@ -840,6 +990,7 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     g3: {
         nodes: [
+            // 故意用固體物品輸出口(belt)對接提純機 pipe 入，驗證媒質錯接
             makeNode('src', 0, 100, '物品輸出口', '物品輸出口', { primaryOutput: '源礦' }),
             makeNode('purifier', 220, 100, '提純機', '提純機', {
                 machineMode: 'liquid_mode',
@@ -851,22 +1002,88 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     l1: {
         nodes: [
-            makeNode('src', 0, 100, '息壤氣 Source', '物品輸出口', { primaryOutput: '息壤氣' }),
+            makeNode('src', 0, 100, '息壤氣 Source', '基礎材料輸出點', { primaryOutput: '息壤氣' }),
             makeNode('converter', 220, 100, '固氣轉化機(有 loss)', '固氣轉化機', {
                 machineMode: 'solid_mode',
-                primaryOutput: '息壤',
             }),
             makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
         ],
-        edges: [makeEdgeLoose('e1', 'src', 'converter'), makeEdgeLoose('e2', 'converter', 'sink')],
+        edges: [
+            makeEdgePorts('e1', 'src', 'converter', 'out-0', 'in-0'),
+            makeEdgePorts('e2', 'converter', 'sink', 'out-0', 'in-0'),
+        ],
+    },
+    'v9-no-sink': {
+        nodes: [
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
+        ],
+        edges: [makeEdge('e1', 'src', 'crusher')],
+    },
+    'v9-missing-water': {
+        nodes: [
+            makeNode('ore', 0, 100, '赤銅礦', '基礎材料輸出點', { primaryOutput: '赤銅礦' }),
+            makeNode('ref', 220, 100, '精煉爐', '精煉爐', { machineMode: 'liquid_mode' }),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [
+            makeEdgePorts('e1', 'ore', 'ref', 'out-0', 'in-0'),
+            makeEdgePorts('e2', 'ref', 'sink', 'out-1', 'in-0'),
+        ],
+    },
+    'v9-swap-ore': {
+        nodes: [
+            makeNode('src', 0, 100, '源礦', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [makeEdge('e1', 'src', 'crusher'), makeEdge('e2', 'crusher', 'sink')],
+    },
+    'v9-swap-sand': {
+        nodes: [
+            makeNode('src', 0, 100, '砂葉', '基礎材料輸出點', { primaryOutput: '砂葉' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [makeEdge('e1', 'src', 'crusher'), makeEdge('e2', 'crusher', 'sink')],
+    },
+    'v9-xi-rang': {
+        nodes: [
+            makeNode('needle', 0, 40, '芽針', '基礎材料輸出點', { primaryOutput: '芽針' }),
+            makeNode('water', 0, 180, '清水', '基礎材料輸出點', { primaryOutput: '清水' }),
+            makeNode('refinery', 200, 40, '精煉爐', '精煉爐', { machineMode: 'base_mode' }),
+            makeNode('furnace', 400, 100, '天有洪爐', '天有洪爐', {
+                machineMode: 'default',
+                environment: 'stable',
+            }),
+            makeNode('sink', 600, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [
+            makeEdge('e1', 'needle', 'refinery'),
+            makeEdge('e2', 'refinery', 'furnace'),
+            // 洪爐埠皆 belt；清水為 liquid → 抽象邊略過媒質以演示配方鏈
+            makeEdgeLoose('e3', 'water', 'furnace'),
+            makeEdge('e4', 'furnace', 'sink'),
+        ],
     },
 };
 
 const activePresetMeta = computed(() => presets.find((p) => p.id === selectedPreset.value) ?? null);
 
+/** D1 最短鏈套用：精選產品（其餘可自產品分頁複製名稱） */
+const chainProductOptions = [
+    '息壤',
+    '源石粉末',
+    '砂葉粉末',
+    '錦草溶液',
+    '紫晶質瓶',
+    '赤銅塊',
+    '赫銅零件',
+];
+const chainProduct = ref('息壤');
+
 /**
  * 依群組篩選 preset 清單。
- * @param group basic | advanced
  */
 function presetsByGroup(group: PresetMeta['group']): PresetMeta[] {
     return presets.filter((p) => p.group === group);
@@ -985,6 +1202,76 @@ async function loadPreset(id: string) {
     selectedPreset.value = id;
     selectedTopoNodeId.value = null;
     jsonInput.value = JSON.stringify(presetData[id], null, 2);
+    errorMessage.value = '';
+    await runCalculation();
+}
+
+/**
+ * V9-F2：依 D1 最短反向鏈產生演示圖（抽象邊連線，便於跨媒質演示）。
+ */
+async function applyReverseChainDemo() {
+    const root = findShortestReverseChain(chainProduct.value);
+    if (!root) {
+        errorMessage.value = `無法推演最短鏈：${chainProduct.value}`;
+        return;
+    }
+
+    const materialIds = new Map<string, string>();
+    const productIds = new Map<string, string>();
+    const nodes: FactoryNode[] = [];
+    const edges: FactoryEdge[] = [];
+    let seq = 0;
+    let matLane = 0;
+
+    function visit(n: ChainNode): string {
+        if (n.kind === 'material') {
+            let id = materialIds.get(n.itemId);
+            if (!id) {
+                id = `src_${seq++}`;
+                materialIds.set(n.itemId, id);
+                nodes.push(
+                    makeNode(id, 0, matLane * 90, n.itemId, MATERIAL_SOURCE, {
+                        primaryOutput: n.itemId,
+                    }),
+                );
+                matLane += 1;
+            }
+            return id;
+        }
+
+        const existing = productIds.get(n.itemId);
+        if (existing) return existing;
+
+        const childIds = (n.inputs ?? []).map((c) => visit(c));
+        const id = `dev_${seq++}`;
+        productIds.set(n.itemId, id);
+        const col = productIds.size;
+        const machine = n.recipe?.machine ?? '粉碎機';
+        const env = n.recipe?.environment;
+        nodes.push(
+            makeNode(id, col * 200, 80, `${machine}→${n.itemId}`, machine, {
+                machineMode: n.recipe?.machineMode,
+                environment: env && env !== 'none' ? env : undefined,
+                /** 主產出：多輸出時引擎出邊／匹配優先此品（V9-H1-2） */
+                primaryOutput: n.itemId,
+            }),
+        );
+        for (const src of childIds) {
+            edges.push(makeEdgeLoose(`e_${src}_${id}_${edges.length}`, src, id));
+        }
+        return id;
+    }
+
+    const rootId = visit(root);
+    const sinkId = `sink_${seq++}`;
+    nodes.push(
+        makeNode(sinkId, (productIds.size + 1) * 200, 80, '物品輸入口', '物品輸入口'),
+    );
+    edges.push(makeEdgeLoose(`e_${rootId}_${sinkId}`, rootId, sinkId));
+
+    selectedPreset.value = null;
+    selectedTopoNodeId.value = null;
+    jsonInput.value = JSON.stringify({ nodes, edges }, null, 2);
     errorMessage.value = '';
     await runCalculation();
 }

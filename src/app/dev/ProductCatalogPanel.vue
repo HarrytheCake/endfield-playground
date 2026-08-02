@@ -1,73 +1,73 @@
 <script setup lang="ts">
 /**
- * V8-B2：產品／材料目錄 — 列表／JSON／form 色塊 placeholder
+ * V9-B2／D1：產品／材料目錄＋最短反向鏈路預覽
  */
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { getAllMaterials } from '@/data/materials';
 import { getAllProducts } from '@/data/products';
 import type { ItemForm } from '@/types/flow';
+import {
+    collectLeafMaterials,
+    countRecipeSteps,
+    findShortestReverseChain,
+    type ChainNode,
+} from '@/utils/reverseChain';
 
-type CatalogKind = 'all' | 'material' | 'product';
+type CatalogKind = 'material' | 'product';
 
 interface CatalogRow {
     key: string;
-    kind: 'material' | 'product';
+    kind: CatalogKind;
     id: string;
     name: string;
     form: ItemForm;
     recipeCount: number;
-    /** 序列化用原始物件 */
     payload: unknown;
 }
 
 const materials = getAllMaterials();
 const products = getAllProducts();
 
-const materialNames = new Set(materials.map((m) => m.name));
+const kindFilter = ref<CatalogKind>('product');
+const filter = ref('');
 
 const rows = computed((): CatalogRow[] => {
-    const list: CatalogRow[] = [];
-    for (const m of materials) {
-        list.push({
+    if (kindFilter.value === 'material') {
+        return materials.map((m) => ({
             key: `mat:${m.id}`,
-            kind: 'material',
+            kind: 'material' as const,
             id: m.id,
             name: m.name,
             form: m.form,
             recipeCount: 0,
             payload: m,
-        });
+        }));
     }
-    for (const p of products) {
-        // 材料已以 materials 列展示時，產品列仍保留（含配方）；標成 product
-        list.push({
-            key: `prod:${p.id}`,
-            kind: 'product',
+    return products.map((p) => ({
+        key: `prod:${p.id}`,
+        kind: 'product' as const,
+        id: p.id,
+        name: p.name,
+        form: p.form,
+        recipeCount: p.recipes.length,
+        payload: {
             id: p.id,
             name: p.name,
             form: p.form,
-            recipeCount: p.recipes.length,
-            payload: {
-                id: p.id,
-                name: p.name,
-                form: p.form,
-                alsoMaterial: materialNames.has(p.name),
-                recipes: p.recipes,
-            },
-        });
-    }
-    return list;
+            recipes: p.recipes,
+        },
+    }));
 });
 
-const kindFilter = ref<CatalogKind>('all');
-const filter = ref('');
 const selectedKey = ref(rows.value[0]?.key ?? '');
+
+watch(kindFilter, () => {
+    selectedKey.value = rows.value[0]?.key ?? '';
+});
 
 const filtered = computed(() => {
     const q = filter.value.trim().toLowerCase();
     return rows.value.filter((r) => {
-        if (kindFilter.value === 'material' && r.kind !== 'material') return false;
-        if (kindFilter.value === 'product' && r.kind !== 'product') return false;
         if (!q) return true;
         return (
             r.name.toLowerCase().includes(q) ||
@@ -81,6 +81,19 @@ const selected = computed(() => rows.value.find((r) => r.key === selectedKey.val
 
 const jsonText = computed(() =>
     selected.value ? JSON.stringify(selected.value.payload, null, 2) : '',
+);
+
+const reverseChain = computed((): ChainNode | null => {
+    if (!selected.value || selected.value.kind !== 'product') return null;
+    return findShortestReverseChain(selected.value.name);
+});
+
+const chainSteps = computed(() =>
+    reverseChain.value ? countRecipeSteps(reverseChain.value) : 0,
+);
+
+const chainLeaves = computed(() =>
+    reverseChain.value ? collectLeafMaterials(reverseChain.value) : [],
 );
 
 function formLabel(form: ItemForm): string {
@@ -98,6 +111,29 @@ function formColor(form: ItemForm): string {
 function selectRow(key: string) {
     selectedKey.value = key;
 }
+
+/** 樹狀文字列（縮排） */
+function chainLines(node: ChainNode, depth = 0): string[] {
+    const pad = '  '.repeat(depth);
+    if (node.kind === 'material') {
+        return [`${pad}• ${node.itemId}（材料）`];
+    }
+    const mode = node.recipe?.machineMode ? `/${node.recipe.machineMode}` : '';
+    const env = node.recipe?.environment ? ` · env=${node.recipe.environment}` : '';
+    const rate =
+        node.ratePerMin != null ? ` · ${node.ratePerMin}/min` : '';
+    const lines = [
+        `${pad}• ${node.itemId} ← ${node.recipe?.machine ?? '?'}${mode}${rate}${env}`,
+    ];
+    for (const child of node.inputs ?? []) {
+        lines.push(...chainLines(child, depth + 1));
+    }
+    return lines;
+}
+
+const chainText = computed(() =>
+    reverseChain.value ? chainLines(reverseChain.value).join('\n') : '',
+);
 </script>
 
 <template>
@@ -108,9 +144,8 @@ function selectRow(key: string) {
             <div class="mb-2 flex flex-wrap gap-1">
                 <button
                     v-for="k in [
-                        { id: 'all' as const, label: '全部' },
-                        { id: 'material' as const, label: '材料' },
                         { id: 'product' as const, label: '產品' },
+                        { id: 'material' as const, label: '基礎材料' },
                     ]"
                     :key="k.id"
                     type="button"
@@ -118,103 +153,97 @@ function selectRow(key: string) {
                     :class="
                         kindFilter === k.id
                             ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
                     "
                     @click="kindFilter = k.id"
                 >
                     {{ k.label }}
                 </button>
             </div>
+            <p class="mb-2 text-[10px] text-gray-500 dark:text-gray-400">
+                產品＝products.json；材料＝materials.json（不含假產品）
+            </p>
             <input
                 v-model="filter"
                 type="search"
-                placeholder="搜尋名稱／id／form"
-                class="mb-2 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                placeholder="搜尋名稱／id／form…"
+                class="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-900"
             />
-            <p class="mb-2 text-[10px] text-gray-500">
-                顯示 {{ filtered.length }}（材料 {{ materials.length }} · 產品 {{ products.length }}）
-            </p>
-            <ul class="max-h-[520px] space-y-0.5 overflow-y-auto text-xs">
+            <ul class="max-h-[28rem] space-y-0.5 overflow-y-auto text-xs">
                 <li v-for="r in filtered" :key="r.key">
                     <button
                         type="button"
-                        class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition-colors"
+                        class="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
                         :class="
                             selectedKey === r.key
-                                ? 'bg-blue-100 font-medium text-blue-900 dark:bg-blue-900/40 dark:text-blue-100'
-                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                                ? 'bg-blue-50 dark:bg-blue-950'
+                                : ''
                         "
                         @click="selectRow(r.key)"
                     >
                         <span
                             class="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
                             :style="{ background: formColor(r.form) }"
-                            :title="r.form"
+                            :title="formLabel(r.form)"
                         />
-                        <span class="min-w-0 flex-1">
-                            <span class="block truncate">{{ r.name }}</span>
-                            <span class="block truncate text-[10px] text-gray-500">
-                                {{ r.kind === 'material' ? '材料' : '產品' }}
-                                · {{ r.form }}
-                                <template v-if="r.kind === 'product'">
-                                    · {{ r.recipeCount }} 配方
-                                </template>
-                            </span>
+                        <span class="truncate font-medium">{{ r.name }}</span>
+                        <span class="ml-auto shrink-0 text-[10px] text-gray-400">
+                            {{ r.kind === 'product' ? `${r.recipeCount}配方` : r.form }}
                         </span>
                     </button>
                 </li>
             </ul>
+            <p class="mt-2 text-[10px] text-gray-400">{{ filtered.length }} 筆</p>
         </div>
 
-        <div v-if="selected" class="space-y-4">
+        <div class="space-y-3">
             <div
+                v-if="selected"
                 class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
             >
-                <div class="flex flex-wrap items-start gap-4">
-                    <!-- placeholder 視覺：色塊＋form 標籤（正式圖後補） -->
+                <div class="mb-3 flex flex-wrap items-center gap-3">
                     <div
-                        class="flex h-28 w-28 shrink-0 flex-col items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-600"
-                        :style="{ background: formColor(selected.form) + '33' }"
+                        class="flex h-16 w-16 items-center justify-center rounded text-xs font-bold text-white"
+                        :style="{ background: formColor(selected.form) }"
                     >
-                        <div
-                            class="mb-2 h-12 w-12 rounded"
-                            :style="{ background: formColor(selected.form) }"
-                        />
-                        <span class="text-[10px] font-medium text-gray-700 dark:text-gray-200">
-                            {{ formLabel(selected.form) }}
-                        </span>
-                        <span class="font-mono text-[9px] text-gray-500">{{ selected.form }}</span>
+                        {{ formLabel(selected.form) }}
                     </div>
-                    <div class="min-w-0 flex-1 space-y-1">
+                    <div>
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
                             {{ selected.name }}
                         </h3>
-                        <p class="font-mono text-[11px] text-gray-500">{{ selected.id }}</p>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">
-                            類型：{{ selected.kind === 'material' ? '基礎材料' : '產品／配方載體' }}
+                        <p class="text-xs text-gray-500">
+                            {{ selected.kind === 'product' ? '產品' : '基礎材料' }} ·
+                            {{ selected.id }} · form={{ selected.form }}
                         </p>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">
-                            form（物態）：
-                            <span class="font-medium">{{ selected.form }}</span>
-                            （{{ formLabel(selected.form) }}）→
-                            {{ selected.form === 'solid' ? 'belt' : 'pipe' }}
-                        </p>
-                        <p v-if="selected.kind === 'product'" class="text-xs text-gray-600 dark:text-gray-400">
-                            配方數：{{ selected.recipeCount }}
-                        </p>
-                        <p class="text-[10px] text-gray-400">圖像 placeholder；正式美術後補</p>
                     </div>
                 </div>
-            </div>
+                <div
+                    v-if="selected.kind === 'product'"
+                    class="mb-3 rounded-md border border-emerald-200 bg-emerald-50/80 p-3 dark:border-emerald-900 dark:bg-emerald-950/30"
+                >
+                    <h4 class="mb-1 text-xs font-semibold text-emerald-900 dark:text-emerald-100">
+                        最短反向鏈路（V9-D1）
+                    </h4>
+                    <p v-if="reverseChain" class="mb-2 text-[10px] text-emerald-800/80 dark:text-emerald-200/70">
+                        {{ chainSteps }} 步配方 · 葉材料：{{ chainLeaves.join('、') || '—' }}
+                    </p>
+                    <pre
+                        v-if="reverseChain"
+                        class="max-h-48 overflow-auto whitespace-pre-wrap rounded bg-white/80 p-2 text-[11px] leading-relaxed text-gray-800 dark:bg-zinc-900 dark:text-zinc-100"
+                    >{{ chainText }}</pre>
+                    <p v-else class="text-[11px] text-amber-700 dark:text-amber-300">
+                        無法推演（無可用配方或循環阻擋）
+                    </p>
+                </div>
 
-            <div
-                class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-            >
-                <h4 class="mb-2 text-xs font-semibold text-gray-900 dark:text-white">JSON</h4>
+                <h4 class="mb-1 text-xs font-semibold text-gray-700 dark:text-gray-200">JSON</h4>
                 <pre
-                    class="max-h-[420px] overflow-auto rounded bg-zinc-900 p-3 text-[11px] leading-relaxed text-zinc-100"
-                >{{ jsonText }}</pre>
+                    class="max-h-96 overflow-auto rounded bg-gray-50 p-3 text-[11px] dark:bg-gray-900"
+                    >{{ jsonText }}</pre
+                >
             </div>
+            <p v-else class="text-sm text-gray-400">請選擇品項</p>
         </div>
     </div>
 </template>

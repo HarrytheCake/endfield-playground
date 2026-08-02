@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * V8-D1：Dev 拓樸 SVG — 節點顯示 machineMode 埠方位／media，邊可對齊 handle。
+ * V9-C2：Dev 拓樸 SVG — 依機器 width×height 格點畫埠（side／offset）。
  */
 import { computed } from 'vue';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
@@ -11,6 +11,10 @@ import {
     edgeEndpoint,
     portMediaColor,
     modePortSummaryLabel,
+    listGridLines,
+    resolveMachineCells,
+    resolveDisplayGrid,
+    nodeRotation,
 } from '@/app/dev/topologyPortUtils';
 
 const props = withDefaults(
@@ -25,7 +29,11 @@ const props = withDefaults(
         /** 邊流量標籤／堵塞 */
         edgeStyle?: Record<string, { label?: string; congested?: boolean }>;
         selectedNodeId?: string | null;
+        /** 每一格像素；節點矩形＝格數×cellSize */
+        cellSize?: number;
+        /** @deprecated 改依機器 WxH×cellSize；保留僅相容舊呼叫 */
         nodeWidth?: number;
+        /** @deprecated 改依機器 WxH×cellSize */
         nodeHeight?: number;
         pad?: number;
     }>(),
@@ -33,8 +41,7 @@ const props = withDefaults(
         nodeStyle: () => ({}),
         edgeStyle: () => ({}),
         selectedNodeId: null,
-        nodeWidth: 132,
-        nodeHeight: 64,
+        cellSize: 22,
         pad: 48,
     },
 );
@@ -43,17 +50,52 @@ const emit = defineEmits<{
     selectNode: [nodeId: string];
 }>();
 
-const NODE_W = computed(() => props.nodeWidth);
-const NODE_H = computed(() => props.nodeHeight);
+interface NodeGeom {
+    id: string;
+    x: number;
+    y: number;
+    rectW: number;
+    rectH: number;
+    widthCells: number;
+    heightCells: number;
+    machineWidth: number;
+    machineHeight: number;
+    rotation: 0 | 1 | 2 | 3;
+}
+
+function nodeGeom(n: FactoryNode): NodeGeom {
+    const cells = resolveMachineCells(n.data?.machineType as string | undefined);
+    const rotation = nodeRotation(n.data);
+    const display = resolveDisplayGrid(cells.width, cells.height, rotation);
+    const rectW = display.widthCells * props.cellSize;
+    const rectH = display.heightCells * props.cellSize;
+    return {
+        id: n.id,
+        x: n.position.x,
+        y: n.position.y,
+        rectW,
+        rectH,
+        widthCells: display.widthCells,
+        heightCells: display.heightCells,
+        machineWidth: cells.width,
+        machineHeight: cells.height,
+        rotation,
+    };
+}
+
+const geoms = computed(() => {
+    const map = new Map<string, NodeGeom>();
+    for (const n of props.nodes) map.set(n.id, nodeGeom(n));
+    return map;
+});
 
 const viewBox = computed(() => {
     if (!props.nodes.length) return '0 0 640 240';
-    const xs = props.nodes.map((n) => n.position.x);
-    const ys = props.nodes.map((n) => n.position.y);
-    const minX = Math.min(...xs) - props.pad;
-    const minY = Math.min(...ys) - props.pad;
-    const maxX = Math.max(...xs) + NODE_W.value + props.pad;
-    const maxY = Math.max(...ys) + NODE_H.value + props.pad;
+    const gs = [...geoms.value.values()];
+    const minX = Math.min(...gs.map((g) => g.x)) - props.pad;
+    const minY = Math.min(...gs.map((g) => g.y)) - props.pad;
+    const maxX = Math.max(...gs.map((g) => g.x + g.rectW)) + props.pad;
+    const maxY = Math.max(...gs.map((g) => g.y + g.rectH)) + props.pad;
     return `${minX} ${minY} ${Math.max(maxX - minX, 320)} ${Math.max(maxY - minY, 200)}`;
 });
 
@@ -61,12 +103,18 @@ interface DrawnNode {
     id: string;
     x: number;
     y: number;
+    rectW: number;
+    rectH: number;
+    widthCells: number;
+    heightCells: number;
     title: string;
     modeLabel: string;
     subtitle: string;
+    sizeLabel: string;
     fill: string;
     invalid: boolean;
     selected: boolean;
+    gridLines: { key: string; x1: number; y1: number; x2: number; y2: number }[];
     ports: {
         key: string;
         x: number;
@@ -78,37 +126,56 @@ interface DrawnNode {
 }
 
 const drawnNodes = computed((): DrawnNode[] => {
-    const w = NODE_W.value;
-    const h = NODE_H.value;
     return props.nodes.map((n) => {
+        const g = geoms.value.get(n.id)!;
         const style = props.nodeStyle[n.id] ?? {};
         const machineType = n.data?.machineType as string | undefined;
         const machineMode = n.data?.machineMode as string | undefined;
         const mode = resolveNodeMode(machineType, machineMode);
         const markers = listModePortMarkers(mode);
-        const ports = mode
-            ? markers.map((m) => {
-                  const local = portPositionOnRect(m, mode, w, h);
-                  return {
-                      key: m.key,
-                      x: n.position.x + local.x,
-                      y: n.position.y + local.y,
-                      color: portMediaColor(m.media),
-                      label: `${m.label}:${m.media[0]}`,
-                  };
-              })
-            : [];
+        const ports = markers.map((m) => {
+            const local = portPositionOnRect(
+                m,
+                g.machineWidth,
+                g.machineHeight,
+                g.rectW,
+                g.rectH,
+                g.rotation,
+            );
+            return {
+                key: m.key,
+                x: g.x + local.x,
+                y: g.y + local.y,
+                color: portMediaColor(m.media),
+                label: `${m.label}:${m.media[0]}`,
+            };
+        });
+        const gridLines = listGridLines(g.widthCells, g.heightCells, g.rectW, g.rectH).map(
+            (line) => ({
+                ...line,
+                x1: g.x + line.x1,
+                y1: g.y + line.y1,
+                x2: g.x + line.x2,
+                y2: g.y + line.y2,
+            }),
+        );
 
         return {
             id: n.id,
-            x: n.position.x,
-            y: n.position.y,
+            x: g.x,
+            y: g.y,
+            rectW: g.rectW,
+            rectH: g.rectH,
+            widthCells: g.widthCells,
+            heightCells: g.heightCells,
             title: (n.data?.label as string) || n.id,
             modeLabel: modePortSummaryLabel(mode),
             subtitle: style.subtitleExtra ?? n.id,
+            sizeLabel: `${g.widthCells}×${g.heightCells}`,
             fill: style.fill ?? '#52525b',
             invalid: style.invalid ?? false,
             selected: props.selectedNodeId === n.id,
+            gridLines,
             ports,
             noPortData: !mode,
         };
@@ -117,11 +184,11 @@ const drawnNodes = computed((): DrawnNode[] => {
 
 const drawnEdges = computed(() => {
     const byId = new Map(props.nodes.map((n) => [n.id, n]));
-    const w = NODE_W.value;
-    const h = NODE_H.value;
     return props.edges.map((e) => {
         const s = byId.get(e.source);
         const t = byId.get(e.target);
+        const sg = s ? geoms.value.get(s.id) : undefined;
+        const tg = t ? geoms.value.get(t.id) : undefined;
         const sMode = resolveNodeMode(
             s?.data?.machineType as string | undefined,
             s?.data?.machineMode as string | undefined,
@@ -131,22 +198,28 @@ const drawnEdges = computed(() => {
             t?.data?.machineMode as string | undefined,
         );
         const p1 = edgeEndpoint(
-            s?.position.x ?? 0,
-            s?.position.y ?? 0,
-            w,
-            h,
+            sg?.x ?? 0,
+            sg?.y ?? 0,
+            sg?.machineWidth ?? 2,
+            sg?.machineHeight ?? 2,
+            sg?.rectW ?? props.cellSize * 2,
+            sg?.rectH ?? props.cellSize * 2,
             sMode,
             'out',
             e.sourceHandle,
+            sg?.rotation ?? 0,
         );
         const p2 = edgeEndpoint(
-            t?.position.x ?? 0,
-            t?.position.y ?? 0,
-            w,
-            h,
+            tg?.x ?? 0,
+            tg?.y ?? 0,
+            tg?.machineWidth ?? 2,
+            tg?.machineHeight ?? 2,
+            tg?.rectW ?? props.cellSize * 2,
+            tg?.rectH ?? props.cellSize * 2,
             tMode,
             'in',
             e.targetHandle,
+            tg?.rotation ?? 0,
         );
         const es = props.edgeStyle[e.id] ?? {};
         return {
@@ -179,6 +252,7 @@ function onNodeClick(id: string) {
                 <span class="inline-block h-2.5 w-2.5 rounded-sm" style="background: #0ea5e9" />
                 pipe 埠
             </span>
+            <span>節點＝機器 width×height 格點；埠依 side／offset</span>
             <span>點節點可選取並切 machineMode</span>
         </div>
         <div
@@ -237,42 +311,53 @@ function onNodeClick(id: string) {
                     <rect
                         :x="node.x"
                         :y="node.y"
-                        :width="NODE_W"
-                        :height="NODE_H"
-                        rx="6"
+                        :width="node.rectW"
+                        :height="node.rectH"
+                        rx="3"
                         :fill="node.fill"
                         :stroke="node.selected ? '#2563eb' : node.invalid ? '#a1a1aa' : '#3f3f46'"
                         :stroke-dasharray="node.invalid ? '4 3' : undefined"
                         :stroke-width="node.selected ? 3 : 2"
                     />
+                    <line
+                        v-for="line in node.gridLines"
+                        :key="line.key"
+                        :x1="line.x1"
+                        :y1="line.y1"
+                        :x2="line.x2"
+                        :y2="line.y2"
+                        stroke="rgba(255,255,255,0.18)"
+                        stroke-width="1"
+                    />
                     <text
-                        :x="node.x + NODE_W / 2"
-                        :y="node.y + 16"
+                        :x="node.x + node.rectW / 2"
+                        :y="node.y + Math.min(14, node.rectH * 0.28)"
                         text-anchor="middle"
-                        class="fill-white text-[11px] font-semibold"
+                        class="fill-white text-[10px] font-semibold"
                     >
                         {{ node.title }}
                     </text>
                     <text
-                        :x="node.x + NODE_W / 2"
-                        :y="node.y + 32"
+                        :x="node.x + node.rectW / 2"
+                        :y="node.y + Math.min(28, node.rectH * 0.5)"
                         text-anchor="middle"
-                        class="fill-white/90 text-[9px]"
+                        class="fill-white/90 text-[8px]"
                     >
-                        {{ node.modeLabel }}
+                        {{ node.sizeLabel }} · {{ node.modeLabel }}
                     </text>
                     <text
-                        :x="node.x + NODE_W / 2"
-                        :y="node.y + 46"
+                        v-if="node.rectH >= 48"
+                        :x="node.x + node.rectW / 2"
+                        :y="node.y + Math.min(42, node.rectH * 0.72)"
                         text-anchor="middle"
-                        class="fill-white/80 text-[9px]"
+                        class="fill-white/75 text-[8px]"
                     >
                         {{ node.subtitle }}
                     </text>
                     <text
                         v-if="node.noPortData"
-                        :x="node.x + NODE_W / 2"
-                        :y="node.y + NODE_H + 12"
+                        :x="node.x + node.rectW / 2"
+                        :y="node.y + node.rectH + 12"
                         text-anchor="middle"
                         class="fill-zinc-500 text-[8px]"
                     >
