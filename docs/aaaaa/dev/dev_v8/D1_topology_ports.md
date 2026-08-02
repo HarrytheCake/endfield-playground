@@ -8,7 +8,7 @@
 
 ## 1. 目標
 
-改 `/dev/flow-engine` 與 `/dev/graph-viz` 拓樸視覺化：
+改 `/dev/flow-engine`（與當時 `/dev/graph-viz`；**後者 V9-H1-4 已退役**）拓樸視覺化：
 
 - 節點出入口依當前 `machineMode` 的 `ports`（side／offset／media）
 - 切換 mode 時更新標籤與埠示意（寫回 JSON `data.machineMode`）
@@ -23,7 +23,7 @@
 | `src/app/dev/topologyPortUtils.ts` | 埠列表、座標、handle 端點、標籤 |
 | `src/app/dev/DevTopologySvg.vue` | 共用 SVG 拓樸（埠色塊＋mode 副標） |
 | `FlowEngineTest.vue` | 改用 DevTopologySvg；點節點切 mode |
-| `GraphViz.vue` | 新增「埠示意拓樸」區；Mermaid 含埠摘要 |
+| `GraphViz.vue` | （歷史）埠示意拓樸；**V9-H1-4 已刪** |
 | `topologyPortUtils.test.ts` | 精煉爐 mode 埠數回歸 |
 
 ---

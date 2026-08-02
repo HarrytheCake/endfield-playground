@@ -54,7 +54,7 @@ V8 已完成引擎側埠一對一、form、belt 30／pipe 60、H8 匯流堵塞�
 
 | 版本 | 關係 |
 |------|------|
-| V6 | 鎖定；本版不改 drag／history |
+| V6 | 已完成／解鎖；本版不改 drag／history |
 | V7 | 完成；本版延續 modes／belt·pipe／machineMode |
 | V8 | 完成；本版延續埠一對一、form、速率、H8 語意 |
 | CR-02／CR-03 | 本版不要求連線 UI 拒絕；引擎側為主 |

@@ -1,6 +1,7 @@
 ﻿# A3 — Graph Structure 可視化頁
 
-**對應工項**：V5-A3
+**對應工項**：V5-A3  
+> **V9-H1-4（2026-08-02）：已退役。** `/dev/graph-viz` 轉址 `/dev/flow-engine`；`GraphViz.vue` 已刪。本檔僅作歷史規格。
 
 ---
 

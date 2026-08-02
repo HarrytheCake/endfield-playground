@@ -1,7 +1,7 @@
 # V9-E1 — 引擎依輸入匹配配方
 
 **對應工項：** V9-E1  
-**狀態：** 未開始  
+**狀態：** ✅ 完成  
 **依賴：** B1／B2；建議 D1 可並行  
 **最後更新：** 2026-08-02
 
@@ -18,13 +18,16 @@ FlowEngine 核心行為變更：
 
 ---
 
-## 2. 匹配規則（定案）
+## 2. 匹配規則（已實作）
 
 1. 限定：當前 `machineType`＋`machineMode`（缺省 modes[0]）下的配方子集  
 2. **輸入不齊**：配方所需任一種輸入未接到（或流量為 0）→ 不匹配  
 3. **完全吻合**：接入品項種類集合＝配方 inputs 名稱集合 → 候選  
-4. 多候選：依 `products.json` 中配方出現順序取**第一條**  
-5. UI `recipeIndex`：可作提示／除錯顯示；**引擎產出以匹配結果為準**（匹配成功時覆寫有效配方）
+4. 多候選：依 `products.json` 出現順序（`getRecipesForMachine`）取**第一條**  
+5. UI `recipeIndex`：提示／除錯；引擎以匹配結果覆寫  
+6. `environment`：配方與節點（缺省 `"none"`）須一致  
+
+API：`matchRecipeByInputs(machineType, incomingItemIds, machineMode?, environment?)`
 
 ---
 
@@ -32,25 +35,26 @@ FlowEngine 核心行為變更：
 
 | 欄位 | V9 語意 |
 |------|---------|
-| `recipeIndex` | 可選；不再是唯一真相。無匹配時可視為無效 |
-| `primaryOutput` | Source 類節點（基礎材料輸出點／物品輸出口）仍可用 |
-| environment | 配方含 environment 時需與節點／全域環境一致才匹配（延續既有規則；細節對齊 products） |
+| `recipeIndex` | 可選；匹配成功後由引擎寫回 |
+| `environment` | 節點環境；影響可匹配配方 |
+| `primaryOutput` | Source 類仍用之 |
+| `buildGraph` | 一般機器不再預填 rates；匹配後填入 |
 
 ---
 
 ## 4. 影響範圍
 
-- `useFlowEngine.ts` 效率／產出計算入口  
-- 既有依賴固定 `recipeIndex` 的測試與 H10／G2 等 preset（F1 標註是否改預期）  
-- FLOW_ENGINE_GUIDE 計算流程章節（G1）
+- `useFlowEngine.ts`：`validateChains`／`propagateFlows`  
+- H6 等：同輸入集合取第一配方後速率預期已更新  
+- FLOW_ENGINE_GUIDE 計算流程（G1 補文件）
 
 ---
 
 ## 5. DoD
 
-- [ ] 單元測試：粉碎機換料換產；精煉爐缺清水無產出；齊全後有產出  
-- [ ] 多配方同輸入集合時取資料順序第一  
-- [ ] type-check；核心回歸測試更新
+- [x] 單元測試：粉碎機換料換產；精煉爐缺清水無產出；齊全後有產出  
+- [x] 多配方同輸入集合時取資料順序第一  
+- [x] type-check；核心回歸測試更新（282）
 
 ---
 
@@ -59,3 +63,4 @@ FlowEngine 核心行為變更：
 ### 2026-08-02
 
 - 建立細項
+- 完成：matchRecipeByInputs、引擎串接、測試、本檔標完成

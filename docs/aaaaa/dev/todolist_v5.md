@@ -39,7 +39,7 @@ V5 版本目標：為 L2/L3 層級與其他 CR 成員提供**開發者支援**�
   - 技術細節：見 [dev_v5/A2_flow_engine_test.md](./dev_v5/A2_flow_engine_test.md)
 
 - [x] **V5-A3** `/dev/graph-viz` — 圖結構可視化頁
-  - 頁面元件：`src/app/dev/GraphViz.vue`（新建）
+  - 頁面元件：`src/app/dev/GraphViz.vue`（新建；**V9-H1-4 已刪除**，路由轉址 `/dev/flow-engine`）
   - 功能需求：
     - 輸入區：同 V5-A2，貼入 nodes / edges JSON
     - 輸出區：顯示 `buildGraph()` 結果（adjacency list 格式）

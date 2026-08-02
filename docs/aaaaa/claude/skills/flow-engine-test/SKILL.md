@@ -51,8 +51,8 @@ pnpm test -- src/__tests__/store/flowStore.test.ts
 | H4 | 環路 | 子圖非法／略過 |
 | H5 | 懸空設備 | 無有效流量 |
 | H6 | 多級串聯 | 鏈上高效率、有 sink 交付 |
-| H7 | 雙 Source 灌同一機 | 至少一條入邊堵塞（橘） |
-| H8 | 雙鏈 → 匯流器 → Sink | 出口 ≈30；入邊堵塞回推約各 15 |
+| H7 | 雙 Source 分接 in-0／in-1 | 粉碎機滿速；兩條源礦入邊橘邊約各 15；出邊≈30 |
+| H8 | 雙鏈 → 匯流器 → Sink（堵塞） | 出口 ≈30；入邊橘邊堵塞回推約各 15 |
 | H9 | 兩條獨立產線 | 互不影響 |
 | H10 | 配方不符 | 節點標非法 |
 | H11 | 半速 + 分流 | 各出邊約 7.5/min |
@@ -61,8 +61,8 @@ Dev 頁面（僅 `import.meta.env.DEV`）：
 
 | 路由 | 用途 |
 |------|------|
-| `/dev/flow-engine` | JSON preset + 手動觸發計算 |
-| `/dev/graph-viz` | 拓撲 / 環路 / invalid 子圖視覺化 |
+| `/dev/flow-engine` | JSON preset + 拓樸／環路／invalid＋手動計算（含原 graph-viz） |
+| `/dev/graph-viz` | **已退役** → 轉址 `/dev/flow-engine`（V9-H1-4） |
 | `/dev/history-replay` | undo/redo（非 FlowEngine 核心，但常一起驗證） |
 
 手動頁驗證步驟細節見 `docs/aaaaa/dev/dev_v5/A2_flow_engine_test.md`。

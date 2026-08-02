@@ -1,7 +1,7 @@
 # V9-B1 — machines modes-only 埠
 
 **對應工項：** V9-B1  
-**狀態：** 未開始  
+**狀態：** 完成  
 **依賴：** A1  
 **最後更新：** 2026-08-02
 
@@ -17,23 +17,25 @@
 
 ---
 
-## 2. 現況
+## 2. 現況（實作後）
 
 | 層 | 行為 |
 |----|------|
-| FlowEngine／DevTopology／MachineCatalog | 已讀 `modes[]` |
-| `generate-src-data.mjs` | 無 modes 時從外層合成；外層與 modes[0] 雙寫 |
-| `MachineShape.vue` | 仍讀頂層 `input_ports`／`output_ports` |
+| `data`／`data_1` machines.json | 無外層 ports |
+| `generate-src-data.mjs` | 不產出頂層 ports；stub 亦 modes-only |
+| `Machine` 型別 | 無 `input_ports`／`output_ports` |
+| `MachineShape.vue` | `getMachineMode(machine, machineMode?)` |
+| FlowEngine／DevTopology／MachineCatalog | 早已讀 `modes[]` |
 
 ---
 
-## 3. 實作要點
+## 3. 實作摘要
 
-1. 編輯／腳本清理 `machines.json`：刪外層 ports；確保每機有非空 `modes`
-2. codegen：禁止再輸出頂層 ports（或僅作 deprecated 鏡像＝`modes[0]`，**建議直接不產出**）
-3. `src/types/machine.ts`：頂層 ports 標 optional／移除；文件註明權威在 mode
-4. `MachineShape.vue`：依節點 `machineMode`（缺省 modes[0]）取埠
-5. 回歸：灌裝機 base vs gas_liquid 埠數不同；配件機僅 default
+1. 清理 `data/machines.json` 與 `data_1/machines.json`（43 台剝除外層 ports）
+2. codegen／SOURCE_SINK_STUBS modes-only
+3. `Machine` 介面移除頂層 ports；文件註明權威在 mode
+4. `MachineShape` 新增 optional `machineMode`
+5. 測試：無頂層 ports；灌裝機 base vs gas_liquid；配件機 default
 
 ---
 
@@ -46,10 +48,10 @@
 
 ## 5. DoD
 
-- [ ] `aaaaa/data/machines.json` 無外層 ports
-- [ ] `pnpm generate:src-data` 後 `src/data/machines.ts` 一致
-- [ ] MachineShape／引擎／預覽皆只依 mode ports
-- [ ] type-check／既有測試不因缺頂層 ports 而炸（測試一併改）
+- [x] `aaaaa/data/machines.json` 無外層 ports
+- [x] `pnpm generate:src-data` 後 `src/data/machines.ts` 一致
+- [x] MachineShape／引擎／預覽皆只依 mode ports
+- [x] type-check／既有測試通過（252）
 
 ---
 
@@ -58,3 +60,5 @@
 ### 2026-08-02
 
 - 建立細項
+- V6 解鎖後標為進行中；準備實作
+- 完成 JSON 清理、codegen、型別、MachineShape、回歸測試
