@@ -63,16 +63,37 @@ describe('buildGraph()', () => {
 
     it('正確標記 source / sink 節點', () => {
         const nodes = [
-            makeNode('src', '物品輸出口'),
+            makeNode('src', '基礎材料輸出點'),
+            makeNode('itemSrc', '物品輸出口'),
             makeNode('mid', '粉碎機'),
             makeNode('sink', '物品輸入口'),
         ];
         const graph = buildGraph(nodes, []);
 
         expect(graph.nodes.get('src')!.isSource).toBe(true);
+        expect(graph.nodes.get('itemSrc')!.isSource).toBe(true);
         expect(graph.nodes.get('sink')!.isSink).toBe(true);
         expect(graph.nodes.get('mid')!.isSource).toBe(false);
         expect(graph.nodes.get('mid')!.isSink).toBe(false);
+    });
+
+    it('V9-B2：基礎材料輸出點依 primaryOutput 合成產出速率', () => {
+        const nodes: FactoryNode[] = [
+            {
+                id: 'src',
+                type: 'default',
+                position: { x: 0, y: 0 },
+                data: {
+                    label: '源',
+                    machineType: '基礎材料輸出點',
+                    machineMode: 'solid_belt',
+                    primaryOutput: '源礦',
+                    sourceRatePerMin: 30,
+                },
+            },
+        ];
+        const graph = buildGraph(nodes, []);
+        expect(graph.nodes.get('src')!.outputRates.get('源礦')).toBe(30);
     });
 
     it('hasBlockingError 為 true 的節點被過濾掉', () => {
@@ -131,7 +152,7 @@ describe('buildGraph()', () => {
         expect(graph.invalidSubgraphUids.size).toBe(0);
     });
 
-    it('找得到配方的節點，inputRates / outputRates 會被初始化', () => {
+    it('V9-E1：buildGraph 不再依 recipeIndex 預填速率（待輸入匹配）', () => {
         const nodes = [
             makeNode('a', '粉碎機', recipeIndexOf('粉碎機', '源石粉末', 'default'), 'default'),
         ];
@@ -139,8 +160,8 @@ describe('buildGraph()', () => {
 
         const node = graph.nodes.get('a')!;
         expect(node.machineMode).toBe('default');
-        expect(node.inputRates.size).toBeGreaterThan(0);
-        expect(node.outputRates.size).toBeGreaterThan(0);
+        expect(node.inputRates.size).toBe(0);
+        expect(node.outputRates.size).toBe(0);
     });
 
     it('缺省 machineMode 時回退 modes[0]', () => {
@@ -169,10 +190,10 @@ describe('validateRecipeMatch()', () => {
         );
     });
 
-    it('上游品項額外含其他品項仍然合法（超集即可）', () => {
+    it('V9-E1：超集不合法（須完全吻合）', () => {
         expect(
             validateRecipeMatch('粉碎機', yuanPowderIdx, new Set(['源礦', '其他無關品項']), 'default'),
-        ).toBe(true);
+        ).toBe(false);
     });
 
     it('上游缺少配方需要的品項時回傳 false', () => {
@@ -185,8 +206,9 @@ describe('validateRecipeMatch()', () => {
         expect(validateRecipeMatch('粉碎機', yuanPowderIdx, new Set(), 'default')).toBe(false);
     });
 
-    it('source 配方（inputs 為空）永遠合法，即使上游為空', () => {
-        expect(validateRecipeMatch('物品輸出口', 0, new Set(), 'default')).toBe(true);
+    it('V9-B2：source 不再注入假配方，validateRecipeMatch 回傳 false', () => {
+        expect(validateRecipeMatch('基礎材料輸出點', 0, new Set(), 'solid_belt')).toBe(false);
+        expect(validateRecipeMatch('物品輸出口', 0, new Set(), 'default')).toBe(false);
     });
 
     it('找不到配方時回傳 false', () => {

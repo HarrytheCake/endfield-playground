@@ -25,8 +25,25 @@ export type FactoryNodeData = {
      * 缺省時以該機器 modes[0].id 解釋。
      */
     machineMode?: string;
-    /** 選用的配方索引，對應 getRecipesForMachine(machineType, machineMode)[recipeIndex] */
+    /**
+     * 選用的配方索引（除錯／提示用）。
+     * V9-E1：引擎產出以實際輸入匹配為準，不再唯讀此欄。
+     */
     recipeIndex?: number;
+    /**
+     * 節點環境標籤（對應 Environment.id）；缺省 `"none"`。
+     * V9-E1：配方 `environment` 須與此一致才可匹配。
+     */
+    environment?: string;
+    /**
+     * Source 節點產出的品項名（基礎材料輸出點／物品輸出口）。
+     * V9-B2：材料不再以假配方注入 products；引擎依此欄合成 outputRates。
+     */
+    primaryOutput?: string;
+    /**
+     * Source 節點產出速率（個／分）。缺省時由引擎依 recipeIndex（0→30、1→15）推得。
+     */
+    sourceRatePerMin?: number;
     /** 設備旋轉次數（0/1/2/3 對應 0°/90°/180°/270°），預設 0 */
     rotation?: Rotation;
 };

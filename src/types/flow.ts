@@ -133,12 +133,25 @@ export interface FlowNode {
      * 缺省時以該機器 modes[0].id 解釋。
      */
     machineMode?: string;
-    /** 目前選用的配方索引（預設 0；在 mode 過濾後的配方列表上） */
+    /**
+     * 目前有效配方索引（mode 過濾後列表）。
+     * V9-E1：由輸入匹配寫入；UI 預選僅作初始提示。
+     */
     recipeIndex: number;
+    /**
+     * 節點環境（Environment.id）；缺省 `"none"`。
+     * 匹配配方時須與 RecipeDef.environment 一致。
+     */
+    environment?: string;
     /** 是否為物品輸出口（地區資源 source） */
     isSource: boolean;
     /** 是否為物品輸入口（產值 sink） */
     isSink: boolean;
+    /**
+     * 此節點「主產出」品項（source 的 primaryOutput，或加工機意圖產物）。
+     * V9-H1-2：多輸出時出邊優先承載此品，入邊匹配忽略未連副產。
+     */
+    primaryOutput?: string;
     /**
      * false = 略過計算。原因包含：
      *   - CR-03 標記 hasBlockingError
