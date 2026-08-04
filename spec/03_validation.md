@@ -3,7 +3,37 @@
 
 - **所屬階段：** Phase 1
 - **依賴：** CR-01（設備狀態）、CR-02（管線連接狀態）
-- **文件版本：** v0.3
+- **文件版本：** v0.4
+
+---
+
+## 📌 變更日誌 / 重新評估紀錄 (Re-evaluation Log)
+
+> **2026-08-04 重評更新 (CR-03 演算法重構提案)：**
+> 
+> 經重新評估，採用 **Grid Map 空間索引演算法**
+> 
+> ```ts
+> // 全局空間索引：座標 -> 物件 ID 列表
+> allgrid: Map<Position, ObjectId[]> = new Map();
+> result: Set<ObjectId> = new Set();
+> 
+> for (const entity of [...machines, ...pipelines]) {
+>   const points = isMachine(entity) ? getMachineOccupiedGrids(entity) : getPipelineOccupiedGrids(entity);
+>   for (const point of points) {
+>     const existing = allgrid.get(point) ?? [];
+>     for (const existingId of existing) {
+>       if (layersIntersect(entity, getObjectById(existingId))) {
+>         result.add(existingId);
+>         result.add(entity.id);
+>       }
+>     }
+>     existing.push(entity.id);
+>     allgrid.set(point, existing);
+>   }
+> }
+> ```
+> 
 
 ---
 
