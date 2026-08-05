@@ -18,9 +18,9 @@ describe('absToRelPath', () => {
     expect(result).toEqual([
       [1, 2],
       [
-        [1, 2],   // index 1 (Y軸) +2
-        [0, 2],   // index 0 (X軸) +2
-        [1, -4]   // index 1 (Y軸) -4
+        { axis: 1, delta: 2 },   // index 1 (Y軸) +2
+        { axis: 0, delta: 2 },   // index 0 (X軸) +2
+        { axis: 1, delta: -4 }   // index 1 (Y軸) -4
       ]
     ]);
   });
@@ -41,9 +41,9 @@ describe('absToRelPath', () => {
     expect(result).toEqual([
       [5, 5],
       [
-        [1, 5],   // Y 軸 +5
-        [0, -3],  // X 軸 -3
-        [1, -10]  // Y 軸 -10
+        { axis: 1, delta: 5 },   // Y 軸 +5
+        { axis: 0, delta: -3 },  // X 軸 -3
+        { axis: 1, delta: -10 }  // Y 軸 -10
       ]
     ]);
   });
@@ -64,9 +64,9 @@ describe('absToRelPath', () => {
     expect(result).toEqual([
       [10, 20, 0],
       [
-        [0, 20],  // index 0 (X軸) +20
-        [1, 30],  // index 1 (Y軸) +30
-        [2, 15]   // index 2 (Z軸) +15
+        { axis: 0, delta: 20 },  // index 0 (X軸) +20
+        { axis: 1, delta: 30 },  // index 1 (Y軸) +30
+        { axis: 2, delta: 15 }   // index 2 (Z軸) +15
       ]
     ]);
   });
@@ -102,7 +102,7 @@ describe('absToRelPath', () => {
     expect(result).toEqual([
       [1, 2],
       [
-        [1, 3]  // 自動忽略 0 位移，僅保留有效移動
+        { axis: 1, delta: 3 }  // 自動忽略 0 位移，僅保留有效移動
       ]
     ]);
   });
@@ -122,8 +122,8 @@ describe('absToRelPath', () => {
     expect(result).toEqual([
       [0, 0, 0, 0],
       [
-        [3, 5], // index 3 +5
-        [1, 2]  // index 1 +2
+        { axis: 3, delta: 5 }, // index 3 +5
+        { axis: 1, delta: 2 }  // index 1 +2
       ]
     ]);
   });
