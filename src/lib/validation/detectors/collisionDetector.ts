@@ -1,5 +1,5 @@
 import type { Position } from '@/types/euclideanSpace';
-import type { shironesMachine, shironesPipeline } from '../../../../types/shironesinterface';
+import type { shironesMachine, shironesPipeline } from '@/types/shironesinterface';
 import { getOccupiedCells } from '@/utils/shirone/getMachineOccupiedGrids';
 import { getPipelineOccupiedGrids } from '@/utils/shirone/getPipelineOccupiedGrids';
 
@@ -15,8 +15,16 @@ export function detectCollisions
     // 使用 Set 來收集所有發生碰撞的物件 ID
     const collidedIds = new Set<string>();
 
+    let expectedDimension = -1;
+
     const processPoints = (points: Position[], id: string) => {
         for (const pos of points) {
+            if (expectedDimension === -1) {
+                expectedDimension = pos.length;
+            } else if (pos.length !== expectedDimension) {
+                throw new Error(`Dimension mismatch! Expected ${expectedDimension}D, but got ${pos.length}D at object ${id}`);
+            }
+
             let currentLevel = allgrid;
             
             // 透過迴圈動態存取多維陣列
