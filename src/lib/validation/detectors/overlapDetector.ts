@@ -4,7 +4,7 @@ import { getOccupiedCells } from '@/utils/shirone/getMachineOccupiedGrids';
 import { getPipelineOccupiedGrids } from '@/utils/shirone/getPipelineOccupiedGrids';
 
 
-export function detectCollisions
+export function detectOverlaps
 (
     machineList: shironesMachine[],
     pipelineList: shironesPipeline[]
@@ -12,8 +12,8 @@ export function detectCollisions
 {
     const allgrid: any[] = [];
     
-    // 使用 Set 來收集所有發生碰撞的物件 ID
-    const collidedIds = new Set<string>();
+    // 使用 Set 來收集所有發生重疊的物件 ID
+    const overlappedIds = new Set<string>();
 
     let expectedDimension = -1;
 
@@ -45,9 +45,9 @@ export function detectCollisions
             
             // 檢查該格子內是否已經有其他物件的 ID
             for (const existingId of cell) {
-                // 將發生碰撞的雙方 ID 都加入結果中
-                collidedIds.add(existingId);
-                collidedIds.add(id);
+                // 將發生重疊的雙方 ID 都加入結果中
+                overlappedIds.add(existingId);
+                overlappedIds.add(id);
             }
             
             // 將當前的 ID 存入該格子
@@ -67,5 +67,5 @@ export function detectCollisions
         processPoints(points, pipelineItem.id);
     }
 
-    return Array.from(collidedIds);
+    return Array.from(overlappedIds);
 }
