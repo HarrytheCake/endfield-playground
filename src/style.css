@@ -45,8 +45,8 @@ body,
     grid-template-columns: 1fr 320px;
     grid-template-rows: minmax(0, 1fr) 108px;
     grid-template-areas:
-        "canvas stats"
-        "toolbar stats";
+        'canvas stats'
+        'toolbar stats';
     flex: 1;
     min-height: 0;
     min-width: 0;

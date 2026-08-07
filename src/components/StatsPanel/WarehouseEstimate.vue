@@ -56,9 +56,9 @@ function handleCapacityChange(event: Event) {
                 <tr v-for="item in rows" :key="item.itemId">
                     <td>{{ item.name }}</td>
                     <td>
-                        <span v-if="item.hoursToFull !== null"
-                            >{{ item.hoursToFull }} 小時後滿載</span
-                        >
+                        <span v-if="item.hoursToFull !== null">
+                            {{ item.hoursToFull }} 小時後滿載
+                        </span>
                         <span v-else class="text-gray-400">（產出為負，不會滿載）</span>
                     </td>
                 </tr>
