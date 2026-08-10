@@ -15,10 +15,9 @@ import type { Alert, Detector, ValidationContext } from '@/types/validation';
  *
  * @example
  * import { useValidationStore } from '@/store/validationStore'
- * import { E001_deviceOverlap } from '@/lib/validation/detectors/E001_deviceOverlap'
  *
  * const validationStore = useValidationStore()
- * validationStore.registerDetector(E001_deviceOverlap)
+ * validationStore.registerDetector(someDetector)
  * validationStore.run({ devices, connections, getDef })
  */
 export const useValidationStore = defineStore('validation', () => {
@@ -42,7 +41,7 @@ export const useValidationStore = defineStore('validation', () => {
      *
      * @param detector 要註冊的 detector
      * @example
-     * validationStore.registerDetector(E001_deviceOverlap)
+     * validationStore.registerDetector(someDetector)
      */
     function registerDetector(detector: Detector): void {
         if (detectors.value.some((d) => d.code === detector.code)) {
@@ -154,7 +153,7 @@ export const useValidationStore = defineStore('validation', () => {
          *
          * @param detector 要註冊的 detector
          * @example
-         * validationStore.registerDetector(E001_deviceOverlap)
+         * validationStore.registerDetector(someDetector)
          */
         registerDetector,
         /**
