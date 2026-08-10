@@ -35,3 +35,7 @@ components.d.ts
 
 # Agents
 .agents/
+
+# Python cache (docs/dernoson/plan-history tooling)
+__pycache__/
+*.pyc

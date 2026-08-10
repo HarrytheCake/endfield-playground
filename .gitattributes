@@ -1,0 +1,14 @@
+# 換行符統一為 LF
+#
+# repo 內既有 blob 已全部是 LF，此設定不會造成內容重新正規化，
+# 只改變 checkout 時寫入工作區的換行符。
+#
+# 之所以需要：Windows 端 core.autocrlf=true 會在 checkout 時把 LF 轉成 CRLF，
+# 但 Prettier 預設以 LF 輸出，兩者互相覆寫，導致每次 pnpm format
+# 都產生一批「內容相同、只差換行符」的假變更。
+# eol=lf 會覆蓋 core.autocrlf，讓各平台工作區一致為 LF。
+* text=auto eol=lf
+
+# 二進位檔：不做換行符轉換，也不做 diff
+*.png binary
+*.jpg binary
