@@ -1,0 +1,322 @@
+[
+  {
+    "id": "e5c534e6-6fbd-4597-a6e1-7bcb7059bc88",
+    "name": "主基地",
+    "grid_width": 20,
+    "grid_height": 15,
+    "placements": [
+      {
+        "id": "c9339318-98b7-412c-adb5-df0c4d6823b0",
+        "machine": "物品輸出口",
+        "rotation": 0,
+        "source_item": "源礦",
+        "x": 7,
+        "y": 3
+      },
+      {
+        "id": "8141afb3-801d-4502-bcc7-f15597218fea",
+        "machine": "物品輸入口",
+        "rotation": 2,
+        "x": 17,
+        "y": 3
+      },
+      {
+        "id": "f10ea198-e4bd-4a8f-92d6-fd1b1b247d34",
+        "machine": "物品輸入口",
+        "rotation": 2,
+        "x": 17,
+        "y": 7
+      },
+      {
+        "id": "bb147235-04be-4b2f-b2ba-5799e8fecd8e",
+        "machine": "物品輸出口",
+        "rotation": 0,
+        "source_item": "源礦",
+        "x": 1,
+        "y": 7
+      },
+      {
+        "id": "5cdd5da0-cc25-464f-b4f8-a4098ddeb636",
+        "machine": "粉碎機",
+        "rotation": 0,
+        "x": 11,
+        "y": 3
+      },
+      {
+        "id": "b49a3925-a2a3-4aaf-b545-b8056d095bdf",
+        "machine": "精煉爐",
+        "rotation": 0,
+        "x": 5,
+        "y": 7
+      },
+      {
+        "id": "50e8c6fd-95dc-4002-92e0-9ef2ef8aa54c",
+        "machine": "物品輸出口",
+        "x": 2,
+        "y": 1,
+        "rotation": 0,
+        "source_item": "藍鐵礦"
+      },
+      {
+        "id": "40a8e4ff-a6d6-4278-8d5c-f6df186bc074",
+        "machine": "精煉爐",
+        "x": 5,
+        "y": 0,
+        "rotation": 0
+      },
+      {
+        "id": "ecedaa6d-a9d9-4211-804a-9bb34d335898",
+        "machine": "配件機",
+        "x": 10,
+        "y": 0,
+        "rotation": 0
+      },
+      {
+        "id": "e47ec6d6-a3f8-4c78-a9c6-ea121119ba76",
+        "machine": "物品輸入口",
+        "x": 19,
+        "y": 0,
+        "rotation": 2
+      }
+    ],
+    "plan_id": "7dd94e87-a806-4035-9644-63eb99f76f75",
+    "connections": [
+      {
+        "from": {
+          "placement_id": "c9339318-98b7-412c-adb5-df0c4d6823b0",
+          "port_idx": 0,
+          "port_type": "output"
+        },
+        "id": "14d41206-e293-473e-b076-89bd2a700680",
+        "path": [
+          {
+            "x": 8,
+            "y": 4
+          },
+          {
+            "x": 9,
+            "y": 4
+          },
+          {
+            "x": 10,
+            "y": 4
+          }
+        ],
+        "to": {
+          "placement_id": "5cdd5da0-cc25-464f-b4f8-a4098ddeb636",
+          "port_idx": 0,
+          "port_type": "input"
+        },
+        "type": "belt"
+      },
+      {
+        "from": {
+          "placement_id": "5cdd5da0-cc25-464f-b4f8-a4098ddeb636",
+          "port_idx": 0,
+          "port_type": "output"
+        },
+        "id": "bcc1609b-84d6-4986-b20d-8b64a9c09306",
+        "path": [
+          {
+            "x": 14,
+            "y": 4
+          },
+          {
+            "x": 15,
+            "y": 4
+          },
+          {
+            "x": 16,
+            "y": 4
+          }
+        ],
+        "to": {
+          "placement_id": "8141afb3-801d-4502-bcc7-f15597218fea",
+          "port_idx": 0,
+          "port_type": "input"
+        },
+        "type": "belt"
+      },
+      {
+        "from": {
+          "placement_id": "bb147235-04be-4b2f-b2ba-5799e8fecd8e",
+          "port_idx": 0,
+          "port_type": "output"
+        },
+        "id": "b4a2f564-f51c-49df-9274-6876460f787f",
+        "path": [
+          {
+            "x": 2,
+            "y": 8
+          },
+          {
+            "x": 3,
+            "y": 8
+          },
+          {
+            "x": 4,
+            "y": 8
+          }
+        ],
+        "to": {
+          "placement_id": "b49a3925-a2a3-4aaf-b545-b8056d095bdf",
+          "port_idx": 0,
+          "port_type": "input"
+        },
+        "type": "belt"
+      },
+      {
+        "from": {
+          "placement_id": "b49a3925-a2a3-4aaf-b545-b8056d095bdf",
+          "port_idx": 0,
+          "port_type": "output"
+        },
+        "id": "0d80bce8-9744-45ad-9f56-a949b9618b19",
+        "path": [
+          {
+            "x": 8,
+            "y": 8
+          },
+          {
+            "x": 9,
+            "y": 8
+          },
+          {
+            "x": 10,
+            "y": 8
+          },
+          {
+            "x": 11,
+            "y": 8
+          },
+          {
+            "x": 12,
+            "y": 8
+          },
+          {
+            "x": 13,
+            "y": 8
+          },
+          {
+            "x": 14,
+            "y": 8
+          },
+          {
+            "x": 15,
+            "y": 8
+          },
+          {
+            "x": 16,
+            "y": 8
+          }
+        ],
+        "to": {
+          "placement_id": "f10ea198-e4bd-4a8f-92d6-fd1b1b247d34",
+          "port_idx": 0,
+          "port_type": "input"
+        },
+        "type": "belt"
+      },
+      {
+        "id": "c283e2c8-984a-4f65-ae98-1274007e10a1",
+        "type": "belt",
+        "path": [
+          {
+            "x": 3,
+            "y": 2
+          },
+          {
+            "x": 4,
+            "y": 2
+          },
+          {
+            "x": 4,
+            "y": 1
+          }
+        ],
+        "from": {
+          "placement_id": "50e8c6fd-95dc-4002-92e0-9ef2ef8aa54c",
+          "port_type": "output",
+          "port_idx": 0
+        },
+        "to": {
+          "placement_id": "40a8e4ff-a6d6-4278-8d5c-f6df186bc074",
+          "port_type": "input",
+          "port_idx": 0
+        }
+      },
+      {
+        "id": "f72fc268-a127-4f30-9930-732a75691d2a",
+        "type": "belt",
+        "path": [
+          {
+            "x": 8,
+            "y": 1
+          },
+          {
+            "x": 9,
+            "y": 1
+          }
+        ],
+        "from": {
+          "placement_id": "40a8e4ff-a6d6-4278-8d5c-f6df186bc074",
+          "port_type": "output",
+          "port_idx": 0
+        },
+        "to": {
+          "placement_id": "ecedaa6d-a9d9-4211-804a-9bb34d335898",
+          "port_type": "input",
+          "port_idx": 0
+        }
+      },
+      {
+        "id": "2947fe66-d07e-4e54-bcb0-38d87c0a13ab",
+        "type": "belt",
+        "path": [
+          {
+            "x": 13,
+            "y": 1
+          },
+          {
+            "x": 14,
+            "y": 1
+          },
+          {
+            "x": 15,
+            "y": 1
+          },
+          {
+            "x": 16,
+            "y": 1
+          },
+          {
+            "x": 17,
+            "y": 1
+          },
+          {
+            "x": 18,
+            "y": 1
+          }
+        ],
+        "from": {
+          "placement_id": "ecedaa6d-a9d9-4211-804a-9bb34d335898",
+          "port_type": "output",
+          "port_idx": 0
+        },
+        "to": {
+          "placement_id": "e47ec6d6-a3f8-4c78-a9c6-ea121119ba76",
+          "port_type": "input",
+          "port_idx": 0
+        }
+      }
+    ],
+    "region_resources": []
+  },
+  {
+    "id": "bb464cc4-abd8-42c6-9d8b-7e4f6ba09d88",
+    "name": "654",
+    "grid_width": 20,
+    "grid_height": 15,
+    "placements": []
+  }
+]

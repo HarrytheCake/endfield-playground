@@ -18,8 +18,49 @@ import {
     detectCongestion,
     calcItemSummary,
 } from '@/composables/useFlowEngine';
+import { getRecipesForMachine } from '@/data/products';
 
 // ─── 測試輔助工具 ──────────────────────────────────────────────────────────────
+
+/**
+ * 依產出品項（與可選輸入約束）解析 recipeIndex。
+ * 索引相對於 getRecipesForMachine(machine, modeId) 過濾後列表。
+ */
+function recipeIndexOf(
+    machineName: string,
+    primaryOutput: string,
+    requiredInputs?: Record<string, number>,
+    modeId?: string,
+): number {
+    const idx = getRecipesForMachine(machineName, modeId).findIndex((r) => {
+        if (!r.outputs.some((o) => o.itemId === primaryOutput)) return false;
+        if (!requiredInputs) return true;
+        return Object.entries(requiredInputs).every(([itemId, qty]) =>
+            r.inputs.some((i) => i.itemId === itemId && i.quantity === qty),
+        );
+    });
+    if (idx < 0) {
+        throw new Error(`找不到配方：${machineName} → ${primaryOutput} (mode=${modeId})`);
+    }
+    return idx;
+}
+
+const RI = {
+    /** 碳塊→碳粉末×2（belt 截斷測試用） */
+    crusherCarbonPowder: () => recipeIndexOf('粉碎機', '碳粉末', undefined, 'default'),
+    crusherYuanPowder: () => recipeIndexOf('粉碎機', '源石粉末', undefined, 'default'),
+    crusherBlueIronPowder: () => recipeIndexOf('粉碎機', '藍鐵粉末', undefined, 'default'),
+    crusherSandLeafPowder: () => recipeIndexOf('粉碎機', '砂葉粉末', undefined, 'default'),
+    crusherRedCopperPowder: () => recipeIndexOf('粉碎機', '赤銅粉末', undefined, 'default'),
+    /** 藍鐵粉末×2＋砂葉粉末×1 → 緻密藍鐵粉末（time=2s → 理論 30/min） */
+    grinderDenseBlueIron: () => recipeIndexOf('研磨機', '緻密藍鐵粉末', undefined, 'default'),
+    refineryRedCopper: () =>
+        recipeIndexOf('精煉爐', '赤銅塊', { 赤銅礦: 1, 清水: 1 }, 'liquid_mode'),
+    reactorRedCopperSolution: () => recipeIndexOf('反應池', '赤銅溶液', { 赤銅粉末: 1 }, 'default'),
+    reactorHueCopper: () => recipeIndexOf('反應池', '赫銅塊', { 赫銅溶液: 2 }, 'default'),
+    purifierHueSolution: () => recipeIndexOf('提純機', '赫銅溶液', { 赤銅溶液: 4 }, 'liquid_mode'),
+    partsHueCopper: () => recipeIndexOf('配件機', '赫銅零件', undefined, 'default'),
+};
 
 /** 建立空白 FlowGraph */
 function makeGraph(): FlowGraph {
@@ -35,6 +76,7 @@ function makeGraph(): FlowGraph {
 
 interface AddNodeOpts {
     machineType?: string;
+    machineMode?: string;
     recipeIndex?: number;
     isSource?: boolean;
     isSink?: boolean;
@@ -48,6 +90,7 @@ function addNode(graph: FlowGraph, uid: string, opts: AddNodeOpts = {}): FlowNod
     const node: FlowNode = {
         deviceUid: uid,
         machineType: opts.machineType ?? uid,
+        machineMode: opts.machineMode,
         recipeIndex: opts.recipeIndex ?? 0,
         isSource: opts.isSource ?? false,
         isSink: opts.isSink ?? false,
@@ -85,10 +128,10 @@ function runPipeline(graph: FlowGraph) {
 
 // ─── H1：基礎單鏈路（傳送帶截斷驗證） ────────────────────────────────────────
 
-describe('H1 — 基礎單鏈路：藍鐵礦→粉碎機→sink', () => {
+describe('H1 — 基礎單鏈路：碳塊→粉碎機→sink', () => {
     /**
      * 情境：
-     *   物品輸出口(藍鐵礦 30/min) → 粉碎機(1→2, time=2s, 需求=30, 產出=60) → 物品輸入口
+     *   物品輸出口(碳塊 30/min) → 粉碎機(1→2, time=2s, 需求=30, 產出=60) → 物品輸入口
      *
      * 預期：
      *   - source→crusher 邊：30/min（傳送帶上限）
@@ -99,20 +142,17 @@ describe('H1 — 基礎單鏈路：藍鐵礦→粉碎機→sink', () => {
 
     beforeEach(() => {
         graph = makeGraph();
-        // source 節點：藍鐵礦 30/min（已被傳送帶上限截斷）
         addNode(graph, 'source', {
             machineType: '物品輸出口',
             isSource: true,
-            outputRates: new Map([['藍鐵礦', BELT_RATE_LIMIT]]), // 30/min
+            outputRates: new Map([['碳塊', BELT_RATE_LIMIT]]), // 30/min
         });
-        // 粉碎機：1 藍鐵礦 → 2 藍鐵粉末，每 2 秒 → 需 30/min，產 60/min
         addNode(graph, 'crusher', {
             machineType: '粉碎機',
-            recipeIndex: 1, // 藍鐵粉末配方
-            inputRates: new Map([['藍鐵礦', 30]]),
-            outputRates: new Map([['藍鐵粉末', 60]]),
+            recipeIndex: RI.crusherCarbonPowder(),
+            inputRates: new Map([['碳塊', 30]]),
+            outputRates: new Map([['碳粉末', 60]]),
         });
-        // sink 節點
         addNode(graph, 'sink', {
             machineType: '物品輸入口',
             isSink: true,
@@ -124,14 +164,14 @@ describe('H1 — 基礎單鏈路：藍鐵礦→粉碎機→sink', () => {
     it('傳送帶上限截斷後 source→crusher 邊流量 = 30/min', () => {
         const { flows } = runPipeline(graph);
         expect(flows.get('e1')?.rate).toBe(BELT_RATE_LIMIT);
-        expect(flows.get('e1')?.itemId).toBe('藍鐵礦');
+        expect(flows.get('e1')?.itemId).toBe('碳塊');
     });
 
     it('粉碎機理論輸出 60/min 經傳送帶截斷至 30/min', () => {
         const { flows } = runPipeline(graph);
         const e2 = flows.get('e2');
         expect(e2?.rate).toBe(BELT_RATE_LIMIT); // 30/min（截斷）
-        expect(e2?.itemId).toBe('藍鐵粉末');
+        expect(e2?.itemId).toBe('碳粉末');
     });
 
     it('粉碎機效率 = 100%（供料充足）', () => {
@@ -139,13 +179,12 @@ describe('H1 — 基礎單鏈路：藍鐵礦→粉碎機→sink', () => {
         expect(graph.nodes.get('crusher')!.efficiency).toBe(1);
     });
 
-    it('calcItemSummary 藍鐵礦 consumed=30, 藍鐵粉末 produced=30 (belt-capped)', () => {
+    it('calcItemSummary 碳塊 consumed=30, 碳粉末 produced=60 (belt-capped edge)', () => {
         const { summary } = runPipeline(graph);
-        const ore = summary.find((s) => s.itemId === '藍鐵礦');
-        const powder = summary.find((s) => s.itemId === '藍鐵粉末');
-        // crusher 的 inputRates 在 propagateFlows 內以 efficiency 縮放
+        const ore = summary.find((s) => s.itemId === '碳塊');
+        const powder = summary.find((s) => s.itemId === '碳粉末');
         expect(ore?.consumed).toBeCloseTo(30, 5);
-        expect(powder?.produced).toBeCloseTo(60, 5); // node outputRates 仍為 60
+        expect(powder?.produced).toBeCloseTo(60, 5);
     });
 });
 
@@ -153,57 +192,54 @@ describe('H1 — 基礎單鏈路：藍鐵礦→粉碎機→sink', () => {
 
 describe('H2 — 未配頻：研磨機效率 50%', () => {
     /**
-     * 情境：
-     *   sourceA(源礦 30/min) → crusherA(1→1) → 研磨機 ←  crusherB(1→2) ← sourceB(藍礦 30/min)
-     *   研磨機配方：源石粉末 60/min + 藍鐵粉末 60/min → 研製合成粉末方塊 60/min（time=1s）
+     * 情境（正式產品：緻密藍鐵粉末）：
+     *   srcSand(砂葉) → crusherSand → 研磨機 ← crusherB ← srcB(藍鐵塊)
+     *   研磨機配方：藍鐵粉末 60/min + 砂葉粉末 30/min → 緻密藍鐵粉末 30/min（time=2s）
      *
-     *   實際抵達研磨機：源石粉末 30(belt) + 藍鐵粉末 30(belt)
-     *   效率 = min(30/60, 30/60) = 0.5
+     *   實際抵達：藍鐵粉末 30 + 砂葉粉末 30
+     *   效率 = min(30/60, 30/30) = 0.5 → 輸出 15/min
      */
     let graph: FlowGraph;
 
     beforeEach(() => {
         graph = makeGraph();
 
-        addNode(graph, 'srcA', {
+        addNode(graph, 'srcSand', {
             machineType: '物品輸出口',
             isSource: true,
-            outputRates: new Map([['源礦', 30]]),
+            outputRates: new Map([['砂葉', 30]]),
         });
         addNode(graph, 'srcB', {
             machineType: '物品輸出口',
             isSource: true,
-            outputRates: new Map([['藍鐵礦', 30]]),
+            outputRates: new Map([['藍鐵塊', 30]]),
         });
-        // 粉碎機A：源礦 30/min → 源石粉末 30/min（time=2s，1:1）
-        addNode(graph, 'crusherA', {
+        addNode(graph, 'crusherSand', {
             machineType: '粉碎機',
-            recipeIndex: 0, // 源石粉末
-            inputRates: new Map([['源礦', 30]]),
-            outputRates: new Map([['源石粉末', 30]]),
+            recipeIndex: RI.crusherSandLeafPowder(),
+            inputRates: new Map([['砂葉', 30]]),
+            outputRates: new Map([['砂葉粉末', 30]]),
         });
-        // 粉碎機B：藍鐵礦 30/min → 藍鐵粉末 60/min（time=2s，1:2）
         addNode(graph, 'crusherB', {
             machineType: '粉碎機',
-            recipeIndex: 1, // 藍鐵粉末
-            inputRates: new Map([['藍鐵礦', 30]]),
-            outputRates: new Map([['藍鐵粉末', 60]]),
+            recipeIndex: RI.crusherBlueIronPowder(),
+            inputRates: new Map([['藍鐵塊', 30]]),
+            outputRates: new Map([['藍鐵粉末', 30]]),
         });
-        // 研磨機：源石粉末 60 + 藍鐵粉末 60 → 研製合成粉末方塊 60（time=1s）
         addNode(graph, 'grinder', {
             machineType: '研磨機',
-            recipeIndex: 0,
+            recipeIndex: RI.grinderDenseBlueIron(),
             inputRates: new Map([
-                ['源石粉末', 60],
                 ['藍鐵粉末', 60],
+                ['砂葉粉末', 30],
             ]),
-            outputRates: new Map([['研製合成粉末方塊', 60]]),
+            outputRates: new Map([['緻密藍鐵粉末', 30]]),
         });
         addNode(graph, 'sink', { machineType: '物品輸入口', isSink: true });
 
-        addEdge(graph, 'e_srcA_cA', 'srcA', 'crusherA');
+        addEdge(graph, 'e_srcSand_cS', 'srcSand', 'crusherSand');
         addEdge(graph, 'e_srcB_cB', 'srcB', 'crusherB');
-        addEdge(graph, 'e_cA_g', 'crusherA', 'grinder');
+        addEdge(graph, 'e_cS_g', 'crusherSand', 'grinder');
         addEdge(graph, 'e_cB_g', 'crusherB', 'grinder');
         addEdge(graph, 'e_g_sink', 'grinder', 'sink');
     });
@@ -214,20 +250,20 @@ describe('H2 — 未配頻：研磨機效率 50%', () => {
         expect(eff).toBeCloseTo(0.5, 5);
     });
 
-    it('研磨機輸出速率 = 30/min（60 × 0.5）', () => {
+    it('研磨機輸出速率 = 15/min（30 × 0.5）', () => {
         runPipeline(graph);
-        const output = graph.nodes.get('grinder')!.outputRates.get('研製合成粉末方塊') ?? 0;
-        expect(output).toBeCloseTo(30, 5);
+        const output = graph.nodes.get('grinder')!.outputRates.get('緻密藍鐵粉末') ?? 0;
+        expect(output).toBeCloseTo(15, 5);
     });
 
-    it('研磨機→sink 管線流量 = 30/min', () => {
+    it('研磨機→sink 管線流量 = 15/min', () => {
         const { flows } = runPipeline(graph);
-        expect(flows.get('e_g_sink')?.rate).toBeCloseTo(30, 5);
+        expect(flows.get('e_g_sink')?.rate).toBeCloseTo(15, 5);
     });
 
-    it('crusherA 效率 = 100%（供料充足）', () => {
+    it('crusherB 效率 = 100%（供料充足）', () => {
         runPipeline(graph);
-        expect(graph.nodes.get('crusherA')!.efficiency).toBe(1);
+        expect(graph.nodes.get('crusherB')!.efficiency).toBe(1);
     });
 });
 
@@ -235,73 +271,56 @@ describe('H2 — 未配頻：研磨機效率 50%', () => {
 
 describe('H3 — 配頻：研磨機效率 100%', () => {
     /**
-     * 情境（與 H2 相同研磨機，但加入第二台 crusherA2 以補足源石粉末）：
-     *   srcA1 + srcA2 各 30/min → crusherA1 + crusherA2（各產源石粉末 30/min）
-     *   srcB 30/min → crusherB（藍鐵粉末 60/min，belt→30/min）
-     *   研磨機獲得：源石粉末 60/min（兩條邊各 30）+ 藍鐵粉末 30/min（belt）
-     *   效率 = min(60/60, 30/60) = 0.5（belt 仍是瓶頸）
-     *
-     * 若要達到真正 100% 需要 2 條 belt 輸送藍鐵粉末（2 台 crusherB）：
-     *   srcB1+srcB2 → crusherB1+crusherB2 → 各 30/min 藍鐵粉末 → 研磨機：60/min 藍鐵粉末
-     *   效率 = min(60/60, 60/60) = 1.0
+     * 與 H2 同配方（緻密藍鐵粉末），補足藍鐵粉末至 60/min：
+     *   srcB1+srcB2 → cB1+cB2（各 30 藍鐵粉末）＋ srcSand → crusherSand（30 砂葉粉末）
+     *   效率 = min(60/60, 30/30) = 1.0 → 輸出 30/min（等於 belt 上限）
      */
     let graph: FlowGraph;
 
     beforeEach(() => {
         graph = makeGraph();
 
-        // 兩台源礦 source
-        for (const id of ['srcA1', 'srcA2']) {
-            addNode(graph, id, {
-                machineType: '物品輸出口',
-                isSource: true,
-                outputRates: new Map([['源礦', 30]]),
-            });
-        }
-        // 兩台藍鐵礦 source
+        addNode(graph, 'srcSand', {
+            machineType: '物品輸出口',
+            isSource: true,
+            outputRates: new Map([['砂葉', 30]]),
+        });
         for (const id of ['srcB1', 'srcB2']) {
             addNode(graph, id, {
                 machineType: '物品輸出口',
                 isSource: true,
-                outputRates: new Map([['藍鐵礦', 30]]),
+                outputRates: new Map([['藍鐵塊', 30]]),
             });
         }
-        // 兩台 crusherA（各 30/min 源石粉末）
-        for (const id of ['cA1', 'cA2']) {
-            addNode(graph, id, {
-                machineType: '粉碎機',
-                recipeIndex: 0,
-                inputRates: new Map([['源礦', 30]]),
-                outputRates: new Map([['源石粉末', 30]]),
-            });
-        }
-        // 兩台 crusherB（各輸出 60/min 藍鐵粉末，各 belt 30/min）
+        addNode(graph, 'crusherSand', {
+            machineType: '粉碎機',
+            recipeIndex: RI.crusherSandLeafPowder(),
+            inputRates: new Map([['砂葉', 30]]),
+            outputRates: new Map([['砂葉粉末', 30]]),
+        });
         for (const id of ['cB1', 'cB2']) {
             addNode(graph, id, {
                 machineType: '粉碎機',
-                recipeIndex: 1,
-                inputRates: new Map([['藍鐵礦', 30]]),
-                outputRates: new Map([['藍鐵粉末', 60]]),
+                recipeIndex: RI.crusherBlueIronPowder(),
+                inputRates: new Map([['藍鐵塊', 30]]),
+                outputRates: new Map([['藍鐵粉末', 30]]),
             });
         }
-        // 研磨機
         addNode(graph, 'grinder', {
             machineType: '研磨機',
-            recipeIndex: 0,
+            recipeIndex: RI.grinderDenseBlueIron(),
             inputRates: new Map([
-                ['源石粉末', 60],
                 ['藍鐵粉末', 60],
+                ['砂葉粉末', 30],
             ]),
-            outputRates: new Map([['研製合成粉末方塊', 60]]),
+            outputRates: new Map([['緻密藍鐵粉末', 30]]),
         });
         addNode(graph, 'sink', { machineType: '物品輸入口', isSink: true });
 
-        addEdge(graph, 'e_sA1_cA1', 'srcA1', 'cA1');
-        addEdge(graph, 'e_sA2_cA2', 'srcA2', 'cA2');
+        addEdge(graph, 'e_sSand_cS', 'srcSand', 'crusherSand');
         addEdge(graph, 'e_sB1_cB1', 'srcB1', 'cB1');
         addEdge(graph, 'e_sB2_cB2', 'srcB2', 'cB2');
-        addEdge(graph, 'e_cA1_g', 'cA1', 'grinder');
-        addEdge(graph, 'e_cA2_g', 'cA2', 'grinder');
+        addEdge(graph, 'e_cS_g', 'crusherSand', 'grinder');
         addEdge(graph, 'e_cB1_g', 'cB1', 'grinder');
         addEdge(graph, 'e_cB2_g', 'cB2', 'grinder');
         addEdge(graph, 'e_g_sink', 'grinder', 'sink');
@@ -313,13 +332,13 @@ describe('H3 — 配頻：研磨機效率 100%', () => {
         expect(eff).toBeCloseTo(1, 5);
     });
 
-    it('研磨機輸出 = 60/min（研製合成粉末方塊）', () => {
+    it('研磨機輸出 = 30/min（緻密藍鐵粉末）', () => {
         runPipeline(graph);
-        const output = graph.nodes.get('grinder')!.outputRates.get('研製合成粉末方塊') ?? 0;
-        expect(output).toBeCloseTo(60, 5);
+        const output = graph.nodes.get('grinder')!.outputRates.get('緻密藍鐵粉末') ?? 0;
+        expect(output).toBeCloseTo(30, 5);
     });
 
-    it('研磨機→sink 管線 = 30/min（belt 截斷）', () => {
+    it('研磨機→sink 管線 = 30/min（滿速等於 belt 上限）', () => {
         const { flows } = runPipeline(graph);
         expect(flows.get('e_g_sink')?.rate).toBeCloseTo(30, 5);
     });
@@ -337,7 +356,7 @@ describe('H4 — 非法鏈路：懸空節點與配方不符', () => {
         });
         addNode(graph, 'orphan_crusher', {
             machineType: '粉碎機',
-            recipeIndex: 0,
+            recipeIndex: RI.crusherYuanPowder(),
             inputRates: new Map([['源礦', 30]]),
             outputRates: new Map([['源石粉末', 30]]),
         });
@@ -358,7 +377,7 @@ describe('H4 — 非法鏈路：懸空節點與配方不符', () => {
         });
         addNode(graph, 'orphan', {
             machineType: '粉碎機',
-            recipeIndex: 0,
+            recipeIndex: RI.crusherYuanPowder(),
             inputRates: new Map([['源礦', 30]]),
             outputRates: new Map([['源石粉末', 30]]),
         });
@@ -379,7 +398,7 @@ describe('H4 — 非法鏈路：懸空節點與配方不符', () => {
         const graph = makeGraph();
         addNode(graph, 'isolated', {
             machineType: '粉碎機',
-            recipeIndex: 0,
+            recipeIndex: RI.crusherYuanPowder(),
             inputRates: new Map([['源礦', 30]]),
             outputRates: new Map([['源石粉末', 30]]),
         });
@@ -398,7 +417,7 @@ describe('H4 — 非法鏈路：懸空節點與配方不符', () => {
         });
         addNode(graph, 'crusher', {
             machineType: '粉碎機',
-            recipeIndex: 0,
+            recipeIndex: RI.crusherYuanPowder(),
             inputRates: new Map([['源礦', 30]]),
             outputRates: new Map([['源石粉末', 30]]),
         });
@@ -409,9 +428,9 @@ describe('H4 — 非法鏈路：懸空節點與配方不符', () => {
         // 懸空節點
         addNode(graph, 'orphan', {
             machineType: '粉碎機',
-            recipeIndex: 1,
-            inputRates: new Map([['藍鐵礦', 30]]),
-            outputRates: new Map([['藍鐵粉末', 60]]),
+            recipeIndex: RI.crusherBlueIronPowder(),
+            inputRates: new Map([['藍鐵塊', 30]]),
+            outputRates: new Map([['藍鐵粉末', 30]]),
         });
 
         validateChains(graph);
@@ -448,10 +467,10 @@ describe('H5 — 多輸出配方：精煉爐（赤銅塊 + 汙水）', () => {
             outputRates: new Map([['清水', 30]]),
         });
         // 精煉爐：赤銅礦+清水 → 赤銅塊+汙水（各 30/min，time=2s）
-        // getRecipesForMachine('精煉爐') 順序：[藍鐵塊, 紫晶纖維, 赤銅塊, 穩定碳塊]
         addNode(graph, 'refinery', {
             machineType: '精煉爐',
-            recipeIndex: 2, // 赤銅塊配方
+            machineMode: 'liquid_mode',
+            recipeIndex: RI.refineryRedCopper(), // 赤銅塊配方
             inputRates: new Map([
                 ['赤銅礦', 30],
                 ['清水', 30],
@@ -516,8 +535,8 @@ describe('H5 — 多輸出配方：精煉爐（赤銅塊 + 汙水）', () => {
 describe('H6-cycle — 環路偵測', () => {
     it('環路節點應被標記為非法，hasCycle = true', () => {
         const graph = makeGraph();
-        addNode(graph, 'A', { machineType: '粉碎機', recipeIndex: 0 });
-        addNode(graph, 'B', { machineType: '研磨機', recipeIndex: 0 });
+        addNode(graph, 'A', { machineType: '粉碎機', recipeIndex: RI.crusherYuanPowder() });
+        addNode(graph, 'B', { machineType: '研磨機', recipeIndex: RI.grinderDenseBlueIron() });
         // A → B → A 構成環
         addEdge(graph, 'e_AB', 'A', 'B');
         addEdge(graph, 'e_BA', 'B', 'A');
@@ -538,7 +557,7 @@ describe('H6-cycle — 環路偵測', () => {
         });
         addNode(graph, 'crusher', {
             machineType: '粉碎機',
-            recipeIndex: 0,
+            recipeIndex: RI.crusherYuanPowder(),
             inputRates: new Map([['源礦', 30]]),
             outputRates: new Map([['源石粉末', 30]]),
         });
@@ -546,8 +565,8 @@ describe('H6-cycle — 環路偵測', () => {
         addEdge(graph, 'e1', 'src', 'crusher');
         addEdge(graph, 'e2', 'crusher', 'sink');
         // 環路子圖
-        addNode(graph, 'cycA', { machineType: '研磨機', recipeIndex: 0 });
-        addNode(graph, 'cycB', { machineType: '精煉爐', recipeIndex: 0 });
+        addNode(graph, 'cycA', { machineType: '研磨機', recipeIndex: RI.grinderDenseBlueIron() });
+        addNode(graph, 'cycB', { machineType: '精煉爐', recipeIndex: RI.refineryRedCopper() });
         addEdge(graph, 'eAB', 'cycA', 'cycB');
         addEdge(graph, 'eBA', 'cycB', 'cycA');
 
@@ -587,7 +606,7 @@ describe('H6 — 武陵建造計畫端對端（赫銅零件鏈路）', () => {
         addNode(graph, 'srcOre', {
             machineType: '物品輸出口',
             isSource: true,
-            outputRates: new Map([['赤銅礦', 30]]),
+            outputRates: new Map([['赤銅塊', 30]]),
         });
         addNode(graph, 'srcAcid', {
             machineType: '物品輸出口',
@@ -597,29 +616,29 @@ describe('H6 — 武陵建造計畫端對端（赫銅零件鏈路）', () => {
         addNode(graph, 'srcBlue', {
             machineType: '物品輸出口',
             isSource: true,
-            outputRates: new Map([['藍鐵礦', 30]]),
+            outputRates: new Map([['藍鐵塊', 30]]),
         });
 
-        // 粉碎機：赤銅礦 → 赤銅粉末（1:1, time=2s → 30/min）
+        // 粉碎機：赤銅塊 → 赤銅粉末（1:1, time=2s → 30/min）
         addNode(graph, 'crusherOre', {
             machineType: '粉碎機',
-            recipeIndex: 3, // 赤銅粉末
-            inputRates: new Map([['赤銅礦', 30]]),
+            recipeIndex: RI.crusherRedCopperPowder(),
+            inputRates: new Map([['赤銅塊', 30]]),
             outputRates: new Map([['赤銅粉末', 30]]),
         });
 
-        // 粉碎機：藍鐵礦 → 藍鐵粉末（1:2, time=2s → 60/min, belt=30）
+        // 粉碎機：藍鐵塊 → 藍鐵粉末（1:1, time=2s → 30/min）
         addNode(graph, 'crusherBlue', {
             machineType: '粉碎機',
-            recipeIndex: 1,
-            inputRates: new Map([['藍鐵礦', 30]]),
-            outputRates: new Map([['藍鐵粉末', 60]]),
+            recipeIndex: RI.crusherBlueIronPowder(),
+            inputRates: new Map([['藍鐵塊', 30]]),
+            outputRates: new Map([['藍鐵粉末', 30]]),
         });
 
         // 反應池A：赤銅粉末 + 沉積酸 → 赤銅溶液（1+1→1, time=2s → 30/min）
         addNode(graph, 'reactionA', {
             machineType: '反應池',
-            recipeIndex: 0,
+            recipeIndex: RI.reactorRedCopperSolution(),
             inputRates: new Map([
                 ['赤銅粉末', 30],
                 ['沉積酸', 30],
@@ -631,7 +650,8 @@ describe('H6 — 武陵建造計畫端對端（赫銅零件鏈路）', () => {
         // 30/min 赤銅溶液 ÷ 4 = 7.5 cycles/min → 各 7.5/min 輸出
         addNode(graph, 'purifier', {
             machineType: '提純機',
-            recipeIndex: 0,
+            machineMode: 'liquid_mode',
+            recipeIndex: RI.purifierHueSolution(),
             inputRates: new Map([['赤銅溶液', 30]]),
             outputRates: new Map([
                 ['赫銅溶液', 7.5],
@@ -639,14 +659,14 @@ describe('H6 — 武陵建造計畫端對端（赫銅零件鏈路）', () => {
             ]),
         });
 
-        // 反應池B：2赫銅溶液 + 1藍鐵粉末 → 赫銅塊 + 汙水（2s）
-        // 理論速率：赫銅溶液需求 60/min，藍鐵粉末需求 30/min，產出 30/min
-        // 實際：赫銅溶液 7.5/min → efficiency = 7.5/60 = 0.125 → 赫銅塊 3.75/min
+        // 反應池B：赫銅溶液 + 藍鐵粉末 → 赫銅塊 + 汙水
+        // V9-E1：同輸入集合取資料順序第一 → 1+1（非 2+1）配方；需求各 30/min
+        // 實際：赫銅溶液 7.5/min → efficiency = 7.5/30 = 0.25 → 赫銅塊 7.5/min
         addNode(graph, 'reactionB', {
             machineType: '反應池',
-            recipeIndex: 1, // 赫銅塊配方
+            recipeIndex: RI.reactorHueCopper(),
             inputRates: new Map([
-                ['赫銅溶液', 60],
+                ['赫銅溶液', 30],
                 ['藍鐵粉末', 30],
             ]),
             outputRates: new Map([
@@ -655,12 +675,11 @@ describe('H6 — 武陵建造計畫端對端（赫銅零件鏈路）', () => {
             ]),
         });
 
-        // 配件機：5赫銅塊 → 赫銅零件（10s）
-        // 理論速率：赫銅塊需求 30/min，產出 6/min
-        // 實際：赫銅塊 3.75/min → efficiency = 3.75/30 = 0.125 → 赫銅零件 0.75/min
+        // 配件機：5赫銅塊 → 赫銅零件（10s）→ 需求 30/min、產出 6/min
+        // 實際：赫銅塊 7.5/min → efficiency = 0.25 → 赫銅零件 1.5/min
         addNode(graph, 'partMachine', {
             machineType: '配件機',
-            recipeIndex: 1, // 赫銅零件
+            recipeIndex: RI.partsHueCopper(),
             inputRates: new Map([['赫銅塊', 30]]),
             outputRates: new Map([['赫銅零件', 6]]),
         });
@@ -690,17 +709,16 @@ describe('H6 — 武陵建造計畫端對端（赫銅零件鏈路）', () => {
         expect(output).toBeCloseTo(7.5, 3);
     });
 
-    it('赫銅零件最終產出 = 0.75/min（赫銅塊供給 3.75/min，配件機需求 30/min，效率 12.5%）', () => {
+    it('赫銅零件最終產出 = 1.5/min（V9-E1 匹配 1+1 配方後效率 25%）', () => {
         const { flows } = runPipeline(graph);
-        expect(flows.get('e_part_sink')?.rate).toBeCloseTo(0.75, 3);
+        expect(flows.get('e_part_sink')?.rate).toBeCloseTo(1.5, 3);
         expect(flows.get('e_part_sink')?.itemId).toBe('赫銅零件');
     });
 
-    it('反應池B 效率 = 0.125（赫銅溶液需求 60/min，實際 7.5/min → 12.5%）', () => {
+    it('反應池B 效率 = 0.25（V9-E1：同集合取第一條 1+1 配方，需求 30/min）', () => {
         runPipeline(graph);
-        // purifier: 4×赤銅溶液→赫銅溶液×1，30/min 輸入 → 7.5/min 赫銅溶液
-        // reactionB 需求 2×(60/2)=60/min，實際 7.5/min → efficiency = 7.5/60 = 0.125
-        expect(graph.nodes.get('reactionB')!.efficiency).toBeCloseTo(0.125, 3);
+        // purifier → 7.5/min 赫銅溶液；匹配配方需求 30/min → efficiency = 0.25
+        expect(graph.nodes.get('reactionB')!.efficiency).toBeCloseTo(0.25, 3);
     });
 
     it('calcItemSummary 赫銅零件 produced > 0（由 partMachine 產出，最終送入 sink）', () => {

@@ -3,9 +3,9 @@
  *
  * 測試對象：src/store/editorStore.ts
  * 重點：
- *   - 8 個高階 actions（placeDevice / moveDevices / rotateDevice / removeDevices /
+ *   - 高階 actions（placeDevice / moveDevices / commitDeviceMove / rotateDevice / removeDevices /
  *     setRecipe / pasteSelection / addConnection / removeConnection）
- *   - 每個 action 呼叫一次 = 一筆歷史項目（可 undo / redo 還原）
+ *   - 每個 action 呼叫一次 = 一筆歷史項目（可 undo / redo 還原；零位移 commit 除外）
  *   - 邊界情況（找不到 uid、空輸入、重複值不入歷史）
  *
  * 備註：editorStore 預設帶有 mockNodes / mockEdges，  \
@@ -126,6 +126,77 @@ describe('moveDevices()', () => {
         const depthBefore = history.undoDepth;
 
         store.moveDevices([], { x: 10, y: 10 });
+
+        expect(history.undoDepth).toBe(depthBefore);
+    });
+});
+
+// ─── commitDeviceMove() ───────────────────────────────────────────────────────
+
+describe('commitDeviceMove()', () => {
+    beforeEach(() => freshStore());
+
+    it('畫面已到位時不重複位移，且可 undo / redo', () => {
+        const store = useEditorStore();
+        const history = useHistoryStore();
+        store.placeDevice(makeNode('n1', 0, 0));
+        // 模擬 Vue Flow 拖曳已把 position 改成最終值
+        store.nodes = store.nodes.map((n) =>
+            n.id === 'n1' ? { ...n, position: { x: 80, y: 40 } } : n,
+        );
+        const depthBefore = history.undoDepth;
+
+        store.commitDeviceMove(['n1'], { n1: { x: 0, y: 0 } });
+
+        expect(store.nodes.find((n) => n.id === 'n1')!.position).toEqual({ x: 80, y: 40 });
+        expect(history.undoDepth).toBe(depthBefore + 1);
+
+        history.undo();
+        expect(store.nodes.find((n) => n.id === 'n1')!.position).toEqual({ x: 0, y: 0 });
+
+        history.redo();
+        expect(store.nodes.find((n) => n.id === 'n1')!.position).toEqual({ x: 80, y: 40 });
+    });
+
+    it('零位移不進歷史', () => {
+        const store = useEditorStore();
+        const history = useHistoryStore();
+        store.placeDevice(makeNode('n1', 10, 20));
+        const depthBefore = history.undoDepth;
+
+        store.commitDeviceMove(['n1'], { n1: { x: 10, y: 20 } });
+
+        expect(history.undoDepth).toBe(depthBefore);
+    });
+
+    it('多 uid 一次 undo 全部還原', () => {
+        const store = useEditorStore();
+        const history = useHistoryStore();
+        store.placeDevice(makeNode('n1', 0, 0));
+        store.placeDevice(makeNode('n2', 100, 100));
+        store.nodes = store.nodes.map((n) => {
+            if (n.id === 'n1') return { ...n, position: { x: 30, y: 0 } };
+            if (n.id === 'n2') return { ...n, position: { x: 100, y: 160 } };
+            return n;
+        });
+
+        store.commitDeviceMove(['n1', 'n2'], {
+            n1: { x: 0, y: 0 },
+            n2: { x: 100, y: 100 },
+        });
+        history.undo();
+
+        expect(store.nodes.find((n) => n.id === 'n1')!.position).toEqual({ x: 0, y: 0 });
+        expect(store.nodes.find((n) => n.id === 'n2')!.position).toEqual({ x: 100, y: 100 });
+    });
+
+    it('空 uids 不進歷史', () => {
+        const store = useEditorStore();
+        const history = useHistoryStore();
+        store.placeDevice(makeNode('n1'));
+        const depthBefore = history.undoDepth;
+
+        store.commitDeviceMove([], { n1: { x: 0, y: 0 } });
 
         expect(history.undoDepth).toBe(depthBefore);
     });

@@ -1,500 +1,826 @@
 <template>
-    <div class="flow-engine-test">
-        <div class="mb-6">
+    <div class="flow-engine-test space-y-6">
+        <div>
             <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
                 FlowEngine 手動測試
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400">
-                測試流量計算引擎的正確性，可選擇 Preset 或自訂 JSON 輸入
+                引擎情境、機器／產品資料預覽（V8-B）
             </p>
 
-            <!-- 使用說明 -->
-            <div
-                class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
-            >
-                <div class="flex items-start gap-3">
-                    <svg
-                        class="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <div class="flex-1">
-                        <h3 class="mb-2 text-sm font-semibold text-blue-900 dark:text-blue-200">
-                            使用說明
-                        </h3>
-                        <ul class="space-y-1 text-xs text-blue-800 dark:text-blue-300">
-                            <li>
-                                • 點擊上方 <strong>H1~H6</strong> 按鈕載入預設測試情境（完整
-                                nodes/edges 格式）
-                            </li>
-                            <li>• 在 JSON 輸入區可查看或修改數據結構</li>
-                            <li>• 點擊「▶️ 執行計算」按鈕觸發 FlowEngine 計算</li>
-                            <li>• 右側面板顯示計算結果：管線流量、設備效率、品項統計、電力平衡</li>
-                            <li>
-                                •
-                                <strong class="text-red-600 dark:text-red-400">注意：</strong
-                                >此頁面不會修改主畫布，僅用於獨立測試
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <button
+                    v-for="tab in pageTabs"
+                    :key="tab.id"
+                    type="button"
+                    class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                    :class="
+                        pageTab === tab.id
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200'
+                    "
+                    @click="pageTab = tab.id"
+                >
+                    {{ tab.label }}
+                </button>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-6">
-            <!-- 左側：輸入區 -->
-            <div class="space-y-4">
-                <!-- Preset 選擇器 -->
+        <MachineCatalogPanel v-if="pageTab === 'machines'" />
+        <ProductCatalogPanel v-else-if="pageTab === 'products'" />
+
+        <template v-else>
+            <div
+                class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
+            >
+                <h3 class="mb-2 text-sm font-semibold text-blue-900 dark:text-blue-200">
+                    使用說明
+                </h3>
+                <ul class="space-y-1 text-xs text-blue-800 dark:text-blue-300">
+                    <li>
+                        • 點擊 <strong>H1–H11</strong>／<strong>G*</strong>／<strong>V9</strong>
+                        載入情境並<strong>自動執行計算</strong>
+                    </li>
+                    <li>• 中間拓撲圖：節點依效率著色，管線顯示流量；橘色邊 = 堵塞</li>
+                    <li>• 「預期結果」清單可對照右側實際數值做目視驗證</li>
+                    <li>• V9：基礎材料輸出點、E1 輸入匹配配方、D1 最短鏈套用</li>
+                    <li>• 「機器」「產品／材料」分頁可預覽資料 JSON 與埠／物態</li>
+                    <li>• 可修改 JSON 後按「執行計算」；此頁不永久改動主畫布</li>
+                </ul>
+            </div>
+
+            <div
+                class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+            >
+                <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                    Preset 測試情境
+                </h3>
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-medium text-gray-500">基礎</span>
+                    <button
+                        v-for="preset in presetsByGroup('basic')"
+                        :key="preset.id"
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="presetButtonClass(preset.id)"
+                        @click="loadPreset(preset.id)"
+                    >
+                        {{ preset.name }}
+                    </button>
+                </div>
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-medium text-gray-500">進階</span>
+                    <button
+                        v-for="preset in presetsByGroup('advanced')"
+                        :key="preset.id"
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="presetButtonClass(preset.id)"
+                        @click="loadPreset(preset.id)"
+                    >
+                        {{ preset.name }}
+                    </button>
+                </div>
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-medium text-gray-500">V7 mode／媒質</span>
+                    <button
+                        v-for="preset in presetsByGroup('v7')"
+                        :key="preset.id"
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="presetButtonClass(preset.id)"
+                        @click="loadPreset(preset.id)"
+                    >
+                        {{ preset.name }}
+                    </button>
+                </div>
+                <div class="mb-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-medium text-gray-500">V9 演示</span>
+                    <button
+                        v-for="preset in presetsByGroup('v9')"
+                        :key="preset.id"
+                        type="button"
+                        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="presetButtonClass(preset.id)"
+                        @click="loadPreset(preset.id)"
+                    >
+                        {{ preset.name }}
+                    </button>
+                </div>
                 <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    class="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50/80 p-2 dark:border-emerald-900 dark:bg-emerald-950/30"
                 >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        Preset 測試情境
-                    </h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button
-                            v-for="preset in presets"
-                            :key="preset.id"
-                            @click="loadPreset(preset.id)"
-                            class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                            :class="
-                                selectedPreset === preset.id
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                            "
+                    <span class="text-[10px] font-medium text-emerald-800 dark:text-emerald-200">
+                        D1 最短鏈套用
+                    </span>
+                    <select
+                        v-model="chainProduct"
+                        class="rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-900"
+                    >
+                        <option v-for="name in chainProductOptions" :key="name" :value="name">
+                            {{ name }}
+                        </option>
+                    </select>
+                    <button
+                        type="button"
+                        class="rounded bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+                        @click="applyReverseChainDemo"
+                    >
+                        產生演示圖
+                    </button>
+                </div>
+                <p v-if="activePresetMeta" class="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">{{
+                        activePresetMeta.name
+                    }}</span>
+                    — {{ activePresetMeta.description }}
+                </p>
+            </div>
+
+            <div
+                v-if="activePresetMeta"
+                class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+            >
+                <h3 class="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    預期結果（目視對照）
+                </h3>
+                <ul
+                    class="list-inside list-disc space-y-1 text-xs text-amber-900 dark:text-amber-200"
+                >
+                    <li v-for="(hint, i) in activePresetMeta.expected" :key="i">{{ hint }}</li>
+                </ul>
+            </div>
+
+            <div
+                class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+            >
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">拓撲視覺化</h3>
+                    <div class="flex flex-wrap gap-3 text-[10px] text-gray-500">
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2.5 w-2.5 rounded-sm bg-green-500" />100%
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2.5 w-2.5 rounded-sm bg-yellow-400" />50–99%
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2.5 w-2.5 rounded-sm bg-orange-400" />1–49%
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2.5 w-2.5 rounded-sm bg-zinc-400" />0% /
+                            非法
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-0.5 w-4 bg-orange-500" />堵塞邊
+                        </span>
+                    </div>
+                </div>
+                <DevTopologySvg
+                    v-if="parsedGraph"
+                    :nodes="parsedGraph.nodes"
+                    :edges="parsedGraph.edges"
+                    :node-style="topologyNodeStyle"
+                    :edge-style="topologyEdgeStyle"
+                    :selected-node-id="selectedTopoNodeId"
+                    @select-node="selectedTopoNodeId = $event"
+                />
+                <div
+                    v-if="selectedTopoNode"
+                    class="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs dark:border-blue-800 dark:bg-blue-950/40"
+                >
+                    <span class="font-semibold text-blue-900 dark:text-blue-100">
+                        {{ selectedTopoNode.data?.label || selectedTopoNode.id }}
+                    </span>
+                    <span class="text-gray-500">machineMode</span>
+                    <button
+                        v-for="mode in selectedTopoModes"
+                        :key="mode.id"
+                        type="button"
+                        class="rounded px-2 py-1 font-medium"
+                        :class="
+                            (selectedTopoNode.data?.machineMode ?? selectedTopoModes[0]?.id) ===
+                            mode.id
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200'
+                        "
+                        @click="setTopoNodeMode(selectedTopoNode.id, mode.id)"
+                    >
+                        {{ mode.label }}
+                    </button>
+                    <span v-if="!selectedTopoModes.length" class="text-gray-500"
+                        >無 modes 資料</span
+                    >
+                </div>
+                <p v-else-if="!parsedGraph" class="text-xs text-gray-400">
+                    載入 Preset 或貼上合法 JSON 後顯示拓撲
+                </p>
+                <p v-else class="mt-2 text-[10px] text-gray-400">
+                    點選節點可切換 machineMode，埠示意會更新
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div class="space-y-4">
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            JSON 輸入
+                        </h3>
+                        <textarea
+                            v-model="jsonInput"
+                            class="h-80 w-full rounded-md border border-gray-300 bg-gray-50 p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-900"
+                            placeholder='{"nodes": [...], "edges": [...]}'
+                            @input="selectedPreset = null"
+                        />
+                        <div
+                            v-if="errorMessage"
+                            class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400"
                         >
-                            {{ preset.name }}
+                            {{ errorMessage }}
+                        </div>
+                        <button
+                            type="button"
+                            class="mt-3 w-full rounded-md bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="isCalculating || !jsonInput"
+                            @click="runCalculation"
+                        >
+                            {{ isCalculating ? '計算中...' : '執行計算' }}
                         </button>
                     </div>
-                    <p v-if="selectedPreset" class="mt-3 text-xs text-gray-600 dark:text-gray-400">
-                        {{ presets.find((p) => p.id === selectedPreset)?.description }}
-                    </p>
                 </div>
 
-                <!-- JSON 輸入區 -->
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        JSON 輸入
-                    </h3>
-                    <textarea
-                        v-model="jsonInput"
-                        class="h-96 w-full rounded-md border border-gray-300 bg-gray-50 p-3 font-mono text-xs dark:border-gray-600 dark:bg-gray-900"
-                        placeholder='{"nodes": [...], "edges": [...]}'
-                    />
-
-                    <!-- 錯誤訊息 -->
+                <div class="space-y-4">
                     <div
-                        v-if="errorMessage"
-                        class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                     >
-                        ⚠️ {{ errorMessage }}
-                    </div>
-
-                    <button
-                        @click="runCalculation"
-                        :disabled="isCalculating || !jsonInput"
-                        class="mt-3 w-full rounded-md bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        {{ isCalculating ? '計算中...' : '▶️ 執行計算' }}
-                    </button>
-
-                    <!-- JSON 格式說明 -->
-                    <details class="mt-3">
-                        <summary
-                            class="cursor-pointer text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                        >
-                            📖 JSON 格式說明
-                        </summary>
-                        <div
-                            class="mt-2 rounded-md bg-gray-50 p-3 font-mono text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-300"
-                        >
-                            <pre>
-{
-  "nodes": [
-    {
-      "id": "node-1",
-      "type": "default",
-      "position": { "x": 0, "y": 100 },
-      "data": {
-        "label": "設備名稱",
-        "machineType": "crusher",
-        "recipeIndex": 0,
-        "rotation": 0
-      }
-    }
-  ],
-  "edges": [
-    {
-      "id": "edge-1",
-      "source": "node-1",
-      "target": "node-2",
-      "sourceHandle": "out-0",
-      "targetHandle": "in-0"
-    }
-  ]
-}</pre
-                            >
-                        </div>
-                    </details>
-                </div>
-            </div>
-
-            <!-- 右側：結果顯示區 -->
-            <div class="space-y-4">
-                <!-- edgeFlows -->
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        1. edgeFlows（管線流量）
-                    </h3>
-                    <div v-if="result" class="space-y-2">
-                        <div
-                            v-for="[uid, flow] in result.edgeFlows"
-                            :key="uid"
-                            class="rounded bg-gray-50 p-2 text-xs dark:bg-gray-900"
-                        >
-                            <span class="font-mono text-gray-500">{{ uid }}</span>
-                            <span class="ml-2 text-blue-600 dark:text-blue-400">
-                                {{ flow.itemId }}
-                            </span>
-                            <span class="ml-2 font-semibold text-green-600 dark:text-green-400">
-                                {{ flow.rate.toFixed(2) }}/min
-                            </span>
-                        </div>
-                    </div>
-                    <p v-else class="text-xs text-gray-400">尚未執行計算</p>
-                </div>
-
-                <!-- nodeEfficiencies -->
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        2. nodeEfficiencies（設備效率）
-                    </h3>
-                    <div v-if="result" class="space-y-2">
-                        <div
-                            v-for="[uid, eff] in result.nodeEfficiencies"
-                            :key="uid"
-                            class="flex items-center justify-between rounded bg-gray-50 p-2 text-xs dark:bg-gray-900"
-                        >
-                            <span class="font-mono text-gray-500">{{ uid }}</span>
-                            <span :class="getEfficiencyClass(eff)" class="font-semibold">
-                                {{ (eff * 100).toFixed(1) }}%
-                            </span>
-                        </div>
-                    </div>
-                    <p v-else class="text-xs text-gray-400">尚未執行計算</p>
-                </div>
-
-                <!-- itemSummary -->
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        3. itemSummary（品項統計）
-                    </h3>
-                    <table v-if="result && result.itemSummary.length > 0" class="w-full text-xs">
-                        <thead>
-                            <tr class="text-left text-gray-500 dark:text-gray-400">
-                                <th class="pb-2">品項</th>
-                                <th class="pb-2">產出</th>
-                                <th class="pb-2">消耗</th>
-                                <th class="pb-2">淨值</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="item in result.itemSummary"
-                                :key="item.itemId"
-                                class="border-t border-gray-200 dark:border-gray-700"
-                            >
-                                <td class="py-2">{{ item.name }}</td>
-                                <td class="py-2 text-green-600 dark:text-green-400">
-                                    {{ item.produced.toFixed(2) }}
-                                </td>
-                                <td class="py-2 text-red-600 dark:text-red-400">
-                                    {{ item.consumed.toFixed(2) }}
-                                </td>
-                                <td
-                                    class="py-2 font-semibold"
-                                    :class="item.net > 0 ? 'text-green-600' : 'text-red-600'"
-                                >
-                                    {{ item.net.toFixed(2) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p v-else class="text-xs text-gray-400">尚未執行計算</p>
-                </div>
-
-                <!-- powerBalance -->
-                <div
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-                        4. powerBalance（電力統計）
-                    </h3>
-                    <div v-if="result" class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span class="text-gray-500">需求：</span>
-                            <span class="font-semibold text-red-600"
-                                >{{ result.powerBalance.demand.toFixed(0) }} kW</span
-                            >
-                        </div>
-                        <div>
-                            <span class="text-gray-500">供應：</span>
-                            <span class="font-semibold text-green-600"
-                                >{{ result.powerBalance.supply.toFixed(0) }} kW</span
-                            >
-                        </div>
-                        <div class="col-span-2">
-                            <span class="text-gray-500">差額：</span>
-                            <span
-                                class="font-semibold"
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            1. edgeFlows（管線流量）
+                        </h3>
+                        <div v-if="result" class="max-h-48 space-y-2 overflow-y-auto">
+                            <div
+                                v-for="[uid, flow] in result.edgeFlows"
+                                :key="uid"
+                                class="rounded p-2 text-xs"
                                 :class="
-                                    result.powerBalance.supply - result.powerBalance.demand >= 0
-                                        ? 'text-green-600'
-                                        : 'text-red-600'
+                                    flow.isCongested
+                                        ? 'bg-orange-50 dark:bg-orange-950/40'
+                                        : 'bg-gray-50 dark:bg-gray-900'
                                 "
                             >
-                                {{
-                                    (
-                                        result.powerBalance.supply - result.powerBalance.demand
-                                    ).toFixed(0)
-                                }}
-                                kW
-                            </span>
+                                <span class="font-mono text-gray-500">{{ uid }}</span>
+                                <span class="ml-2 text-blue-600 dark:text-blue-400">{{
+                                    flow.itemId
+                                }}</span>
+                                <span class="ml-2 font-semibold text-green-600 dark:text-green-400">
+                                    {{ flow.rate.toFixed(2) }}/min
+                                </span>
+                                <span
+                                    v-if="flow.isCongested"
+                                    class="ml-2 font-semibold text-orange-600"
+                                >
+                                    堵塞
+                                </span>
+                            </div>
+                            <p v-if="result.edgeFlows.length === 0" class="text-xs text-gray-400">
+                                （無有效管線流量）
+                            </p>
                         </div>
+                        <p v-else class="text-xs text-gray-400">尚未執行計算</p>
                     </div>
-                    <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            2. nodeEfficiencies（設備效率）
+                        </h3>
+                        <div v-if="result" class="max-h-40 space-y-2 overflow-y-auto">
+                            <div
+                                v-for="[uid, eff] in result.nodeEfficiencies"
+                                :key="uid"
+                                class="flex items-center justify-between rounded bg-gray-50 p-2 text-xs dark:bg-gray-900"
+                            >
+                                <span class="font-mono text-gray-500">
+                                    {{ uid }}
+                                    <span
+                                        v-if="result.invalidChainUids.includes(uid)"
+                                        class="ml-1 text-zinc-400"
+                                        >非法</span
+                                    >
+                                </span>
+                                <span :class="getEfficiencyClass(eff)" class="font-semibold">
+                                    {{ (eff * 100).toFixed(1) }}%
+                                </span>
+                            </div>
+                        </div>
+                        <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+                    </div>
+
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            3. itemSummary / sinkDeliveries
+                        </h3>
+                        <table
+                            v-if="result && result.itemSummary.length > 0"
+                            class="mb-3 w-full text-xs"
+                        >
+                            <thead>
+                                <tr class="text-left text-gray-500">
+                                    <th class="pb-2">品項</th>
+                                    <th class="pb-2">產出</th>
+                                    <th class="pb-2">消耗</th>
+                                    <th class="pb-2">淨值</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="item in result.itemSummary"
+                                    :key="item.itemId"
+                                    class="border-t border-gray-200 dark:border-gray-700"
+                                >
+                                    <td class="py-1.5">{{ item.name }}</td>
+                                    <td class="py-1.5 text-green-600">
+                                        {{ item.produced.toFixed(2) }}
+                                    </td>
+                                    <td class="py-1.5 text-red-600">
+                                        {{ item.consumed.toFixed(2) }}
+                                    </td>
+                                    <td
+                                        class="py-1.5 font-semibold"
+                                        :class="item.net >= 0 ? 'text-green-600' : 'text-red-600'"
+                                    >
+                                        {{ item.net.toFixed(2) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="result" class="space-y-1 text-xs">
+                            <div
+                                v-for="[itemId, rate] in result.sinkDeliveries"
+                                :key="itemId"
+                                class="rounded bg-blue-50 p-2 dark:bg-blue-950/30"
+                            >
+                                Sink 交付
+                                <span class="font-semibold">{{ itemId }}</span>
+                                ：{{ rate.toFixed(2) }}/min
+                            </div>
+                            <p v-if="result.sinkDeliveries.length === 0" class="text-gray-400">
+                                （無 sink 交付）
+                            </p>
+                        </div>
+                        <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+                    </div>
+
+                    <div
+                        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                            4. 電力 / 非法 / 堵塞摘要
+                        </h3>
+                        <div v-if="result" class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span class="text-gray-500">需求：</span>
+                                <span class="font-semibold text-red-600"
+                                    >{{ result.powerBalance.demand.toFixed(0) }} kW</span
+                                >
+                            </div>
+                            <div>
+                                <span class="text-gray-500">供應：</span>
+                                <span class="font-semibold text-green-600"
+                                    >{{ result.powerBalance.supply.toFixed(0) }} kW</span
+                                >
+                            </div>
+                            <div class="col-span-2 text-xs">
+                                <span class="text-gray-500">堵塞邊：</span>
+                                <span class="font-mono">{{
+                                    result.congestedEdges.length
+                                        ? result.congestedEdges.join(', ')
+                                        : '無'
+                                }}</span>
+                            </div>
+                            <div class="col-span-2 text-xs">
+                                <span class="text-gray-500">非法節點：</span>
+                                <span class="font-mono">{{
+                                    result.invalidChainUids.length
+                                        ? result.invalidChainUids.join(', ')
+                                        : '無'
+                                }}</span>
+                            </div>
+                        </div>
+                        <p v-else class="text-xs text-gray-400">尚未執行計算</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { runFlowEngine } from '@/composables/useFlowEngine';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
 import type { EdgeFlow, ItemSummary } from '@/types/flow';
+import { getItemForm, getRecipesForMachine } from '@/data/products';
+import MachineCatalogPanel from '@/app/dev/MachineCatalogPanel.vue';
+import ProductCatalogPanel from '@/app/dev/ProductCatalogPanel.vue';
+import DevTopologySvg from '@/app/dev/DevTopologySvg.vue';
+import { getMachine } from '@/data/machines';
+import { findShortestReverseChain, type ChainNode } from '@/utils/reverseChain';
 
-/** FlowEngineTest 頁面計算結果的顯示用結構，對應 flowStore 計算完成後讀出的欄位 */
+type PageTab = 'engine' | 'machines' | 'products';
+
+const pageTabs: { id: PageTab; label: string }[] = [
+    { id: 'engine', label: '引擎測試' },
+    { id: 'machines', label: '機器' },
+    { id: 'products', label: '產品／材料' },
+];
+
+const pageTab = ref<PageTab>('engine');
+const selectedTopoNodeId = ref<string | null>(null);
+
+/** FlowEngineTest 頁面計算結果的顯示用結構 */
 interface FlowEngineTestResult {
-    /** 管線流量：edge uid 對應的 EdgeFlow */
     edgeFlows: [string, EdgeFlow][];
-    /** 設備效率：node uid 對應的效率值（0~1） */
     nodeEfficiencies: [string, number][];
-    /** 品項產出/消耗統計 */
     itemSummary: ItemSummary[];
-    /** 電力供需統計 */
-    powerBalance: {
-        /** 總電力需求（kW） */
-        demand: number;
-        /** 總電力供應（kW） */
-        supply: number;
+    sinkDeliveries: [string, number][];
+    congestedEdges: string[];
+    invalidChainUids: string[];
+    powerBalance: { demand: number; supply: number };
+}
+
+interface PresetMeta {
+    id: string;
+    name: string;
+    group: 'basic' | 'advanced' | 'v7' | 'v9';
+    description: string;
+    expected: string[];
+}
+
+const editorStore = useEditorStore();
+const flowStore = useFlowStore();
+
+const selectedPreset = ref<string | null>(null);
+const jsonInput = ref('');
+const isCalculating = ref(false);
+const result = ref<FlowEngineTestResult | null>(null);
+const errorMessage = ref('');
+
+let originalNodes: FactoryNode[] = [];
+let originalEdges: FactoryEdge[] = [];
+
+/**
+ * 依主要產出品項解析 recipeIndex（相對於 mode 過濾後列表）。
+ */
+function recipeIndexOf(
+    machineName: string,
+    primaryOutput: string,
+    modeId?: string,
+    recipePick = 0,
+): number {
+    const matches = getRecipesForMachine(machineName, modeId)
+        .map((r, i) => ({ r, i }))
+        .filter(({ r }) => r.outputs.some((o) => o.itemId === primaryOutput));
+    if (!matches.length) {
+        console.warn(`[FlowEngineTest] 找不到配方：${machineName} → ${primaryOutput}`);
+        return 0;
+    }
+    return matches[Math.min(recipePick, matches.length - 1)]!.i;
+}
+
+interface MakeNodeOpts {
+    machineMode?: string;
+    /** 主產出品項：Source 寫入產出；加工機供 E1／出邊優先（H1-2）並可解析 recipeIndex */
+    primaryOutput?: string;
+    recipeIndex?: number;
+    /** 同一產出品有多個配方時取第 N 個；Source 時 0→30/min、1→15/min */
+    recipePick?: number;
+    sourceRatePerMin?: number;
+    /** 節點環境（E1 匹配用）；缺省 none */
+    environment?: string;
+}
+
+const MATERIAL_SOURCE = '基礎材料輸出點';
+const ITEM_SOURCE = '物品輸出口';
+
+/**
+ * 依品項 form 選擇基礎材料輸出點 mode。
+ */
+function materialSourceMode(itemName: string): string {
+    const form = getItemForm(itemName);
+    return form === 'solid' ? 'solid_belt' : 'fluid_pipe';
+}
+
+/**
+ * 建立測試用 FactoryNode。
+ */
+function makeNode(
+    id: string,
+    x: number,
+    y: number,
+    label: string,
+    machineType: string,
+    opts: MakeNodeOpts | number = {},
+): FactoryNode {
+    const options: MakeNodeOpts = typeof opts === 'number' ? { recipeIndex: opts } : opts;
+    let machineMode = options.machineMode;
+    let recipeIndex = options.recipeIndex ?? 0;
+    const isMaterialSource = machineType === MATERIAL_SOURCE;
+    const isItemSource = machineType === ITEM_SOURCE;
+
+    if (options.primaryOutput && (isMaterialSource || isItemSource)) {
+        if (isMaterialSource && !machineMode) {
+            machineMode = materialSourceMode(options.primaryOutput);
+        }
+        recipeIndex = options.recipePick ?? recipeIndex;
+        const sourceRatePerMin = options.sourceRatePerMin ?? (recipeIndex === 1 ? 15 : 30);
+        return {
+            id,
+            type: 'default',
+            position: { x, y },
+            data: {
+                label,
+                machineType,
+                recipeIndex,
+                machineMode,
+                primaryOutput: options.primaryOutput,
+                sourceRatePerMin,
+                environment: options.environment ?? 'none',
+                rotation: 0,
+            },
+        };
+    }
+
+    if (options.primaryOutput) {
+        recipeIndex = recipeIndexOf(
+            machineType,
+            options.primaryOutput,
+            machineMode,
+            options.recipePick ?? 0,
+        );
+    }
+    return {
+        id,
+        type: 'default',
+        position: { x, y },
+        data: {
+            label,
+            machineType,
+            recipeIndex,
+            machineMode,
+            environment: options.environment ?? 'none',
+            rotation: 0,
+            /** V9-H1-2：加工機主產出（多輸出時匹配／出邊優先） */
+            ...(options.primaryOutput ? { primaryOutput: options.primaryOutput } : {}),
+        },
     };
 }
 
-/** 藍圖 store：測試期間會被暫時替換為 JSON 輸入資料，計算完成後還原 */
-const editorStore = useEditorStore();
-/** FlowEngine 計算結果 store：計算完成後從這裡讀出結果組成顯示用資料 */
-const flowStore = useFlowStore();
+/**
+ * 建立測試用 FactoryEdge（預設 out-0 → in-0，供媒質檢查）。
+ */
+function makeEdge(id: string, source: string, target: string): FactoryEdge {
+    return {
+        id,
+        source,
+        target,
+        sourceHandle: 'out-0',
+        targetHandle: 'in-0',
+    };
+}
 
-/** 目前選取的 preset id，null 代表尚未選擇或使用自訂 JSON */
-const selectedPreset = ref<string | null>(null);
-/** JSON 輸入區的文字內容，執行計算時會被解析為 nodes / edges */
-const jsonInput = ref('');
-/** 是否正在執行計算，供按鈕 disabled 狀態與文字切換使用 */
-const isCalculating = ref(false);
-/** 最近一次計算完成的顯示用結果，null 代表尚未執行過 */
-const result = ref<FlowEngineTestResult | null>(null);
-/** JSON 解析或計算失敗時的錯誤訊息 */
-const errorMessage = ref<string>('');
+/** 指定 handle 的邊 */
+function makeEdgePorts(
+    id: string,
+    source: string,
+    target: string,
+    sourceHandle: string,
+    targetHandle: string,
+): FactoryEdge {
+    return { id, source, target, sourceHandle, targetHandle };
+}
 
-// 保存原始畫布數據
-/** 執行測試計算前暫存的原始 editorStore.nodes，計算完成或失敗後用於還原，避免污染主畫布 */
-let originalNodes: FactoryNode[] = [];
-/** 執行測試計算前暫存的原始 editorStore.edges，計算完成或失敗後用於還原，避免污染主畫布 */
-let originalEdges: FactoryEdge[] = [];
+/**
+ * 抽象邊：不帶 handle，略過 belt/pipe 媒質檢查（跨媒質／資料鏈用）。
+ */
+function makeEdgeLoose(id: string, source: string, target: string): FactoryEdge {
+    return { id, source, target };
+}
 
-/** 可一鍵載入的測試情境清單，對應 presetData 中的資料 */
-const presets = [
-    { id: 'h1', name: 'H1', description: '基礎單鏈路：Source → 粉碎機 → Sink（效率 100%）' },
+const presets: PresetMeta[] = [
+    {
+        id: 'h1',
+        name: 'H1',
+        group: 'basic',
+        description: '基礎單鏈路：源礦 Source → 粉碎機(源石粉末) → Sink（效率 100%）',
+        expected: [
+            '粉碎機效率 ≈ 100%',
+            '管線速率受媒質上限約束（belt 30／pipe 60）',
+            '無堵塞、無非法節點',
+        ],
+    },
     {
         id: 'h2',
         name: 'H2',
-        description: '瓶頸測試：Source(15/min) → 粉碎機(需30/min) → Sink（效率 50%）',
+        group: 'basic',
+        description: '瓶頸：Source 半速(源礦) → 粉碎機(源石粉末) → Sink（效率約 50%）',
+        expected: ['粉碎機效率 ≈ 50%（黃）', '下游流量約為供料上限', '無環路'],
     },
-    { id: 'h3', name: 'H3', description: '分流器均分：1→2 分流（各 50%）' },
-    { id: 'h4', name: 'H4', description: '環路偵測：A → B → C → A' },
-    { id: 'h5', name: 'H5', description: '懸空設備：無輸入輸出（效率 0%）' },
-    { id: 'h6', name: 'H6', description: '多級串聯：藍鐵礦 → 粉碎 → 精煉 → 塑型 → 藍鐵瓶' },
+    {
+        id: 'h3',
+        name: 'H3',
+        group: 'basic',
+        description: '分流器均分：1→2（各約 50%）',
+        expected: ['分流器效率 100%', '兩條出邊流量大致相等', '兩 Sink 皆有交付'],
+    },
+    {
+        id: 'h4',
+        name: 'H4',
+        group: 'basic',
+        description: '環路偵測：A → B → C → A',
+        expected: ['環路子圖被標記非法／略過', 'edgeFlows 應為空或無有效傳播', '拓撲節點偏灰'],
+    },
+    {
+        id: 'h5',
+        name: 'H5',
+        group: 'basic',
+        description: '懸空設備：無連線',
+        expected: ['節點屬非法鏈或不參與有效計算', '無 edgeFlows', '無 sink 交付'],
+    },
+    {
+        id: 'h6',
+        name: 'H6',
+        group: 'basic',
+        description: '多級串聯：紫晶礦 → 精煉(紫晶纖維) → 塑型(紫晶質瓶) → Sink',
+        expected: [
+            '鏈上設備效率多數接近 100%（受 belt 限制）',
+            'Sink 有紫晶質瓶交付',
+            '可觀察電力需求 > 0',
+        ],
+    },
+    {
+        id: 'h7',
+        name: 'H7',
+        group: 'advanced',
+        description:
+            '堵塞：雙 Source 分接粉碎機 in-0／in-1（源礦共 60＞機速 30 → 入邊平分約 15／15）',
+        expected: [
+            '兩入邊分接不同入埠（非單埠雙線）',
+            '粉碎機效率 ≈ 100%；源石粉末出邊 ≈ 30/min（通常不堵）',
+            '兩條源礦入邊堵塞（橘）約各 15/min；摘要「堵塞邊」非空',
+        ],
+    },
+    {
+        id: 'h8',
+        name: 'H8',
+        group: 'advanced',
+        description: '堵塞：雙鏈 → 匯流器 → Sink：滿速 belt 匯入後出口限 30，反向堵塞約 15／15',
+        expected: [
+            '圖含匯流器；不雙線直連同一 Sink 口',
+            '匯流器→Sink 約 30/min',
+            '兩條入匯流器邊堵塞（橘）回推約各 15/min；摘要「堵塞邊」非空',
+        ],
+    },
+    {
+        id: 'h9',
+        name: 'H9',
+        group: 'advanced',
+        description: '兩條完全獨立產線並列',
+        expected: ['兩鏈互不影響', '各鏈效率獨立為 100%', 'itemSummary 含兩種產物路徑'],
+    },
+    {
+        id: 'h10',
+        name: 'H10',
+        group: 'advanced',
+        description: 'E1：紫晶礦灌粉碎機（無匹配配方）→ 非法／無產出',
+        expected: [
+            '粉碎機輸入種類無法匹配任何配方',
+            '粉碎機／下游非法或無有效交付',
+            '拓撲節點虛線灰框',
+        ],
+    },
+    {
+        id: 'h11',
+        name: 'H11',
+        group: 'advanced',
+        description: '半速 Source + 分流：觀察低流量均分',
+        expected: [
+            'Source 15/min → 分流後各出邊約 7.5/min',
+            '分流器效率 100%',
+            '兩 Sink 交付大致相等且偏低',
+        ],
+    },
+    {
+        id: 'g1',
+        name: 'G1',
+        group: 'v7',
+        description: '氣態：息壤氣(pipe) → 固氣轉化機(solid_mode) → 息壤 → Sink',
+        expected: [
+            '材料源 fluid_pipe → 固氣 pipe 入（合法媒質）',
+            '固氣轉化機效率 ≈ 100%；有「息壤」產出',
+            'E1 依息壤氣匹配 solid_mode 配方',
+        ],
+    },
+    {
+        id: 'g2',
+        name: 'G2',
+        group: 'v7',
+        description: 'E1：精煉爐 base_mode 接赤銅礦＋清水（liquid 配方不在此 mode）',
+        expected: ['base_mode 下無匹配配方 → 精煉爐非法／無產出', '無赤銅塊交付', '拓撲節點偏灰'],
+    },
+    {
+        id: 'g3',
+        name: 'G3',
+        group: 'v7',
+        description: 'belt↔pipe：物品輸出口(belt) → 提純機(pipe in)，帶 handle',
+        expected: ['兩端因媒質不符被標非法', '有效 edgeFlows 為空或無交付', '拓撲節點虛線灰框'],
+    },
+    {
+        id: 'l1',
+        name: 'L1',
+        group: 'v7',
+        description: 'loss 延後：固氣轉化機有 loss 資料，summary 不另扣 rate_per_min',
+        expected: [
+            '機器 modes[].loss 存在（息壤氣 6/min）',
+            '息壤氣 consumed ≈ 配方需求（30），不是 36',
+            '確認 V7 不算 loss',
+        ],
+    },
+    {
+        id: 'v9-no-sink',
+        name: 'V9-無Sink',
+        group: 'v9',
+        description: '非法：源礦→粉碎機但無物品輸入口',
+        expected: ['粉碎機無法連到有效 Sink → 非法鏈', '無 sink 交付', '拓撲偏灰'],
+    },
+    {
+        id: 'v9-missing-water',
+        name: 'V9-缺清水',
+        group: 'v9',
+        description: 'E1：精煉爐 liquid_mode 僅赤銅礦（缺清水）→ 無產出',
+        expected: [
+            '輸入集合不齊 → 精煉爐非法／無赤銅塊',
+            '對照「齊全」請用產品鏈或手動加清水源',
+            '拓撲節點偏灰',
+        ],
+    },
+    {
+        id: 'v9-swap-ore',
+        name: 'V9-換料源礦',
+        group: 'v9',
+        description: 'E1 換料：源礦→粉碎機→源石粉末（不預選配方）',
+        expected: ['粉碎機依輸入匹配源石粉末', '效率 ≈ 100%', 'Sink 有源石粉末'],
+    },
+    {
+        id: 'v9-swap-sand',
+        name: 'V9-換料砂葉',
+        group: 'v9',
+        description: 'E1 換料：砂葉→粉碎機→砂葉粉末（同機不同產）',
+        expected: ['粉碎機依輸入匹配砂葉粉末', '效率 ≈ 100%', 'Sink 有砂葉粉末'],
+    },
+    {
+        id: 'v9-xi-rang',
+        name: 'V9-息壤鏈',
+        group: 'v9',
+        description: 'D1 最短鏈：芽針→碳塊；碳塊＋清水→息壤（stable）→Sink',
+        expected: ['天有洪爐 environment=stable', 'Sink 有息壤交付', '不走緻密碳長鏈'],
+    },
 ];
 
-/** 各 preset id 對應的完整 nodes / edges 測試資料，供 loadPreset 寫入 JSON 輸入區 */
 const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }> = {
     h1: {
         nodes: [
-            {
-                id: 'src',
-                type: 'default',
-                position: { x: 0, y: 100 },
-                data: {
-                    label: '物品輸出口',
-                    machineType: '物品輸出口',
-                    recipeIndex: 0,
-                    rotation: 0,
-                },
-            },
-            {
-                id: 'crusher',
-                type: 'default',
-                position: { x: 200, y: 100 },
-                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
-            },
-            {
-                id: 'sink',
-                type: 'default',
-                position: { x: 400, y: 100 },
-                data: {
-                    label: '物品輸入口',
-                    machineType: '物品輸入口',
-                    recipeIndex: 0,
-                    rotation: 0,
-                },
-            },
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('crusher', 200, 100, '粉碎機', '粉碎機', { primaryOutput: '源石粉末' }),
+            makeNode('sink', 400, 100, '物品輸入口', '物品輸入口'),
         ],
-        edges: [
-            {
-                id: 'e1',
-                source: 'src',
-                target: 'crusher',
-                sourceHandle: 'out-0',
-                targetHandle: 'in-0',
-            },
-            {
-                id: 'e2',
-                source: 'crusher',
-                target: 'sink',
-                sourceHandle: 'out-0',
-                targetHandle: 'in-0',
-            },
-        ],
+        edges: [makeEdge('e1', 'src', 'crusher'), makeEdge('e2', 'crusher', 'sink')],
     },
     h2: {
         nodes: [
-            {
-                id: 'miner',
-                type: 'default',
-                position: { x: 0, y: 100 },
-                data: {
-                    label: '物品輸出口',
-                    machineType: '物品輸出口',
-                    recipeIndex: 1, // 使用半速配方 (15/min)
-                    rotation: 0,
-                },
-            },
-            {
-                id: 'crusher',
-                type: 'default',
-                position: { x: 200, y: 100 },
-                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
-            },
-            {
-                id: 'sink',
-                type: 'default',
-                position: { x: 400, y: 100 },
-                data: {
-                    label: '物品輸入口',
-                    machineType: '物品輸入口',
-                    recipeIndex: 0,
-                    rotation: 0,
-                },
-            },
+            makeNode('miner', 0, 100, '基礎材料輸出點(半速)', '基礎材料輸出點', {
+                primaryOutput: '源礦',
+                recipePick: 1,
+            }),
+            makeNode('crusher', 200, 100, '粉碎機', '粉碎機', { primaryOutput: '源石粉末' }),
+            makeNode('sink', 400, 100, '物品輸入口', '物品輸入口'),
         ],
-        edges: [
-            {
-                id: 'e1',
-                source: 'miner',
-                target: 'crusher',
-                sourceHandle: 'out-0',
-                targetHandle: 'in-0',
-            },
-            {
-                id: 'e2',
-                source: 'crusher',
-                target: 'sink',
-                sourceHandle: 'out-0',
-                targetHandle: 'in-0',
-            },
-        ],
+        edges: [makeEdge('e1', 'miner', 'crusher'), makeEdge('e2', 'crusher', 'sink')],
     },
     h3: {
         nodes: [
-            {
-                id: 'src',
-                type: 'default',
-                position: { x: 0, y: 100 },
-                data: {
-                    label: '物品輸出口',
-                    machineType: '物品輸出口',
-                    recipeIndex: 0,
-                    rotation: 0,
-                },
-            },
-            {
-                id: 'splitter',
-                type: 'default',
-                position: { x: 200, y: 100 },
-                data: { label: '分流器', machineType: '分流器', recipeIndex: 0, rotation: 0 },
-            },
-            {
-                id: 'sink1',
-                type: 'default',
-                position: { x: 400, y: 50 },
-                data: {
-                    label: '物品輸入口 1',
-                    machineType: '物品輸入口',
-                    recipeIndex: 0,
-                    rotation: 0,
-                },
-            },
-            {
-                id: 'sink2',
-                type: 'default',
-                position: { x: 400, y: 150 },
-                data: {
-                    label: '物品輸入口 2',
-                    machineType: '物品輸入口',
-                    recipeIndex: 0,
-                    rotation: 0,
-                },
-            },
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('splitter', 200, 100, '分流器', '分流器'),
+            makeNode('sink1', 400, 40, '物品輸入口 1', '物品輸入口'),
+            makeNode('sink2', 400, 160, '物品輸入口 2', '物品輸入口'),
         ],
         edges: [
-            {
-                id: 'e1',
-                source: 'src',
-                target: 'splitter',
-                sourceHandle: 'out-0',
-                targetHandle: 'in-0',
-            },
+            makeEdge('e1', 'src', 'splitter'),
             {
                 id: 'e2',
                 source: 'splitter',
@@ -513,170 +839,503 @@ const presetData: Record<string, { nodes: FactoryNode[]; edges: FactoryEdge[] }>
     },
     h4: {
         nodes: [
-            {
-                id: 'a',
-                type: 'default',
-                position: { x: 0, y: 100 },
-                data: { label: '設備 A', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
-            },
-            {
-                id: 'b',
-                type: 'default',
-                position: { x: 200, y: 100 },
-                data: { label: '設備 B', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
-            },
-            {
-                id: 'c',
-                type: 'default',
-                position: { x: 400, y: 100 },
-                data: { label: '設備 C', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
-            },
+            makeNode('a', 0, 100, '設備 A', '粉碎機', { primaryOutput: '源石粉末' }),
+            makeNode('b', 200, 100, '設備 B', '粉碎機', { primaryOutput: '源石粉末' }),
+            makeNode('c', 400, 100, '設備 C', '粉碎機', { primaryOutput: '源石粉末' }),
         ],
-        edges: [
-            { id: 'e1', source: 'a', target: 'b', sourceHandle: 'out-0', targetHandle: 'in-0' },
-            { id: 'e2', source: 'b', target: 'c', sourceHandle: 'out-0', targetHandle: 'in-0' },
-            { id: 'e3', source: 'c', target: 'a', sourceHandle: 'out-0', targetHandle: 'in-0' },
-        ],
+        edges: [makeEdge('e1', 'a', 'b'), makeEdge('e2', 'b', 'c'), makeEdge('e3', 'c', 'a')],
     },
     h5: {
-        nodes: [
-            {
-                id: 'alone',
-                type: 'default',
-                position: { x: 200, y: 100 },
-                data: { label: '懸空設備', machineType: '粉碎機', recipeIndex: 0, rotation: 0 },
-            },
-        ],
+        nodes: [makeNode('alone', 200, 100, '懸空設備', '粉碎機', { primaryOutput: '源石粉末' })],
         edges: [],
     },
     h6: {
         nodes: [
-            {
-                id: 'src',
-                type: 'default',
-                position: { x: 0, y: 100 },
-                data: {
-                    label: '物品輸出口',
-                    machineType: '物品輸出口',
-                    recipeIndex: 2, // 藍鐵礦 30/min
-                    rotation: 0,
-                },
-            },
-            {
-                id: 'c1',
-                type: 'default',
-                position: { x: 150, y: 100 },
-                data: { label: '粉碎機', machineType: '粉碎機', recipeIndex: 1, rotation: 0 }, // 藍鐵粉末
-            },
-            {
-                id: 'c2',
-                type: 'default',
-                position: { x: 300, y: 100 },
-                data: { label: '精煉爐', machineType: '精煉爐', recipeIndex: 0, rotation: 0 }, // 藍鐵塊
-            },
-            {
-                id: 'c3',
-                type: 'default',
-                position: { x: 450, y: 100 },
-                data: { label: '塑型機', machineType: '塑型機', recipeIndex: 1, rotation: 0 }, // 藍鐵瓶
-            },
-            {
-                id: 'sink',
-                type: 'default',
-                position: { x: 600, y: 100 },
-                data: {
-                    label: '物品輸入口',
-                    machineType: '物品輸入口',
-                    recipeIndex: 0,
-                    rotation: 0,
-                },
-            },
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', {
+                primaryOutput: '紫晶礦',
+            }),
+            makeNode('c1', 200, 100, '精煉爐', '精煉爐', {
+                machineMode: 'base_mode',
+                primaryOutput: '紫晶纖維',
+            }),
+            makeNode('c2', 400, 100, '塑型機', '塑型機', {
+                machineMode: 'base_mode',
+                primaryOutput: '紫晶質瓶',
+            }),
+            makeNode('sink', 600, 100, '物品輸入口', '物品輸入口'),
         ],
         edges: [
-            { id: 'e1', source: 'src', target: 'c1', sourceHandle: 'out-0', targetHandle: 'in-0' },
-            { id: 'e2', source: 'c1', target: 'c2', sourceHandle: 'out-0', targetHandle: 'in-0' },
-            { id: 'e3', source: 'c2', target: 'c3', sourceHandle: 'out-0', targetHandle: 'in-0' },
-            { id: 'e4', source: 'c3', target: 'sink', sourceHandle: 'out-0', targetHandle: 'in-0' },
+            makeEdge('e1', 'src', 'c1'),
+            makeEdge('e2', 'c1', 'c2'),
+            makeEdge('e3', 'c2', 'sink'),
+        ],
+    },
+    h7: {
+        nodes: [
+            makeNode('src1', 0, 40, 'Source A', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('src2', 0, 160, 'Source B', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [
+            makeEdgePorts('e_a', 'src1', 'crusher', 'out-0', 'in-0'),
+            makeEdgePorts('e_b', 'src2', 'crusher', 'out-0', 'in-1'),
+            makeEdge('e_out', 'crusher', 'sink'),
+        ],
+    },
+    h8: {
+        nodes: [
+            makeNode('src1', 0, 40, 'Source A', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('src2', 0, 180, 'Source B', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('c1', 200, 40, '粉碎機 A', '粉碎機', { primaryOutput: '源石粉末' }),
+            makeNode('c2', 200, 180, '粉碎機 B', '粉碎機', { primaryOutput: '源石粉末' }),
+            makeNode('merger', 380, 110, '匯流器', '匯流器'),
+            makeNode('sink', 560, 110, 'Sink', '物品輸入口'),
+        ],
+        edges: [
+            makeEdge('e1', 'src1', 'c1'),
+            makeEdge('e2', 'src2', 'c2'),
+            // 匯流器三入埠：兩鏈分接 in-0／in-1，避免單埠雙線
+            {
+                id: 'e3',
+                source: 'c1',
+                target: 'merger',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+            {
+                id: 'e4',
+                source: 'c2',
+                target: 'merger',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-1',
+            },
+            makeEdge('e5', 'merger', 'sink'),
+        ],
+    },
+    h9: {
+        nodes: [
+            makeNode('srcA', 0, 40, 'Source A', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('cA', 200, 40, '粉碎機 A', '粉碎機', { primaryOutput: '源石粉末' }),
+            makeNode('sinkA', 400, 40, 'Sink A', '物品輸入口'),
+            makeNode('srcB', 0, 180, 'Source B', '基礎材料輸出點', { primaryOutput: '紫晶礦' }),
+            makeNode('cB', 200, 180, '精煉爐 B', '精煉爐', {
+                machineMode: 'base_mode',
+                primaryOutput: '紫晶纖維',
+            }),
+            makeNode('sinkB', 400, 180, 'Sink B', '物品輸入口'),
+        ],
+        edges: [
+            makeEdge('e1', 'srcA', 'cA'),
+            makeEdge('e2', 'cA', 'sinkA'),
+            makeEdge('e3', 'srcB', 'cB'),
+            makeEdge('e4', 'cB', 'sinkB'),
+        ],
+    },
+    h10: {
+        nodes: [
+            makeNode('src', 0, 100, '紫晶礦 Source', '基礎材料輸出點', { primaryOutput: '紫晶礦' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [makeEdge('e1', 'src', 'crusher'), makeEdge('e2', 'crusher', 'sink')],
+    },
+    h11: {
+        nodes: [
+            makeNode('src', 0, 100, '半速 Source', '基礎材料輸出點', {
+                primaryOutput: '源礦',
+                recipePick: 1,
+            }),
+            makeNode('splitter', 200, 100, '分流器', '分流器'),
+            makeNode('sink1', 400, 40, 'Sink 1', '物品輸入口'),
+            makeNode('sink2', 400, 160, 'Sink 2', '物品輸入口'),
+        ],
+        edges: [
+            makeEdge('e1', 'src', 'splitter'),
+            {
+                id: 'e2',
+                source: 'splitter',
+                target: 'sink1',
+                sourceHandle: 'out-0',
+                targetHandle: 'in-0',
+            },
+            {
+                id: 'e3',
+                source: 'splitter',
+                target: 'sink2',
+                sourceHandle: 'out-1',
+                targetHandle: 'in-0',
+            },
+        ],
+    },
+    g1: {
+        nodes: [
+            makeNode('src', 0, 100, '息壤氣 Source', '基礎材料輸出點', { primaryOutput: '息壤氣' }),
+            makeNode('converter', 220, 100, '固氣轉化機', '固氣轉化機', {
+                machineMode: 'solid_mode',
+            }),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        // pipe→pipe in；belt out→sink
+        edges: [
+            makeEdgePorts('e1', 'src', 'converter', 'out-0', 'in-0'),
+            makeEdgePorts('e2', 'converter', 'sink', 'out-0', 'in-0'),
+        ],
+    },
+    g2: {
+        nodes: [
+            makeNode('srcOre', 0, 40, '赤銅礦', '基礎材料輸出點', { primaryOutput: '赤銅礦' }),
+            makeNode('srcWater', 0, 160, '清水', '基礎材料輸出點', { primaryOutput: '清水' }),
+            makeNode('refinery', 220, 100, '精煉爐(base_mode)', '精煉爐', {
+                machineMode: 'base_mode',
+            }),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [
+            makeEdgeLoose('e1', 'srcOre', 'refinery'),
+            makeEdgeLoose('e2', 'srcWater', 'refinery'),
+            makeEdgeLoose('e3', 'refinery', 'sink'),
+        ],
+    },
+    g3: {
+        nodes: [
+            // 故意用固體物品輸出口(belt)對接提純機 pipe 入，驗證媒質錯接
+            makeNode('src', 0, 100, '物品輸出口', '物品輸出口', { primaryOutput: '源礦' }),
+            makeNode('purifier', 220, 100, '提純機', '提純機', {
+                machineMode: 'liquid_mode',
+                primaryOutput: '赫銅溶液',
+            }),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [makeEdge('e1', 'src', 'purifier'), makeEdge('e2', 'purifier', 'sink')],
+    },
+    l1: {
+        nodes: [
+            makeNode('src', 0, 100, '息壤氣 Source', '基礎材料輸出點', { primaryOutput: '息壤氣' }),
+            makeNode('converter', 220, 100, '固氣轉化機(有 loss)', '固氣轉化機', {
+                machineMode: 'solid_mode',
+            }),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [
+            makeEdgePorts('e1', 'src', 'converter', 'out-0', 'in-0'),
+            makeEdgePorts('e2', 'converter', 'sink', 'out-0', 'in-0'),
+        ],
+    },
+    'v9-no-sink': {
+        nodes: [
+            makeNode('src', 0, 100, '基礎材料輸出點', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
+        ],
+        edges: [makeEdge('e1', 'src', 'crusher')],
+    },
+    'v9-missing-water': {
+        nodes: [
+            makeNode('ore', 0, 100, '赤銅礦', '基礎材料輸出點', { primaryOutput: '赤銅礦' }),
+            makeNode('ref', 220, 100, '精煉爐', '精煉爐', { machineMode: 'liquid_mode' }),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [
+            makeEdgePorts('e1', 'ore', 'ref', 'out-0', 'in-0'),
+            makeEdgePorts('e2', 'ref', 'sink', 'out-1', 'in-0'),
+        ],
+    },
+    'v9-swap-ore': {
+        nodes: [
+            makeNode('src', 0, 100, '源礦', '基礎材料輸出點', { primaryOutput: '源礦' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [makeEdge('e1', 'src', 'crusher'), makeEdge('e2', 'crusher', 'sink')],
+    },
+    'v9-swap-sand': {
+        nodes: [
+            makeNode('src', 0, 100, '砂葉', '基礎材料輸出點', { primaryOutput: '砂葉' }),
+            makeNode('crusher', 220, 100, '粉碎機', '粉碎機'),
+            makeNode('sink', 440, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [makeEdge('e1', 'src', 'crusher'), makeEdge('e2', 'crusher', 'sink')],
+    },
+    'v9-xi-rang': {
+        nodes: [
+            makeNode('needle', 0, 40, '芽針', '基礎材料輸出點', { primaryOutput: '芽針' }),
+            makeNode('water', 0, 180, '清水', '基礎材料輸出點', { primaryOutput: '清水' }),
+            makeNode('refinery', 200, 40, '精煉爐', '精煉爐', { machineMode: 'base_mode' }),
+            makeNode('furnace', 400, 100, '天有洪爐', '天有洪爐', {
+                machineMode: 'default',
+                environment: 'stable',
+            }),
+            makeNode('sink', 600, 100, '物品輸入口', '物品輸入口'),
+        ],
+        edges: [
+            makeEdge('e1', 'needle', 'refinery'),
+            makeEdge('e2', 'refinery', 'furnace'),
+            // 洪爐埠皆 belt；清水為 liquid → 抽象邊略過媒質以演示配方鏈
+            makeEdgeLoose('e3', 'water', 'furnace'),
+            makeEdge('e4', 'furnace', 'sink'),
         ],
     },
 };
 
+const activePresetMeta = computed(() => presets.find((p) => p.id === selectedPreset.value) ?? null);
+
+/** D1 最短鏈套用：精選產品（其餘可自產品分頁複製名稱） */
+const chainProductOptions = [
+    '息壤',
+    '源石粉末',
+    '砂葉粉末',
+    '錦草溶液',
+    '紫晶質瓶',
+    '赤銅塊',
+    '赫銅零件',
+];
+const chainProduct = ref('息壤');
+
 /**
- * 將指定 preset 的 nodes / edges 資料序列化寫入 JSON 輸入區，供使用者檢視或修改後執行計算。
- * @param id preset 識別碼，對應 presetData 的 key
- * @example
- * loadPreset('h1')
+ * 依群組篩選 preset 清單。
  */
-function loadPreset(id: string) {
-    selectedPreset.value = id;
-    jsonInput.value = JSON.stringify(presetData[id], null, 2);
-    errorMessage.value = '';
+function presetsByGroup(group: PresetMeta['group']): PresetMeta[] {
+    return presets.filter((p) => p.group === group);
 }
 
 /**
- * 解析 JSON 輸入區內容，暫時替換 editorStore 的 nodes / edges 並執行一次 FlowEngine 計算，
- * 讀取結果後立即還原原始畫布資料，確保本測試頁不會影響主編輯器狀態。
- * @example
- * await runCalculation()
+ * Preset 按鈕樣式。
+ * @param id preset id
+ */
+function presetButtonClass(id: string): string {
+    return selectedPreset.value === id
+        ? 'bg-blue-600 text-white'
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600';
+}
+
+/** 嘗試解析目前 JSON 為圖資料（失敗時為 null） */
+const parsedGraph = computed<{ nodes: FactoryNode[]; edges: FactoryEdge[] } | null>(() => {
+    if (!jsonInput.value.trim()) return null;
+    try {
+        const data = JSON.parse(jsonInput.value) as {
+            nodes?: FactoryNode[];
+            edges?: FactoryEdge[];
+        };
+        if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) return null;
+        return { nodes: data.nodes, edges: data.edges };
+    } catch {
+        return null;
+    }
+});
+
+const selectedTopoNode = computed(() => {
+    const id = selectedTopoNodeId.value;
+    if (!id || !parsedGraph.value) return null;
+    return parsedGraph.value.nodes.find((n) => n.id === id) ?? null;
+});
+
+const selectedTopoModes = computed(() => {
+    const type = selectedTopoNode.value?.data?.machineType as string | undefined;
+    if (!type) return [];
+    return getMachine(type)?.modes ?? [];
+});
+
+/**
+ * 寫回 JSON 的 machineMode，拓樸埠示意跟著更新。
+ */
+function setTopoNodeMode(nodeId: string, modeId: string) {
+    const g = parsedGraph.value;
+    if (!g) return;
+    const nodes = g.nodes.map((n) =>
+        n.id === nodeId
+            ? { ...n, data: { ...n.data, machineMode: modeId, label: n.data?.label ?? n.id } }
+            : n,
+    );
+    jsonInput.value = JSON.stringify({ nodes, edges: g.edges }, null, 2);
+}
+
+const topologyNodeStyle = computed(() => {
+    const g = parsedGraph.value;
+    const map: Record<string, { fill?: string; invalid?: boolean; subtitleExtra?: string }> = {};
+    if (!g) return map;
+    const effMap = new Map(result.value?.nodeEfficiencies ?? []);
+    const invalid = new Set(result.value?.invalidChainUids ?? []);
+    for (const n of g.nodes) {
+        const eff = effMap.get(n.id);
+        const isInvalid = invalid.has(n.id);
+        map[n.id] = {
+            fill: nodeFillColor(eff, isInvalid),
+            invalid: isInvalid,
+            subtitleExtra:
+                eff === undefined
+                    ? n.id
+                    : isInvalid
+                      ? `${n.id} · 非法`
+                      : `${n.id} · ${(eff * 100).toFixed(0)}%`,
+        };
+    }
+    return map;
+});
+
+const topologyEdgeStyle = computed(() => {
+    const g = parsedGraph.value;
+    const map: Record<string, { label?: string; congested?: boolean }> = {};
+    if (!g) return map;
+    const flowMap = new Map(result.value?.edgeFlows ?? []);
+    const congested = new Set(result.value?.congestedEdges ?? []);
+    for (const e of g.edges) {
+        const flow = flowMap.get(e.id);
+        const isC = congested.has(e.id) || flow?.isCongested === true;
+        map[e.id] = {
+            label: flow ? `${flow.itemId} ${flow.rate.toFixed(1)}${isC ? '!' : ''}` : e.id,
+            congested: isC,
+        };
+    }
+    return map;
+});
+
+/**
+ * 節點填色（效率 / 非法）。
+ * @param eff 效率 0~1，未計算時 undefined
+ * @param invalid 是否非法鏈
+ */
+function nodeFillColor(eff: number | undefined, invalid: boolean): string {
+    if (invalid) return '#71717a';
+    if (eff === undefined) return '#52525b';
+    if (eff >= 1) return '#22c55e';
+    if (eff >= 0.5) return '#eab308';
+    if (eff > 0) return '#fb923c';
+    return '#a1a1aa';
+}
+
+/**
+ * 載入 preset 並自動執行計算。
+ * @param id preset id
+ */
+async function loadPreset(id: string) {
+    selectedPreset.value = id;
+    selectedTopoNodeId.value = null;
+    jsonInput.value = JSON.stringify(presetData[id], null, 2);
+    errorMessage.value = '';
+    await runCalculation();
+}
+
+/**
+ * V9-F2：依 D1 最短反向鏈產生演示圖（抽象邊連線，便於跨媒質演示）。
+ */
+async function applyReverseChainDemo() {
+    const root = findShortestReverseChain(chainProduct.value);
+    if (!root) {
+        errorMessage.value = `無法推演最短鏈：${chainProduct.value}`;
+        return;
+    }
+
+    const materialIds = new Map<string, string>();
+    const productIds = new Map<string, string>();
+    const nodes: FactoryNode[] = [];
+    const edges: FactoryEdge[] = [];
+    let seq = 0;
+    let matLane = 0;
+
+    function visit(n: ChainNode): string {
+        if (n.kind === 'material') {
+            let id = materialIds.get(n.itemId);
+            if (!id) {
+                id = `src_${seq++}`;
+                materialIds.set(n.itemId, id);
+                nodes.push(
+                    makeNode(id, 0, matLane * 90, n.itemId, MATERIAL_SOURCE, {
+                        primaryOutput: n.itemId,
+                    }),
+                );
+                matLane += 1;
+            }
+            return id;
+        }
+
+        const existing = productIds.get(n.itemId);
+        if (existing) return existing;
+
+        const childIds = (n.inputs ?? []).map((c) => visit(c));
+        const id = `dev_${seq++}`;
+        productIds.set(n.itemId, id);
+        const col = productIds.size;
+        const machine = n.recipe?.machine ?? '粉碎機';
+        const env = n.recipe?.environment;
+        nodes.push(
+            makeNode(id, col * 200, 80, `${machine}→${n.itemId}`, machine, {
+                machineMode: n.recipe?.machineMode,
+                environment: env && env !== 'none' ? env : undefined,
+                /** 主產出：多輸出時引擎出邊／匹配優先此品（V9-H1-2） */
+                primaryOutput: n.itemId,
+            }),
+        );
+        for (const src of childIds) {
+            edges.push(makeEdgeLoose(`e_${src}_${id}_${edges.length}`, src, id));
+        }
+        return id;
+    }
+
+    const rootId = visit(root);
+    const sinkId = `sink_${seq++}`;
+    nodes.push(makeNode(sinkId, (productIds.size + 1) * 200, 80, '物品輸入口', '物品輸入口'));
+    edges.push(makeEdgeLoose(`e_${rootId}_${sinkId}`, rootId, sinkId));
+
+    selectedPreset.value = null;
+    selectedTopoNodeId.value = null;
+    jsonInput.value = JSON.stringify({ nodes, edges }, null, 2);
+    errorMessage.value = '';
+    await runCalculation();
+}
+
+/**
+ * 解析 JSON、暫替 editorStore、執行 FlowEngine、讀結果後還原主畫布。
  */
 async function runCalculation() {
     try {
         isCalculating.value = true;
         errorMessage.value = '';
 
-        const data = JSON.parse(jsonInput.value);
-
+        const data = JSON.parse(jsonInput.value) as {
+            nodes?: FactoryNode[];
+            edges?: FactoryEdge[];
+        };
         if (!data.nodes || !data.edges) {
             throw new Error('JSON 格式錯誤：需包含 nodes 和 edges 欄位');
         }
 
-        // 保存原始畫布數據
         originalNodes = [...editorStore.nodes];
         originalEdges = [...editorStore.edges];
-
-        // 臨時替換為測試數據
         editorStore.nodes = data.nodes;
         editorStore.edges = data.edges;
 
-        // 直接執行 FlowEngine，避免 /dev 路由未掛載 watcher 時無計算結果
         await runFlowEngine();
 
-        // 讀取計算結果
         result.value = {
             edgeFlows: Array.from(flowStore.edgeFlows.entries()),
             nodeEfficiencies: Array.from(flowStore.nodeEfficiencies.entries()),
             itemSummary: flowStore.itemSummary,
+            sinkDeliveries: Array.from(flowStore.sinkDeliveries.entries()),
+            congestedEdges: Array.from(flowStore.congestedEdges),
+            invalidChainUids: Array.from(flowStore.invalidChainUids),
             powerBalance: {
                 demand: flowStore.totalPowerDemand,
                 supply: flowStore.totalPowerSupply,
             },
         };
 
-        // 恢復原始數據
         editorStore.nodes = originalNodes;
         editorStore.edges = originalEdges;
-
         isCalculating.value = false;
     } catch (error) {
         errorMessage.value = (error as Error)?.message || '計算失敗，請檢查 JSON 格式';
         console.error('計算失敗：', error);
-
-        // 確保恢復原始數據
         if (originalNodes.length > 0 || originalEdges.length > 0) {
             editorStore.nodes = originalNodes;
             editorStore.edges = originalEdges;
         }
-
         isCalculating.value = false;
     }
 }
 
 /**
- * 依設備效率高低回傳對應顏色 class。
- * @param eff 效率（0~1）
- * @returns Tailwind class 字串
- * @example
- * const cls = getEfficiencyClass(0.8)
+ * 效率文字顏色 class。
+ * @param eff 0~1
  */
 function getEfficiencyClass(eff: number): string {
     if (eff === 1) return 'text-green-500';
@@ -685,7 +1344,3 @@ function getEfficiencyClass(eff: number): string {
     return 'text-gray-400';
 }
 </script>
-
-<style scoped>
-/* Additional styles if needed */
-</style>

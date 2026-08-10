@@ -1,9 +1,12 @@
 # FlowEngine 使用指南 — L2/L3 開發者手冊
 
-**版本：** V5  
+**版本：** V9  
 **建立日期：** 2026-06-06  
+**最後更新：** 2026-08-02  
 **負責人：** aaaaa (CR-04)  
 **適用對象：** L2 容器層（harry, toby）、L3 元件層（avery, goodmorning, MBD）
+
+**相關：** [協作者使用／下一步](./CR04_FOR_COLLABORATORS.md)｜[資料格式](./DATA_FORMAT_GUIDE.md)｜[V6～V9 報告](./MILESTONE_0802_V6_V9_REPORT.md)
 
 ---
 
@@ -16,6 +19,8 @@
 5. [在 L3 中使用 flowStore](#在-l3-中使用-flowstore)
 6. [驗證情境速查](#驗證情境速查)
 7. [常見問題 FAQ](#常見問題-faq)
+8. [V7：machineMode 與媒質](#v7machinemode-與媒質)
+9. [Dev 頁面使用說明](#dev-頁面使用說明)（V8／V9 更新）
 
 ---
 
@@ -131,45 +136,31 @@ useFlowEngine()   // 再啟動流量計算
 runFlowEngine()
   │
   ├─ 1. buildGraph(nodes, edges, hasBlockingError)
-  │      過濾有 CR-03 Error 的設備與管線
-  │      建立 FlowGraph：nodes Map + edges Map + adjacency list
+  │      過濾 CR-03 Error；帶入 machineMode／environment
+  │      Source：primaryOutput × sourceRatePerMin（預設 30）
+  │      一般機器：不預填 rates（V9-E1 待匹配）
   │
   ├─ 2. validateChains(graph)
-  │      反向 BFS，標記「非合法鏈路」（無 sink 下游的設備）
-  │      → graph.invalidSubgraphUids
+  │      反向 BFS（無 Sink 下游 → 非法）
+  │      埠基數／belt↔pipe／form↔媒質
+  │      _resolveRecipesByInputs → matchRecipeByInputs
+  │      有配方卻無匹配 → 非法（輸入不齊／種類不符）
   │
   ├─ 3. topologicalSort(graph)
-  │      Kahn's Algorithm，偵測環路
-  │      環路內的設備標記為 invalid，不參與計算
-  │      → sortedNodes: string[]（拓撲順序）
+  │      Kahn's Algorithm；環路 → invalid
   │
   ├─ 4. propagateFlows(sortedNodes, graph)
-  │      依拓撲順序正向傳播，計算流量與效率
-  │      ┌─ source node: 直接輸出 recipe.output_rate_per_min
-  │      ├─ normal device: efficiency = min(supplied_i / required_i)
-  │      │                 output = recipe_rate × efficiency
-  │      ├─ splitter: input ÷ output_count（或使用者設定比例）
-  │      └─ merger: Σ inputs
-  │      → edgeFlows: Map<uid, EdgeFlow>
+  │      ┌─ source: primaryOutput 速率
+  │      ├─ normal: 依正流量品項再 matchRecipeByInputs
+  │      │          efficiency = min(supplied/required)
+  │      │          無匹配 → efficiency=0、無產出
+  │      ├─ splitter / merger
+  │      └─ → edgeFlows
   │
-  ├─ 5. detectCongestion(graph, edgeFlows)
-  │      多遍反向傳播，偵測堵塞並修正上游速率
-  │      若下游滿載，標記 EdgeFlow.isCongested = true
-  │      → congestedEdges: Set<uid>
-  │
-  ├─ 6. calcItemSummary(graph)
-  │      彙整所有設備的輸入/輸出，按品項統計
-  │      produced = 所有 source / 設備輸出加總
-  │      consumed = 所有 sink / 設備輸入加總
-  │      net = produced − consumed
-  │      → itemSummary: ItemSummary[]
-  │
-  ├─ 7. sinkDeliveries（交付量統計）
-  │      統計所有物品輸入口（sink）的實際接收量
-  │      → sinkDeliveries: Map<itemId, rate>
-  │
-  └─ 8. applyResult(result)
-         一次性批次寫入 flowStore（避免多次響應式更新）
+  ├─ 5. detectCongestion …
+  ├─ 6. calcItemSummary …（不含 mode.loss）
+  ├─ 7. sinkDeliveries …（總產值只計 Sink）
+  └─ 8. applyResult → flowStore
 ```
 
 ### 關鍵步驟說明
@@ -185,26 +176,35 @@ function buildGraph(
 ```
 
 - 過濾有 `validationStore.hasBlockingError(uid) === true` 的設備與管線
-- 建立有向圖結構：
-  - `nodes: Map<uid, FlowNode>`
-  - `edges: Map<uid, EdgeMeta>`
-  - `adjacencyList: Map<uid, string[]>` （uid → 下游設備 uid[]）
+- 寫入 `machineMode`／`environment`（缺省 `modes[0]`／`"none"`）
+- **Source**（基礎材料輸出點／物品輸出口）：`primaryOutput` → `outputRates`
+- **一般機器**：V9 起不依 `recipeIndex` 預填 rates（匹配後再填）
 
-#### 2. validateChains — 反向 BFS 鏈路驗證
+#### 2. validateChains — 反向 BFS＋配方匹配
 
 ```typescript
 function validateChains(graph: FlowGraph): void
+function matchRecipeByInputs(
+  machineType: string,
+  incomingItemIds: Set<string>,
+  machineMode?: string,
+  environment?: string,
+): { recipe: RecipeDef; index: number } | null
 ```
 
-- 從所有 `isSink = true` 的節點開始**反向** BFS
-- 能追溯到的節點標記為 `isValid = true`
-- 無法追溯到的節點（孤立 / 無 sink 下游）標記為 `isValid = false`
-- 結果儲存於 `graph.invalidSubgraphUids`
+- 從 Sink **反向** BFS；無法到達 Sink → 非法
+- 埠一對一、belt↔pipe、form↔媒質（V7／V8）
+- **V9-E1**：依上游品項 `matchRecipeByInputs`（種類集合**完全吻合**＋environment）
+  - 多候選 → 資料順序第一
+  - 無匹配 → 非法／無理論產出
+- `recipeIndex` 僅提示；引擎以匹配結果覆寫
 
 **範例：**
 ```
-礦機 → 熔爐 → （無連線）    // 熔爐無 sink 下游 → invalid
-礦機 → 熔爐 → sink         // 正常鏈路 → valid
+礦機 → 熔爐 → （無連線）     // 無 sink → invalid
+源礦 → 粉碎機 → sink         // E1 匹配源石粉末 → valid
+赤銅礦 → 精煉(liquid) → sink // 缺清水 → 無匹配 → invalid
+belt 口 → pipe 口            // 媒質錯接 → invalid
 ```
 
 #### 3. topologicalSort — 拓撲排序與環路偵測
@@ -810,18 +810,153 @@ if (flowStore.hasPowerShortage) {
 
 ### Q7：如何在開發時測試 FlowEngine？
 
-使用 `/dev/flow-engine` 測試頁：
+見下方 [Dev 頁面使用說明](#dev-頁面使用說明)。路由：`http://localhost:5173/dev/flow-engine`（僅 DEV）。
 
-1. 貼入 H1–H6 preset JSON
-2. 點選「執行計算」
-3. 檢視 edgeFlows / nodeEfficiencies / itemSummary
+---
 
-**測試頁路由：**
-```
-http://localhost:5173/dev/flow-engine
-```
+## Dev 頁面使用說明
 
-僅在 `import.meta.env.DEV` 時可訪問。
+僅 `import.meta.env.DEV` 可訪問。導覽：`/dev`（預設進 flow-engine）。
+
+### 路由一覽
+
+| 路由 | 狀態 | 用途 |
+|------|------|------|
+| `/dev/flow-engine` | ✅ 主頁 | 引擎計算、拓樸、機器／產品目錄、preset、D1 演示 |
+| `/dev/history-replay` | ✅ | Undo／Redo＋V6 拖曳驗收 |
+| `/dev/validation-test` | ✅ | Detector／警示 |
+| `/dev/graph-viz` | ❌ 退役 | 自動轉址 flow-engine（V9-H1-4） |
+
+---
+
+### `/dev/flow-engine` — 三個分頁
+
+#### 1）引擎測試（預設）
+
+| UI | 用法 |
+|----|------|
+| Preset 按鈕 | 點選即載入 JSON 並計算。群組：**basic**（H1–H6）、**advanced**（H7–H11）、**v7**（G1–G3／L1）、**v9**（換料／缺清水／息壤／無 Sink） |
+| 預期說明 | 每個 preset 下方列出應觀察的效率／堵塞／非法語意 |
+| JSON 區 | 可手改 `nodes`／`edges` 後按「執行計算」 |
+| 拓樸 SVG | 節點著色＝效率；**橘邊＝堵塞**；點節點可切 `machineMode`（埠示意更新） |
+| 摘要面板 | 電力、非法節點、**堵塞邊**列表、Sink 交付、品項 summary |
+| D1 最短鏈 | 選產品 →「產生演示圖」：依最短反向鏈建圖（加工機帶 `primaryOutput`） |
+
+**建議手測路徑：**
+
+1. **H1** — 滿速源礦→粉碎→Sink  
+2. **H7** — 雙源灌粉碎機：源礦入邊橘邊約 15／15；出邊源石粉末≈30  
+3. **H8** — 匯流堵塞：入匯流器邊約 15／15  
+4. **H10／G2** — 非法／無匹配配方  
+5. **v9-xi-rang** 或 D1 選「息壤」／「赫銅零件」— 反向鏈演示  
+6. **v9-swap-*** — E1 換料語意  
+
+#### 2）機器目錄
+
+- 依 `machine_tags` 分頁（基礎生產／合成製造／…）  
+- 顯示 WxH 格點＋當前 mode 埠（side／offset／media）  
+- 可切 mode 預覽埠變化  
+
+#### 3）產品／材料目錄
+
+- **產品**＝`products.json`；**基礎材料**＝`materials.json`（已分離）  
+- 選產品可預覽 D1 最短鏈（步數、葉材料、各步效率個／分）  
+
+---
+
+### Preset 速查（引擎語意）
+
+| ID | 觀察重點 |
+|----|----------|
+| H1／H2 | 滿速／半速效率 |
+| H3／H11 | 分流 |
+| H4／H5 | 環路／孤立非法 |
+| H6 | 多級串聯 |
+| **H7** | 同品雙入：入邊堵塞平分；出邊通常不堵 |
+| **H8** | 匯流器出口限 30 → 入邊回推堵塞 |
+| H9 | 雙獨立產線 |
+| H10 | 輸入無法匹配配方 |
+| G1／L1 | 氣態／mode；loss 不進 summary |
+| G2 | 錯 mode → 無匹配 |
+| G3 | belt↔pipe 錯接非法 |
+| v9-* | E1 換料／缺料／無 Sink／息壤短鏈 |
+
+完整盤點：[dev_v9/F1_case_inventory.md](./dev/dev_v9/F1_case_inventory.md)。
+
+---
+
+### `/dev/history-replay` — 歷史與 V6
+
+| 區塊 | 用法 |
+|------|------|
+| 快速場景／測試操作 | 擺放、移動、刪除 → 觀察 Undo Stack |
+| **V6 拖曳驗收** | 與下方 Undo／Redo **同一** `historyStore`。建議先按 **「一鍵 M1→M4（推薦）」**；空畫布時模擬鈕會提示需先擺設備 |
+| Undo／Redo／Clear | 還原／重做／清空歷史 |
+
+M7（真拖曳跟手）請到主畫布目視後手動勾選。
+
+---
+
+## V7：machineMode 與媒質
+
+### machineMode
+
+- 節點欄位：`FactoryNode.data.machineMode?: string`
+- 缺省：該機器 `modes[0].id`（`resolveMachineMode`）
+- 配方候選：`getRecipesForMachine(machineType, machineMode)`
+- **V9**：實際選用由 `matchRecipeByInputs` 決定；`recipeIndex` 為匹配後索引（mode 過濾後）
+
+### PortMedia（belt｜pipe）
+
+- `PortDef.media`: `'belt'`（固體／傳送帶）或 `'pipe'`（液體／氣體／管線）
+- `validateChains`：當邊的 source／target handle **皆有值**時比對兩端媒質；belt↔pipe → 非法
+- handle 缺省（抽象測試邊）則**跳過**媒質合法性檢查；速率仍可依品項 `form` 套用上限
+- 速率：`belt` → 30／min，`pipe` → 60／min（`PIPE_RATE_LIMIT`）
+
+### loss
+
+- `MachineMode.loss` 僅在資料／型別存在
+- FlowEngine **不**把 loss 算進 `itemSummary`（刻意延後）
+
+### 手動驗證
+
+`/dev/flow-engine` → V7 群組：G1（氣態＋mode）、G2（錯誤 mode）、G3（belt↔pipe）、L1（loss 不進 summary）
+
+### V8：埠基數／form／速率／H8（已實作）
+
+定案與工項：[todolist_v8.md](./dev/todolist_v8.md)／[A1_scope_decision.md](./dev/dev_v8/A1_scope_decision.md)。
+
+| 項 | 說明 |
+|----|------|
+| Dev | `/dev/flow-engine` 機器／產品分頁（JSON＋placeholder） |
+| 埠 | 每埠最多一條邊；複數埠依 `modes[].ports`；無 handle 且該方向僅一埠時，多條抽象邊亦非法 |
+| 速率 | `BELT_RATE_LIMIT=30`；`PIPE_RATE_LIMIT=60`（埠媒質優先，否則依品項 `form`，皆未知則 30） |
+| H8 | 雙鏈→匯流器→Sink；滿速 belt 匯入後出口 30 → 反向堵塞（上游約 15／15） |
+| form | `ItemForm`：`solid`→belt，`liquid`／`gas`→pipe；錯配 → `isItemFormMediaMismatch` 標非法 |
+| 驗證 | **僅 FlowEngine**（CR-04 先行；CR-02 UI 拒絕後續） |
+| 拓樸 | `DevTopologySvg`（`/dev/flow-engine`）；依當前 mode ports；點節點可切 `machineMode`。`/dev/graph-viz` 已退役（V9-H1-4） |
+
+測試：`src/__tests__/flowEngine.v8.*.test.ts`、`itemForm.test.ts`。
+
+### V9：材料源／輸入匹配／反向鏈路（已實作）
+
+定案與工項：[todolist_v9.md](./dev/todolist_v9.md)／[A1_scope_decision.md](./dev/dev_v9/A1_scope_decision.md)。
+
+| 項 | 說明 |
+|----|------|
+| 埠資料 | 僅 `modes[]`；預設 `modes[0]` |
+| Source | **基礎材料輸出點**（form→belt／pipe）＋物品輸出口（固體）；`primaryOutput` |
+| 產品／材料 | `products.json`／`materials.json` 分冊；無材料假產品 |
+| 配方 | `matchRecipeByInputs`：種類集合完全吻合；不齊無產出；同集合取第一 |
+| 環境 | 節點 `environment`（缺省 `none`）須與配方一致 |
+| 反向鏈 | `findShortestReverseChain`（`src/utils/reverseChain.ts`）；息壤選短鏈 |
+| 預覽 | 機器 tag 分頁；WxH 格點埠；產品頁顯示最短鏈 |
+| Dev | V9 preset（換料／缺清水／息壤／無 Sink）＋「產生演示圖」 |
+| 總產值 | 只計 **物品輸入口** 交付 |
+| 堵塞 | 同品多入邊（一般機或匯流器）按供給比例分攤 demand（H7／H8） |
+| 多輸出 | `matchRecipeByEdgeCandidates`：每邊選一品；`primaryOutput` 優先 |
+
+測試：`reverseChain.test.ts`、`matchRecipeByInputs.test.ts`、`flowEngine.v9.h7Congestion.test.ts`、`flowEngine.v9.h12ByproductMatch.test.ts`。
 
 ---
 
@@ -857,14 +992,19 @@ const purifier: Machine = {
 
 ## 相關文件
 
-- **L1 API Reference** — [docs/aaaaa/L1_API_REFERENCE.md](./L1_API_REFERENCE.md)
+- **協作者使用／下一步** — [CR04_FOR_COLLABORATORS.md](./CR04_FOR_COLLABORATORS.md)
+- **資料格式** — [DATA_FORMAT_GUIDE.md](./DATA_FORMAT_GUIDE.md)
+- **V6～V9 報告** — [MILESTONE_0802_V6_V9_REPORT.md](./MILESTONE_0802_V6_V9_REPORT.md)
+- **L1 API Reference** — [L1_API_REFERENCE.md](./L1_API_REFERENCE.md)
 - **FlowEngine 原始碼** — [src/composables/useFlowEngine.ts](../../src/composables/useFlowEngine.ts)
-- **FlowEngine 測試** — [src/__tests__/composables/useFlowEngine.test.ts](../../src/__tests__/composables/useFlowEngine.test.ts)
+- **V7 mode／媒質測試** — [src/__tests__/flowEngine.v7.modeMedia.test.ts](../../src/__tests__/flowEngine.v7.modeMedia.test.ts)
+- **V8 埠／速率／H8／form** — `src/__tests__/flowEngine.v8.*.test.ts`
+- **V9** — `reverseChain.test.ts`、`matchRecipeByInputs.test.ts`、`flowEngine.v9.*.test.ts`
 - **開發測試頁** — `/dev/flow-engine`
 
 ---
 
-**文件版本：** V5  
-**最後更新：** 2026-06-06  
+**文件版本：** V9.1  
+**最後更新：** 2026-08-02  
 **維護者：** aaaaa (CR-04)  
-**問題回報：** 見 `docs/aaaaa/TODOLIST.md` 封鎖項目追蹤
+**問題回報：** 見 `docs/aaaaa/dev/todolist_v9.md`

@@ -6,8 +6,8 @@ import { Background } from '@vue-flow/background';
 import { Controls } from '@vue-flow/controls';
 import { MiniMap } from '@vue-flow/minimap';
 import { VueFlow, EdgeLabelRenderer, useVueFlow } from '@vue-flow/core';
-import type { NodeMouseEvent } from '@vue-flow/core';
-import type { EquipmentType, Rotation } from '@/types/editor';
+import type { NodeDragEvent, NodeMouseEvent } from '@vue-flow/core';
+import type { DevicePositionSnapshot, EquipmentType, Rotation } from '@/types/editor';
 import type { FactoryNode } from '@/types/graph';
 import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
@@ -211,6 +211,53 @@ function handleNodeClick({ node }: NodeMouseEvent) {
 }
 
 /**
+ * 拖曳開始時各設備的位置快照；非拖曳中為 null。
+ * 供 drag-stop 呼叫 commitDeviceMove，讓移動進入歷史且不重複套用位移。
+ */
+const dragBeforeSnapshot = ref<DevicePositionSnapshot | null>(null);
+
+/**
+ * 本次拖曳涉及的設備 uid（單選或多選）。
+ */
+const dragUids = ref<string[]>([]);
+
+/**
+ * 記錄拖曳開始時的位置快照。  \
+ * node-drag-start 與 selection-drag-start 共用（事件形狀相同）。
+ *
+ * @param event Vue Flow 拖曳事件，nodes 為本次一併移動的節點
+ * @example
+ * handleNodeDragStart({ node, nodes: [node], event } as NodeDragEvent)
+ */
+function handleNodeDragStart({ nodes: dragged }: NodeDragEvent) {
+    if (dragged.length === 0) {
+        dragBeforeSnapshot.value = null;
+        dragUids.value = [];
+        return;
+    }
+    dragUids.value = dragged.map((n) => n.id);
+    dragBeforeSnapshot.value = Object.fromEntries(
+        dragged.map((n) => [n.id, { x: n.position.x, y: n.position.y }]),
+    );
+}
+
+/**
+ * 拖曳結束後確認位置並寫入歷史。  \
+ * 零位移由 L1 commitDeviceMove 略過，不進歷史。
+ *
+ * @example
+ * handleNodeDragStop()
+ */
+function handleNodeDragStop() {
+    const before = dragBeforeSnapshot.value;
+    const uids = dragUids.value;
+    dragBeforeSnapshot.value = null;
+    dragUids.value = [];
+    if (!before || uids.length === 0) return;
+    editorStore.commitDeviceMove(uids, before);
+}
+
+/**
  * 處理從工具列拖拉設備到畫布放開的事件，於放開處放置對應設備。
  * @param event 拖放事件
  * @example
@@ -246,6 +293,10 @@ function handleCanvasDrop(event: DragEvent) {
             @selection-change="handleSelectionChange"
             @node-click="handleNodeClick"
             @pane-click="handlePaneClick"
+            @node-drag-start="handleNodeDragStart"
+            @node-drag-stop="handleNodeDragStop"
+            @selection-drag-start="handleNodeDragStart"
+            @selection-drag-stop="handleNodeDragStop"
         >
             <Background variant="lines" :gap="gridSize" :size="1" pattern-color="#3f3f46" />
             <Controls />

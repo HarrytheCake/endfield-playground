@@ -13,6 +13,7 @@ import {
     getRecipesForMachine,
     getRecipesByProduct,
     getRecipe,
+    getProduct,
     getAllProducts,
     getAllRecipes,
 } from '@/data/products';
@@ -29,16 +30,49 @@ describe('getRecipesForMachine()', () => {
     it('不存在的機器名稱回傳空陣列', () => {
         expect(getRecipesForMachine('不存在的機器')).toEqual([]);
     });
+
+    it('modeId 過濾只回傳相符或未標 mode 的配方', () => {
+        const all = getRecipesForMachine('精煉爐');
+        const liquid = getRecipesForMachine('精煉爐', 'liquid_mode');
+        expect(liquid.length).toBeGreaterThan(0);
+        expect(liquid.length).toBeLessThanOrEqual(all.length);
+        for (const r of liquid) {
+            expect(r.machineMode == null || r.machineMode === 'liquid_mode').toBe(true);
+        }
+    });
+
+    it('氣態相關配方帶 machineMode', () => {
+        const gas = getAllRecipes().filter(
+            (r) =>
+                r.machineMode === 'gas_mode' ||
+                r.machineMode === 'solid_mode' ||
+                r.machineMode === 'gas_liquid_mode',
+        );
+        expect(gas.length).toBeGreaterThan(0);
+        for (const r of gas) {
+            expect(r.machineMode).toBeTruthy();
+            expect(r.environment).toBeTruthy();
+        }
+    });
+
+    it('固氣轉化機 solid_mode 可查息壤配方', () => {
+        const recipes = getRecipesForMachine('固氣轉化機', 'solid_mode');
+        expect(recipes.some((r) => r.outputs.some((o) => o.itemId === '息壤'))).toBe(true);
+    });
 });
 
 // ─── getRecipesByProduct() ───────────────────────────────────────────────────
 
 describe('getRecipesByProduct()', () => {
-    it('已知產品（源礦）回傳至少一個配方', () => {
-        const recipes = getRecipesByProduct('源礦');
+    it('已知產品（源石粉末）回傳至少一個配方', () => {
+        const recipes = getRecipesByProduct('源石粉末');
         expect(recipes.length).toBeGreaterThan(0);
-        // 源礦由物品輸出口提供
-        expect(recipes[0].machine).toBe('物品輸出口');
+        expect(recipes[0].machine).toBe('粉碎機');
+    });
+
+    it('基礎材料（源礦）不在 products（V9-B2）', () => {
+        expect(getRecipesByProduct('源礦')).toEqual([]);
+        expect(getProduct('源礦')).toBeUndefined();
     });
 
     it('不存在的產品回傳空陣列', () => {
@@ -50,18 +84,18 @@ describe('getRecipesByProduct()', () => {
 
 describe('getRecipe()', () => {
     it('回傳指定 index 的配方', () => {
-        const recipe = getRecipe('源礦', 0);
+        const recipe = getRecipe('源石粉末', 0);
         expect(recipe).toBeDefined();
-        expect(recipe!.outputs[0].itemId).toBe('源礦');
+        expect(recipe!.outputs[0].itemId).toBe('源石粉末');
     });
 
     it('index 預設為 0', () => {
-        const recipe = getRecipe('源礦');
+        const recipe = getRecipe('源石粉末');
         expect(recipe).toBeDefined();
     });
 
     it('index 超出範圍回傳 undefined', () => {
-        expect(getRecipe('源礦', 999)).toBeUndefined();
+        expect(getRecipe('源石粉末', 999)).toBeUndefined();
     });
 
     it('不存在的產品回傳 undefined', () => {
@@ -78,6 +112,11 @@ describe('getAllProducts() / getAllRecipes()', () => {
         for (const p of products) {
             expect(Array.isArray(p.recipes)).toBe(true);
         }
+    });
+
+    it('getAllProducts 不含 codegen 測試 stub（V9-H1-3）', () => {
+        expect(getAllProducts().some((p) => p.name === '研製合成粉末方塊')).toBe(false);
+        expect(getProduct('研製合成粉末方塊')).toBeUndefined();
     });
 
     it('getAllRecipes 為所有 product.recipes 的攤平結果', () => {
