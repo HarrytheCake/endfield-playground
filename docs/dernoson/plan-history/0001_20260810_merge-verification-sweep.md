@@ -2,7 +2,7 @@
 
 - **prev:** —
 - **skill:** plan-history v3
-- **status:** draft
+- **status:** in-progress
 
 ## 主題簡述
 
@@ -97,11 +97,282 @@ H7–H11、v7 G1–G3 與 L1、v9 五個），**每個 preset 都帶 `expected` 
 兩者都是「文件說了算」的約定：一個沒有機制擋住誤用，一個沒有選定唯一做法。這類約定在
 三方各自開發、互不知情的情況下最容易破，屬於架構層要先定調的項目。
 
+### O6 · 2026-08-10 06:12:30+08:00 — 基準線四步全綠，auto-fix 零改動
+
+在 `dev/dernoson`（HEAD `3cab044`）跑完 `validate-changes` 全套：`pnpm format` 全數
+`(unchanged)`；`pnpm lint`（`eslint . --fix`）無輸出；`pnpm type-check`（`vue-tsc --build`）
+無輸出；`pnpm test` 28 個測試檔、301 個案例全數通過，耗時 2.14s。跑前跑後 `git status
+--porcelain` 一致，只有 plan-history 的兩個 md 為 modified。
+
+合流前不存在既有紅燈，且兩支 auto-fix 工具一個字都沒改。因此後續任何實測異常都不能歸因於
+「本來就壞的」—— 這條基準線是乾淨的，實測發現與既有債務之間沒有灰色地帶。
+
+### O7 · 2026-08-10 06:14:53+08:00 — 自動化覆蓋在三方之間極度不均
+
+清點 `src/__tests__/` 的 28 個測試檔落點，對照 O1 的三方檔案範圍：
+
+- aaaaa：`flowEngine` 系列 8 檔、`composables/useFlowEngine`、`matchRecipeByInputs`、
+  `data/` 四檔、`utils/reverseChain`、`topologyPortUtils` —— 301 個案例絕大多數在此。
+- shirone：`lib/validation/detectors/overlapDetector.test.ts`（294 行）直接測 `detectOverlaps`，
+  並間接運行 `getMachineOccupiedGrids` 與 `getPipelineOccupiedGrids`；
+  `utils/absToRelPath.test.ts` 測 `rewritePipelineStructure`，而該模組只導出 `absToRelPath`
+  這一個函式，等於全覆蓋。無專屬測試檔的只有前述兩支 grid utils 與 `types/euclideanSpace.ts`。
+- mbd：`src/components/` 底下**零測試檔**，其動過的 `src/utils/flowHelpers.ts` 亦無。
+  15 檔 614 行的變更，自動化驗證只保證「型別編得過」。
+
+O6 的綠燈因此不是均勻的背書：aaaaa 的引擎行為有測試撐著，shirone 大致有，mbd 完全沒有。
+`0001#2` 是 mbd 那批變更的第一道也是唯一一道檢驗，沒有既有測試會先攔下任何東西 —— 那格的
+驗收要做得比其他格細，觀察也要記得更具體。
+
+### O8 · 2026-08-10 06:22:05+08:00 — 主畫面 console 無 error 但被噪音塞滿
+
+`pnpm dev` 冷載入 `/`：零 `[error]`，但有 18 筆 `[Vue warn] Vue received a Component that was
+made a reactive object`（每個節點一筆，指名 `FlowNodeOverlay`）、約 30 筆 `[validateChains]`
+debug log、1 筆 `[Validation] runValidation complete`。
+
+兩個成因都已在原始碼確認：`src/editor/canvas/FactoryCanvas.vue:20` 寫
+`const nodeTypes = { default: FlowNodeOverlay }`，元件被放進會被 Vue 轉成 reactive 的容器而
+未經 `markRaw`；`src/composables/useFlowEngine.ts` 的 455／461／470／477／489／496／504 七處
+`console.log` 留在正式路徑上，每次驗證重跑就整批再印一次。
+
+功能不受影響，但 `0001#3`～`0001#6` 都要靠 console 判讀，噪音會把真正的錯誤埋掉，且噪音量
+隨節點數與重算次數放大。
+
+### O9 · 2026-08-10 06:24:40+08:00 — 兩套統計面板同時掛載且互相矛盾
+
+冷啟動的預設藍圖有 18 nodes / 15 edges（非空畫布）。同一畫面上：mbd 的 `StatsPanel`
+（`MainLayout.vue:43`）顯示設備數量 **0 台**、管線 0 條、總耗電 0 kW；aaaaa 的
+`ProductionStats`（`src/editor/stats/ProductionStats.vue`，掛在 `InspectorPanel.vue:56`，已查證）
+顯示設備數量 **18**、非法節點 9，並附完整原料供給表與機器用量。桌面寬度下兩者左右並排。
+
+這超出 O2 所說的「props 是常值所以沒東西可測」：使用者在同一個畫面上會直接看到 0 台與 18 台
+兩個數字。問題不在任一元件的正確性，而在**同一職責有兩套實作同時上線**，屬 mbd 與 aaaaa 的
+交界，是本輪實測目前最該由使用者裁決的一項。
+
+### O10 · 2026-08-10 06:26:15+08:00 — 預設藍圖下 FlowEngine 產不出任何結果
+
+直接讀 store：`itemSummary` 長度 0、`ticketRates` `[]`、`totalPowerDemand`／`totalPowerSupply`
+／`warehouseCapacity` 皆 0；`invalidChainUids` 有 9 筆（`orphan-1`、`furnace-A`、`parts-A`、
+`crusher-B1`、`react-A`、`purifier`、`crusher-B2`、`react-B`、`parts-B`）；`nodeEfficiencies`
+中來源與輸入口為 1、8 台機器全為 0。畫布上每台機器節點底下都印著「非法」。
+`validationStore.alerts` 同時為 0。
+
+兩個推論。其一：**把 StatsPanel 接上 flowStore 也不會有數字** —— 接線不是缺數字的唯一原因，
+這會影響「接線」該不該被當成一件獨立的工作來開。其二：目前無法分辨這是引擎缺陷、還是預設
+藍圖本來就沒接成合法鏈路（`ProductionStats` 的提示語正是「請連接物品輸出口至輸入口」）。
+`0001#3` 的 preset 驗收會直接判定這件事 —— preset 全過則引擎無罪，問題在預設藍圖。
+
+另外 `alerts` 恆 0 與「非法節點 9」並存**不構成矛盾**：非法判定來自 FlowEngine 自己的鏈路
+驗證，alerts 來自 validationStore 的 detector 註冊表，是兩套獨立機制。這反而佐證了 O3。
+
+### O11 · 2026-08-10 06:27:30+08:00 — WarehouseEstimate 的容量輸入框是死控制項
+
+`src/components/StatsPanel/WarehouseEstimate.vue:18-29,39-44` 定義了
+`emit('update:capacityCells')` 並綁在 `@input`，但 `StatsPanel/Index.vue:13` 寫的是
+`:capacity-cells="0" :rows="[]"`，**沒有任何 listener**（已查證原始碼）。實測輸入 250：DOM
+值變成 250 並停住，`flow.warehouseCapacity` 仍為 0，表格仍 0 列。
+
+使用者會以為設定成功了 —— 這比「顯示 0」嚴重，因為它偽裝成可用。對照組是
+`ProductionStats.vue` 的同名欄位，接了 `setWarehouseCapacity`、會真的寫進 store。同一個功能
+在同一畫面上一個能用一個不能用，與 O9 是同一個交界問題的兩個面向。
+
+### O12 · 2026-08-10 06:28:20+08:00 — StatsPanel 四個子區塊的渲染現況與三個原始碼瑕疵
+
+空資料下四塊都不壞版：`PowerSummary` 五行文字正常但**是唯一沒有卡片外框的區塊**（裸
+`<section class="p-3">`，另三塊皆 `rounded-lg border border-zinc-700`），視覺不成一套；
+`ItemSummaryTable` 與 `TicketEstimate` 只剩表頭浮著，**無空狀態提示**；`WarehouseEstimate`
+見 O11。
+
+三個瑕疵本格的空陣列輸入看不到，但我已逐一在原始碼確認存在：
+`ItemSummaryTable.vue:50` 用 `text-gray-900` 而容器是 `bg-zinc-950`（第 28 行），有資料時
+整列近黑字配近黑底；`ItemSummaryTable.vue:69` 的 `min-w-[12.5]` 缺單位，產出無效 CSS 會被
+瀏覽器丟棄；`ItemSummaryTable.vue:80` 在 `</template>` 之後有一個孤立字元 `S`。
+
+第三項最值得注意：format／lint／type-check／test 四關全部沒攔下一個落在 SFC 頂層的雜字元。
+這是 O7「mbd 零覆蓋」的具體代價 —— 靜態工具鏈對這批變更的保護比想像中更薄。
+
+### O13 · 2026-08-10 06:29:12+08:00 — V6 拖曳錄製與 undo／redo 完全正常
+
+真實滑鼠拖曳 `furnace-A`：`{x:380,y:200}` → `{x:480,y:260}`，DOM `translate` 同步，位移
++100/+60 符合 `snapToGrid:true` / `gridSize:20`；undoStack 0→1，label 為「移動 1 台設備」；
+Ctrl+Z 回到原位（undo 1→0、redo 0→1），Ctrl+Y 復原（redo 1→0、undo 0→1）。
+
+`commitDeviceMove` 進歷史、label 正確、undo／redo 雙向皆對。**這條路徑沒有發現任何問題** ——
+在 mbd／aaaaa 交界處問題成堆的這一格裡，V6 這條是乾淨的，值得單獨記下來，免得日後把整格
+的印象一併當成壞的。
+
+附帶一個未追的現象：拖曳結束後 `selectedNodeIds` 仍為 `[]`，拖曳本身不產生選取，是否為預期
+未定。
+
+### O14 · 2026-08-10 06:29:12+08:00 — 瀏覽器 pane 尺寸固定，寬螢幕版面無截圖證據
+
+瀏覽器 pane 實體尺寸固定 714×790；`resize_window` 改得動 `innerWidth`（DOM 量測確認 layout
+確實重排到 1440×900），但截圖合成仍停在原生尺寸。
+
+因此 O9 的「兩套面板並排」是靠 innerText 與各元件 rect 確認的，**不是靠看圖**。事實本身可信，
+但凡是需要「看起來如何」才能下判斷的結論，本輪實測都不具備證據；`0001#4` 的拓撲 SVG 上色
+判讀要留意同一限制。
+
+### O15 · 2026-08-10 06:35:40+08:00 — preset 是 20 個，不是 O4 說的 22 個
+
+- **更正:** O4
+
+程式化計數 `presets.length === 20`，我另以 `grep -oE "id: '[^']+'"` 取出全部 id 覆核：
+h1–h11（11）、g1 g2 g3 l1（4）、v9-no-sink／missing-water／swap-ore／swap-sand／xi-rang（5）。
+分組為 basic 6／advanced 5／v7 4／v9 5。
+
+O4 的「22 個」是我目測分組時多算的，事實錯誤，故用 `更正` 而非 `更新`。O4 的其餘內容仍然
+成立：每個 preset 都自帶可觀測的 `expected` 條列、同頁三分頁、`graph-viz` 已退役重導。凡引用
+O4 的地方一律改引本則。
+
+### O16 · 2026-08-10 06:37:10+08:00 — 20 組 preset 全數通過，零失敗
+
+抽樣 13 組（`0001#3` 正文列的那批）全過，另補跑其餘 7 組亦全過。判讀方式是直接驅動
+`loadPreset(id)` 並讀 `result` 的 `edgeFlows`／`nodeEfficiencies`／`sinkDeliveries`／
+`congestedEdges`／`invalidChainUids`，完全不依賴 console —— 這繞開了 O8 的噪音問題。
+
+關鍵數字：H1 `crusher=1`、兩邊皆 30；H2 `crusher=0.5`、兩邊皆 15；H3／H11 分流均分
+（15/15、7.5/7.5）；H4／H5 非法集合正確且 flows 空；H7 埠實測落在 `in-0`／`in-1`、出邊 30
+不堵而兩入邊各 15 標堵塞；H8 匯流器出邊 30、兩入邊各 15 堵塞；G1 `converter=1`、息壤 30；
+G2／H10／V9-缺清水 皆正確標非法且無交付；L1 實測 `solid_mode.loss` 存在而 `息壤氣
+consumed=30`（非 36），確認 V7 不扣 loss；V9-息壤鏈節點實測 `environment:"stable"`。
+
+引擎在 v7／v8／v9 三代規則上的行為與作者自訂的驗收條件一致。這是本輪實測唯一大面積為綠的
+區塊，且判準不是實測時現編的。
+
+### O17 · 2026-08-10 06:39:05+08:00 — O10 結案：引擎無罪，根因是預設藍圖停在舊資料模型
+
+O10 懸著「引擎缺陷還是預設藍圖沒接好」一問，O16 的 20 組零失敗已排除引擎缺陷。進一步用 dev
+頁的 JSON 輸入做對照實驗（該頁本就設計成可改 JSON 執行，不永久改動主畫布），把預設藍圖原封
+不動貼進去分三輪加欄位：原樣 → `edgeFlows` 0 條；只補 `furnace-A` 的 `machineMode` → 毫無
+變化；再補兩個來源的 `primaryOutput` + `sourceRatePerMin:30` + `machineMode` → **鏈路 A 整條
+活過來**（赤銅礦 30、清水 30 → 赤銅塊 30、汙水 30 → 赤銅零件 30，兩節點離開非法集合）。
+
+根因已在原始碼確認：`src/store/editorStore.ts:10` 起的 `mockNodes`，節點 data 只有
+`{ label, machineType, recipeIndex }`；`:135` 起的 `mockEdges` 只有
+`{ id, source, target, animated }`。而引擎要的是 preset 那種形狀 —— 機器要 `machineMode`，
+來源要 `primaryOutput` 與 `sourceRatePerMin`，邊要 `sourceHandle`／`targetHandle`。缺
+`primaryOutput` 時來源不知道自己吐什麼，第一條邊就沒有流量，下游整條連帶非法。
+
+這反過來改寫 O9／O2 的解讀：**把 StatsPanel 接上 flowStore 也仍然全是 0** —— 接線是必要
+條件不是充分條件，種子資料得先跟上 v7／v9 模型。這是 aaaaa 改資料模型而 editorStore 的種子
+沒跟上，屬三方交界的接線缺口，已補進 `0001#7` 的清單。
+
+### O18 · 2026-08-10 06:40:15+08:00 — 產出率超過出邊上限時，既不降效率也不標堵塞
+
+| preset | 配方 | produced | 出邊實際 | Sink | 效率 | 堵塞 |
+|---|---|---|---|---|---|---|
+| V9-換料砂葉 | 1 砂葉 → 3 砂葉粉末／2 秒 | 90/min | 30/min | 30 | 100% | 無 |
+| V9-息壤鏈 | 1 芽針 → 2 碳塊／2 秒 | 碳塊 60/min | 30/min | — | 100% | 無 |
+
+配方數量我開 `src/data/products.ts` 覆核過：`crusher_p_7eec6b9218_0` 的 `砂葉粉末` quantity 3、
+`refinery_p_81e181b9f1_2` 的 `碳塊` quantity 2，兩者 `timeSeconds: 2`，所以 90／60 的算術正確。
+
+每分鐘 60／30 的產出憑空消失，效率仍報 100%，`congestedEdges` 為空。引擎在別處是會做背壓的
+—— H8 的 c1／c2 就因下游匯流器出口限 30 被壓到 50% 且入邊正確標橘（O16）。同一套機制在
+「機器自身產出率 > 出邊媒質上限」這個情境沒有生效。究竟是缺陷，還是 `produced` 本就定義成
+機器名目產能而非實際吞吐，需要由規格擁有者認定，不由實測裁決。
+
+### O19 · 2026-08-10 06:41:26+08:00 — 另四項 expected 未涵蓋的行為與一項措辭問題
+
+四項數字上站得住、但沒有任何 expected 涵蓋到的行為：
+
+1. **pass-through 節點的 consumed 重複計算** —— H3 `源礦 produced 30 / consumed 60`（分流器
+   算一次、兩個 Sink 再算一次），H11 同型 `p15/c30`；H1 無 pass-through 則乾淨的 `p30/c30`。
+2. **收不到料的 Sink 仍報 100% 且不列非法** —— H10／G2／V9-缺清水 三組，上游已標非法、Sink
+   一無所獲，但 `sink=1` 且不在 `invalidChainUids`。
+3. **G3 標記範圍比 expected 寬** —— expected 說「兩端」，實際 `inv` 三個（含下游 sink）。連帶
+   非法說得通，但與字面不符。
+4. **拓撲 SVG 的匯流器節點擠成一團** —— 1×1 格畫得極小，埠標籤與節點名重疊到看不清；其他
+   3×3 機器正常。純視覺，不影響數值，且受 O14 的截圖限制。
+
+另有一項不是行為問題而是驗收條件本身的問題：**H6 的第一條 expected 不可證偽** ——「鏈上設備
+效率多數接近 100%」，實際 `c1=1`、`c2=0.5` 剛好一半一半，談不上「多數」；括號註明「（受
+belt 限制）」顯示作者預期到會被壓低。此條未判不過，但也不能算真的驗到了。
+
+### O20 · 2026-08-10 06:48:10+08:00 — catalog 資料一致性與拓撲上色三項皆過
+
+**機器分頁（判準自訂，程式化掃描 46 台 × 全 mode 的每個埠）**：offset 超界 0 筆、同 side 同
+offset 重疊 0 筆、未分類機器 0 台、`config_signed_off === false` 0 台；5 個 tag 各
+10／11／7／13／5，加總 46、聯集 46，恰好分割。無埠機器 6 台（供電樁、中繼器、倉庫存取線等）
+本來就沒埠。逐座標比對精煉爐 3×3：`drawnPorts` 算出 in-0/1/2 在 (50,36)(78,36)(106,36)、
+out 在 y=120、liquid_mode 多的 in-3 (36,78)／out-0 (120,78)，以 cell 28、pad 36 換算完全正確，
+切 mode 後即時更新。**渲染與資料零落差。**
+
+**產品分頁（判準自訂）**：94 產品 / 14 材料全部解得出鏈，無 0 步數，所有葉節點都是真材料，
+最深鏈 10 步（灼銅裝備原件）。
+
+**拓撲上色（判準為頁面自帶圖例，本格唯一照表驗收的部分）**：H8 讀 attribute 實測
+`src1/src2/merger/sink` 效率 1 → `fill:#22c55e`，`c1/c2` 效率 0.5 → `fill:#eab308`，邊線
+`#f97316` 恰 4 條對應 `congestedEdges`、`#71717a` 1 條為未堵的 e5；H4 非法節點
+`fill:#71717a stroke:#a1a1aa stroke-dasharray:"4 3"`。全部與圖例一致。
+
+三項結論皆未依賴截圖，繞開了 O14 的限制。資料層與視覺對映這一塊是可信的，本格的問題全部
+集中在互動時序與版面（O21～O24）。
+
+### O21 · 2026-08-10 06:50:25+08:00 — findShortestReverseChain 對 4/94 產品回傳非最短鏈
+
+`findShortestReverseChain('赫銅塊')` 回傳 7 步，實際最短為 6 步。不需要相信任何外部模型即可
+確認：實作自己算出 `findShortestReverseChain('氣態赫銅')` 為 5 步；`赫銅塊` 有一條配方
+`solid_gas_converter_hue_copper_ingot_1`（已覆核 `src/data/products.ts:565-572`）輸入**只有**
+`氣態赫銅`；故經此路徑為 1+5=6，且該樹六個品項互不重複、完全無環。另三個（赫銅瓶 8→7、
+赫銅零件 8→7、赫銅裝備零件 17→16）都是自赫銅塊 +1 繼承，**根只有一個**。
+
+根因在 `src/utils/reverseChain.ts:125-135`（已覆核）：memo 命中的重用條件是
+`cached.productsUsed ∩ stack === ∅`。追 `赫銅塊` 的展開順序 —— 先試 recipe 0 遞迴進
+`赫銅溶液`，此時在 stack = {赫銅塊, 赫銅溶液} 之下評估 `氣態赫銅`，它的兩條便宜路徑分別要經
+`赫銅溶液` 與 `赫銅塊`，雙雙被擋，只剩經 `分離芯` 的昂貴路徑，算出 8 寫進 memo；回到 recipe 1
+時 stack 只剩 {赫銅塊}，`氣態赫銅` 本可走 `赫銅溶液` 拿到 5，但 memo 命中那筆 8，而它的
+`productsUsed` 走分離芯路線、不含赫銅塊，守衛檢查不出衝突而直接重用。
+
+守衛檢查的是「這棵快取樹**用到**哪些產品」，真正該檢查的是「算這棵樹時**哪些路徑被擋住**」。
+兩者不等價，這就是漏洞 —— 快取了一個在受限 stack 下才成立的成本，卻在限制解除後重用。
+`src/__tests__/utils/reverseChain.test.ts` 存在但未涵蓋此情形，是 O7 覆蓋議題的又一個實例。
+
+嚴重性請照「**1 個根因、4 個產品輸出錯誤**」讀：修一處即可全部歸位，但使用者可見的錯誤結果
+是四筆。
+
+### O22 · 2026-08-10 06:51:40+08:00 — 埠標籤寬度未隨格寬縮放，兩個畫面都中
+
+- **推翻:** O19
+
+標籤 `{{ p.label }}·{{ p.media }}`（如 `in-0·belt`）在 font-size 8 下約 40px 寬，格寬只有
+28px。機器分頁的 3×3 機器單邊三埠時，三個標籤疊成 `n-0·beltin-1·beltin-2·belt` 無法閱讀，
+中央的「液體模式 · 3×3」也被埠方塊蓋住；拓撲 SVG 的匯流器則是 1×1 卻有 in3/out1 四個埠，
+標題（font 10）與尺寸標籤（font 8）畫在 `y+min(14, rectH*0.28)` 與 `y+min(28, rectH*0.5)`，
+小 rect 上間距不足而重疊。
+
+O19 第 4 項把它記成匯流器的 1×1 特例，那個歸因不成立：同一成因在 3×3 機器上照樣發作。事實
+（匯流器擠成一團）仍然為真，但它是通病的一個樣本，不是特例。屬純視覺，不影響數值。
+
+### O23 · 2026-08-10 06:53:00+08:00 — 拓撲切 mode 不觸發重算，中間態是混合畫面
+
+`setTopoNodeMode`（`FlowEngineTest.vue:1141-1150`，已覆核）只把 `machineMode` 寫回
+`jsonInput`，**沒有呼叫 `runCalculation()`**。g1 實測切 `solid_mode → gas_mode`：`jsonInput`
+更新、埠示意跟著換，但 `result` 完全沒變，仍是 solid_mode 的 `converter=1、息壤=30、無非法`；
+手動按執行計算後才變成 `src,converter,sink` 全非法、零流量（媒質不符，與 G3 同型）。
+
+UI 提示只承諾「埠示意會更新」，所以不算食言。但中間態是**新的埠配置疊在舊的效率配色上**，
+看的人無從分辨畫面哪一半是舊的 —— 而這正是 `0001#4` 正文問的「切 mode 後是否重算」，答案
+是否。對後續任何依賴此頁判讀的工作，這是一個會靜默誤導的狀態。
+
+### O24 · 2026-08-10 06:54:33+08:00 — 兩處呈現與敘述瑕疵
+
+`MachineCatalogPanel.vue:175` 的說明寫「依 machine.tags 分頁；一機多 tag 可出現多頁」，但實測
+`tags.length > 1` 的機器是 **0 台**。功能或許支援，資料從未觸發，這句敘述目前描述不到任何
+現象。
+
+`DevTopologySvg.vue:346`（已覆核）以 `v-if="node.rectH >= 48"` 關掉帶著 `id · 效率%` 的第三行
+副標。匯流器、分流器、物流橋這類正好都是 1×1，因此**恰恰是最需要看堵塞狀況的節點看不到
+效率** —— H8 實測 `merger` 效率為 1，SVG 上只有「匯流器 ¶ 1×1 · 預設 · in3/out1」。
+
+兩者都不影響數值，但都會讓讀畫面的人得到比實際少的資訊。
+
 ## 待辦
 
 ### 1 實測基準線：現有驗證套件的紅綠現況
 
-- **state:** 待實作
+- **state:** 完成
 - **basis:** → O1
 
 在動任何實測之前跑一次 `validate-changes`（format → lint → type-check → test），把結果
@@ -116,12 +387,14 @@ H7–H11、v7 G1–G3 與 L1、v9 五個），**每個 preset 都帶 `expected` 
 **沿革**
 
 - H1 · 2026-08-10 決斷 —— 實測前先取基準線，避免既有紅燈被誤記為實測發現（使用者）
+- H2 · 2026-08-10 落地 —— 四步全綠、auto-fix 零改動，無既有紅燈 → O6
+- H3 · 2026-08-10 決斷 —— 不開子格：無紅燈可追，覆蓋偏差屬觀察 → O7
 
 ### 2 主畫面實測：StatsPanel 渲染與 V6 拖曳錄製
 
-- **state:** 待實作
+- **state:** 完成
 - **needs:** 0001#1
-- **basis:** → O2
+- **basis:** → O2、O7
 
 在 `/` 上驗三件事：頁面開得起來且 console 無 error；StatsPanel 四個子區塊
 （PowerSummary／ItemSummaryTable／TicketEstimate／WarehouseEstimate）在 0 與空陣列輸入下的
@@ -131,41 +404,51 @@ Ctrl+Y 能否正確回退與重做。
 **數值正確性明確不在本格範圍**：props 是常值，沒有輸入可測（O2）。本格只回答「空資料下
 會不會壞」與「拖曳有沒有進歷史」。
 
+本格是 mbd 那批變更唯一的檢驗，沒有任何既有測試會先攔下問題（O7），所以觀察要記到「哪個
+子區塊、什麼輸入、什麼現象」的粒度，不能只寫「渲染正常」。
+
 **子格衍生指引**：本格是「主畫面互動面」的傘格。StatsPanel 接線、拖曳歷史語意、鍵盤
 快捷等若要各自往下追，另開新格，本格加 `needs` 指向它們。
 
 **沿革**
 
 - H1 · 2026-08-10 決斷 —— 只測渲染與歷史，不測數值（使用者）
+- H2 · 2026-08-10 落地 —— V6 拖曳與 undo／redo 路徑乾淨，無任何問題 → O13
+- H3 · 2026-08-10 落地 —— 兩套統計面板職責重疊為本格最大發現 → O9
+- H4 · 2026-08-10 決斷 —— 標完成而非部分完成：寬螢幕版面判斷本就不在本格範圍 → O14
 
 ### 3 引擎 preset 抽樣驗收：12 組對照 expected
 
-- **state:** 待實作
+- **state:** 完成
 - **needs:** 0001#1
-- **basis:** → O4
+- **basis:** → O15
 
-在 `/dev/flow-engine` 逐一跑 12 個 preset，對照每個 preset 自帶的 `expected` 條列逐條判
-通過或不通過，不通過的記下實際觀測值：
+在 `/dev/flow-engine` 逐一跑 preset，對照每個 preset 自帶的 `expected` 條列逐條判通過或不
+通過，不通過的記下實際觀測值。原訂抽樣 13 組：
 
 - basic 全跑：H1 H2 H3 H4 H5 H6（滿速／瓶頸 50%／分流均分／環路標非法／懸空設備／多級串聯）
 - advanced：H7 H8（入埠分接堵塞、匯流器反向堵塞）
 - v7：G1 G3（氣態 pipe 合法鏈、belt↔pipe 媒質不符標非法）
 - v9：swap-ore、swap-sand、xi-rang（E1 依輸入換配方、D1 最短鏈走 stable environment）
 
-抽樣外的 10 組（H9–H11、G2、L1、v9-no-sink、v9-missing-water）時間有餘再補，不列必做。
+實際執行時因為判讀方式改成直接驅動 `loadPreset(id)` 讀 `result`、單組成本趨近於零，抽樣外
+的 7 組一併補完，**20 組全跑且全過**（O16）。
 
 **子格衍生指引**：本格是「FlowEngine 規則正確性」的傘格。任一 preset 不通過而需要追根因
 時，該根因另開新格（一個根因一格，不是一個 preset 一格），本格加 `needs` 指向它們。
 
 **沿革**
 
-- H1 · 2026-08-10 決斷 —— 採抽樣 12 組而非全部 22 組（使用者）
+- H1 · 2026-08-10 決斷 —— 採抽樣而非全跑（使用者）
+- H2 · 2026-08-10 修正 —— 原寫抽樣 12 組但實列 13 組、母體 20 非 22，正文改寫 → O15（取代 H1）
+- H3 · 2026-08-10 落地 —— 20 組全跑全過，零失敗 → O16
+- H4 · 2026-08-10 落地 —— 判定 O10：引擎無罪，根因在 editorStore 種子資料 → O17
 
 ### 4 catalog 分頁與拓撲互動實測
 
-- **state:** 待實作
+- **state:** 完成
 - **needs:** 0001#1
-- **basis:** → O4
+- **basis:** → O15、O14
 
 同頁另兩個分頁與拓撲視覺化：「機器」分頁（MachineCatalogPanel）的 mode／port／tag 呈現是否
 與 `src/data/machines.ts` 一致；「產品／材料」分頁（ProductCatalogPanel）的反向最短鏈、葉材料
@@ -178,11 +461,17 @@ Ctrl+Y 能否正確回退與重做。
 **子格衍生指引**：本格是「dev 視覺化工具可信度」的傘格。catalog 與拓撲若各自有值得深追的
 問題，分別開新格，本格加 `needs` 指向它們。
 
+**沿革**
+
+- H1 · 2026-08-10 落地 —— 資料一致性與拓撲上色三項皆過，未依賴截圖 → O20
+- H2 · 2026-08-10 落地 —— 找到本輪唯一有根因的真缺陷，反向鏈 memo 守衛條件不足 → O21
+- H3 · 2026-08-10 決斷 —— 不開子格：O21 已追到根因，剩下只有修不修，屬使用者決定 → O21
+
 ### 5 歷史回放頁實測：V6 拖曳錄製
 
 - **state:** 待實作
 - **needs:** 0001#1
-- **basis:** → O4
+- **basis:** → O15、O13
 
 在 `/dev/history-replay` 驗 V6 的拖曳錄製與回放：拖曳是否被錄成 command、回放順序是否與
 操作順序一致、undo／redo 與回放的互動是否自洽。與 0001#2 的差別是那邊測主畫面的真實操作
@@ -195,7 +484,7 @@ Ctrl+Y 能否正確回退與重做。
 
 - **state:** 待實作
 - **needs:** 0001#1
-- **basis:** → O3
+- **basis:** → O3、O10
 
 在 `/dev/validation-test` 依頁面自附流程操作（新增設備 A → 新增重疊的 B → 新增不重疊的 C →
 清空），確認 alerts 全程維持 0、errorCount／warningCount 維持 0、Editor Nodes 清單同步更新。
@@ -218,11 +507,20 @@ Ctrl+Y 能否正確回退與重做。
 2. StatsPanel 四個子元件 props 全為常值（O2）
 3. `detectOverlaps` 未註冊成 Detector，且 `shironesMachine` 與主線 `FactoryNode` 型別不相容（O3）
 4. `rewritePipelineStructure` 產品程式碼零引用（O3）
+5. `editorStore.ts` 的 `mockNodes`／`mockEdges` 停在舊資料模型，缺 `machineMode`／
+   `primaryOutput`／`sourceRatePerMin`／handle，導致預設藍圖跑不出任何流量（O17）
 
 實測過程若發現新缺口，追加進本清單。**本格只描述缺口，不提議修法** —— 修法屬 0001#8 的裁決。
 
+**測試覆蓋缺口（O7）不併入本清單**：本格盤的是「三方交界處沒接起來」，覆蓋缺口是驗證強度
+問題，兩者的判準與收斂方式都不同。O7 已完整記錄，需要時由使用者另開格承載。
+
 **子格衍生指引**：本格是「整合缺口」的傘格。清單收斂後，使用者挑出要動手的缺口時，一個
 缺口開一格，本格加 `needs` 指向它們，本格保留清單本身。
+
+**沿革**
+
+- H1 · 2026-08-10 決斷 —— 測試覆蓋缺口不併入本清單，維持「整合缺口」單一判準 → O7
 
 ### 8 架構人工對答：七題逐題裁決
 
