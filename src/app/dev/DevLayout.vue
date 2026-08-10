@@ -81,13 +81,7 @@ const devPages = [
         path: '/dev/flow-engine',
         name: 'FlowEngine 測試',
         icon: '⚙️',
-        description: '手動測試流量計算引擎',
-    },
-    {
-        path: '/dev/graph-viz',
-        name: '圖結構視覺化',
-        icon: '🔀',
-        description: '查看拓撲排序與環路偵測',
+        description: '流量引擎／拓樸／preset／D1 演示（含原 graph-viz）',
     },
     {
         path: '/dev/history-replay',

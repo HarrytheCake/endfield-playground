@@ -1,0 +1,2492 @@
+[
+  {
+    "name": "錦草溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "錦草粉末",
+            "quantity": 1
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "錦草溶液",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-錦草溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "錦草溶液",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "赤銅瓶-錦草溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅瓶",
+            "quantity": 1
+          },
+          {
+            "name": "錦草溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "芽針溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "芽針粉末",
+            "quantity": 1
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "芽針溶液",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-芽針溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "芽針溶液",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "赤銅瓶-芽針溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅瓶",
+            "quantity": 1
+          },
+          {
+            "name": "芽針溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "液化息壤",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "息壤",
+            "quantity": 1
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "液化息壤",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-液化息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "液化息壤",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "液化重息壤",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "重息壤",
+            "quantity": 1
+          },
+          {
+            "name": "沉積酸",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "液化重息壤",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-液化重息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "液化重息壤",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "壤晶廢液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "液化息壤",
+            "quantity": 1
+          },
+          {
+            "name": "汙水",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "壤晶廢液",
+            "quantity": 1
+          },
+          {
+            "name": "惰性壤晶廢液",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "惰性壤晶廢液",
+            "quantity": 4
+          }
+        ],
+        "machine": "提純機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "壤晶廢液",
+            "quantity": 1
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "惰性壤晶廢液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "液化息壤",
+            "quantity": 1
+          },
+          {
+            "name": "汙水",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "壤晶廢液",
+            "quantity": 1
+          },
+          {
+            "name": "惰性壤晶廢液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赤銅溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅粉末",
+            "quantity": 1
+          },
+          {
+            "name": "沉積酸",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赫銅溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅溶液",
+            "quantity": 4
+          }
+        ],
+        "machine": "提純機",
+        "outputs": [
+          {
+            "name": "赫銅溶液",
+            "quantity": 1
+          },
+          {
+            "name": "沉積酸",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 2
+      }
+    ]
+  },
+  {
+    "name": "汙水",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅礦",
+            "quantity": 1
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅塊",
+            "quantity": 1
+          },
+          {
+            "name": "汙水",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "壤晶廢液",
+            "quantity": 2
+          },
+          {
+            "name": "藍鐵粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "壤晶",
+            "quantity": 1
+          },
+          {
+            "name": "汙水",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "赫銅溶液",
+            "quantity": 1
+          },
+          {
+            "name": "藍鐵粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赫銅塊",
+            "quantity": 1
+          },
+          {
+            "name": "汙水",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "碳塊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "蕎花",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "outputs": [
+          {
+            "name": "碳塊",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 2
+      },
+      {
+        "inputs": [
+          {
+            "name": "砂葉",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "outputs": [
+          {
+            "name": "碳塊",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 2
+      }
+    ]
+  },
+  {
+    "name": "晶體外殼",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "源礦",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "晶體外殼",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "紫晶纖維",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶礦",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "紫晶纖維",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "藍鐵塊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵礦",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵塊",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赤銅塊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅礦",
+            "quantity": 1
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅塊",
+            "quantity": 1
+          },
+          {
+            "name": "汙水",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "穩定碳塊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "緻密碳粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "outputs": [
+          {
+            "name": "穩定碳塊",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 2
+      }
+    ]
+  },
+  {
+    "name": "密製晶體",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "緻密晶體粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "outputs": [
+          {
+            "name": "密製晶體",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 2
+      }
+    ]
+  },
+  {
+    "name": "高晶纖維",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "高晶粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "高晶纖維",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "鋼塊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "緻密藍鐵粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "鋼塊",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赫銅塊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赫銅溶液",
+            "quantity": 2
+          },
+          {
+            "name": "藍鐵粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赫銅塊",
+            "quantity": 1
+          },
+          {
+            "name": "汙水",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "息壤",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "穩定碳塊",
+            "quantity": 2
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ],
+        "machine": "天有洪爐",
+        "outputs": [
+          {
+            "name": "息壤",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 2
+      }
+    ]
+  },
+  {
+    "name": "重息壤",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "息壤",
+            "quantity": 10
+          },
+          {
+            "name": "壤晶廢液",
+            "quantity": 5
+          }
+        ],
+        "machine": "天有洪爐",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "重息壤",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "壤晶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "壤晶廢液",
+            "quantity": 2
+          },
+          {
+            "name": "藍鐵粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "反應池",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "壤晶",
+            "quantity": 1
+          },
+          {
+            "name": "汙水",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "碳粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "碳塊",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "碳粉末",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "源石粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "源礦",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "源石粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "晶體外殼粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "晶體外殼",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "晶體外殼粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "紫晶粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶纖維",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "紫晶粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "藍鐵粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵塊",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赤銅粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅塊",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "砂葉粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "砂葉",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "砂葉粉末",
+            "quantity": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "酮化灌木粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "酮化灌木",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "酮化灌木粉末",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "細磨蕎花粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "蕎花粉末",
+            "quantity": 2
+          },
+          {
+            "name": "砂葉粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "研磨機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "細磨蕎花粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "細磨柑實粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "柑實粉末",
+            "quantity": 2
+          },
+          {
+            "name": "砂葉粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "研磨機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "細磨柑實粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "緻密碳粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "碳粉末",
+            "quantity": 2
+          },
+          {
+            "name": "砂葉粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "研磨機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "緻密碳粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "緻密源石粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "源石粉末",
+            "quantity": 2
+          },
+          {
+            "name": "砂葉粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "研磨機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "緻密源石粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "緻密晶體粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "緻密源石粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "精煉爐",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "緻密晶體粉末",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "晶體外殼粉末",
+            "quantity": 2
+          },
+          {
+            "name": "砂葉粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "研磨機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "緻密晶體粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "高晶粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶粉末",
+            "quantity": 2
+          },
+          {
+            "name": "砂葉粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "研磨機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "高晶粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "緻密藍鐵粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵粉末",
+            "quantity": 2
+          },
+          {
+            "name": "砂葉粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "研磨機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "緻密藍鐵粉末",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "紫晶質瓶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶纖維",
+            "quantity": 2
+          }
+        ],
+        "machine": "塑型機",
+        "outputs": [
+          {
+            "name": "紫晶質瓶",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 2
+      }
+    ]
+  },
+  {
+    "name": "藍鐵瓶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵塊",
+            "quantity": 2
+          }
+        ],
+        "machine": "塑型機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-清水",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-錦草溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "錦草溶液",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-芽針溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "芽針溶液",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-液化息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "液化息壤",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶-液化重息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "液化重息壤",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "高晶質瓶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "高晶纖維",
+            "quantity": 1
+          }
+        ],
+        "machine": "塑型機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "高晶質瓶",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "鋼質瓶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "鋼塊",
+            "quantity": 2
+          }
+        ],
+        "machine": "塑型機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "鋼質瓶",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赤銅瓶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅塊",
+            "quantity": 2
+          }
+        ],
+        "machine": "塑型機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅瓶",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "赤銅瓶-錦草溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅瓶",
+            "quantity": 1
+          },
+          {
+            "name": "錦草溶液",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "name": "赤銅瓶-芽針溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "拆解機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅瓶",
+            "quantity": 1
+          },
+          {
+            "name": "芽針溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赫銅瓶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赫銅塊",
+            "quantity": 2
+          }
+        ],
+        "machine": "塑型機",
+        "outputs": [
+          {
+            "name": "赫銅瓶",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 2
+      }
+    ]
+  },
+  {
+    "name": "紫晶零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶纖維",
+            "quantity": 1
+          }
+        ],
+        "machine": "配件機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "紫晶零件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "鐵製零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵塊",
+            "quantity": 1
+          }
+        ],
+        "machine": "配件機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "鐵製零件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "高晶零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "高晶纖維",
+            "quantity": 1
+          }
+        ],
+        "machine": "配件機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "高晶零件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "鋼製零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "鋼塊",
+            "quantity": 1
+          }
+        ],
+        "machine": "配件機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "鋼製零件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赤銅零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅塊",
+            "quantity": 1
+          }
+        ],
+        "machine": "配件機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅零件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赫銅零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赫銅塊",
+            "quantity": 5
+          }
+        ],
+        "machine": "配件機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "赫銅零件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "紫晶裝備原件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "晶體外殼",
+            "quantity": 5
+          },
+          {
+            "name": "紫晶纖維",
+            "quantity": 5
+          }
+        ],
+        "machine": "裝備原件機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "紫晶裝備原件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "藍鐵裝備原件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "晶體外殼",
+            "quantity": 10
+          },
+          {
+            "name": "藍鐵礦",
+            "quantity": 10
+          }
+        ],
+        "machine": "裝備原件機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "藍鐵裝備原件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "高晶裝備原件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "密製晶體",
+            "quantity": 10
+          },
+          {
+            "name": "高晶纖維",
+            "quantity": 10
+          }
+        ],
+        "machine": "裝備原件機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "高晶裝備原件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "息壤裝備原件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "密製晶體",
+            "quantity": 10
+          },
+          {
+            "name": "息壤",
+            "quantity": 10
+          }
+        ],
+        "machine": "裝備原件機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "息壤裝備原件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赤銅裝備原件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅零件",
+            "quantity": 10
+          },
+          {
+            "name": "息壤",
+            "quantity": 10
+          }
+        ],
+        "machine": "裝備原件機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "赤銅裝備原件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赫銅裝備零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赫銅零件",
+            "quantity": 2
+          },
+          {
+            "name": "重息壤",
+            "quantity": 2
+          }
+        ],
+        "machine": "裝備原件機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "赫銅裝備零件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "低容量谷地電池",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶零件",
+            "quantity": 5
+          },
+          {
+            "name": "源石粉末",
+            "quantity": 10
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "低容量谷地電池",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "中容量谷地電池",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "鐵製零件",
+            "quantity": 10
+          },
+          {
+            "name": "源石粉末",
+            "quantity": 15
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "中容量谷地電池",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "高容量谷地電池",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "鋼製零件",
+            "quantity": 10
+          },
+          {
+            "name": "緻密源石粉末",
+            "quantity": 15
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "高容量谷地電池",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "低容量武陵電池",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "息壤",
+            "quantity": 5
+          },
+          {
+            "name": "緻密源石粉末",
+            "quantity": 15
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "低容量武陵電池",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "中容量武陵電池",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "壤晶",
+            "quantity": 5
+          },
+          {
+            "name": "緻密源石粉末",
+            "quantity": 20
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "中容量武陵電池",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "藍鐵瓶-清水",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "清水",
+            "quantity": 1
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶-清水",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "藍鐵瓶-錦草溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "錦草溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶-錦草溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "藍鐵瓶-芽針溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "芽針溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶-芽針溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "藍鐵瓶-液化息壤",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "液化息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶-液化息壤",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "藍鐵瓶-液化重息壤",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 1
+          },
+          {
+            "name": "液化重息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "藍鐵瓶-液化重息壤",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赤銅瓶-錦草溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅瓶",
+            "quantity": 1
+          },
+          {
+            "name": "錦草溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅瓶-錦草溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "赤銅瓶-芽針溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅瓶",
+            "quantity": 1
+          },
+          {
+            "name": "芽針溶液",
+            "quantity": 1
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "赤銅瓶-芽針溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "工業爆炸物",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶零件",
+            "quantity": 5
+          },
+          {
+            "name": "酮化灌木粉末",
+            "quantity": 1
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "工業爆炸物",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "蕎花粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "蕎花",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "蕎花粉末",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "柑實粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "柑實",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "柑實粉末",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "錦草粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "錦草",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "錦草粉末",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "芽針粉末",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "芽針",
+            "quantity": 1
+          }
+        ],
+        "machine": "粉碎機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "芽針粉末",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "蕎癒膠囊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶質瓶",
+            "quantity": 5
+          },
+          {
+            "name": "蕎花粉末",
+            "quantity": 5
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "蕎癒膠囊",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "優質蕎癒膠囊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 10
+          },
+          {
+            "name": "蕎花粉末",
+            "quantity": 10
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "優質蕎癒膠囊",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "柑實罐頭",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "紫晶質瓶",
+            "quantity": 5
+          },
+          {
+            "name": "柑實粉末",
+            "quantity": 5
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "柑實罐頭",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "優質柑實罐頭",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "藍鐵瓶",
+            "quantity": 10
+          },
+          {
+            "name": "柑實粉末",
+            "quantity": 10
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "優質柑實罐頭",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "錦草飲料",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "鐵製零件",
+            "quantity": 10
+          },
+          {
+            "name": "藍鐵瓶-錦草溶液",
+            "quantity": 5
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "錦草飲料",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "芽針針劑",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "鐵製零件",
+            "quantity": 10
+          },
+          {
+            "name": "藍鐵瓶",
+            "quantity": 5
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "芽針針劑",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "精選蕎癒膠囊",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "鋼質瓶",
+            "quantity": 10
+          },
+          {
+            "name": "細磨蕎花粉末",
+            "quantity": 10
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "精選蕎癒膠囊",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "精選柑實罐頭",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "鋼質瓶",
+            "quantity": 10
+          },
+          {
+            "name": "細磨柑實粉末",
+            "quantity": 10
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "精選柑實罐頭",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "優質錦草飲料",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅零件",
+            "quantity": 10
+          },
+          {
+            "name": "赤銅瓶-錦草溶液",
+            "quantity": 5
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "優質錦草飲料",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "優質芽針針劑",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "赤銅零件",
+            "quantity": 10
+          },
+          {
+            "name": "赤銅瓶-芽針溶液",
+            "quantity": 5
+          }
+        ],
+        "machine": "封裝機",
+        "outputs": [
+          {
+            "name": "優質芽針針劑",
+            "quantity": 1
+          }
+        ],
+        "time_seconds": 10
+      }
+    ]
+  },
+  {
+    "name": "實驗息壤瓶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "息壤",
+            "quantity": 2
+          }
+        ],
+        "machine": "塑型機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "實驗息壤瓶",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "實驗息壤零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "配件機",
+        "time_seconds": 2,
+        "outputs": [
+          {
+            "name": "實驗息壤零件",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "息壤葫蘆",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "實驗息壤瓶",
+            "quantity": 5
+          },
+          {
+            "name": "實驗息壤零件",
+            "quantity": 5
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "息壤葫蘆",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "實驗重息壤瓶",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "重息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "塑型機",
+        "time_seconds": 20,
+        "outputs": [
+          {
+            "name": "實驗重息壤瓶",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "實驗重息壤瓶-芽針溶液",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "實驗重息壤瓶",
+            "quantity": 1
+          },
+          {
+            "name": "芽針溶液",
+            "quantity": 5
+          }
+        ],
+        "machine": "灌裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "實驗重息壤瓶-芽針溶液",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "息壤玉葫蘆",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "實驗重息壤瓶-芽針溶液",
+            "quantity": 1
+          },
+          {
+            "name": "實驗玉銅發散器",
+            "quantity": 1
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "息壤玉葫蘆",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "實驗玉銅發散器",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "實驗重息壤零件",
+            "quantity": 1
+          },
+          {
+            "name": "赫銅塊",
+            "quantity": 1
+          }
+        ],
+        "machine": "封裝機",
+        "time_seconds": 10,
+        "outputs": [
+          {
+            "name": "實驗玉銅發散器",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "實驗重息壤零件",
+    "recipes": [
+      {
+        "inputs": [
+          {
+            "name": "重息壤",
+            "quantity": 1
+          }
+        ],
+        "machine": "配件機",
+        "time_seconds": 20,
+        "outputs": [
+          {
+            "name": "實驗重息壤零件",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -5,7 +5,8 @@
  *
  * P1-C（鏈路合法性驗證）:
  *   C1  validateChains(graph)              — 反向 BFS 合法鏈路過濾
- *   C2  validateRecipeMatch(...)           — 配方品項符合性檢查
+ *   C2  validateRecipeMatch(...)           — 固定索引配方符合性（除錯）
+ *   V9-E1 matchRecipeByInputs(...)         — 依實際輸入集合匹配配方
  *
  * P1-D（核心演算法）:
  *   D2  buildGraph(nodes, edges)           — 建立有向圖
@@ -18,7 +19,7 @@
  *   D9  runFlowEngine()                    — 主入口
  *
  * P1-E（Watch 觸發）:
- *   E1  useFlowEngine() composable         — watch + useDebounceFn(runFlowEngine, 150)
+ *   useFlowEngine() composable             — watch + useDebounceFn(runFlowEngine, 150)
  */
 
 import type {
@@ -30,9 +31,10 @@ import type {
     RecipeDef,
     FlowEngineResult,
 } from '@/types/flow';
-import { BELT_RATE_LIMIT } from '@/types/flow';
-import { getRecipesForMachine } from '@/data/products';
-import { getMachine } from '@/data/machines';
+import { BELT_RATE_LIMIT, rateLimitForMedia, formToPortMedia } from '@/types/flow';
+import { getRecipesForMachine, getItemForm } from '@/data/products';
+import { getMachine, getMachineMode } from '@/data/machines';
+import type { PortMedia } from '@/types/machine';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import { useValidationStore } from '@/store/validationStore';
@@ -43,25 +45,265 @@ import { useDebounceFn } from '@vueuse/core';
 // ─── 內部工具 ─────────────────────────────────────────────────────────────────
 
 /**
- * 依設備類型與配方索引取得 RecipeDef。
- * 使用 getRecipesForMachine（依設備名）而非 getRecipe（依產品名）。
- * @param machineType 設備類型名稱（對應 MachineDef.name）
- * @param recipeIndex 選用的配方索引
- * @returns 對應的配方定義，找不到時為 undefined
- * @example
- * const recipe = getRecipeForNode('粉碎機', 0)
+ * 解析節點的機器型態 id；缺省為該機器 modes[0].id。
+ *
+ * @param machineType 設備中文名
+ * @param machineMode 節點上的 machineMode（可缺）
  */
-function getRecipeForNode(machineType: string, recipeIndex: number): RecipeDef | undefined {
-    return getRecipesForMachine(machineType)[recipeIndex];
+export function resolveMachineMode(machineType: string, machineMode?: string): string | undefined {
+    const machine = getMachine(machineType);
+    if (!machine?.modes.length) return machineMode;
+    return getMachineMode(machine, machineMode).id;
+}
+
+/**
+ * 依設備類型、型態與配方索引取得 RecipeDef。
+ * recipeIndex 是對 `getRecipesForMachine(machineType, machineMode)` 過濾後列表的索引。
+ *
+ * @param machineType 設備類型名稱
+ * @param recipeIndex 選用的配方索引（mode 過濾後）
+ * @param machineMode 機器型態；缺省 modes[0]
+ */
+function getRecipeForNode(
+    machineType: string,
+    recipeIndex: number,
+    machineMode?: string,
+): RecipeDef | undefined {
+    const modeId = resolveMachineMode(machineType, machineMode);
+    return getRecipesForMachine(machineType, modeId)[recipeIndex];
+}
+
+/** 兩字串集合是否完全相同 */
+function itemSetsEqual(a: Set<string>, b: Set<string>): boolean {
+    if (a.size !== b.size) return false;
+    for (const id of a) {
+        if (!b.has(id)) return false;
+    }
+    return true;
+}
+
+/**
+ * V9-E1：依實際接入品項種類匹配配方。
+ *
+ * - 限定 machineType＋machineMode 配方子集
+ * - 接入品項集合須與配方 inputs **完全吻合**
+ * - environment 須一致（缺省皆為 `"none"`）
+ * - 多候選取資料順序第一條
+ *
+ * @returns 匹配的配方與 mode 過濾後索引；無匹配回傳 null
+ */
+export function matchRecipeByInputs(
+    machineType: string,
+    incomingItemIds: Set<string>,
+    machineMode?: string,
+    environment: string = 'none',
+): { recipe: RecipeDef; index: number } | null {
+    const modeId = resolveMachineMode(machineType, machineMode);
+    const recipes = getRecipesForMachine(machineType, modeId);
+    const env = environment || 'none';
+
+    for (let i = 0; i < recipes.length; i++) {
+        const recipe = recipes[i]!;
+        if ((recipe.environment ?? 'none') !== env) continue;
+        const need = new Set(recipe.inputs.map((inp) => inp.itemId));
+        if (itemSetsEqual(need, incomingItemIds)) {
+            return { recipe, index: i };
+        }
+    }
+    return null;
+}
+
+/**
+ * 各入邊各選一品後，集合是否能剛好等於 need（一條邊一種物流）。
+ * 邊數可多於 need（多餘邊須能選到已覆蓋品，使集合不膨脹）— 實際上要求選取集合 === need。
+ */
+function edgePicksCanEqualNeed(
+    edgeCandidates: readonly (readonly string[])[],
+    need: Set<string>,
+): boolean {
+    if (need.size === 0) return edgeCandidates.every((c) => c.length === 0);
+    if (edgeCandidates.length === 0) return false;
+
+    const edges = edgeCandidates.map((c) => c.filter((id) => need.has(id)));
+    if (edges.some((c) => c.length === 0)) return false;
+
+    const picked: string[] = [];
+    const dfs = (i: number): boolean => {
+        if (i >= edges.length) {
+            return itemSetsEqual(new Set(picked), need);
+        }
+        const opts = edges[i]!;
+        for (const item of opts) {
+            picked.push(item);
+            if (dfs(i + 1)) return true;
+            picked.pop();
+        }
+        return false;
+    };
+    return dfs(0);
+}
+
+/**
+ * V9-H1-2：依「每邊候選品項」匹配配方（多輸出上游不把副產算進輸入集合）。
+ *
+ * 每條入邊從候選中選一品；選取集合須與配方 inputs 完全吻合。
+ *
+ * @param edgeCandidateItems 各入邊可承載的品項列表（通常為上游 outputs）
+ */
+export function matchRecipeByEdgeCandidates(
+    machineType: string,
+    edgeCandidateItems: readonly (readonly string[])[],
+    machineMode?: string,
+    environment: string = 'none',
+): { recipe: RecipeDef; index: number } | null {
+    if (edgeCandidateItems.length === 0) {
+        return matchRecipeByInputs(machineType, new Set(), machineMode, environment);
+    }
+
+    // 單邊單品：與舊 matchRecipeByInputs 等價（含多邊各一品的扁平集合）
+    const solePerEdge = edgeCandidateItems.every((c) => c.length <= 1);
+    if (solePerEdge) {
+        const flat = new Set<string>();
+        for (const c of edgeCandidateItems) {
+            if (c[0]) flat.add(c[0]);
+        }
+        return matchRecipeByInputs(machineType, flat, machineMode, environment);
+    }
+
+    const modeId = resolveMachineMode(machineType, machineMode);
+    const recipes = getRecipesForMachine(machineType, modeId);
+    const env = environment || 'none';
+
+    for (let i = 0; i < recipes.length; i++) {
+        const recipe = recipes[i]!;
+        if ((recipe.environment ?? 'none') !== env) continue;
+        const need = new Set(recipe.inputs.map((inp) => inp.itemId));
+        if (edgePicksCanEqualNeed(edgeCandidateItems, need)) {
+            return { recipe, index: i };
+        }
+    }
+    return null;
+}
+
+/**
+ * 機器在該 mode 下是否有任何配方（分流器等無配方節點回傳 false）。
+ */
+function machineHasRecipes(machineType: string, machineMode?: string): boolean {
+    const modeId = resolveMachineMode(machineType, machineMode);
+    return getRecipesForMachine(machineType, modeId).length > 0;
+}
+
+/**
+ * 自 Vue Flow handle id 解析埠索引（`out-0` / `in-1`）。
+ * 無法解析時回傳 0。
+ */
+function parseHandlePortIndex(handle: string | null | undefined, kind: 'in' | 'out'): number {
+    if (!handle) return 0;
+    const m = handle.match(new RegExp(`^${kind}-(\\d+)$`));
+    return m ? Number(m[1]) : 0;
+}
+
+/**
+ * 取得節點指定 handle 對應埠的媒質。
+ * handle 缺省或無埠／索引越界時回傳 null（略過埠媒質，改由 form 等回退）。
+ */
+function resolvePortMedia(
+    machineType: string,
+    machineMode: string | undefined,
+    direction: 'in' | 'out',
+    handle: string | null | undefined,
+): PortMedia | null {
+    if (handle == null) return null;
+    const machine = getMachine(machineType);
+    if (!machine) return null;
+    const mode = getMachineMode(machine, machineMode);
+    const ports = direction === 'in' ? mode.input_ports : mode.output_ports;
+    if (!ports.length) return null;
+    const idx = parseHandlePortIndex(handle, direction);
+    return ports[idx]?.media ?? null;
+}
+
+/**
+ * 解析邊上應套用的媒質（優先來源出埠，其次目標入埠）。
+ */
+function resolveEdgeMedia(source: FlowNode, target: FlowNode, meta: EdgeMeta): PortMedia | null {
+    const srcMedia = resolvePortMedia(
+        source.machineType,
+        source.machineMode,
+        'out',
+        meta.sourceHandle,
+    );
+    if (srcMedia) return srcMedia;
+    return resolvePortMedia(target.machineType, target.machineMode, 'in', meta.targetHandle);
+}
+
+/**
+ * 邊上速率上限：
+ * 1. 能從埠解析媒質 → belt 30／pipe 60
+ * 2. 否則若已知品項 → 依 form（solid→30，liquid／gas→60）
+ * 3. 皆未知 → 保守 BELT_RATE_LIMIT（30）
+ *
+ * @param itemId 邊上承載品項（可選）
+ */
+function edgeRateLimit(
+    source: FlowNode,
+    target: FlowNode,
+    meta: EdgeMeta,
+    itemId?: string,
+): number {
+    const portMedia = resolveEdgeMedia(source, target, meta);
+    if (portMedia) return rateLimitForMedia(portMedia);
+    if (itemId) return rateLimitForMedia(formToPortMedia(getItemForm(itemId)));
+    return BELT_RATE_LIMIT;
+}
+
+/**
+ * 兩邊皆能解析媒質且不一致時回傳 true（belt ↔ pipe）。
+ * handle 缺省（抽象測試邊）時不檢查。
+ */
+function isPortMediaMismatch(source: FlowNode, target: FlowNode, meta: EdgeMeta): boolean {
+    if (meta.sourceHandle == null || meta.targetHandle == null) return false;
+    const srcMedia = resolvePortMedia(
+        source.machineType,
+        source.machineMode,
+        'out',
+        meta.sourceHandle,
+    );
+    const tgtMedia = resolvePortMedia(
+        target.machineType,
+        target.machineMode,
+        'in',
+        meta.targetHandle,
+    );
+    if (!srcMedia || !tgtMedia) return false;
+    return srcMedia !== tgtMedia;
+}
+
+/**
+ * 上游配方產出物態與線路媒質全數不符時回傳 true。
+ * handle 缺省或無配方產出時略過。
+ */
+function isItemFormMediaMismatch(source: FlowNode, target: FlowNode, meta: EdgeMeta): boolean {
+    if (meta.sourceHandle == null || meta.targetHandle == null) return false;
+    const media = resolveEdgeMedia(source, target, meta);
+    if (!media) return false;
+
+    const recipe = getRecipeForNode(source.machineType, source.recipeIndex, source.machineMode);
+    const itemIds: string[] = [];
+    if (source.outputRates.size > 0) {
+        itemIds.push(...source.outputRates.keys());
+    } else if (recipe) {
+        itemIds.push(...recipe.outputs.map((o) => o.itemId));
+    }
+    if (!itemIds.length) return false;
+
+    // 所有可能產出皆與線路媒質不符 → 非法
+    return itemIds.every((id) => formToPortMedia(getItemForm(id)) !== media);
 }
 
 /**
  * D4 — 計算單台設備的理論輸入 / 輸出速率（個/min）。
  * ratePerMin = quantity × (60 / timeSeconds)
- * @param recipe 該設備目前選用的配方
- * @returns 各輸入 / 輸出品項的理論速率（個/min）
- * @example
- * const { inputRates, outputRates } = calcDeviceRate(recipe)
  */
 function calcDeviceRate(recipe: RecipeDef): {
     inputRates: Map<string, number>;
@@ -82,42 +324,103 @@ function calcDeviceRate(recipe: RecipeDef): {
 // ─── C2：配方品項符合性檢查 ────────────────────────────────────────────────────
 
 /**
- * 驗證上游實際傳入的品項集合是否符合設備所選配方的輸入需求。
+ * 驗證上游品項集合是否**完全吻合**指定索引配方的 inputs（V9-E1 精確集合）。
  *
- * 規則：
- *   - 配方 inputs 為空（source 節點） 永遠合法
- *   - incomingItemIds 必須是 recipe.inputs 的 itemId 超集（或相等）
- *     也就是說，配方需要的每種輸入品項都必須有對應的上游連線
+ * 引擎主路徑請用 {@link matchRecipeByInputs}；本函式供固定索引除錯／舊測試。
  *
- * @param machineType   設備類型名稱（對應 MachineDef.name）
- * @param recipeIndex   選用的配方索引
+ * @param machineType   設備類型名稱
+ * @param recipeIndex   配方索引（mode 過濾後）
  * @param incomingItemIds  上游實際連入的品項名稱集合
- * @returns matched = true 代表配方合法
- *
- * @example
- * // 粉碎機配方 0（源石粉末）需要「源礦」作為輸入
- * validateRecipeMatch('粉碎機', 0, new Set(['源礦']))    // → true
- * validateRecipeMatch('粉碎機', 0, new Set(['赤銅礦']))  // → false（品項不符）
+ * @param machineMode   機器型態；缺省 modes[0]
+ * @param environment   節點環境；缺省 `"none"`
  */
 export function validateRecipeMatch(
     machineType: string,
     recipeIndex: number,
     incomingItemIds: Set<string>,
+    machineMode?: string,
+    environment: string = 'none',
 ): boolean {
-    // 依設備名稱查詢配方（與 getRecipeForNode / propagateFlows 一致）
-    const recipe = getRecipesForMachine(machineType)[recipeIndex];
-
-    // 找不到配方  不合法
+    const recipe = getRecipeForNode(machineType, recipeIndex, machineMode);
     if (!recipe) return false;
-
-    // source 節點（inputs 為空） 永遠合法
-    if (recipe.inputs.length === 0) return true;
-
-    // 配方所需的每種輸入品項，上游都必須有對應連線
-    return recipe.inputs.every((input) => incomingItemIds.has(input.itemId));
+    if ((recipe.environment ?? 'none') !== (environment || 'none')) return false;
+    const need = new Set(recipe.inputs.map((input) => input.itemId));
+    return itemSetsEqual(need, incomingItemIds);
 }
 
 // ─── C1：合法鏈路過濾 ─────────────────────────────────────────────────────────
+
+/**
+ * 產生埠佔用鍵；無法判定時回傳 null（略過基數檢查）。
+ *
+ * - 有 handle → `uid:in|out:handle`
+ * - 無 handle 且該方向僅 1 個 port → `uid:in|out:__sole__`（抽象邊仍受單埠單線約束）
+ * - 無 handle 且多埠 → null（舊測試抽象多線暫略過，待補 handle）
+ */
+function portOccupancyKey(
+    node: FlowNode,
+    direction: 'in' | 'out',
+    handle: string | null | undefined,
+): string | null {
+    if (handle != null && handle !== '') {
+        return `${node.deviceUid}:${direction}:${handle}`;
+    }
+    const machine = getMachine(node.machineType);
+    if (!machine) return null;
+    const mode = getMachineMode(machine, node.machineMode);
+    const ports = direction === 'in' ? mode.input_ports : mode.output_ports;
+    if (ports.length === 1) {
+        return `${node.deviceUid}:${direction}:__sole__`;
+    }
+    return null;
+}
+
+/**
+ * V8-C1：同一埠最多一條邊。違規時將相關節點標為非法。
+ * 僅引擎側；不負責 CR-02 連線拒絕。
+ */
+function markPortCardinalityViolations(graph: FlowGraph): void {
+    const { nodes, edgeMeta } = graph;
+    /** occupancyKey → connectionUid[] */
+    const occupancy = new Map<string, string[]>();
+
+    for (const meta of edgeMeta.values()) {
+        const source = nodes.get(meta.sourceDeviceUid);
+        const target = nodes.get(meta.targetDeviceUid);
+        if (!source || !target) continue;
+
+        const outKey = portOccupancyKey(source, 'out', meta.sourceHandle);
+        if (outKey) {
+            const list = occupancy.get(outKey) ?? [];
+            list.push(meta.connectionUid);
+            occupancy.set(outKey, list);
+        }
+        const inKey = portOccupancyKey(target, 'in', meta.targetHandle);
+        if (inKey) {
+            const list = occupancy.get(inKey) ?? [];
+            list.push(meta.connectionUid);
+            occupancy.set(inKey, list);
+        }
+    }
+
+    for (const connUids of occupancy.values()) {
+        if (connUids.length <= 1) continue;
+        for (const connUid of connUids) {
+            const meta = edgeMeta.get(connUid);
+            if (!meta) continue;
+            const source = nodes.get(meta.sourceDeviceUid);
+            const target = nodes.get(meta.targetDeviceUid);
+            if (source) {
+                source.isValid = false;
+                graph.invalidSubgraphUids.add(source.deviceUid);
+            }
+            if (target) {
+                target.isValid = false;
+                graph.invalidSubgraphUids.add(target.deviceUid);
+            }
+        }
+    }
+}
 
 /**
  * 從所有 sink 節點出發進行反向 BFS，標記可以到達 sink 的節點為「合法鏈路」。
@@ -125,6 +428,7 @@ export function validateRecipeMatch(
  *
  * 處理後：
  *   - 不可達 sink 的節點       node.isValid = false，加入 graph.invalidSubgraphUids
+ *   - 埠基數違規（單埠多線）   node.isValid = false，加入 graph.invalidSubgraphUids
  *   - 配方品項不符的節點       node.isValid = false，加入 graph.invalidSubgraphUids
  *   - 所有合法節點             node.isValid 維持 true
  *
@@ -208,58 +512,139 @@ export function validateChains(graph: FlowGraph): void {
         }
     }
 
-    //  Step 4：針對合法鏈路中的每個節點驗證配方品項符合性
+    //  Step 3.4：單埠單線（V8-C1）
+    markPortCardinalityViolations(graph);
+    _propagateInvalidDownstream(graph);
+
+    //  Step 3.5：V9-E1 依上游品項匹配配方，寫入理論 input／outputRates
+    _resolveRecipesByInputs(graph);
+
+    //  Step 3.6：埠媒質檢查（belt ↔ pipe）＋品項 form↔媒質；兩端 handle 皆有時才驗
+    for (const meta of edgeMeta.values()) {
+        const source = nodes.get(meta.sourceDeviceUid);
+        const target = nodes.get(meta.targetDeviceUid);
+        if (!source || !target) continue;
+        if (!source.isValid && !target.isValid) continue;
+        const mediaBad =
+            isPortMediaMismatch(source, target, meta) ||
+            isItemFormMediaMismatch(source, target, meta);
+        if (!mediaBad) continue;
+
+        source.isValid = false;
+        target.isValid = false;
+        graph.invalidSubgraphUids.add(source.deviceUid);
+        graph.invalidSubgraphUids.add(target.deviceUid);
+    }
+    _propagateInvalidDownstream(graph);
+
+    //  Step 4：有配方機器若無法匹配輸入 → 非法（不齊／種類不符）
     for (const [uid, node] of nodes) {
-        if (!node.isValid) continue; // 已非法，跳過
-        if (node.isSource) continue; // source 節點不需要驗配方輸入
-        if (node.isSink) continue; // sink 節點接受任意品項，不驗配方
+        if (!node.isValid) continue;
+        if (node.isSource || node.isSink) continue;
+        if (!machineHasRecipes(node.machineType, node.machineMode)) continue;
 
-        // 檢查節點是否有配方（分流器、管道橋等無配方節點跳過驗證）
-        const recipe = getRecipeForNode(node.machineType, node.recipeIndex);
-        if (!recipe) {
-            continue; // 無配方的特殊節點（如分流器）不需要驗證
-        }
-
-        // 蒐集上游所有邊傳入的品項（此時尚未計算速率，只看品項種類）
-        const incomingEdgeUids = inEdges.get(uid) ?? [];
-        const incomingItemIds = new Set<string>();
-
-        for (const connUid of incomingEdgeUids) {
-            const meta = edgeMeta.get(connUid);
-            if (!meta) continue;
-
-            // 從上游節點的 outputRates 推斷品項（buildGraph 後應已初始化）
-            const upstreamNode = nodes.get(meta.sourceDeviceUid);
-            if (!upstreamNode) continue;
-
-            // 若上游 outputRates 尚未填充（buildGraph 階段），
-            // 則根據上游節點的配方 outputs 推斷
-            if (upstreamNode.outputRates.size > 0) {
-                for (const itemId of upstreamNode.outputRates.keys()) {
-                    incomingItemIds.add(itemId);
-                }
-            } else {
-                // fallback：從配方定義推斷
-                const upstreamRecipe = getRecipeForNode(
-                    upstreamNode.machineType,
-                    upstreamNode.recipeIndex,
-                );
-                if (upstreamRecipe) {
-                    upstreamRecipe.outputs.forEach((o) => incomingItemIds.add(o.itemId));
-                }
-            }
-        }
-
-        const matched = validateRecipeMatch(node.machineType, node.recipeIndex, incomingItemIds);
+        const matched = matchRecipeByEdgeCandidates(
+            node.machineType,
+            _collectEdgeCandidateItemIds(graph, uid),
+            node.machineMode,
+            node.environment ?? 'none',
+        );
         if (!matched) {
             node.isValid = false;
             graph.invalidSubgraphUids.add(uid);
+            node.inputRates = new Map();
+            node.outputRates = new Map();
+            node.efficiency = 0;
         }
     }
 
     //  Step 5：配方不符節點的下游也應連帶標記為非法
-    // （因為它們的上游輸入已不可信，需要再做一次正向 BFS 清除）
     _propagateInvalidDownstream(graph);
+}
+
+/**
+ * 自單一上游節點列出此邊可能承載的品項（多輸出時含副產候選）。
+ * 若上游標了 primaryOutput 且在產出中，僅回傳主產（一條邊一種物流）。
+ */
+function _upstreamEdgeCandidates(upstream: FlowNode): string[] {
+    const fromRates = [...upstream.outputRates.keys()];
+    let candidates: string[];
+    if (fromRates.length > 0) {
+        candidates = fromRates;
+    } else if (!upstream.isSource) {
+        const upstreamRecipe = getRecipeForNode(
+            upstream.machineType,
+            upstream.recipeIndex,
+            upstream.machineMode,
+        );
+        candidates = upstreamRecipe ? upstreamRecipe.outputs.map((o) => o.itemId) : [];
+    } else {
+        candidates = [];
+    }
+
+    const primary = upstream.primaryOutput;
+    if (primary && candidates.includes(primary)) return [primary];
+    return candidates;
+}
+
+/**
+ * 各入邊的候選品項列表（供 {@link matchRecipeByEdgeCandidates}）。
+ */
+function _collectEdgeCandidateItemIds(graph: FlowGraph, uid: string): string[][] {
+    const { nodes, inEdges, edgeMeta } = graph;
+    const node = nodes.get(uid);
+    if (!node) return [];
+
+    const perEdge: string[][] = [];
+    for (const connUid of inEdges.get(uid) ?? []) {
+        const meta = edgeMeta.get(connUid);
+        if (!meta) continue;
+        const upstreamNode = nodes.get(meta.sourceDeviceUid);
+        if (!upstreamNode || !upstreamNode.isValid) continue;
+        if (isPortMediaMismatch(upstreamNode, node, meta)) continue;
+        if (isItemFormMediaMismatch(upstreamNode, node, meta)) continue;
+
+        const candidates = _upstreamEdgeCandidates(upstreamNode);
+        if (candidates.length > 0) perEdge.push(candidates);
+    }
+    return perEdge;
+}
+
+/**
+ * V9-E1：由 source 往下游多遍匹配配方，寫入 recipeIndex 與理論速率。
+ */
+function _resolveRecipesByInputs(graph: FlowGraph): void {
+    const { nodes } = graph;
+    const maxPasses = Math.max(nodes.size, 1) + 2;
+
+    for (let pass = 0; pass < maxPasses; pass++) {
+        let changed = false;
+        for (const [uid, node] of nodes) {
+            if (!node.isValid || node.isSource || node.isSink) continue;
+            if (!machineHasRecipes(node.machineType, node.machineMode)) continue;
+
+            const matched = matchRecipeByEdgeCandidates(
+                node.machineType,
+                _collectEdgeCandidateItemIds(graph, uid),
+                node.machineMode,
+                node.environment ?? 'none',
+            );
+            if (!matched) continue;
+
+            if (
+                node.recipeIndex !== matched.index ||
+                node.outputRates.size === 0 ||
+                node.inputRates.size === 0
+            ) {
+                node.recipeIndex = matched.index;
+                const rates = calcDeviceRate(matched.recipe);
+                node.inputRates = rates.inputRates;
+                node.outputRates = rates.outputRates;
+                changed = true;
+            }
+        }
+        if (!changed) break;
+    }
 }
 
 /**
@@ -341,22 +726,35 @@ export function buildGraph(
         const machineType = node.data?.machineType ?? node.data?.label ?? node.id;
         const machineDef = getMachine(machineType);
         const recipeIndex = node.data?.recipeIndex ?? 0;
+        const machineMode = resolveMachineMode(machineType, node.data?.machineMode);
+        const environment = node.data?.environment ?? 'none';
+        const isSource = machineDef?.is_source ?? false;
+        const isSink = machineDef?.is_sink ?? false;
 
-        const recipe = getRecipeForNode(machineType, recipeIndex);
-        const { inputRates, outputRates } = recipe
-            ? calcDeviceRate(recipe)
-            : { inputRates: new Map<string, number>(), outputRates: new Map<string, number>() };
+        const inputRates = new Map<string, number>();
+        let outputRates = new Map<string, number>();
+
+        const primaryOutput = node.data?.primaryOutput;
+        if (isSource && primaryOutput) {
+            /** 基礎材料／物品輸出：不依賴 products 假配方 */
+            const rate = node.data?.sourceRatePerMin ?? (recipeIndex === 1 ? 15 : 30);
+            outputRates = new Map([[primaryOutput, rate]]);
+        }
+        // V9-E1：一般機器速率改由 validateChains／propagateFlows 依輸入匹配後填入
 
         const flowNode: FlowNode = {
             deviceUid: node.id,
             machineType,
+            machineMode,
+            environment,
             recipeIndex,
-            isSource: machineDef?.is_source ?? false,
-            isSink: machineDef?.is_sink ?? false,
+            isSource,
+            isSink,
             isValid: true,
             efficiency: 1,
             outputRates,
             inputRates,
+            primaryOutput,
         };
 
         graph.nodes.set(node.id, flowNode);
@@ -370,6 +768,8 @@ export function buildGraph(
             connectionUid: edge.id,
             sourceDeviceUid: edge.source,
             targetDeviceUid: edge.target,
+            sourceHandle: edge.sourceHandle,
+            targetHandle: edge.targetHandle,
         };
         graph.edgeMeta.set(edge.id, meta);
         graph.outEdges.get(edge.source)!.push(edge.id);
@@ -475,12 +875,16 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
         const outEdgeUids = outEdges.get(uid) ?? [];
 
         if (node.isSource) {
-            // Source：直接以理論速率輸出（套 BELT_RATE_LIMIT）
+            // Source：直接以理論速率輸出（依邊媒質套用 30／60）
             for (const connUid of outEdgeUids) {
                 const meta = edgeMeta.get(connUid);
                 if (!meta) continue;
+                const target = nodes.get(meta.targetDeviceUid);
                 for (const [itemId, recipeRate] of node.outputRates) {
-                    const rate = Math.min(recipeRate, BELT_RATE_LIMIT);
+                    const limit = target
+                        ? edgeRateLimit(node, target, meta, itemId)
+                        : rateLimitForMedia(itemId ? formToPortMedia(getItemForm(itemId)) : null);
+                    const rate = Math.min(recipeRate, limit);
                     edgeFlows.set(connUid, {
                         connectionUid: connUid,
                         itemId,
@@ -497,10 +901,12 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
             for (const [itemId, rate] of received) node.inputRates.set(itemId, rate);
             node.efficiency = 1;
         } else {
-            // 檢查是否為分流器（無配方節點，需特殊處理）
+            // 檢查是否為分流／匯流（無配方物流節點）
             const machineDef = getMachine(node.machineType);
             const isSplitter =
                 machineDef && (machineDef.name === '分流器' || machineDef.name === '管道分流器');
+            const isMerger =
+                machineDef && (machineDef.name === '匯流器' || machineDef.name === '管道匯流器');
 
             if (isSplitter) {
                 // 分流器邏輯：輸入流量均分至所有輸出邊
@@ -523,8 +929,12 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
                     for (const connUid of outEdgeUids) {
                         const meta = edgeMeta.get(connUid);
                         if (!meta) continue;
+                        const target = nodes.get(meta.targetDeviceUid);
+                        const limit = target
+                            ? edgeRateLimit(node, target, meta, inputItemId)
+                            : rateLimitForMedia(formToPortMedia(getItemForm(inputItemId)));
 
-                        const rate = Math.min(ratePerOutput, BELT_RATE_LIMIT);
+                        const rate = Math.min(ratePerOutput, limit);
                         edgeFlows.set(connUid, {
                             connectionUid: connUid,
                             itemId: inputItemId,
@@ -542,13 +952,82 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
                 continue;
             }
 
-            // 一般設備（D5 calcDeviceOutput）
-            const received = nodeInputReceived.get(uid) ?? new Map();
-            const recipe = getRecipeForNode(node.machineType, node.recipeIndex);
-            if (!recipe) {
-                node.isValid = false;
-                graph.invalidSubgraphUids.add(uid);
+            if (isMerger) {
+                // 匯流器：Σ 輸入 → 單出邊（套用 belt／pipe 上限）
+                // inputRates 記「可接受吞吐量」= 實際出口速率，供堵塞按比例回推上游
+                const received = nodeInputReceived.get(uid) ?? new Map();
+                let totalInput = 0;
+                let inputItemId: string | undefined;
+
+                for (const [itemId, rate] of received) {
+                    totalInput += rate;
+                    inputItemId = itemId;
+                }
+
+                if (totalInput > 0 && inputItemId && outEdgeUids.length > 0) {
+                    const meta = edgeMeta.get(outEdgeUids[0]!);
+                    const target = meta ? nodes.get(meta.targetDeviceUid) : undefined;
+                    const limit =
+                        meta && target
+                            ? edgeRateLimit(node, target, meta, inputItemId)
+                            : rateLimitForMedia(formToPortMedia(getItemForm(inputItemId)));
+                    const outRate = Math.min(totalInput, limit);
+
+                    node.inputRates.set(inputItemId, outRate);
+                    node.outputRates.set(inputItemId, outRate);
+                    node.efficiency = 1;
+
+                    if (meta) {
+                        edgeFlows.set(outEdgeUids[0]!, {
+                            connectionUid: outEdgeUids[0]!,
+                            itemId: inputItemId,
+                            rate: outRate,
+                            isCongested: false,
+                        });
+                        const downstream = nodeInputReceived.get(meta.targetDeviceUid);
+                        if (downstream)
+                            downstream.set(
+                                inputItemId,
+                                (downstream.get(inputItemId) ?? 0) + outRate,
+                            );
+                    }
+                } else {
+                    node.efficiency = 0;
+                }
                 continue;
+            }
+
+            // 一般設備（D5 calcDeviceOutput）— V9-E1 依實際正流量品項匹配配方
+            const received = nodeInputReceived.get(uid) ?? new Map();
+            const incomingPositive = new Set<string>();
+            for (const [itemId, rate] of received) {
+                if (rate > 0) incomingPositive.add(itemId);
+            }
+
+            let recipe: RecipeDef | undefined;
+            if (machineHasRecipes(node.machineType, node.machineMode)) {
+                const matched = matchRecipeByInputs(
+                    node.machineType,
+                    incomingPositive,
+                    node.machineMode,
+                    node.environment ?? 'none',
+                );
+                if (!matched) {
+                    // 輸入不齊／不符 → 無產出（節點可仍為合法鏈，效率 0）
+                    node.efficiency = 0;
+                    node.inputRates = new Map();
+                    node.outputRates = new Map();
+                    continue;
+                }
+                node.recipeIndex = matched.index;
+                recipe = matched.recipe;
+            } else {
+                recipe = getRecipeForNode(node.machineType, node.recipeIndex, node.machineMode);
+                if (!recipe) {
+                    node.isValid = false;
+                    graph.invalidSubgraphUids.add(uid);
+                    continue;
+                }
             }
 
             const { inputRates: requiredRates, outputRates: recipeOutputRates } =
@@ -563,6 +1042,7 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
             efficiency = Math.min(1, Math.max(0, efficiency));
             node.efficiency = efficiency;
 
+            node.inputRates = new Map();
             for (const [itemId, required] of requiredRates) {
                 node.inputRates.set(itemId, required * efficiency);
             }
@@ -583,17 +1063,33 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
 
                 const downstreamRecipe = downstreamNode.isSink
                     ? null
-                    : getRecipeForNode(downstreamNode.machineType, downstreamNode.recipeIndex);
+                    : getRecipeForNode(
+                          downstreamNode.machineType,
+                          downstreamNode.recipeIndex,
+                          downstreamNode.machineMode,
+                      );
 
                 let chosenItemId: string | undefined;
                 let chosenRate = 0;
 
-                if (downstreamRecipe) {
+                // V9-H1-2：優先主產出（演示鏈／多輸出時避免副產佔邊）
+                if (node.primaryOutput && (outputAvailable.get(node.primaryOutput) ?? 0) > 0) {
+                    chosenItemId = node.primaryOutput;
+                    chosenRate = Math.min(
+                        outputAvailable.get(node.primaryOutput)!,
+                        edgeRateLimit(node, downstreamNode, meta, node.primaryOutput),
+                    );
+                }
+
+                if (!chosenItemId && downstreamRecipe) {
                     for (const input of downstreamRecipe.inputs) {
                         const available = outputAvailable.get(input.itemId) ?? 0;
                         if (available > 0) {
                             chosenItemId = input.itemId;
-                            chosenRate = Math.min(available, BELT_RATE_LIMIT);
+                            chosenRate = Math.min(
+                                available,
+                                edgeRateLimit(node, downstreamNode, meta, input.itemId),
+                            );
                             break;
                         }
                     }
@@ -602,7 +1098,10 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
                     for (const [itemId, rate] of outputAvailable) {
                         if (rate > 0) {
                             chosenItemId = itemId;
-                            chosenRate = Math.min(rate, BELT_RATE_LIMIT);
+                            chosenRate = Math.min(
+                                rate,
+                                edgeRateLimit(node, downstreamNode, meta, itemId),
+                            );
                             break;
                         }
                     }
@@ -632,12 +1131,50 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
 // ─── D7：堵塞反向傳播 ─────────────────────────────────────────────────────────
 
 /**
+ * 計算某條入邊對目標節點該品項的「需求份額」。
+ *
+ * 同品項多入邊按供給比例分攤 `inputRates`（可接受吞吐量）：
+ * 例如粉碎機需求源礦 30、兩入邊各供 30 → 各邊份額 15（供過於求堵塞）。
+ * 單入邊時份額＝整份 demand（行為不變）。
+ *
+ * @param rateSnapshot 本遍開始時的邊速率（避免同遍互相干擾）
+ */
+function edgeDemandForCongestion(
+    graph: FlowGraph,
+    edgeFlows: Map<string, EdgeFlow>,
+    targetUid: string,
+    flow: EdgeFlow,
+    demand: number,
+    rateSnapshot?: ReadonlyMap<string, number>,
+): number {
+    if (!graph.nodes.get(targetUid)) return demand;
+
+    let totalSupply = 0;
+    for (const connUid of graph.inEdges.get(targetUid) ?? []) {
+        const snap = rateSnapshot?.get(connUid);
+        if (snap != null) {
+            const f = edgeFlows.get(connUid);
+            if (f && f.itemId === flow.itemId) totalSupply += snap;
+            continue;
+        }
+        const f = edgeFlows.get(connUid);
+        if (f && f.itemId === flow.itemId) totalSupply += f.rate;
+    }
+    if (totalSupply <= 1e-9) return demand;
+    const flowRate = rateSnapshot?.get(flow.connectionUid) ?? flow.rate;
+    return demand * (flowRate / totalSupply);
+}
+
+/**
  * D7 — 偵測堵塞並向上游反向更新效率。
  *
- * 若某條邊的 supply > downstream.inputRates（需求）：  \
- *   - isCongested = true，rate 截斷至 demand  \
+ * 若某條邊的 supply > 該邊需求份額：  \
+ *   - isCongested = true，rate 截斷至份額  \
  *   - 上游節點效率與 outputRates 按比例縮減  \
  *   - 上游的 inputRates 同步縮減，影響更上游的剩餘資源計算
+ *
+ * 同品多入邊（匯流器或一般加工機）按供給比例分攤需求
+ * （例：需求 30、兩入各 30 → 各邊約 15）。
  *
  * @param graph     目前 FlowGraph（會被 mutate）
  * @param edgeFlows propagateFlows 產生的邊流量表（會被 mutate）
@@ -654,6 +1191,9 @@ export function detectCongestion(graph: FlowGraph, edgeFlows: Map<string, EdgeFl
     const MAX_PASSES = nodes.size + 2;
     for (let pass = 0; pass < MAX_PASSES; pass++) {
         let changed = false;
+        /** 本遍開始時的速率快照，避免同遍內比例分攤互相干擾 */
+        const rateSnapshot = new Map<string, number>();
+        for (const [id, f] of edgeFlows) rateSnapshot.set(id, f.rate);
 
         for (const [connUid, flow] of edgeFlows) {
             const meta = edgeMeta.get(connUid);
@@ -663,16 +1203,25 @@ export function detectCongestion(graph: FlowGraph, edgeFlows: Map<string, EdgeFl
             if (!targetNode || !targetNode.isValid) continue;
 
             const demand = targetNode.inputRates.get(flow.itemId) ?? 0;
-            if (flow.rate <= demand + 1e-6) continue;
+            const edgeDemand = edgeDemandForCongestion(
+                graph,
+                edgeFlows,
+                meta.targetDeviceUid,
+                flow,
+                demand,
+                rateSnapshot,
+            );
+            const supplyRate = rateSnapshot.get(connUid) ?? flow.rate;
+            if (supplyRate <= edgeDemand + 1e-6) continue;
 
-            // 標記堵塞，截斷至 demand
-            edgeFlows.set(connUid, { ...flow, isCongested: true, rate: demand });
+            // 標記堵塞，截斷至該邊份額
+            edgeFlows.set(connUid, { ...flow, isCongested: true, rate: edgeDemand });
             changed = true;
 
             const sourceNode = nodes.get(meta.sourceDeviceUid);
             if (!sourceNode || !sourceNode.isValid) continue;
 
-            const congestionRatio = flow.rate > 0 ? demand / flow.rate : 0;
+            const congestionRatio = supplyRate > 0 ? edgeDemand / supplyRate : 0;
 
             // source 節點：只縮減 outputRates（無 inputRates）
             if (sourceNode.isSource) {
@@ -705,9 +1254,22 @@ export function detectCongestion(graph: FlowGraph, edgeFlows: Map<string, EdgeFl
                 if (!upMeta) continue;
                 const upFlow = edgeFlows.get(upConnUid);
                 if (!upFlow) continue;
-                const upDemand = sourceNode.inputRates.get(upFlow.itemId) ?? 0;
-                if (upFlow.rate > upDemand + 1e-6) {
-                    edgeFlows.set(upConnUid, { ...upFlow, isCongested: true, rate: upDemand });
+                const upDemandTotal = sourceNode.inputRates.get(upFlow.itemId) ?? 0;
+                const upEdgeDemand = edgeDemandForCongestion(
+                    graph,
+                    edgeFlows,
+                    sourceNode.deviceUid,
+                    upFlow,
+                    upDemandTotal,
+                    rateSnapshot,
+                );
+                const upSupply = rateSnapshot.get(upConnUid) ?? upFlow.rate;
+                if (upSupply > upEdgeDemand + 1e-6) {
+                    edgeFlows.set(upConnUid, {
+                        ...upFlow,
+                        isCongested: true,
+                        rate: upEdgeDemand,
+                    });
                 }
             }
         }

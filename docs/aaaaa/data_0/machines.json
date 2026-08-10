@@ -1,0 +1,1331 @@
+[
+  {
+    "name": "塑型機",
+    "width": 3,
+    "height": 3,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      }
+    ],
+    "power": 10.0,
+    "tags": [
+      "基礎生產"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "灌裝機",
+    "width": 6,
+    "height": 4,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "top",
+        "offset": 4
+      },
+      {
+        "side": "top",
+        "offset": 5
+      },
+      {
+        "side": "left",
+        "offset": 1
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 4
+      },
+      {
+        "side": "bottom",
+        "offset": 5
+      }
+    ],
+    "power": 20.0,
+    "tags": [
+      "合成製造"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "精煉爐",
+    "width": 3,
+    "height": 3,
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      },
+      {
+        "side": "left",
+        "offset": 1
+      },
+      {
+        "side": "left",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "right",
+        "offset": 0
+      },
+      {
+        "side": "right",
+        "offset": 1
+      },
+      {
+        "side": "right",
+        "offset": 2
+      }
+    ],
+    "power": 5.0,
+    "tags": [
+      "基礎生產"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "粉碎機",
+    "width": 3,
+    "height": 3,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      }
+    ],
+    "power": 5.0,
+    "tags": [
+      "基礎生產"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "配件機",
+    "width": 3,
+    "height": 3,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      }
+    ],
+    "power": 20.0,
+    "tags": [
+      "基礎生產"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "裝備原件機",
+    "width": 4,
+    "height": 6,
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      },
+      {
+        "side": "left",
+        "offset": 1
+      },
+      {
+        "side": "left",
+        "offset": 2
+      },
+      {
+        "side": "left",
+        "offset": 3
+      },
+      {
+        "side": "left",
+        "offset": 4
+      },
+      {
+        "side": "left",
+        "offset": 5
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 0
+      },
+      {
+        "side": "right",
+        "offset": 1
+      },
+      {
+        "side": "right",
+        "offset": 2
+      },
+      {
+        "side": "right",
+        "offset": 3
+      },
+      {
+        "side": "right",
+        "offset": 4
+      },
+      {
+        "side": "right",
+        "offset": 5
+      }
+    ],
+    "power": 10.0,
+    "tags": [
+      "合成製造"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "封裝機",
+    "width": 6,
+    "height": 4,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "top",
+        "offset": 4
+      },
+      {
+        "side": "top",
+        "offset": 5
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 4
+      },
+      {
+        "side": "bottom",
+        "offset": 5
+      }
+    ],
+    "power": 20.0,
+    "tags": [
+      "合成製造"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "研磨機",
+    "width": 6,
+    "height": 4,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "top",
+        "offset": 4
+      },
+      {
+        "side": "top",
+        "offset": 5
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 4
+      },
+      {
+        "side": "bottom",
+        "offset": 5
+      }
+    ],
+    "power": 50.0,
+    "tags": [
+      "合成製造"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "反應池",
+    "width": 5,
+    "height": 5,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "left",
+        "offset": 1
+      },
+      {
+        "side": "left",
+        "offset": 3
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      },
+      {
+        "side": "right",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      }
+    ],
+    "power": 50.0,
+    "tags": [
+      "合成製造"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "天有洪爐",
+    "width": 5,
+    "height": 5,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "top",
+        "offset": 4
+      },
+      {
+        "side": "left",
+        "offset": 2
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 4
+      }
+    ],
+    "power": 50.0,
+    "tags": [
+      "合成製造"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "提純機",
+    "width": 5,
+    "height": 5,
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 1
+      },
+      {
+        "side": "left",
+        "offset": 3
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      },
+      {
+        "side": "right",
+        "offset": 3
+      }
+    ],
+    "power": 50.0,
+    "tags": [
+      "合成製造"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "拆解機",
+    "width": 6,
+    "height": 4,
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "top",
+        "offset": 4
+      },
+      {
+        "side": "top",
+        "offset": 5
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 4
+      },
+      {
+        "side": "bottom",
+        "offset": 5
+      }
+    ],
+    "power": 20.0,
+    "tags": [
+      "合成製造"
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "物品准入口",
+    "width": 1,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "物流設備"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 0
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "分流器",
+    "width": 1,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "物流設備"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "right",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 0
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "物流橋",
+    "width": 1,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "物流設備"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 0
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "right",
+        "offset": 0
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "匯流器",
+    "width": 1,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "物流設備"
+    ],
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "left",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 0
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 0
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "管道准入口",
+    "width": 1,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "物流設備"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 0
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "管道分流器",
+    "width": 1,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "物流設備"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "right",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 0
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "管道橋",
+    "width": 1,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "物流設備"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 0
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "right",
+        "offset": 0
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "管道匯流器",
+    "width": 1,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "物流設備"
+    ],
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "left",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 0
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 0
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "協議儲存箱",
+    "width": 3,
+    "height": 3,
+    "power": 5.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "倉庫存貨口",
+    "width": 3,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 1
+      }
+    ],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "倉庫取貨口",
+    "width": 3,
+    "height": 1,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [],
+    "output_ports": [
+      {
+        "side": "top",
+        "offset": 1
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "儲液罐",
+    "width": 3,
+    "height": 3,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 1
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "倉庫存取線基段",
+    "width": 4,
+    "height": 8,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "倉庫存取線源樁",
+    "width": 4,
+    "height": 4,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "暗管入口",
+    "width": 3,
+    "height": 3,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 1
+      }
+    ],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "暗管出口",
+    "width": 3,
+    "height": 3,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "多口暗管入口",
+    "width": 3,
+    "height": 5,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 1
+      },
+      {
+        "side": "left",
+        "offset": 3
+      }
+    ],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "多口暗管出口",
+    "width": 3,
+    "height": 5,
+    "power": 0.0,
+    "tags": [
+      "倉庫存取"
+    ],
+    "input_ports": [],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      },
+      {
+        "side": "right",
+        "offset": 3
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "採種機",
+    "width": 5,
+    "height": 5,
+    "power": 10.0,
+    "tags": [
+      "基礎生產"
+    ],
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "top",
+        "offset": 4
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 4
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "種植機",
+    "width": 5,
+    "height": 5,
+    "power": 20.0,
+    "tags": [
+      "基礎生產"
+    ],
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "top",
+        "offset": 4
+      },
+      {
+        "side": "left",
+        "offset": 2
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "bottom",
+        "offset": 0
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 4
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "廢水處理機",
+    "width": 3,
+    "height": 3,
+    "power": 50.0,
+    "tags": [
+      "基礎生產"
+    ],
+    "input_ports": [
+      {
+        "side": "left",
+        "offset": 1
+      }
+    ],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "擴容反應池",
+    "width": 6,
+    "height": 5,
+    "power": 100.0,
+    "tags": [
+      "合成製造"
+    ],
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 1
+      },
+      {
+        "side": "top",
+        "offset": 2
+      },
+      {
+        "side": "top",
+        "offset": 3
+      },
+      {
+        "side": "top",
+        "offset": 4
+      },
+      {
+        "side": "left",
+        "offset": 1
+      },
+      {
+        "side": "left",
+        "offset": 3
+      }
+    ],
+    "output_ports": [
+      {
+        "side": "right",
+        "offset": 1
+      },
+      {
+        "side": "right",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 1
+      },
+      {
+        "side": "bottom",
+        "offset": 2
+      },
+      {
+        "side": "bottom",
+        "offset": 3
+      },
+      {
+        "side": "bottom",
+        "offset": 4
+      }
+    ],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "供電樁",
+    "width": 2,
+    "height": 2,
+    "power": 0.0,
+    "tags": [
+      "電力"
+    ],
+    "input_ports": [],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "息壤供電樁",
+    "width": 2,
+    "height": 2,
+    "power": 0.0,
+    "tags": [
+      "電力"
+    ],
+    "input_ports": [],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "中繼器",
+    "width": 3,
+    "height": 3,
+    "power": 0.0,
+    "tags": [
+      "電力"
+    ],
+    "input_ports": [],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "息壤中繼器",
+    "width": 3,
+    "height": 3,
+    "power": 0.0,
+    "tags": [
+      "電力"
+    ],
+    "input_ports": [],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  },
+  {
+    "name": "熱能池",
+    "width": 2,
+    "height": 2,
+    "power": 0.0,
+    "tags": [
+      "電力"
+    ],
+    "input_ports": [
+      {
+        "side": "top",
+        "offset": 0
+      },
+      {
+        "side": "top",
+        "offset": 1
+      }
+    ],
+    "output_ports": [],
+    "is_source": false,
+    "is_sink": false
+  }
+]

@@ -136,15 +136,233 @@
             </div>
         </div>
 
-        <!-- 控制面板 -->
+        <!-- V6 拖曳驗收（commitDeviceMove） -->
+        <div
+            class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950"
+        >
+            <h3 class="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                V6 拖曳驗收
+            </h3>
+            <div class="mb-3 space-y-2 text-xs text-amber-800 dark:text-amber-300">
+                <p>
+                    <strong>目的：</strong>驗證「拖曳結束」會正確寫入歷史（模擬改座標 →
+                    <code class="rounded bg-white/60 px-1 dark:bg-black/30">commitDeviceMove</code
+                    >）。 與下方 <strong>Undo／Redo／Clear</strong>、<strong>Undo Stack</strong>
+                    是<strong>同一套</strong>
+                    <code class="rounded bg-white/60 px-1 dark:bg-black/30">historyStore</code
+                    >——一鍵腳本跑完後，可直接用下方 Undo 再驗一次。
+                </p>
+                <p>
+                    <strong>建議路徑（最快）：</strong>按
+                    <span class="font-semibold">「一鍵 M1→M4」</span>（會自動清場並擺設備）→
+                    看綠／紅結果 → checklist 會自動勾選通過項。
+                </p>
+                <p>
+                    <strong>手動路徑：</strong>右側「➕ 擺放設備」至少 1～2 台 → 再按上方模擬按鈕 →
+                    用下方 Undo／Redo 觀察座標。M7（跟手）請到
+                    <RouterLink class="underline" to="/">主編輯畫布</RouterLink>
+                    真拖曳後手動勾選。
+                </p>
+                <p class="text-amber-700 dark:text-amber-400">
+                    目前畫布：{{ nodeCount }} 台設備
+                    <span v-if="v6Busy" class="ml-2 font-semibold">· 腳本執行中…</span>
+                </p>
+            </div>
+
+            <div class="mb-3 overflow-x-auto rounded-md bg-white/80 p-2 dark:bg-gray-900/80">
+                <table class="w-full text-left text-xs text-amber-900 dark:text-amber-200">
+                    <thead>
+                        <tr class="border-b border-amber-200 dark:border-amber-800">
+                            <th class="py-1 pr-3 font-semibold">項</th>
+                            <th class="py-1 pr-3 font-semibold">怎麼測</th>
+                            <th class="py-1 font-semibold">通過長相</th>
+                        </tr>
+                    </thead>
+                    <tbody class="align-top">
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M1</td>
+                            <td class="py-1 pr-3">模擬拖曳（單）→ 下方 Undo</td>
+                            <td class="py-1">座標回到拖曳前</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M2</td>
+                            <td class="py-1 pr-3">接 M1 → 下方 Redo</td>
+                            <td class="py-1">座標回到拖曳後</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M3</td>
+                            <td class="py-1 pr-3">模擬拖曳（多）→ Undo 一次</td>
+                            <td class="py-1">兩台都還原（需 ≥2 台）</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M4</td>
+                            <td class="py-1 pr-3">模擬零位移</td>
+                            <td class="py-1">undoDepth 不變</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M5</td>
+                            <td class="py-1 pr-3">一鍵 M5（交錯）</td>
+                            <td class="py-1">拖曳／旋轉／刪除交錯 Undo 合理</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M6</td>
+                            <td class="py-1 pr-3">一鍵 M6 或右側「移動所有設備」</td>
+                            <td class="py-1">moveDevices 路徑 Undo 正常</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 pr-3 font-mono">M7</td>
+                            <td class="py-1 pr-3">
+                                <RouterLink class="underline" to="/">主畫布</RouterLink> 真拖曳
+                            </td>
+                            <td class="py-1">跟手無抖動（此頁無法代替）</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mb-2 flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    class="rounded-md bg-amber-800 px-3 py-2 text-xs text-white hover:bg-amber-900 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy"
+                    :title="v6Busy ? '腳本執行中' : '推薦：自動清場、擺設備並驗 M1–M4'"
+                    @click="runV6ScriptM1toM4"
+                >
+                    一鍵 M1→M4（推薦）
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md bg-amber-800 px-3 py-2 text-xs text-white hover:bg-amber-900 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy"
+                    :title="v6Busy ? '腳本執行中' : '自動驗 M5 交錯 Undo'"
+                    @click="runV6ScriptM5"
+                >
+                    一鍵 M5（交錯）
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md bg-blue-700 px-3 py-2 text-xs text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy || nodeCount === 0"
+                    :title="v6NeedNodesHint(1) || '對現有設備跑 moveDevices'"
+                    @click="runV6ScriptM6"
+                >
+                    一鍵 M6（moveDevices）
+                </button>
+                <span
+                    class="mx-1 hidden h-8 w-px self-center bg-amber-300 sm:inline-block dark:bg-amber-700"
+                    aria-hidden="true"
+                />
+                <button
+                    type="button"
+                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy || nodeCount === 0"
+                    :title="v6NeedNodesHint(1) || 'M1：單機模擬拖曳結束'"
+                    @click="simulateDragCommitSingle"
+                >
+                    模擬拖曳（單）
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy || nodeCount < 2"
+                    :title="v6NeedNodesHint(2) || 'M3：多機同一筆 commit'"
+                    @click="simulateDragCommitMulti"
+                >
+                    模擬拖曳（多）
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md bg-amber-700 px-3 py-2 text-xs text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="v6Busy || nodeCount === 0"
+                    :title="v6NeedNodesHint(1) || 'M4：零位移不應進歷史'"
+                    @click="simulateZeroDisplacement"
+                >
+                    模擬零位移
+                </button>
+            </div>
+            <p
+                v-if="v6ButtonHint"
+                class="mb-3 text-xs font-medium text-amber-700 dark:text-amber-400"
+            >
+                {{ v6ButtonHint }}
+            </p>
+
+            <div
+                v-if="v6Busy"
+                class="mb-3 rounded-md border border-amber-400 bg-amber-100 p-2 text-xs font-semibold text-amber-900 dark:bg-amber-900 dark:text-amber-100"
+            >
+                腳本執行中，請稍候（按鈕暫時鎖定）…
+            </div>
+
+            <div
+                v-if="v6Message"
+                class="mb-3 rounded-md bg-white p-2 font-mono text-xs whitespace-pre-wrap text-amber-900 dark:bg-gray-900 dark:text-amber-200"
+                :class="
+                    v6Pass === false
+                        ? 'border border-red-400'
+                        : v6Pass
+                          ? 'border border-green-500'
+                          : ''
+                "
+            >
+                {{ v6Message }}
+            </div>
+
+            <div class="rounded-md bg-white p-3 dark:bg-gray-900">
+                <div class="mb-2 flex items-center justify-between">
+                    <h4 class="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                        驗收勾選（通過後勾；一鍵腳本會自動勾）
+                    </h4>
+                    <button
+                        type="button"
+                        class="text-xs text-gray-500 underline hover:text-gray-800 dark:hover:text-gray-200"
+                        @click="resetV6Checklist"
+                    >
+                        重置勾選
+                    </button>
+                </div>
+                <ul class="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
+                    <li
+                        v-for="item in v6ChecklistItems"
+                        :key="item.id"
+                        class="flex items-start gap-2"
+                    >
+                        <input
+                            :id="`v6-${item.id}`"
+                            v-model="v6Checklist[item.id]"
+                            type="checkbox"
+                            class="mt-0.5"
+                        />
+                        <label :for="`v6-${item.id}`" class="cursor-pointer leading-snug">
+                            <span class="font-semibold">{{ item.id }}</span>
+                            — {{ item.label }}
+                            <span
+                                v-if="item.id === 'M7'"
+                                class="ml-1 text-amber-700 dark:text-amber-300"
+                            >
+                                （需
+                                <RouterLink class="underline" to="/">主編輯畫布</RouterLink>
+                                目視跟手；此頁無法代替，驗後可手動勾選）
+                            </span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 控制面板：與上方 V6 共用 historyStore -->
         <div
             class="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
         >
+            <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                歷史控制（與上方 V6 驗收<strong>同一</strong> Undo／Redo 堆疊）
+            </p>
             <div class="flex items-center justify-between">
                 <div class="flex space-x-3">
                     <button
                         @click="undo"
                         :disabled="!historyStore.canUndo"
+                        :title="historyStore.canUndo ? '還原上一筆' : '目前沒有可 Undo 的紀錄'"
                         class="rounded-md bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         ⏮️ Undo
@@ -152,6 +370,7 @@
                     <button
                         @click="redo"
                         :disabled="!historyStore.canRedo"
+                        :title="historyStore.canRedo ? '重做' : '目前沒有可 Redo 的紀錄'"
                         class="rounded-md bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         ⏭️ Redo
@@ -176,9 +395,12 @@
                 <div
                     class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                 >
-                    <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                    <h3 class="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
                         Undo Stack（{{ historyStore.undoStack.length }}）
                     </h3>
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                        V6 一鍵腳本與手動模擬拖曳寫入的紀錄也在這裡
+                    </p>
                     <div class="max-h-96 space-y-2 overflow-y-auto">
                         <div
                             v-for="(command, index) in historyStore.undoStack"
@@ -304,7 +526,7 @@
                             :disabled="editorStore.nodes.length === 0"
                             class="w-full rounded-md bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
                         >
-                            ↔️ 測試：移動所有設備
+                            ↔️ 測試：移動所有設備（M6／moveDevices）
                         </button>
                         <button
                             @click="testRemoveDevices"
@@ -321,9 +543,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useLocalStorage } from '@vueuse/core';
+import { RouterLink } from 'vue-router';
 import { useEditorStore } from '@/store/editorStore';
 import { useHistoryStore } from '@/store/historyStore';
+import type { DevicePositionSnapshot } from '@/types/editor';
 
 /** 藍圖 store：本頁所有測試操作（擺放 / 移動 / 刪除）皆透過此 store 觸發 */
 const editorStore = useEditorStore();
@@ -331,6 +556,389 @@ const editorStore = useEditorStore();
 const historyStore = useHistoryStore();
 /** 快速測試場景執行進度提示文字 */
 const scenarioMessage = ref('');
+
+/** V6 區塊忙碌中（一鍵腳本執行時禁用按鈕） */
+const v6Busy = ref(false);
+/** V6 結果訊息 */
+const v6Message = ref('');
+/** V6 最近一次腳本是否全部通過（null = 僅手動操作） */
+const v6Pass = ref<boolean | null>(null);
+
+/** 目前畫布設備數（供 V6 按鈕啟用條件） */
+const nodeCount = computed(() => editorStore.nodes.length);
+
+/**
+ * 手動模擬按鈕缺設備時的提示（一鍵 M1→M4／M5 不需預先擺放）。
+ * @param need 至少需要的設備數
+ */
+function v6NeedNodesHint(need: number): string {
+    if (v6Busy.value) return '腳本執行中';
+    if (nodeCount.value >= need) return '';
+    if (need <= 1) {
+        return '需先有設備：請按右側「➕ 擺放設備」，或改用「一鍵 M1→M4（推薦）」';
+    }
+    return `需至少 ${need} 台設備（目前 ${nodeCount.value}）：請再擺放，或改用「一鍵 M1→M4（推薦）」`;
+}
+
+/** 常駐顯示的按鈕狀態說明（有禁用原因時） */
+const v6ButtonHint = computed(() => {
+    if (v6Busy.value) return '';
+    if (nodeCount.value === 0) {
+        return '提示：模擬拖曳／零位移／M6 目前無法點——畫布是空的。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
+    }
+    if (nodeCount.value < 2) {
+        return '提示：「模擬拖曳（多）」需要 ≥2 台。可再擺一台，或只用一鍵腳本／單機模擬。';
+    }
+    return '';
+});
+
+type V6CheckId = 'M1' | 'M2' | 'M3' | 'M4' | 'M5' | 'M6' | 'M7';
+
+const v6ChecklistItems: { id: V6CheckId; label: string }[] = [
+    { id: 'M1', label: '模擬拖曳（單）後，下方 Undo 回到拖曳前座標' },
+    { id: 'M2', label: '接 M1 後，下方 Redo 回到拖曳後座標' },
+    { id: 'M3', label: '模擬拖曳（多）後，一次 Undo 兩台都還原' },
+    { id: 'M4', label: '模擬零位移後，Depth 不變（不寫入歷史）' },
+    { id: 'M5', label: '一鍵 M5：拖曳／旋轉／刪除交錯 Undo 合理' },
+    { id: 'M6', label: '一鍵 M6 或「移動所有設備」後 Undo 正常' },
+    { id: 'M7', label: '主畫布真拖曳跟手（無抖動／跳回）' },
+];
+
+/** M1–M6 勾選狀態（持久化）；M7 僅展示不可勾選通過 */
+const v6Checklist = useLocalStorage<Record<V6CheckId, boolean>>('aaaaa-v6-d2-checklist', {
+    M1: false,
+    M2: false,
+    M3: false,
+    M4: false,
+    M5: false,
+    M6: false,
+    M7: false,
+});
+
+/**
+ * 短延遲，讓一鍵腳本 UI 可讀。
+ * @param ms 毫秒
+ */
+function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * 讀取指定 uid 的目前座標快照。
+ * @param uids 設備 uid
+ */
+function snapshotPositions(uids: string[]): DevicePositionSnapshot {
+    const snap: DevicePositionSnapshot = {};
+    for (const uid of uids) {
+        const node = editorStore.nodes.find((n) => n.id === uid);
+        if (node) snap[uid] = { x: node.position.x, y: node.position.y };
+    }
+    return snap;
+}
+
+/**
+ * 模擬 Vue Flow v-model：不經歷史直接改寫 position。
+ * @param uids 要移動的 uid
+ * @param delta 位移
+ * @returns 改寫前的 before 快照
+ */
+function applyDragPositions(
+    uids: string[],
+    delta: { x: number; y: number },
+): DevicePositionSnapshot {
+    const before = snapshotPositions(uids);
+    const uidSet = new Set(uids);
+    editorStore.nodes = editorStore.nodes.map((n) =>
+        uidSet.has(n.id)
+            ? {
+                  ...n,
+                  position: {
+                      x: n.position.x + delta.x,
+                      y: n.position.y + delta.y,
+                  },
+              }
+            : n,
+    );
+    return before;
+}
+
+/**
+ * 格式化單一節點座標供訊息顯示。
+ * @param uid 節點 id
+ */
+function fmtPos(uid: string): string {
+    const n = editorStore.nodes.find((x) => x.id === uid);
+    if (!n) return '(missing)';
+    return `(${n.position.x}, ${n.position.y})`;
+}
+
+/**
+ * 模擬單機拖曳結束：改座標 + commitDeviceMove。
+ */
+function simulateDragCommitSingle(): void {
+    const node = editorStore.nodes[0];
+    if (!node) {
+        v6Message.value = '無法執行：畫布無設備。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
+        v6Pass.value = false;
+        return;
+    }
+    const before = applyDragPositions([node.id], { x: 50, y: 0 });
+    const afterExpected = { x: before[node.id].x + 50, y: before[node.id].y };
+    const depthBefore = historyStore.undoDepth;
+    editorStore.commitDeviceMove([node.id], before);
+    const afterActual = editorStore.nodes.find((n) => n.id === node.id)!.position;
+    const noDouble =
+        Math.abs(afterActual.x - afterExpected.x) < 1e-6 &&
+        Math.abs(afterActual.y - afterExpected.y) < 1e-6;
+    const entered = historyStore.undoDepth === depthBefore + 1;
+    v6Pass.value = noDouble && entered;
+    v6Message.value = [
+        `模擬拖曳（單）uid=${node.id.slice(0, 8)}`,
+        `before=${JSON.stringify(before[node.id])} → now=${fmtPos(node.id)}`,
+        `undoDepth ${depthBefore} → ${historyStore.undoDepth}`,
+        noDouble ? '✓ 無雙重位移' : '✗ 座標不符（疑似雙重位移）',
+        entered ? '✓ 已進歷史' : '✗ 未進歷史',
+    ].join('\n');
+}
+
+/**
+ * 模擬多機同一筆 commitDeviceMove。
+ */
+function simulateDragCommitMulti(): void {
+    const uids = editorStore.nodes.map((n) => n.id);
+    if (uids.length < 2) {
+        v6Message.value =
+            '無法執行：需要至少 2 台設備。請再擺放一台，或改用「一鍵 M1→M4（推薦）」。';
+        v6Pass.value = false;
+        return;
+    }
+    const before = applyDragPositions(uids, { x: 40, y: 10 });
+    const depthBefore = historyStore.undoDepth;
+    editorStore.commitDeviceMove(uids, before);
+    const entered = historyStore.undoDepth === depthBefore + 1;
+    v6Pass.value = entered;
+    v6Message.value = [
+        `模擬拖曳（多）${uids.length} 台；應為單一歷史項目`,
+        `undoDepth ${depthBefore} → ${historyStore.undoDepth}`,
+        entered ? '✓ 一筆進歷史' : '✗ 歷史深度異常',
+        '請按 Undo：全部應一次還原',
+    ].join('\n');
+}
+
+/**
+ * 零位移 commit：undoDepth 應不變。
+ */
+function simulateZeroDisplacement(): void {
+    const node = editorStore.nodes[0];
+    if (!node) {
+        v6Message.value = '無法執行：畫布無設備。請用「一鍵 M1→M4（推薦）」或右側「➕ 擺放設備」。';
+        v6Pass.value = false;
+        return;
+    }
+    const before = snapshotPositions([node.id]);
+    const depthBefore = historyStore.undoDepth;
+    editorStore.commitDeviceMove([node.id], before);
+    const ok = historyStore.undoDepth === depthBefore;
+    v6Pass.value = ok;
+    v6Message.value = [
+        `零位移 commit uid=${node.id.slice(0, 8)} @${fmtPos(node.id)}`,
+        `undoDepth ${depthBefore} → ${historyStore.undoDepth}`,
+        ok ? '✓ 未進歷史（M4 通過）' : '✗ 不應增加歷史',
+    ].join('\n');
+    if (ok) v6Checklist.value.M4 = true;
+}
+
+/**
+ * 一鍵跑 M1→M4：自動斷言並勾選通過項。
+ */
+async function runV6ScriptM1toM4(): Promise<void> {
+    v6Busy.value = true;
+    v6Pass.value = null;
+    const lines: string[] = [];
+    let allOk = true;
+
+    try {
+        // 清空干擾：至少保證有節點
+        while (editorStore.nodes.length > 0) {
+            editorStore.removeDevices(editorStore.nodes.map((n) => n.id));
+        }
+        historyStore.clear();
+        await delay(80);
+
+        // M1
+        v6Message.value = 'M1：擺放 → 模擬拖曳 → Undo...';
+        testPlaceDevice();
+        await delay(120);
+        const uid = editorStore.nodes[0]!.id;
+        const before1 = applyDragPositions([uid], { x: 50, y: 0 });
+        const after1 = { x: before1[uid].x + 50, y: before1[uid].y };
+        editorStore.commitDeviceMove([uid], before1);
+        const posAfterCommit = { ...editorStore.nodes.find((n) => n.id === uid)!.position };
+        const m1NoDouble =
+            Math.abs(posAfterCommit.x - after1.x) < 1e-6 &&
+            Math.abs(posAfterCommit.y - after1.y) < 1e-6;
+        historyStore.undo();
+        const posAfterUndo = editorStore.nodes.find((n) => n.id === uid)!.position;
+        const m1Ok =
+            m1NoDouble &&
+            Math.abs(posAfterUndo.x - before1[uid].x) < 1e-6 &&
+            Math.abs(posAfterUndo.y - before1[uid].y) < 1e-6;
+        lines.push(m1Ok ? '✓ M1 Undo 還原' : '✗ M1 失敗');
+        v6Checklist.value.M1 = m1Ok;
+        allOk &&= m1Ok;
+        await delay(120);
+
+        // M2
+        v6Message.value = 'M2：Redo...';
+        historyStore.redo();
+        const posAfterRedo = editorStore.nodes.find((n) => n.id === uid)!.position;
+        const m2Ok =
+            Math.abs(posAfterRedo.x - after1.x) < 1e-6 &&
+            Math.abs(posAfterRedo.y - after1.y) < 1e-6;
+        lines.push(m2Ok ? '✓ M2 Redo' : '✗ M2 失敗');
+        v6Checklist.value.M2 = m2Ok;
+        allOk &&= m2Ok;
+        await delay(120);
+
+        // M3
+        v6Message.value = 'M3：多機一次 Undo...';
+        testPlaceDevice();
+        await delay(80);
+        const uids = editorStore.nodes.map((n) => n.id);
+        const before3 = applyDragPositions(uids, { x: 30, y: 20 });
+        editorStore.commitDeviceMove(uids, before3);
+        historyStore.undo();
+        const m3Ok = uids.every((id) => {
+            const n = editorStore.nodes.find((x) => x.id === id)!;
+            return (
+                Math.abs(n.position.x - before3[id].x) < 1e-6 &&
+                Math.abs(n.position.y - before3[id].y) < 1e-6
+            );
+        });
+        lines.push(m3Ok ? '✓ M3 多機一次還原' : '✗ M3 失敗');
+        v6Checklist.value.M3 = m3Ok;
+        allOk &&= m3Ok;
+        await delay(120);
+
+        // M4
+        v6Message.value = 'M4：零位移...';
+        const depthBefore = historyStore.undoDepth;
+        const first = editorStore.nodes[0]!;
+        editorStore.commitDeviceMove([first.id], snapshotPositions([first.id]));
+        const m4Ok = historyStore.undoDepth === depthBefore;
+        lines.push(m4Ok ? '✓ M4 零位移不進歷史' : '✗ M4 失敗');
+        v6Checklist.value.M4 = m4Ok;
+        allOk &&= m4Ok;
+
+        v6Pass.value = allOk;
+        v6Message.value = ['一鍵 M1→M4 完成', ...lines, allOk ? '全部通過' : '有失敗項'].join('\n');
+    } finally {
+        v6Busy.value = false;
+    }
+}
+
+/**
+ * M5：移動 → 旋轉 → 刪除，交錯 Undo 後座標堆疊合理。
+ */
+async function runV6ScriptM5(): Promise<void> {
+    v6Busy.value = true;
+    try {
+        while (editorStore.nodes.length > 0) {
+            editorStore.removeDevices(editorStore.nodes.map((n) => n.id));
+        }
+        historyStore.clear();
+        await delay(60);
+
+        testPlaceDevice();
+        await delay(80);
+        const uid = editorStore.nodes[0]!.id;
+        const origin = snapshotPositions([uid])[uid];
+
+        const before = applyDragPositions([uid], { x: 60, y: 0 });
+        editorStore.commitDeviceMove([uid], before);
+        const moved = { ...editorStore.nodes.find((n) => n.id === uid)!.position };
+
+        editorStore.rotateDevice(uid, 1);
+        await delay(60);
+
+        // 再擺一台後刪除移動過的那台，留下堆疊
+        testPlaceDevice();
+        await delay(60);
+        const otherId = editorStore.nodes.find((n) => n.id !== uid)!.id;
+        editorStore.removeDevices([otherId]);
+
+        // Undo 刪除 → Undo 旋轉 → Undo 移動
+        historyStore.undo(); // 還原 other
+        historyStore.undo(); // 還原 rotation
+        const afterUndoRotate = editorStore.nodes.find((n) => n.id === uid);
+        const stillMoved =
+            afterUndoRotate &&
+            Math.abs(afterUndoRotate.position.x - moved.x) < 1e-6 &&
+            Math.abs(afterUndoRotate.position.y - moved.y) < 1e-6;
+
+        historyStore.undo(); // 還原移動
+        const afterUndoMove = editorStore.nodes.find((n) => n.id === uid);
+        const backToOrigin =
+            afterUndoMove &&
+            Math.abs(afterUndoMove.position.x - origin.x) < 1e-6 &&
+            Math.abs(afterUndoMove.position.y - origin.y) < 1e-6;
+
+        const ok = Boolean(stillMoved && backToOrigin);
+        v6Pass.value = ok;
+        v6Checklist.value.M5 = ok;
+        v6Message.value = [
+            'M5 交錯 Undo',
+            stillMoved ? '✓ Undo 刪除／旋轉後仍在移動後座標' : '✗ 旋轉／刪除 undo 後座標錯亂',
+            backToOrigin ? '✓ 再 Undo 移動回到原點' : '✗ 移動 undo 未回原點',
+        ].join('\n');
+    } finally {
+        v6Busy.value = false;
+    }
+}
+
+/**
+ * M6：既有 moveDevices 路徑。
+ */
+async function runV6ScriptM6(): Promise<void> {
+    v6Busy.value = true;
+    try {
+        if (editorStore.nodes.length === 0) testPlaceDevice();
+        await delay(60);
+        const uid = editorStore.nodes[0]!.id;
+        const before = snapshotPositions([uid])[uid];
+        testMoveDevices();
+        const mid = editorStore.nodes.find((n) => n.id === uid)!.position;
+        const movedOk = Math.abs(mid.x - (before.x + 50)) < 1e-6;
+        historyStore.undo();
+        const after = editorStore.nodes.find((n) => n.id === uid)!.position;
+        const undoOk = Math.abs(after.x - before.x) < 1e-6 && Math.abs(after.y - before.y) < 1e-6;
+        const ok = movedOk && undoOk;
+        v6Pass.value = ok;
+        v6Checklist.value.M6 = ok;
+        v6Message.value = [
+            'M6 moveDevices',
+            movedOk ? '✓ X+50' : '✗ 位移不符',
+            undoOk ? '✓ Undo 還原' : '✗ Undo 失敗',
+        ].join('\n');
+    } finally {
+        v6Busy.value = false;
+    }
+}
+
+/**
+ * 重置 checklist 勾選（含 localStorage）。
+ */
+function resetV6Checklist(): void {
+    v6Checklist.value = {
+        M1: false,
+        M2: false,
+        M3: false,
+        M4: false,
+        M5: false,
+        M6: false,
+        M7: false,
+    };
+}
 
 /**
  * 呼叫 historyStore 還原上一筆操作。

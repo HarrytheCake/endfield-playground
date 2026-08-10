@@ -1,0 +1,33 @@
+[
+  {
+    "id": "e63d88fc-6fd2-4d5c-a995-90f575ef6961",
+    "name": "456",
+    "placements": [
+      {
+        "machine": "塑型機",
+        "rotation": 3,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "machine": "塑型機",
+        "x": 4,
+        "y": 0,
+        "rotation": 3
+      },
+      {
+        "machine": "塑型機",
+        "x": 8,
+        "y": 5,
+        "rotation": 0
+      },
+      {
+        "machine": "塑型機",
+        "x": 2,
+        "y": 5,
+        "rotation": 0
+      }
+    ],
+    "thumb": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAAA0CAYAAAAg5t6HAAABaElEQVR4AeyawW3CQBRELQqhBl/TTaQ0kFLSQKR0kysdJczFsjkYv13vgsVDfAnk2fmjt3OD0/k8/jnbGZwGX4jABGz8/B1qZ21zrXfOr/n3ejYBy8LLz8dQOjl/b0q9c+6ed6/nC2C9lh55j8Dg7QlMYJAAlNswgUECUG7DBAYJQLkNOx4wmPjBchsGL0BgAoMEoNyGCQwSgHIbJjBIAMptmMAgASi3YTXAxvfvoXS27C31zrkt/j00U8MuX29D7awFrvXO+TX/Xs8mYL0WPuUeEEpgAFakAgsFMAIDsCIVWCiAERiAFWkxsPybptUkGJ1WWeI7z1IMLCb5V83eE9/S2TtL/G6zVAG7NXuF7wKDtywwgUECUG7DBAYJQHmrhsEYx5ELDN6VwAQGCUC5DRMYJADlNkxgkACUVzUsvxfuPTD/Qr53lvgtFly/FAPL74St5poLv1tlie88TDGwuckrfRYYvO1/AAAA//8NhLY2AAAABklEQVQDAAw5NEuNKmEmAAAAAElFTkSuQmCC"
+  }
+]

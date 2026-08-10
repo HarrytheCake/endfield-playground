@@ -1,47 +1,140 @@
-﻿/**
- * 機器靜態定義資料
+/**
+ * 機器靜態定義資料（由 docs/aaaaa/scripts/generate-src-data.mjs 產生）
  *
- * 對齊 docs/aaaaa/data/machines.json（共 39 台機器）。
- * 另附 FlowEngine 專用節點：物品輸出口（is_source）、物品輸入口（is_sink）。
+ * 來源：docs/aaaaa/data/machines.json（含基礎材料輸出點）
+ *       docs/aaaaa/data/machine_tags.json（分類標籤）
+ * 另附 FlowEngine stub：物品輸出口（固體）、物品輸入口（sink；總產值只計此處交付）。
  *
- * 公開 API：
- *   - machineList        全部機器陣列（主資料源）
- *   - machineMap         name → Machine（向後相容，key 為中文名）
- *   - getMachine(name)   依中文名稱查詢（向後相容，供 editorStore 使用）
- *   - getMachineById(id) 依英文 id 查詢（新增）
- *   - getAllMachines()   回傳所有機器列表
+ * 請勿手改本檔資料區；改 JSON 後重新執行：
+ *   pnpm generate:src-data
  */
 
-import type { Machine } from '@/types/machine';
+import type { Machine, MachineCategory } from '@/types/machine';
+export { getMachineMode } from '@/types/machine';
+
+// ─── 分類標籤（V9-C1）──────────────────────────────────────────────────────────
+
+/** 機器 tag 分頁順序；對齊 machine_tags.json */
+export const MACHINE_TAGS: readonly MachineCategory[] = [
+    '物流設備',
+    '倉庫存取',
+    '基礎生產',
+    '合成製造',
+    '電力',
+];
+
+const _knownTagSet = new Set<string>(MACHINE_TAGS);
 
 // ─── 機器定義陣列 ─────────────────────────────────────────────────────────────
 
 /**
  * 全部機器的靜態定義陣列，模組載入時建立一次，整個應用生命週期內唯讀共用。
- * 為所有機器查詢函式（getMachine / getMachineById / getAllMachines 等）的主資料源。
  */
 export const machineList: Machine[] = [
-    // ─── 基礎生產類 ───────────────────────────────────────────────────────────────
-
     {
         id: 'shaping_machine',
         name: '塑型機',
         width: 3,
         height: 3,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-        ],
         power: 10,
         tags: ['基礎生產'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'base_mode',
+                label: '基礎模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                ],
+                loss: null,
+            },
+            {
+                id: 'gas_mode',
+                label: '氣體模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'left', offset: 1, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
+    {
+        id: 'filling_machine',
+        name: '灌裝機',
+        width: 6,
+        height: 4,
+        power: 20,
+        tags: ['合成製造'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'base_mode',
+                label: '基礎模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'top', offset: 5, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                    { side: 'bottom', offset: 5, media: 'belt' },
+                ],
+                loss: null,
+            },
+            {
+                id: 'gas_liquid_mode',
+                label: '氣液模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'top', offset: 5, media: 'belt' },
+                    { side: 'left', offset: 1, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                    { side: 'bottom', offset: 5, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -53,22 +146,45 @@ export const machineList: Machine[] = [
         name: '精煉爐',
         width: 3,
         height: 3,
-        input_ports: [
-            { side: 'left', offset: 0, type: 'item' },
-            { side: 'left', offset: 1, type: 'item' },
-            { side: 'left', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'liquid' },
-        ],
-        output_ports: [
-            { side: 'top', offset: 1, type: 'liquid' },
-            { side: 'right', offset: 0, type: 'item' },
-            { side: 'right', offset: 1, type: 'item' },
-            { side: 'right', offset: 2, type: 'item' },
-        ],
         power: 5,
         tags: ['基礎生產'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'base_mode',
+                label: '基礎模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                ],
+                loss: null,
+            },
+            {
+                id: 'liquid_mode',
+                label: '液體模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'left', offset: 1, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -80,20 +196,28 @@ export const machineList: Machine[] = [
         name: '粉碎機',
         width: 3,
         height: 3,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-        ],
         power: 5,
         tags: ['基礎生產'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -105,130 +229,28 @@ export const machineList: Machine[] = [
         name: '配件機',
         width: 3,
         height: 3,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-        ],
         power: 20,
         tags: ['基礎生產'],
         is_source: false,
         is_sink: false,
-        onTick: null,
-        onInput: null,
-        onOutput: null,
-        calcEfficiency: null,
-    },
-
-    {
-        id: 'seed_harvester',
-        name: '採種機',
-        width: 5,
-        height: 5,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'top', offset: 4, type: 'item' },
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                ],
+                loss: null,
+            },
         ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-            { side: 'bottom', offset: 4, type: 'item' },
-        ],
-        power: 10,
-        tags: ['基礎生產'],
-        is_source: false,
-        is_sink: false,
-        onTick: null,
-        onInput: null,
-        onOutput: null,
-        calcEfficiency: null,
-    },
-
-    {
-        id: 'planter',
-        name: '種植機',
-        width: 5,
-        height: 5,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'top', offset: 4, type: 'item' },
-            { side: 'left', offset: 2, type: 'liquid' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-            { side: 'bottom', offset: 4, type: 'item' },
-        ],
-        power: 20,
-        tags: ['基礎生產'],
-        is_source: false,
-        is_sink: false,
-        onTick: null,
-        onInput: null,
-        onOutput: null,
-        calcEfficiency: null,
-    },
-
-    {
-        id: 'wastewater_processor',
-        name: '廢水處理機',
-        width: 3,
-        height: 3,
-        input_ports: [{ side: 'left', offset: 1, type: 'liquid' }],
-        output_ports: [],
-        power: 50,
-        tags: ['基礎生產'],
-        is_source: false,
-        is_sink: false,
-        onTick: null,
-        onInput: null,
-        onOutput: null,
-        calcEfficiency: null,
-    },
-
-    // ─── 合成製造類 ───────────────────────────────────────────────────────────────
-
-    {
-        id: 'filling_machine',
-        name: '灌裝機',
-        width: 6,
-        height: 4,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'top', offset: 4, type: 'item' },
-            { side: 'top', offset: 5, type: 'item' },
-            { side: 'left', offset: 1, type: 'liquid' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-            { side: 'bottom', offset: 4, type: 'item' },
-            { side: 'bottom', offset: 5, type: 'item' },
-        ],
-        power: 20,
-        tags: ['合成製造'],
-        is_source: false,
-        is_sink: false,
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -240,26 +262,34 @@ export const machineList: Machine[] = [
         name: '裝備原件機',
         width: 4,
         height: 6,
-        input_ports: [
-            { side: 'left', offset: 0, type: 'item' },
-            { side: 'left', offset: 1, type: 'item' },
-            { side: 'left', offset: 2, type: 'item' },
-            { side: 'left', offset: 3, type: 'item' },
-            { side: 'left', offset: 4, type: 'item' },
-            { side: 'left', offset: 5, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'right', offset: 0, type: 'item' },
-            { side: 'right', offset: 1, type: 'item' },
-            { side: 'right', offset: 2, type: 'item' },
-            { side: 'right', offset: 3, type: 'item' },
-            { side: 'right', offset: 4, type: 'item' },
-            { side: 'right', offset: 5, type: 'item' },
-        ],
         power: 10,
         tags: ['合成製造'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'left', offset: 0, media: 'belt' },
+                    { side: 'left', offset: 1, media: 'belt' },
+                    { side: 'left', offset: 2, media: 'belt' },
+                    { side: 'left', offset: 3, media: 'belt' },
+                    { side: 'left', offset: 4, media: 'belt' },
+                    { side: 'left', offset: 5, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 0, media: 'belt' },
+                    { side: 'right', offset: 1, media: 'belt' },
+                    { side: 'right', offset: 2, media: 'belt' },
+                    { side: 'right', offset: 3, media: 'belt' },
+                    { side: 'right', offset: 4, media: 'belt' },
+                    { side: 'right', offset: 5, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -271,26 +301,34 @@ export const machineList: Machine[] = [
         name: '封裝機',
         width: 6,
         height: 4,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'top', offset: 4, type: 'item' },
-            { side: 'top', offset: 5, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-            { side: 'bottom', offset: 4, type: 'item' },
-            { side: 'bottom', offset: 5, type: 'item' },
-        ],
         power: 20,
         tags: ['合成製造'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'top', offset: 5, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                    { side: 'bottom', offset: 5, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -302,26 +340,34 @@ export const machineList: Machine[] = [
         name: '研磨機',
         width: 6,
         height: 4,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'top', offset: 4, type: 'item' },
-            { side: 'top', offset: 5, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-            { side: 'bottom', offset: 4, type: 'item' },
-            { side: 'bottom', offset: 5, type: 'item' },
-        ],
         power: 50,
         tags: ['合成製造'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'top', offset: 5, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                    { side: 'bottom', offset: 5, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -333,22 +379,30 @@ export const machineList: Machine[] = [
         name: '反應池',
         width: 5,
         height: 5,
-        input_ports: [
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'left', offset: 1, type: 'liquid' },
-            { side: 'left', offset: 3, type: 'liquid' },
-        ],
-        output_ports: [
-            { side: 'right', offset: 1, type: 'liquid' },
-            { side: 'right', offset: 3, type: 'liquid' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-        ],
         power: 50,
         tags: ['合成製造'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'left', offset: 1, media: 'belt' },
+                    { side: 'left', offset: 3, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -356,29 +410,37 @@ export const machineList: Machine[] = [
     },
 
     {
-        id: 'blast_furnace',
+        id: 'tianyou_furnace',
         name: '天有洪爐',
         width: 5,
         height: 5,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'top', offset: 4, type: 'item' },
-            { side: 'left', offset: 2, type: 'liquid' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-            { side: 'bottom', offset: 4, type: 'item' },
-        ],
         power: 50,
         tags: ['合成製造'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'left', offset: 2, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -390,18 +452,43 @@ export const machineList: Machine[] = [
         name: '提純機',
         width: 5,
         height: 5,
-        input_ports: [
-            { side: 'left', offset: 1, type: 'liquid' },
-            { side: 'left', offset: 3, type: 'liquid' },
-        ],
-        output_ports: [
-            { side: 'right', offset: 1, type: 'liquid' },
-            { side: 'right', offset: 3, type: 'liquid' },
-        ],
         power: 50,
         tags: ['合成製造'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'liquid_mode',
+                label: '液體模式',
+                input_ports: [
+                    { side: 'left', offset: 1, media: 'pipe' },
+                    { side: 'left', offset: 3, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                ],
+                loss: null,
+            },
+            {
+                id: 'gas_mode',
+                label: '氣體模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'left', offset: 2, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -413,77 +500,60 @@ export const machineList: Machine[] = [
         name: '拆解機',
         width: 6,
         height: 4,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'top', offset: 4, type: 'item' },
-            { side: 'top', offset: 5, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'right', offset: 1, type: 'liquid' },
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-            { side: 'bottom', offset: 4, type: 'item' },
-            { side: 'bottom', offset: 5, type: 'item' },
-        ],
         power: 20,
         tags: ['合成製造'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'top', offset: 5, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                    { side: 'bottom', offset: 5, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
         calcEfficiency: null,
     },
-
-    {
-        id: 'large_reactor',
-        name: '擴容反應池',
-        width: 6,
-        height: 5,
-        input_ports: [
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-            { side: 'top', offset: 3, type: 'item' },
-            { side: 'top', offset: 4, type: 'item' },
-            { side: 'left', offset: 1, type: 'liquid' },
-            { side: 'left', offset: 3, type: 'liquid' },
-        ],
-        output_ports: [
-            { side: 'right', offset: 1, type: 'liquid' },
-            { side: 'right', offset: 3, type: 'liquid' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-            { side: 'bottom', offset: 3, type: 'item' },
-            { side: 'bottom', offset: 4, type: 'item' },
-        ],
-        power: 100,
-        tags: ['合成製造'],
-        is_source: false,
-        is_sink: false,
-        onTick: null,
-        onInput: null,
-        onOutput: null,
-        calcEfficiency: null,
-    },
-
-    // ─── 物流設備類 ───────────────────────────────────────────────────────────────
 
     {
         id: 'item_access_port',
         name: '物品准入口',
         width: 1,
         height: 1,
-        input_ports: [{ side: 'left', offset: 0, type: 'item' }],
-        output_ports: [{ side: 'right', offset: 0, type: 'item' }],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'left', offset: 0, media: 'belt' }],
+                output_ports: [{ side: 'right', offset: 0, media: 'belt' }],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -495,16 +565,24 @@ export const machineList: Machine[] = [
         name: '分流器',
         width: 1,
         height: 1,
-        input_ports: [{ side: 'left', offset: 0, type: 'item' }],
-        output_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'right', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 0, type: 'item' },
-        ],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'left', offset: 0, media: 'belt' }],
+                output_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'right', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -516,18 +594,26 @@ export const machineList: Machine[] = [
         name: '物流橋',
         width: 1,
         height: 1,
-        input_ports: [
-            { side: 'left', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 0, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'right', offset: 0, type: 'item' },
-        ],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'left', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'right', offset: 0, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -539,16 +625,24 @@ export const machineList: Machine[] = [
         name: '匯流器',
         width: 1,
         height: 1,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'left', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 0, type: 'item' },
-        ],
-        output_ports: [{ side: 'right', offset: 0, type: 'item' }],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'left', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                ],
+                output_ports: [{ side: 'right', offset: 0, media: 'belt' }],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -560,12 +654,20 @@ export const machineList: Machine[] = [
         name: '管道准入口',
         width: 1,
         height: 1,
-        input_ports: [{ side: 'left', offset: 0, type: 'liquid' }],
-        output_ports: [{ side: 'right', offset: 0, type: 'liquid' }],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'left', offset: 0, media: 'pipe' }],
+                output_ports: [{ side: 'right', offset: 0, media: 'pipe' }],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -577,16 +679,24 @@ export const machineList: Machine[] = [
         name: '管道分流器',
         width: 1,
         height: 1,
-        input_ports: [{ side: 'left', offset: 0, type: 'liquid' }],
-        output_ports: [
-            { side: 'top', offset: 0, type: 'liquid' },
-            { side: 'right', offset: 0, type: 'liquid' },
-            { side: 'bottom', offset: 0, type: 'liquid' },
-        ],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'left', offset: 0, media: 'pipe' }],
+                output_ports: [
+                    { side: 'top', offset: 0, media: 'pipe' },
+                    { side: 'right', offset: 0, media: 'pipe' },
+                    { side: 'bottom', offset: 0, media: 'pipe' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -598,18 +708,26 @@ export const machineList: Machine[] = [
         name: '管道橋',
         width: 1,
         height: 1,
-        input_ports: [
-            { side: 'left', offset: 0, type: 'liquid' },
-            { side: 'bottom', offset: 0, type: 'liquid' },
-        ],
-        output_ports: [
-            { side: 'top', offset: 0, type: 'liquid' },
-            { side: 'right', offset: 0, type: 'liquid' },
-        ],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'left', offset: 0, media: 'pipe' },
+                    { side: 'bottom', offset: 0, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'top', offset: 0, media: 'pipe' },
+                    { side: 'right', offset: 0, media: 'pipe' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -621,43 +739,57 @@ export const machineList: Machine[] = [
         name: '管道匯流器',
         width: 1,
         height: 1,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'liquid' },
-            { side: 'left', offset: 0, type: 'liquid' },
-            { side: 'bottom', offset: 0, type: 'liquid' },
-        ],
-        output_ports: [{ side: 'right', offset: 0, type: 'liquid' }],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'pipe' },
+                    { side: 'left', offset: 0, media: 'pipe' },
+                    { side: 'bottom', offset: 0, media: 'pipe' },
+                ],
+                output_ports: [{ side: 'right', offset: 0, media: 'pipe' }],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
         calcEfficiency: null,
     },
 
-    // ─── 倉庫存取類 ───────────────────────────────────────────────────────────────
-
     {
         id: 'protocol_storage_box',
         name: '協議儲存箱',
         width: 3,
         height: 3,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-            { side: 'top', offset: 2, type: 'item' },
-        ],
-        output_ports: [
-            { side: 'bottom', offset: 0, type: 'item' },
-            { side: 'bottom', offset: 1, type: 'item' },
-            { side: 'bottom', offset: 2, type: 'item' },
-        ],
         power: 5,
         tags: ['倉庫存取'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -669,12 +801,20 @@ export const machineList: Machine[] = [
         name: '倉庫存貨口',
         width: 3,
         height: 1,
-        input_ports: [{ side: 'top', offset: 1, type: 'item' }],
-        output_ports: [],
         power: 0,
         tags: ['倉庫存取'],
         is_source: false,
-        is_sink: false,
+        is_sink: true,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'top', offset: 1, media: 'belt' }],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -686,12 +826,20 @@ export const machineList: Machine[] = [
         name: '倉庫取貨口',
         width: 3,
         height: 1,
-        input_ports: [],
-        output_ports: [{ side: 'top', offset: 1, type: 'item' }],
         power: 0,
         tags: ['倉庫存取'],
-        is_source: false,
+        is_source: true,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [{ side: 'top', offset: 1, media: 'belt' }],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -703,12 +851,20 @@ export const machineList: Machine[] = [
         name: '儲液罐',
         width: 3,
         height: 3,
-        input_ports: [{ side: 'left', offset: 1, type: 'liquid' }],
-        output_ports: [{ side: 'right', offset: 1, type: 'liquid' }],
         power: 0,
         tags: ['倉庫存取'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'left', offset: 1, media: 'pipe' }],
+                output_ports: [{ side: 'right', offset: 1, media: 'pipe' }],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -720,12 +876,20 @@ export const machineList: Machine[] = [
         name: '倉庫存取線基段',
         width: 4,
         height: 8,
-        input_ports: [],
-        output_ports: [],
         power: 0,
         tags: ['倉庫存取'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -737,12 +901,20 @@ export const machineList: Machine[] = [
         name: '倉庫存取線源樁',
         width: 4,
         height: 4,
-        input_ports: [],
-        output_ports: [],
         power: 0,
         tags: ['倉庫存取'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -754,12 +926,20 @@ export const machineList: Machine[] = [
         name: '暗管入口',
         width: 3,
         height: 3,
-        input_ports: [{ side: 'left', offset: 1, type: 'liquid' }],
-        output_ports: [],
         power: 0,
         tags: ['倉庫存取'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'left', offset: 1, media: 'pipe' }],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -771,12 +951,20 @@ export const machineList: Machine[] = [
         name: '暗管出口',
         width: 3,
         height: 3,
-        input_ports: [],
-        output_ports: [{ side: 'right', offset: 1, type: 'liquid' }],
         power: 0,
         tags: ['倉庫存取'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [{ side: 'right', offset: 1, media: 'pipe' }],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -788,15 +976,23 @@ export const machineList: Machine[] = [
         name: '多口暗管入口',
         width: 3,
         height: 5,
-        input_ports: [
-            { side: 'left', offset: 1, type: 'liquid' },
-            { side: 'left', offset: 3, type: 'liquid' },
-        ],
-        output_ports: [],
         power: 0,
         tags: ['倉庫存取'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'left', offset: 1, media: 'pipe' },
+                    { side: 'left', offset: 3, media: 'pipe' },
+                ],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -808,34 +1004,206 @@ export const machineList: Machine[] = [
         name: '多口暗管出口',
         width: 3,
         height: 5,
-        input_ports: [],
-        output_ports: [
-            { side: 'right', offset: 1, type: 'liquid' },
-            { side: 'right', offset: 3, type: 'liquid' },
-        ],
         power: 0,
         tags: ['倉庫存取'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                ],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
         calcEfficiency: null,
     },
 
-    // ─── 電力類 ───────────────────────────────────────────────────────────────────
+    {
+        id: 'seed_harvester',
+        name: '採種機',
+        width: 5,
+        height: 5,
+        power: 10,
+        tags: ['基礎生產'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
+    {
+        id: 'planter',
+        name: '種植機',
+        width: 5,
+        height: 5,
+        power: 20,
+        tags: ['基礎生產'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'base_mode',
+                label: '基礎模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                ],
+                loss: null,
+            },
+            {
+                id: 'liquid_mode',
+                label: '液體模式',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'left', offset: 2, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 0, media: 'belt' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
+    {
+        id: 'wastewater_processor',
+        name: '廢水處理機',
+        width: 3,
+        height: 3,
+        power: 50,
+        tags: ['基礎生產'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'left', offset: 1, media: 'pipe' }],
+                output_ports: [],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
+    {
+        id: 'large_reactor',
+        name: '擴容反應池',
+        width: 6,
+        height: 5,
+        power: 100,
+        tags: ['合成製造'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'belt' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                    { side: 'top', offset: 4, media: 'belt' },
+                    { side: 'left', offset: 1, media: 'pipe' },
+                    { side: 'left', offset: 3, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 2, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                    { side: 'bottom', offset: 4, media: 'belt' },
+                ],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
 
     {
         id: 'power_pole',
         name: '供電樁',
         width: 2,
         height: 2,
-        input_ports: [],
-        output_ports: [],
         power: 0,
         tags: ['電力'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -847,12 +1215,20 @@ export const machineList: Machine[] = [
         name: '息壤供電樁',
         width: 2,
         height: 2,
-        input_ports: [],
-        output_ports: [],
         power: 0,
         tags: ['電力'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -864,12 +1240,20 @@ export const machineList: Machine[] = [
         name: '中繼器',
         width: 3,
         height: 3,
-        input_ports: [],
-        output_ports: [],
         power: 0,
         tags: ['電力'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -881,12 +1265,20 @@ export const machineList: Machine[] = [
         name: '息壤中繼器',
         width: 3,
         height: 3,
-        input_ports: [],
-        output_ports: [],
         power: 0,
         tags: ['電力'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -898,59 +1290,253 @@ export const machineList: Machine[] = [
         name: '熱能池',
         width: 2,
         height: 2,
-        input_ports: [
-            { side: 'top', offset: 0, type: 'item' },
-            { side: 'top', offset: 1, type: 'item' },
-        ],
-        output_ports: [],
         power: 0,
         tags: ['電力'],
         is_source: false,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'top', offset: 0, media: 'belt' },
+                    { side: 'top', offset: 1, media: 'belt' },
+                ],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
         calcEfficiency: null,
     },
 
-    // ─── FlowEngine 專用節點（非 machines.json 機器，供產線計算用）─────────────────
+    {
+        id: 'liquid_gas_converter',
+        name: '液氣轉化機',
+        width: 5,
+        height: 5,
+        power: 50,
+        tags: ['合成製造'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'liquid_mode',
+                label: '液體產出',
+                input_ports: [
+                    { side: 'top', offset: 2, media: 'pipe' },
+                    { side: 'left', offset: 1, media: 'pipe' },
+                    { side: 'left', offset: 3, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                ],
+                loss: { item: '液化息壤', rate_per_min: 6 },
+            },
+            {
+                id: 'gas_mode',
+                label: '氣體產出',
+                input_ports: [
+                    { side: 'top', offset: 2, media: 'pipe' },
+                    { side: 'left', offset: 1, media: 'pipe' },
+                    { side: 'left', offset: 3, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                ],
+                loss: { item: '液化息壤', rate_per_min: 6 },
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
 
-    /**
-     * 物品輸出口：產線起點（is_source = true）
-     * FlowEngine 以此識別資源生產節點，直接輸出配方速率。
-     */
+    {
+        id: 'solid_gas_converter',
+        name: '固氣轉化機',
+        width: 5,
+        height: 5,
+        power: 50,
+        tags: ['合成製造'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'solid_mode',
+                label: '固體產出',
+                input_ports: [
+                    { side: 'top', offset: 2, media: 'pipe' },
+                    { side: 'left', offset: 1, media: 'pipe' },
+                    { side: 'left', offset: 3, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'bottom', offset: 1, media: 'belt' },
+                    { side: 'bottom', offset: 3, media: 'belt' },
+                ],
+                loss: { item: '息壤氣', rate_per_min: 6 },
+            },
+            {
+                id: 'gas_mode',
+                label: '氣體產出',
+                input_ports: [
+                    { side: 'top', offset: 1, media: 'belt' },
+                    { side: 'top', offset: 2, media: 'pipe' },
+                    { side: 'top', offset: 3, media: 'belt' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                ],
+                loss: { item: '息壤氣', rate_per_min: 6 },
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
+    {
+        id: 'gas_reactor',
+        name: '氣體反應爐',
+        width: 5,
+        height: 5,
+        power: 50,
+        tags: ['合成製造'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [
+                    { side: 'left', offset: 1, media: 'pipe' },
+                    { side: 'left', offset: 3, media: 'pipe' },
+                ],
+                output_ports: [
+                    { side: 'right', offset: 1, media: 'pipe' },
+                    { side: 'right', offset: 3, media: 'pipe' },
+                ],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
+    {
+        id: 'gas_disperser',
+        name: '氣體散布機',
+        width: 3,
+        height: 3,
+        power: -1,
+        tags: ['合成製造'],
+        is_source: false,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'left', offset: 1, media: 'pipe' }],
+                output_ports: [],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
+    {
+        id: 'material_source',
+        name: '基礎材料輸出點',
+        width: 1,
+        height: 3,
+        power: 0,
+        tags: ['倉庫存取'],
+        is_source: true,
+        is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'solid_belt',
+                label: '固體輸送帶',
+                input_ports: [],
+                output_ports: [{ side: 'right', offset: 1, media: 'belt' }],
+                loss: null,
+            },
+            {
+                id: 'fluid_pipe',
+                label: '液氣管道',
+                input_ports: [],
+                output_ports: [{ side: 'right', offset: 1, media: 'pipe' }],
+                loss: null,
+            },
+        ],
+        onTick: null,
+        onInput: null,
+        onOutput: null,
+        calcEfficiency: null,
+    },
+
     {
         id: 'item_source',
         name: '物品輸出口',
         width: 1,
         height: 3,
-        input_ports: [],
-        output_ports: [{ side: 'right', offset: 1, type: 'item' }],
         power: 0,
         tags: ['物流設備'],
         is_source: true,
         is_sink: false,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [],
+                output_ports: [{ side: 'right', offset: 1, media: 'belt' }],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
         calcEfficiency: null,
     },
 
-    /**
-     * 物品輸入口：產線終點（is_sink = true）
-     * FlowEngine 以此識別產值交付節點，BFS 反向追蹤的起點。
-     */
     {
         id: 'item_sink',
         name: '物品輸入口',
         width: 1,
         height: 3,
-        input_ports: [{ side: 'right', offset: 1, type: 'item' }],
-        output_ports: [],
         power: 0,
         tags: ['物流設備'],
         is_source: false,
         is_sink: true,
+        config_signed_off: true,
+        modes: [
+            {
+                id: 'default',
+                label: '預設',
+                input_ports: [{ side: 'right', offset: 1, media: 'belt' }],
+                output_ports: [],
+                loss: null,
+            },
+        ],
         onTick: null,
         onInput: null,
         onOutput: null,
@@ -960,55 +1546,50 @@ export const machineList: Machine[] = [
 
 // ─── 查詢 Map ───────────────────────────────────────────────────────────────────
 
-/**
- * name（中文）→ Machine 快查 Map。  \
- * 供 editorStore 向後相容（仍以中文名作為鍵）。
- */
+/** name（中文）→ Machine 快查 Map */
 export const machineMap: ReadonlyMap<string, Machine> = new Map(
     machineList.map((m) => [m.name, m]),
 );
 
-/** id（英文 snake_case）→ Machine 快查 Map，FlowEngine 與 detector 使用 */
+/** id（英文 snake_case）→ Machine 快查 Map */
 const machineByIdMap: ReadonlyMap<string, Machine> = new Map(machineList.map((m) => [m.id, m]));
 
 // ─── 查詢函式 ───────────────────────────────────────────────────────────────────
 
 /**
- * 依中文名稱查詢機器定義（向後相容，editorStore 使用）。
+ * 依中文名稱查詢機器定義。
  *
  * @param name 機器中文名稱（對應 Machine.name）
- * @returns Machine 物件，找不到時為 `undefined`
- *
- * @example
- * const crusher = getMachine('粉碎機')
- * if (crusher) console.log(crusher.power)
  */
 export function getMachine(name: string): Machine | undefined {
     return machineMap.get(name);
 }
 
 /**
- * 依英文 id 查詢機器定義（FlowEngine 使用）。
+ * 依英文 id 查詢機器定義。
  *
- * @param id 機器英文 id（對應 Machine.id，snake_case）
- * @returns Machine 物件，找不到時為 `undefined`
- *
- * @example
- * const crusher = getMachineById('crusher')
+ * @param id 機器英文 id（對應 Machine.id）
  */
 export function getMachineById(id: string): Machine | undefined {
     return machineByIdMap.get(id);
 }
 
 /**
- * 取得所有機器定義列表的副本（避免外部 mutate 影響 source）。
- *
- * @returns 機器陣列副本
- *
- * @example
- * const all = getAllMachines()
- * const sources = all.filter((m) => m.is_source)
+ * 取得所有機器定義列表的副本。
  */
 export function getAllMachines(): Machine[] {
     return [...machineList];
+}
+
+/**
+ * 依 tag 篩選機器（一機多 tag 可出現在多個分頁）。
+ *
+ * @param tag `all`＝全部；`untagged`＝無已知 tag；其餘為 MachineCategory
+ */
+export function getMachinesByTag(tag: MachineCategory | 'all' | 'untagged'): Machine[] {
+    if (tag === 'all') return [...machineList];
+    if (tag === 'untagged') {
+        return machineList.filter((m) => !m.tags.some((t) => _knownTagSet.has(t)));
+    }
+    return machineList.filter((m) => m.tags.includes(tag));
 }

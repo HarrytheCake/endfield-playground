@@ -16,7 +16,7 @@ export type EquipmentType = 'smelter' | 'crusher' | 'assembler' | 'conveyor-node
  * - 2 = 180°
  * - 3 = 270°
  *
- * 與 Machine.input_ports / output_ports 的 PortSide / offset 一同決定實際 port 位置。
+ * 與當前 machineMode 的 PortSide / offset 一同決定實際 port 位置。
  */
 export type Rotation = 0 | 1 | 2 | 3;
 
@@ -29,3 +29,9 @@ export interface MapSettings {
     /** 是否啟用 snap-to-grid */
     snapToGrid: boolean;
 }
+
+/**
+ * 設備位置快照：uid → 畫布像素座標。  \
+ * 供 `commitDeviceMove` 在拖曳確認時還原／重做使用。
+ */
+export type DevicePositionSnapshot = Record<string, { x: number; y: number }>;
