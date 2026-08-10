@@ -4,18 +4,15 @@
 
 ## 目前使用中
 
-[0001_20260810_merge-verification-sweep](./0001_20260810_merge-verification-sweep.md) — `in-progress`，待辦待決剩 4/8
+[0001_20260810_merge-verification-sweep](./0001_20260810_merge-verification-sweep.md) — `in-progress`，待辦待決剩 1/8
 
 ## 現在開著的（逐格）
 
-- `0001#5` · **待實作** — 歷史回放頁實測：V6 拖曳錄製
-- `0001#6` · **待實作** — 驗證頁現況確認：確認 alerts 恆 0 屬預期
-- `0001#7` · **待實作** — 整合缺口清單（靜態盤點，不跑 UI）
-- `0001#8` · **阻塞**（等 `0001#7`） — 架構人工對答：七題逐題裁決
+- `0001#8` · **待決斷** — 架構人工對答：七題逐題裁決
 
-> 要做某一格：`python3 docs/dernoson/plan-history/plan-item.py 0001#5`
+> 要做某一格：`python3 docs/dernoson/plan-history/plan-item.py 0001#8`
 > —— 只回那一格的正文與它的依據，不必讀整份計畫。
 
 ## draft / in-progress（流水號降序）
 
-- **0001** [0001_20260810_merge-verification-sweep](./0001_20260810_merge-verification-sweep.md) — `in-progress`，待辦待決剩 4/8
+- **0001** [0001_20260810_merge-verification-sweep](./0001_20260810_merge-verification-sweep.md) — `in-progress`，待辦待決剩 1/8

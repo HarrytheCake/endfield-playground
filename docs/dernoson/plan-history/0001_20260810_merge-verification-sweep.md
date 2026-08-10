@@ -10,7 +10,7 @@
 shirone（驗證重疊偵測）三方的變更，但三者從未在同一棵樹上被人實際操作過一次。本計畫
 把這次合流做一輪人工實測，產出兩樣東西：一份可對照的驗收結果，以及一份整合缺口清單。
 
-三方的「可實測程度」差異極大（見 O2、O3、O4），所以本計畫不追求一致的驗收深度：aaaaa
+三方的「可實測程度」差異極大（見 O2、O3、O15），所以本計畫不追求一致的驗收深度：aaaaa
 是照 preset 自帶的 expected 逐條驗收，mbd 與 shirone 多半只能盤點缺口。
 
 **本計畫的約束**
@@ -18,7 +18,6 @@ shirone（驗證重疊偵測）三方的變更，但三者從未在同一棵樹�
 - 實測只走跑得起來的介面：主畫面 `/` 與 `/dev/*` 既有路由。**不建臨時 dev 頁、不動
   router、不寫新測試**。
 - **發現問題只記錄，不修**。所有缺陷寫成觀察，收斂後由使用者決定哪些開成待辦。
-- aaaaa 的 22 個 preset 採抽樣 12 個；抽樣外的不列為必做。
 - 每一格都是大主題的傘格，子題另開新格（見各格末段的衍生指引）。
 
 ## 規劃描述
@@ -368,6 +367,309 @@ UI 提示只承諾「埠示意會更新」，所以不算食言。但中間態�
 
 兩者都不影響數值，但都會讓讀畫面的人得到比實際少的資訊。
 
+### O25 · 2026-08-10 13:02:10+08:00 — history-replay 六項驗收：M1–M4、M6 過，M5 紅
+
+在 `/dev/history-replay` 以真實點擊跑該頁自帶的一鍵腳本。「一鍵 M1→M4」全綠（Undo 還原、
+Redo、多機一次還原、零位移不進歷史），「一鍵 M6（moveDevices）」全綠（X+50、Undo 還原）。
+checklist 對應項自動勾起。
+
+「一鍵 M5（交錯）」紅：`✓ Undo 刪除／旋轉後仍在移動後座標`，但 `✗ 移動 undo 未回原點`。
+
+M7（主畫布跟手）此頁無法代替，已由 O13 在 0001#2 涵蓋，本格不重測。
+
+除了 M5 那一項，V6 的錄製與回放工具本身可用。
+
+### O26 · 2026-08-10 13:04:05+08:00 — M5 紅燈的根因在 dev 頁腳本，不在 historyStore
+
+`HistoryReplay.vue:870-884` 的 `runV6ScriptM5` 只呼叫三次 `historyStore.undo()`，註解寫
+「還原 other → 還原 rotation → 還原移動」。但腳本清場後實際堆疊有五筆：place(uid)、
+move、rotate、place(other)、remove(other)。三次 undo 只退到 rotate，移動那筆還在堆疊上，
+於是斷言 `backToOrigin` 必然為 false。**少算的是 `testPlaceDevice()` 自己也進歷史那一筆。**
+
+實測覆核：M5 跑完後 Undo Stack 剩 `machine_placement`、`machine_movement` 兩筆，Redo Stack
+三筆；手動再按一次 Undo，節點 x 由 125.15059202489715 → 65.15059202489715，正好 −60，即
+腳本寫入的位移量，回到原點。
+
+所以引擎行為正確，錯的是這格驗收腳本的 undo 次數。M5 的紅燈是假警報，但它會讓每個跑這頁
+的人以為 commitDeviceMove 的 undo 壞掉 —— 這比沒有這項驗收更糟。
+
+### O27 · 2026-08-10 13:05:20+08:00 — 回放順序與 undo／redo 往返完全自洽
+
+跑「場景 2：擺放 → 移動 → 刪除」後讀 Undo Stack：`#1..#4 machine_placement`、
+`#5 machine_movement`、`#6 machine_deletion`，與操作發生順序逐項對應，無合併、無亂序、
+無漏錄。該場景執行前 Redo Stack 有一筆，執行後歸零，分支點清空規則成立。
+
+連按 6 次 Undo：Undo Stack 6→0、Redo Stack 0→6，Redo Stack 內容為 Undo Stack 的精確逆序，
+畫布清空，Undo 鈕 disabled。再連按 5 次 Redo：四個節點的 id、清單順序、座標全部還原成
+undo 前的值，且座標是完整浮點位元相同（如 `115.15059202489715`、`437.9264772296248`）。
+
+「拖曳被錄成 command」「回放順序與操作順序一致」「undo／redo 互動自洽」三問皆為是。
+
+### O28 · 2026-08-10 13:05:55+08:00 — editorStore 跨重整持久化，historyStore 不持久化
+
+進頁時畫布顯示「18 台設備」而 Depth 為 0 —— 前幾格實測留下的節點被保存並在重整後復原，
+歷史堆疊則沒有。兩個 store 的持久化策略不一致，效果是使用者重開頁面後看得到自己的藍圖，
+卻一步也 undo 不回去。
+
+附帶一個破壞性行為：「一鍵 M1→M4」與「一鍵 M5」開頭都會 `removeDevices` 清空整個畫布
+（按鈕文案有寫「會自動清場」）。在 dev 頁這無妨，但它清掉的是與主畫面共用、且會被持久化
+的同一份 `editorStore`。這次實測就把那 18 台清掉了。
+
+是否要讓 historyStore 一併持久化、以及清場是否該只清腳本自己擺的節點，都未定。
+
+### O29 · 2026-08-10 13:09:51+08:00 — M5 的另一項斷言是空過的，修法不只是多按一次 undo
+
+- **推翻:** O26
+
+覆核 `HistoryReplay.vue:843-893` 全段。堆疊確為五筆（`:846-849` 清場並 `historyStore.clear()`、
+`:852` place(uid)、`:858` commitDeviceMove、`:861` rotateDevice、`:865` place(other)、
+`:868` remove(other)），O26 的計數正確。但三次 undo 依序退掉的是 remove(other) → place(other)
+→ rotate，而 `stillMoved` 的量測寫在 `:873`，**只按了兩次 undo 之後** —— 此刻 rotate 還沒被
+還原。它的文案「✓ Undo 刪除／旋轉後仍在移動後座標」聲稱旋轉已還原，實際沒有；而 place／
+remove 都不動 uid 的座標，所以這項斷言無論引擎對錯都會過。
+
+O26 的實測數字反過來佐證這件事：跑完剩 undo 2 筆 + redo 3 筆＝5 筆，底下兩筆是 place(uid)
+與 move，被退掉的三筆只能是 rotate／place(other)／remove(other)。
+
+O26 的判決本身不動：紅燈是假警報，引擎無罪。**倒的是「錯的只是 undo 次數」這個推論** ——
+M5 的兩項斷言都與堆疊對不上，一項假紅、一項空過。所以修法不是多呼叫一次 `undo()`：undo
+次數要改成四次，且 `stillMoved` 的量測點要移到 rotate 被還原之後，否則紅燈消失而空過的那項
+依舊空過，帳面全綠但旋轉從頭到尾沒被驗過。這比 O26 描述的「一行」要大，也讓 O26 那句
+「比沒有這項驗收更糟」更成立。
+
+### O30 · 2026-08-10 13:12:05+08:00 — validation-test 四步流程照跑，空轉完全符合預期
+
+在 `/dev/validation-test` 依 `ValidationTest.vue:34-39` 自附流程逐步真實點擊，每步後讀畫面：
+
+| 步驟 | Editor Nodes | 目前警示 | Error | Warning |
+| --- | --- | --- | --- | --- |
+| 進頁 | 18 | 0 | 0 | 0 |
+| 新增 A | 19 | 0 | 0 | 0 |
+| 新增重疊的 B | 20 | 0 | 0 | 0 |
+| 新增不重疊的 C | 21 | 0 | 0 | 0 |
+| 清空所有設備 | 0 | 0 | 0 | 0 |
+
+A／B／C 確實以宣稱的座標進入清單（`@(10, 10)`、`@(11, 11)`、`@(50, 50)`），清空後顯示
+「(無節點)」且按鈕轉 disabled，全程 console 零 error。
+
+判準來自 O3 與頁面自附說明，**不是自訂的**：alerts 恆 0 是註冊表為空的必然結果，本格照表
+確認它確實如此，不記為缺陷。這格的價值在於把「空轉」與「壞掉」分開 —— 監聽鏈路
+（`useValidation()` → `editorStore.nodes` 變動）本身是活的，Editor Nodes 每一步都即時更新，
+所以 alerts 為 0 是因為沒有 detector 可跑，不是因為監聽沒接上。
+
+### O31 · 2026-08-10 13:13:20+08:00 — editorStore 完全不持久化，那 18 台是硬編種子
+
+- **更正:** O28
+
+`grep -n "useLocalStorage|persist|localStorage|sessionStorage" src/store/` 零命中。實際讀瀏覽器
+儲存：`localStorage` 只有 `vueuse-color-scheme` 與 `aaaaa-v6-d2-checklist`（V6 勾選狀態），
+`sessionStorage` 為空，兩者都沒有藍圖。`editorStore.ts:183-186` 寫的是
+`shallowRef<FactoryNode[]>(mockNodes)` / `shallowRef<FactoryEdge[]>(mockEdges)`，即
+`:20-133` 的硬編種子。
+
+決定性覆核：history-replay 那輪結束時畫布只剩 4 個 `crypto.randomUUID()` 節點；整頁載入
+`/dev/validation-test` 後 Editor Nodes 回到 18，且 id 是 `src-Cu-A`、`src-H2O-…`、`furnace-A`
+—— 種子的名字，不是那 4 個 UUID。清空後再 reload，主畫面回到 18 nodes／15 edges。
+
+所以 O28 說的「跨重整持久化」是事實錯誤：什麼都沒存，每次載入都從 `mockNodes` 重新開始，
+看起來像復原其實是重新播種。`historyStore` 不持久化這半句仍然成立，但「使用者重開頁面後
+看得到自己的藍圖卻 undo 不回去」這個推論整個不存在 —— 真實情況更糟也更單純：**重開頁面
+會丟掉使用者做過的一切，換回一份 demo 資料**。O28 的破壞性清場那段改由 O32 承接。
+
+### O32 · 2026-08-10 13:13:55+08:00 — dev 頁與主畫面共用同一份 editorStore，是通病不是個案
+
+`ValidationTest.vue:153` 與 `HistoryReplay.vue:554` 都是 `useEditorStore()`，`MainLayout` 那條
+路徑也是同一個 Pinia store id（`defineStore('editor', …)`，`editorStore.ts:181`）—— 沒有任何
+scoping，右側「Editor Nodes」就是主畫面藍圖本身。
+
+實測確認效果會即時傳導：在 `/dev/validation-test` 按「清空所有設備」把 21 台清成 0，接著點
+頁首 RouterLink「← 返回主編輯器」（SPA 導覽，不重載），主畫布是空的，統計面板顯示
+設備數量 0 台／管線 0 條。反向亦然：這頁按三次新增，主畫面就多三台。
+
+因此這不是 history-replay 一頁的個案 —— **`/dev/*` 三頁的每一個「新增」「清空」「一鍵腳本」
+按鈕都在改主畫面藍圖**，而頁面上沒有任何一句話提到這件事。有 O31 墊底，影響範圍是一個
+session 內：重載會換回種子，不會永久損毀使用者資料。但在同一 session 裡切回主畫面，看到的
+是被 dev 頁改過的藍圖。
+
+### O33 · 2026-08-10 13:14:30+08:00 — 頁面文字與實際行為四處對不上
+
+本格要求的第二項產出。四處都已對照原始碼確認：
+
+**一、座標系。** 按鈕與 JSDoc（`ValidationTest.vue:160`、`:174`、`:188`）都寫「格子座標」，
+但 `types/graph.ts:15` 明言「Vue Flow 的 Node.position 仍為像素座標」，`canvasStore.ts:26`
+`gridSize = 20`。精煉爐是 3×3 格（`machines.ts:146-148`）＝ 60×60 px，所以 A@(10,10) 佔
+10–70 px、C@(50,50) 佔 50–110 px —— **在 store 實際使用的像素語意下，「不重疊的設備 C」與 A
+是重疊的**。它只在 shirone 那套 `getOccupiedCells`（`getMachineOccupiedGrids.ts:18-24`，以 1 為
+步長逐格展開）的整數格語意下才不重疊。同一頁的按鈕文案採 A 方的座標系，寫入的卻是 B 方的
+store —— 這正是 O3 說的兩套型別不相通，在 UI 文案上留下的痕跡。
+
+**二、副標題超賣。** `:6` 寫「測試 validationStore 的 detector 註冊與 E001 設備重疊偵測」，
+但註冊數為 0、E001 從未被執行過。頁面測得到的只有「註冊表是空的」。
+
+**三、步驟 4 是空句。** `:38`「點擊『清空所有設備』，警示應歸零」—— 警示從第 1 步就是 0，
+無零可歸。這項斷言在目前狀態下不可能失敗（與 O29 的 `stillMoved` 同一種毛病：讀起來像驗收，
+實際上恆真）。
+
+**四、沒交代畫布不是空的。** 流程從「新增設備 A」開始，讀者會以為 A 是第一台；實際進頁就有
+18 台種子（O31），A／B／C 是疊在既有藍圖上，且清空會一併清掉那 18 台（O32）。
+
+四項都不影響 alerts 恆 0 的結論，但每一項都會讓照著這頁操作的人得到錯誤的心智模型。
+
+### O34 · 2026-08-10 13:18:37+08:00 — 座標系錯配的後果：這頁的 fixture 會替一個壞掉的 E001 背書
+
+O33 第 1 項的事實與推論都成立，本則是把它往下推一步。三個數字已覆核：
+`getMachineOccupiedGrids.ts:18-24` 的 `getOccupiedCells` 以 `dx/dy/dz` **各步進 1** 展開佔用格，
+即純整數格語意；`canvasStore.ts:26` `gridSize = ref(20)`；`graph.ts:14-15` 明言 position 是像素。
+
+在格子語意下重算這頁的三台 3×3 精煉爐：A(10,10) 佔 10–12、B(11,11) 佔 11–13（重疊）、
+C(50,50) 佔 50–52（不重疊）。**這組 fixture 完全照文案行為** —— 它剛好是少數在兩種語意下
+標籤都說得通的座標。但真實藍圖不是這樣：畫布 20px 吸附，兩台並排的 3×3 機器相距 60px，
+餵進 `getOccupiedCells` 就成了相距 60 格而 `size` 只有 3，永遠不重疊；要讓它判定重疊，兩個
+節點得靠近到 3 像素以內。
+
+所以一旦有人照 `0001#7`／`0001#8` 的結論把 `detectOverlaps` 註冊進 validationStore 並餵
+`editorStore.nodes`，**這頁會全綠，而主畫布上的重疊偵測實質失效**。O33 把它記成文案瑕疵，
+真正的後果是這頁是專門用來驗這件事的頁面，卻會替壞掉的整合出具通過證明。
+
+連帶一項給 `0001#8` 第 3 題的成本估算：adapter 不只是換形狀。`FactoryNodeData`（`graph.ts:18-49`）
+根本沒有 `size` 欄，而 `shironesMachine` 要 `size: [w,h,d]`，得回查 `machines.ts`；`position`
+還要除以 `gridSize` 取整。「保留 adapter」不是純風格選擇，它要自己承擔單位換算與尺寸查表，
+而這正是目前錯得無聲無息的那一段。
+
+### O35 · 2026-08-10 13:22:40+08:00 — 整合缺口清單：九項，全數靜態查證
+
+本格的交付物。純讀原始碼，未跑 UI。每項為「現況 → 缺什麼 → 動到哪些檔案 → 哪一層」。
+
+**G1 · FlowChart 六元件零引用、無路由**（承 O2）
+`grep -rn "FlowChart"` 在 `src/` 只命中資料夾自身；`router/index.ts` 全文四條路由（`/`、
+`/dev/flow-engine`、`/dev/history-replay`、`/dev/validation-test`），無任何一條指向 FlowChart。
+`Index.vue:29-78` 自持 `ref` 狀態與 `useVueFlow()` 高亮邏輯，並硬編 demo 資料。
+缺：資料來源與掛載點。動：`FlowChart/Index.vue`、掛載它的容器。層級：**L2／L3 邊界未定**，
+正是 0001#8 第 1 題。
+
+**G2 · StatsPanel 的常值不在 MainLayout 而在元件自己**（修正 O2 的落點）
+`MainLayout.vue:44` 寫的是 `<StatsPanel />`，**一個 prop 都沒傳**；常值硬編在
+`StatsPanel/Index.vue:5-13`（`:total-demand-kw="0"`、`:rows="[]"`、`:capacity-cells="0"`）。
+所以缺的不是「MainLayout 沒傳」，是 `Index.vue` 根本沒宣告 props、沒接 `flowStore`。
+缺：`Index.vue` 的 props 或 store 讀取。動：`StatsPanel/Index.vue`、可能加上 `MainLayout.vue`。
+層級：0001#8 第 2 題。**注意 O17：接上去也仍是 0，G5 不解則此項無可觀測效果。**
+
+**G3 · `detectOverlaps` 不是 `Detector`，且四個維度都不相容**（承 O3，細節見 O36）
+`overlapDetector.ts:17` 是 `(shironesMachine[], shironesPipeline[]) => string[]`；
+`types/validation.ts:71-78` 要的是 `{ code, level, run(ctx): Alert[] }`。`src/` 內零
+`registerDetector` 呼叫點（`validationStore.ts:47` 有實作，無呼叫者）。
+缺：一個 adapter 或一次型別收斂。動：`overlapDetector.ts`、`types/shironesinterface.ts`、
+新的註冊點。層級：0001#8 第 3 題與第 4 題。
+
+**G4 · 座標單位不相通 —— 與 G3 是兩件事**（承 O34）
+`graph.ts:14-15` position 為像素、`canvasStore.ts:26` `gridSize=20`；
+`getMachineOccupiedGrids.ts:18-24` 以步進 1 展開，是整數格。**形狀對上了單位也不會對**，
+且不會報錯、不會型別失敗，只會永遠判不出重疊（O34）。
+缺：一次 `position / gridSize` 的換算，以及它該放在 adapter 還是收斂進主線型別的決定。
+動：與 G3 同一批檔案。層級：0001#8 第 3 題的成本項。
+
+**G5 · `mockNodes`／`mockEdges` 停在舊資料模型**（承 O17）
+`editorStore.ts:14-133` 的節點 data 只有 `{ label, machineType, recipeIndex }`，`:135` 起的邊
+只有 `{ id, source, target, animated }`。引擎要 `machineMode`、來源要 `primaryOutput` 與
+`sourceRatePerMin`、邊要 `sourceHandle`／`targetHandle`（`graph.ts:18-49` 已定義這些欄位）。
+缺：種子資料補齊到 v7／v9 模型。動：`editorStore.ts` 單檔。層級：L1。
+**這是清單裡唯一單檔可解、且解了會讓 G2 產生可觀測效果的一項。**
+
+**G6 · `rewritePipelineStructure` 產品程式碼零引用**（承 O3）
+`grep` 顯示它只被 `__tests__/utils/absToRelPath.test.ts` 與 `getPipelineOccupiedGrids.ts`
+引用，後者本身也只被 `overlapDetector.ts` 引用，而該檔零產品引用 —— 整條 shirone 管線鏈是
+懸空的。缺：隨 G3 一併接上，或明確標為未使用。動：`src/utils/shirone/` 三支。層級：L1。
+
+**G7 · `FactoryEdge` 沒有 waypoints，管線側無法轉換**（新增）
+`shironesPipeline` 要 `waypoints: Position[]`（明確折線），但 `graph.ts:56-68` 的
+`FactoryEdgeData` 只有選用的 `bendPoints?: {x,y}[]`，**且沒有起訖座標** —— 端點是渲染時由
+source／target 的 handle 位置導出的，資料模型裡不存在。
+缺：從 node handle 反推端點座標的能力。動：`graph.ts`、adapter、可能要 `FactoryCanvas`
+暴露 handle 幾何。層級：L1。**這項比 G3／G4 更硬：前兩者是換算，這項是資料根本不存在。**
+
+**G8 · 兩處架構約定只靠註解維持**（承 O5）
+`useValidation.ts:13` 的呼叫順序要求、`validationStore.ts:11-12` 同時記載兩種註冊策略。
+缺：機制或定案。動：`useValidation.ts`、`validationStore.ts`、`MainLayout.vue`。
+層級：0001#8 第 4、5 題。
+
+**G9 · dev 三頁與主畫面共用同一份 `editorStore`**（承 O32、O31）
+`ValidationTest.vue:153`、`HistoryReplay.vue:554` 與 `MainLayout` 走的都是
+`defineStore('editor')`，無 scoping，dev 頁的每個「新增」「清空」「一鍵腳本」都在改主畫面
+藍圖，且頁面沒有一句話提到。**實際傷害範圍限一個 session** —— 有 O31 墊底，store 零持久化，
+重載即換回種子，**不會造成資料損毀**。
+缺：一句警語，或 dev 頁改用獨立 store 實例。動：`src/app/dev/` 三頁。層級：L1 的 dev 頁職責。
+
+**不列入本清單的**：測試覆蓋缺口（O7，本格正文已排除）；`0001#3`／`0001#4` 找到的引擎與
+視覺化瑕疵（O18、O21、O22、O23、O24）——那些是既有功能的缺陷，不是「三方交界沒接起來」。
+
+### O36 · 2026-08-10 13:23:30+08:00 — 「保留 adapter」要跨的是四層，不是一層
+
+O34 已指出單位換算與尺寸查表。逐行讀完 `overlapDetector.ts:40-80` 後，完整落差是四層，
+其中兩層 O34 未涵蓋：
+
+1. **形狀**：`FactoryNode`（`{id, position:{x,y}, data}`）→ `shironesMachine`
+   （`{id, position:number[], rotation, size:number[]}`）。`FactoryNodeData` 無 `size`，得回查
+   `machines.ts`；`Machine` 只有 `width`／`height`，**沒有深度**，`size[2]` 得自行合成。
+2. **單位**：像素 → 格（G4／O34）。
+3. **維度會在執行期爆炸**：`overlapDetector.ts:41-49` 以第一個點的維度為基準，不一致就
+   `throw new Error('Dimension mismatch!')`。機器若合成成 3-tuple 而管線由 2D `bendPoints`
+   轉出 2-tuple，**第一條管線就會拋例外**。`validationStore.ts:82-93` 的 try／catch 會把它吞成
+   一行 `console.error`，alerts 靜靜地少一批 —— 又是一個不會紅的失敗。
+4. **輸出**：`detectOverlaps` 回 `string[]`，而 `Detector.run` 要 `Alert[]`（要 `uid`、`code`、
+   `message`、`relatedDeviceUids`、`relatedConnectionUids`）。且回傳的 id 是**設備與管線混在
+   同一個陣列**（該函式 JSDoc 自陳），adapter 拿不到型別標記，得自己回查才能分流到兩個欄位。
+
+另有一項語意假設：`absToRelPath`（`rewritePipelineStructure.ts:31-40`）對每個維度各推一筆
+`AxisMove`，等於把斜線段拆成先走 x 再走 y 的 L 形。管線若非軸對齊，佔用格會與畫面上的線
+不一致。目前 `bendPoints` 無編輯 UI（`graph.ts:66` 註明 Phase 1 建立後不可編輯），這項還沒
+機會發作。
+
+結論：0001#8 第 3 題的「保留 adapter」不是風格選擇。四層裡有兩層（3、4）是**寫得出來但會在
+執行期靜默失敗**的類型，與 O34 的單位問題同一族 —— 這一整族的共同點是型別檢查與現有測試
+都攔不住。
+
+### O37 · 2026-08-10 13:24:10+08:00 — 七題中兩題的前提已被本輪改寫，並缺第八題
+
+回答 0001#8 的可問性，避免使用者被問到已有答案的題目。
+
+**第 2 題（StatsPanel 誰餵資料）題目仍要問，但必須附 O17 的但書。** 兩個選項（MainLayout
+往下傳／StatsPanel 升格容器）都還開著，可是 O17 已證實**任一選法接上去畫面都仍是 0**，
+除非 G5 先解。不附這句，使用者會以為選完就有數字。另外題幹說「MainLayout 讀 store 往下傳」
+隱含 MainLayout 目前有傳 —— 依 G2，它一個 prop 都沒傳。
+
+**第 3 題（型別邊界）的兩個選項已不對等。** 題目把「收斂成主線型別」與「保留 adapter」並列
+成風格選擇，但 O34 加 O36 顯示 adapter 要跨四層、其中兩層會靜默失敗。這題該問的仍是同一個
+問題，選項描述要換成帶成本的版本。
+
+**第 6 題（preset 抽共用 fixture）強度變了。** O16 的 20 組全過使它看起來只是整理工作，但
+O34 給了它一個具體理由：`ValidationTest.vue` 那組 A／B／C 座標剛好在兩種語意下都說得通，
+是**手寫 fixture 恰好遮住錯誤**的實例。這題現在有證據支撐，不再只是風格偏好。
+
+**其餘四題（1、4、5、7）前提完好**，本輪沒有觀察觸及。
+
+**建議補第八題：dev 頁與主畫面共用 `editorStore` 是否可接受（G9／O32）。** 它同時牽涉 L1
+職責與 dev 頁定位，兩個選項（加警語／dev 頁獨立 store 實例）成本差很多，且不屬既有七題任何
+一題。有 O31 墊底，它不是資料安全問題，所以是可以緩的一題 —— 但它是本輪唯一橫跨三個 dev
+頁的結構性發現，漏掉它，`0001#7` 的清單就有一項永遠不會被裁決。
+
+**沒有任何一題因本輪觀察而不必問了。** 第 2、3、6 題是前提被改寫，不是被回答。
+
+### O38 · 2026-08-10 13:25:56+08:00 — FlowChart 是第二套畫布實作，不只是「未接線的元件」
+
+開第一題之前覆核 FlowChart 的實際形狀。`src/components/FlowChart/Index.vue:1-26` 自己
+`import { VueFlow, useVueFlow }`，自己註冊 `nodeTypes`（material／device／product／warehouse／
+pendingImport 五種）與 `edgeTypes`（customEdge），`:28` 起自持 `ref` 節點資料。資料夾內共
+七檔：`Index.vue` 與六個節點／邊元件。
+
+對照主線：`src/editor/canvas/` 已有 `FactoryCanvas.vue`＋`FlowNodeOverlay.vue`＋
+`PipelineEdge.vue`，是實際掛在 `/` 上運行的那一套（O8 的 18 筆 reactive 警告就出自它的
+`nodeTypes`）。兩者都是完整的 `<VueFlow>` 宿主，各有一套節點型別註冊表。
+
+所以 G1 的描述「零引用、無路由」是對的但不夠：**它不是一批等著被接線的展示元件，它是同一
+職責的第二套實作**，與 O9 的兩套統計面板是同一個模式，只是這一套還沒被掛上去所以在畫面上
+看不到衝突。`0001#8` 第 1 題若照原題幹問「是 L3 主元件還是誤置的 L2 容器」，會預設了「它要
+被接上去」這個前提；真正要先答的是保留哪一套的節點視覺，答完才輪得到層級歸屬。
+
 ## 待辦
 
 ### 1 實測基準線：現有驗證套件的紅綠現況
@@ -417,7 +719,7 @@ Ctrl+Y 能否正確回退與重做。
 - H3 · 2026-08-10 落地 —— 兩套統計面板職責重疊為本格最大發現 → O9
 - H4 · 2026-08-10 決斷 —— 標完成而非部分完成：寬螢幕版面判斷本就不在本格範圍 → O14
 
-### 3 引擎 preset 抽樣驗收：12 組對照 expected
+### 3 引擎 preset 驗收：20 組全數對照 expected
 
 - **state:** 完成
 - **needs:** 0001#1
@@ -443,6 +745,7 @@ Ctrl+Y 能否正確回退與重做。
 - H2 · 2026-08-10 修正 —— 原寫抽樣 12 組但實列 13 組、母體 20 非 22，正文改寫 → O15（取代 H1）
 - H3 · 2026-08-10 落地 —— 20 組全跑全過，零失敗 → O16
 - H4 · 2026-08-10 落地 —— 判定 O10：引擎無罪，根因在 editorStore 種子資料 → O17
+- H5 · 2026-08-10 改題 —— 原題「引擎 preset 抽樣驗收：12 組對照 expected」，實際 20 組全跑，標題與事實不符
 
 ### 4 catalog 分頁與拓撲互動實測
 
@@ -469,22 +772,35 @@ Ctrl+Y 能否正確回退與重做。
 
 ### 5 歷史回放頁實測：V6 拖曳錄製
 
-- **state:** 待實作
+- **state:** 完成
 - **needs:** 0001#1
-- **basis:** → O15、O13
+- **basis:** → O25、O27、O29
 
 在 `/dev/history-replay` 驗 V6 的拖曳錄製與回放：拖曳是否被錄成 command、回放順序是否與
 操作順序一致、undo／redo 與回放的互動是否自洽。與 0001#2 的差別是那邊測主畫面的真實操作
 路徑，這邊測 dev 頁提供的錄製與檢視工具本身。
 
+三問皆為是（O27）。該頁自帶的 M1–M4、M6 一鍵驗收全綠；M5 紅，但根因在驗收腳本本身而非
+historyStore，引擎無罪（O26）。M5 兩項斷言都與堆疊對不上 —— 一項假紅、一項在旋轉未還原時
+量測而恆過（O29）；此頁的 M5 結果目前不可作為 V6 行為的證據。M7 屬主畫布跟手，此頁無法
+代替，由 O13 在 0001#2 涵蓋。
+
 **子格衍生指引**：本格是「history 機制」的傘格。command 粒度、macro 合併、回放語意等子題
 另開新格，本格加 `needs` 指向它們。
 
+**沿革**
+
+- H1 · 2026-08-10 落地 —— M1–M4、M6 全綠，M5 紅 → O25
+- H2 · 2026-08-10 落地 —— 判定 M5 紅燈為假警報，根因在腳本 undo 次數少一 → O26
+- H3 · 2026-08-10 落地 —— 回放順序與 undo／redo 往返位元相同，本格三問皆為是 → O27
+- H4 · 2026-08-10 決斷 —— 不開子格：O26 已追到根因，O28 屬持久化策略非 history 語意，皆待使用者裁決 → O28
+- H5 · 2026-08-10 修正 —— 核可時覆核 M5 全段，發現另一項斷言空過，正文改寫並移出 O26 → O29（取代 H2）
+
 ### 6 驗證頁現況確認：確認 alerts 恆 0 屬預期
 
-- **state:** 待實作
+- **state:** 完成
 - **needs:** 0001#1
-- **basis:** → O3、O10
+- **basis:** → O30、O33
 
 在 `/dev/validation-test` 依頁面自附流程操作（新增設備 A → 新增重疊的 B → 新增不重疊的 C →
 清空），確認 alerts 全程維持 0、errorCount／warningCount 維持 0、Editor Nodes 清單同步更新。
@@ -492,25 +808,34 @@ Ctrl+Y 能否正確回退與重做。
 **這是符合現況的預期行為，不得記為 bug**（O3）。本格的產出是「確認空轉符合預期」以及頁面
 說明文字與實際行為是否一致；真正的缺口交給 0001#7。
 
+四步全數照表通過，空轉確實符合預期，且監聽鏈路本身是活的（O30）。第二項產出找到四處文字與
+行為對不上，其中座標系那項與 O3 的兩套型別是同一件事在 UI 文案上的痕跡（O33）。順帶判定
+dev 頁共用主畫面 store 是三頁通病而非個案（O32），並更正了 O28 的持久化認定（O31）。
+
 **子格衍生指引**：本格是「驗證管線現況」的傘格。detector 補齊、型別接線等後續工作不在本格
 展開，屬 0001#7 與 0001#8 的裁決結果。
 
+**沿革**
+
+- H1 · 2026-08-10 落地 —— 四步照表全過，alerts／error／warning 全程 0，監聽鏈路活著 → O30
+- H2 · 2026-08-10 落地 —— 頁面文字與行為四處不一致，含座標系錯配 → O33
+- H3 · 2026-08-10 落地 —— 判定 dev 頁共用 editorStore 為三頁通病，另記不併入 O28 → O32
+- H4 · 2026-08-10 修正 —— 查證 store 無任何持久化，18 台是硬編種子，更正 O28 → O31
+
 ### 7 整合缺口清單（靜態盤點，不跑 UI）
 
-- **state:** 待實作
-- **basis:** → O2、O3
+- **state:** 完成
+- **basis:** → O35、O36
 
 不跑 UI、不改任何程式碼，把三方交界處的未接線項目盤成一份清單，每項寫明：現況、缺什麼、
-接上去會動到哪些檔案、屬於哪一層的職責。已知四項：
+接上去會動到哪些檔案、屬於哪一層的職責。
 
-1. FlowChart 六元件零引用、無路由（O2）
-2. StatsPanel 四個子元件 props 全為常值（O2）
-3. `detectOverlaps` 未註冊成 Detector，且 `shironesMachine` 與主線 `FactoryNode` 型別不相容（O3）
-4. `rewritePipelineStructure` 產品程式碼零引用（O3）
-5. `editorStore.ts` 的 `mockNodes`／`mockEdges` 停在舊資料模型，缺 `machineMode`／
-   `primaryOutput`／`sourceRatePerMin`／handle，導致預設藍圖跑不出任何流量（O17）
+清單為 G1–G9 共九項，全數靜態查證，完整內容見 O35。原訂五項全部成立，其中 G2 的落點修正
+（常值在 `StatsPanel/Index.vue` 而非 `MainLayout`）；新增四項：G4 座標單位不相通（獨立於 G3
+的形狀不通，見 O34）、G7 `FactoryEdge` 沒有 waypoints、G8 註解型架構約定、G9 dev 頁共用
+`editorStore`。adapter 要跨的四層落差與其中兩層的靜默失敗風險見 O36。
 
-實測過程若發現新缺口，追加進本清單。**本格只描述缺口，不提議修法** —— 修法屬 0001#8 的裁決。
+**本格只描述缺口，不提議修法** —— 修法屬 0001#8 的裁決。七題的可問性已在 O37 逐題判過。
 
 **測試覆蓋缺口（O7）不併入本清單**：本格盤的是「三方交界處沒接起來」，覆蓋缺口是驗證強度
 問題，兩者的判準與收斂方式都不同。O7 已完整記錄，需要時由使用者另開格承載。
@@ -521,6 +846,10 @@ Ctrl+Y 能否正確回退與重做。
 **沿革**
 
 - H1 · 2026-08-10 決斷 —— 測試覆蓋缺口不併入本清單，維持「整合缺口」單一判準 → O7
+- H2 · 2026-08-10 落地 —— 清單收斂為 G1–G9，原五項成立、G2 落點修正、新增四項 → O35
+- H3 · 2026-08-10 決斷 —— G4 座標單位獨立於 G3 形狀不通，不併項（使用者）
+- H4 · 2026-08-10 落地 —— adapter 四層落差查證，兩層會在執行期靜默失敗 → O36
+- H5 · 2026-08-10 落地 —— 逐題判過 0001#8 七題的可問性，並提議補第八題 → O37
 
 ### 8 架構人工對答：七題逐題裁決
 
