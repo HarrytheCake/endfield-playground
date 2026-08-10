@@ -1,13 +1,30 @@
 ---
 name: plan-history
-description: Record and maintain this repo's plan history under docs/dernoson/plan-history/. Use BEFORE starting any non-trivial development, refactor, bug fix, or content change — write the plan file first, then implement. Also use when the user asks for a plan / 規劃 / 計畫 / 方案 document, when continuing or forking from an earlier plan ("接續那份計畫", "基於 XXX 往下走", "回到前一個計畫", "換個方向"), and when updating a plan's status or checklist after work lands.
+description: Record and maintain this repo's plan history under your own plan root (see 計畫根目錄 in the skill body). Use BEFORE starting any non-trivial development, refactor, bug fix, or content change — write the plan file first, then implement. Also use when the user asks for a plan / 規劃 / 計畫 / 方案 document, when continuing or forking from an earlier plan ("接續那份計畫", "基於 XXX 往下走", "回到前一個計畫", "換個方向"), and when updating a plan's status or checklist after work lands.
 ---
 
 # Plan history
 
 **版本：v3**
 
-Every planned change to this repo leaves a trace in `docs/dernoson/plan-history/`: one flat
+## 計畫根目錄
+
+本文所有 `<PLAN_ROOT>` 都指**你自己的**計畫目錄，宣告在這裡，本檔其他地方一律引用它：
+
+```
+<PLAN_ROOT> = docs/dernoson/plan-history
+```
+
+它與你 `.claude` symlink 指向的 `docs/<你>/claude` 同一層。三支 `.py` 以自身所在目錄為
+corpus root（`PLAN_HISTORY_ROOT` 未設時），所以把它們連同 `<PLAN_ROOT>` 一起複製過去就會自動
+對齊，不需要改任何程式。**不要寫進別人的計畫目錄** —— `head.md` 是單一生成檔，共用它等於在一
+個嚴禁手動編輯的檔案上製造 merge conflict。
+
+**採用這份 skill 要改的不只這一行。** 本檔之外還有 `.claude/settings.json` 的 PostToolUse
+hook 路徑 —— 它每次 Write/Edit 都會跑，指錯了會去重生成別人的 `head.md`，而且不會報錯。
+完整的採用清單在 `docs/dernoson/README.md`。
+
+Every planned change to this repo leaves a trace in `<PLAN_ROOT>/`: one flat
 directory, one `.md` per plan, chained through a `prev` pointer so a direction change
 is a new file that names its ancestor rather than an edit that erases it.
 
@@ -76,13 +93,13 @@ symbol, bump one version). When in doubt, write the file — it is cheap.
 ## Filename
 
 ```
-docs/dernoson/plan-history/<seq>_<YYYYMMDD>_<topic>.md
+<PLAN_ROOT>/<seq>_<YYYYMMDD>_<topic>.md
 ```
 
 - `<seq>` — 4-digit zero-padded, globally increasing, never reused. Allocate the next
   one by looking at what exists:
   ```bash
-  ls docs/dernoson/plan-history/[0-9]*.md 2>/dev/null | tail -1
+  ls <PLAN_ROOT>/[0-9]*.md 2>/dev/null | tail -1
   ```
 - `<YYYYMMDD>` — the creation date. Get it from `date +%Y%m%d`, never from memory.
 - `<topic>` — short lowercase ASCII kebab-case, 2–5 words (`dv-status-rollup`,
@@ -435,11 +452,11 @@ plan; failing that the highest-seq `draft`; failing that the highest-seq `done`.
 **Run the script after every create or update:**
 
 ```bash
-python3 docs/dernoson/plan-history/update-head.py
+python3 <PLAN_ROOT>/update-head.py
 ```
 
 A `PostToolUse` hook in `.claude/settings.json` also fires it on every Write/Edit under
-`docs/dernoson/plan-history/`, so `head.md` stays correct even if you forget — but run it
+`<PLAN_ROOT>/`, so `head.md` stays correct even if you forget — but run it
 yourself anyway, because the conflict report is the point.
 
 What it reports (lines prefixed `[plan-history]`). **Conflicts fail the exit code;
@@ -474,9 +491,9 @@ the user about the conflict and let them decide.
 ## 讀一格，不要讀整份
 
 ```bash
-python3 docs/dernoson/plan-history/plan-item.py 0011#5             # 這一格 + 檔頭 + 它的依據
-python3 docs/dernoson/plan-history/plan-item.py 0011#5 --history   # + 全部沿革與全部相關觀察
-python3 docs/dernoson/plan-history/plan-item.py --list             # 所有活著的 v3 計畫的開放項
+python3 <PLAN_ROOT>/plan-item.py 0011#5             # 這一格 + 檔頭 + 它的依據
+python3 <PLAN_ROOT>/plan-item.py 0011#5 --history   # + 全部沿革與全部相關觀察
+python3 <PLAN_ROOT>/plan-item.py --list             # 所有活著的 v3 計畫的開放項
 ```
 
 **When you are about to work on an item, ask for that item. Do not `Read` the plan file.**

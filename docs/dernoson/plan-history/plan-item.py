@@ -31,6 +31,7 @@ import unicodedata
 from plan_parse import (
     ADDR_RE,
     LIVE_STATUSES,
+    ROOT_DISPLAY,
     Item,
     Observation,
     Plan,
@@ -193,7 +194,7 @@ def main(argv: list[str]) -> int:
         return die(
             f"[plan-item] {plan.stem} 是 plan-history v{plan.version}，沒有可定址的格子。",
             "            v3 之前的計畫沒有逐格結構，本工具不做降級支援 ——",
-            f"            要看它欠什麼，只能整份讀：docs/dernoson/plan-history/{plan.name}",
+            f"            要看它欠什麼，只能整份讀：{ROOT_DISPLAY}/{plan.name}",
         )
 
     index = item_index(report.plans)

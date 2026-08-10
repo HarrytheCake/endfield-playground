@@ -43,6 +43,32 @@ def force_utf8_stdio() -> None:
 # of them; in normal use it is unset and this is simply where the scripts live.
 HERE = Path(os.environ.get("PLAN_HISTORY_ROOT") or Path(__file__).resolve().parent).resolve()
 
+
+def _display_root() -> str:
+    """How to spell the corpus root in text meant for a human to act on.
+
+    Whoever adopts this skill copies the corpus into *their* `docs/<name>/plan-history/`,
+    so a literal path baked into these strings would send them to someone else's
+    directory — and `head.md`, where two of these land, is generated, so they could not
+    correct it. Deriving it from `HERE` keeps the printed command pointing at the corpus
+    the reader is actually holding.
+
+    Relative to the repo root, POSIX separators: `head.md` is committed, and an absolute
+    or backslashed path would differ per machine, so a clone on another box would
+    regenerate a different file and the up-to-date check would fail. Outside a repo there
+    is nothing to be relative to and no committed file to keep stable, so the absolute
+    path — still runnable — is the better answer.
+    """
+    for parent in (HERE, *HERE.parents):
+        if (parent / ".git").exists():
+            return HERE.relative_to(parent).as_posix()
+    return HERE.as_posix()
+
+
+# Spelled once, at import: every tool prints the same root, and it is only a filesystem
+# walk in the first place.
+ROOT_DISPLAY = _display_root()
+
 FILENAME_RE = re.compile(r"^(\d{4})_(\d{8})_([a-z0-9][a-z0-9-]*)\.md$")
 PREV_RE = re.compile(r"^-\s*\*\*prev:\*\*\s*(.+?)\s*$")
 SKILL_RE = re.compile(r"^-\s*\*\*skill:\*\*\s*(.+?)\s*$")
