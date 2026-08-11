@@ -6,13 +6,15 @@ import { Background } from '@vue-flow/background';
 import { Controls } from '@vue-flow/controls';
 import { MiniMap } from '@vue-flow/minimap';
 import { VueFlow, EdgeLabelRenderer, useVueFlow } from '@vue-flow/core';
-import type { NodeDragEvent, NodeMouseEvent } from '@vue-flow/core';
+import type { Connection, NodeDragEvent, NodeMouseEvent } from '@vue-flow/core';
 import type { DevicePositionSnapshot, EquipmentType, Rotation } from '@/types/editor';
-import type { FactoryNode } from '@/types/graph';
+import type { FactoryEdge, FactoryNode } from '@/types/graph';
+import type { PortMedia } from '@/types/machine';
 import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
 import { useFlowStore } from '@/store/flowStore';
 import { useCanvasStore } from '@/store/canvasStore';
+import { getMachine, getMachineMode } from '@/data/machines';
 import FlowNodeOverlay from './FlowNodeOverlay.vue';
 import PipelineEdge from './PipelineEdge.vue';
 
@@ -273,6 +275,63 @@ function handleCanvasDrop(event: DragEvent) {
     placeNodeAtPointer(droppedEquipment, event.clientX, event.clientY);
     editorStore.disarmPlacement();
 }
+
+/**
+ * 自 handle id（`out-0` / `in-1`）解析埠索引；解析不出來時回退埠 0。  \
+ * id 格式與 FlowNodeOverlay.vue 動態產生的 Handle 一致。
+ * @param handle Vue Flow 傳入的 handle id
+ * @example
+ * parsePortIndex('out-1') // → 1
+ */
+function parsePortIndex(handle: string | null | undefined): number {
+    if (!handle) return 0;
+    const matched = handle.match(/-(\d+)$/);
+    return matched ? Number(matched[1]) : 0;
+}
+
+/**
+ * 依來源節點的機型與出發 handle，查出該埠的傳輸媒質（belt／pipe）。  \
+ * 查不到機型 / 型態 / 埠定義時 fallback 為 belt，避免擋下連線操作。
+ * @param sourceNode 連線起點節點
+ * @param sourceHandle 連線起點 handle id
+ * @example
+ * resolveConnectionPortType(sourceNode, 'out-0') // → 'belt'
+ */
+function resolveConnectionPortType(
+    sourceNode: FactoryNode,
+    sourceHandle: string | null | undefined,
+): PortMedia {
+    const machine = sourceNode.data?.machineType
+        ? getMachine(sourceNode.data.machineType)
+        : undefined;
+    if (!machine) return 'belt';
+    const mode = getMachineMode(machine, sourceNode.data?.machineMode);
+    const idx = parsePortIndex(sourceHandle);
+    return mode.output_ports[idx]?.media ?? 'belt';
+}
+
+/**
+ * 使用者拖曳出一條新連線放開時，組出 FactoryEdge 並透過 editorStore.addConnection() 建立管線。  \
+ * 全程走 L1 高階 action，會自動進歷史（可 undo/redo）。
+ * @param connection Vue Flow 提供的連線結果（起點 / 終點節點與 handle id）
+ * @example
+ * handleConnect({ source: 'a', target: 'b', sourceHandle: 'out-0', targetHandle: 'in-0' })
+ */
+function handleConnect(connection: Connection) {
+    const sourceNode = nodes.value.find((n) => n.id === connection.source);
+    if (!sourceNode) return;
+
+    const edge: FactoryEdge = {
+        id: `edge-${crypto.randomUUID()}`,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle,
+        targetHandle: connection.targetHandle,
+        type: 'pipeline',
+        data: { portType: resolveConnectionPortType(sourceNode, connection.sourceHandle) },
+    };
+    editorStore.addConnection(edge);
+}
 </script>
 
 <template>
@@ -291,6 +350,7 @@ function handleCanvasDrop(event: DragEvent) {
             :snap-grid="[gridSize, gridSize]"
             class="factory-flow"
             @selection-change="handleSelectionChange"
+            @connect="handleConnect"
             @node-click="handleNodeClick"
             @pane-click="handlePaneClick"
             @node-drag-start="handleNodeDragStart"
