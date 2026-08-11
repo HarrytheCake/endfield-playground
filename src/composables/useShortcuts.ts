@@ -7,7 +7,7 @@
  * 目前支援的快捷鍵：
  *   - **Ctrl+Z / Cmd+Z**：呼叫 `historyStore.undo()` 還原藍圖變更
  *   - **Ctrl+Y / Cmd+Y**：呼叫 `historyStore.redo()` 取消還原
- *   - **Delete**：刪除目前選取的設備（透過 `editorStore.removeDevices()`），然後清空選取
+ *   - **Delete**：刪除目前選取的設備與管線（分別透過 `editorStore.removeDevices()` / `editorStore.removeConnection()`），然後清空選取
  *   - **Space（按住）**：暫時切換至 `pan` 工具；放開回 `select`
  *
  * Copy / Paste 暫未實作 —— 需要先有「clipboard store」概念，待 harry / toby 進入  \
@@ -41,16 +41,19 @@ export function useShortcuts() {
     const isRedo = computed(() => keys['Ctrl+Y'].value || keys['Meta+Y'].value);
 
     /**
-     * Delete 鍵：刪除選取的設備並清空選取。  \
-     * 無選取時為 no-op（editorStore.removeDevices 對空陣列也 silently 不入歷史）。
+     * Delete 鍵：刪除選取的設備與管線，然後清空選取。  \
+     * `removeConnection` 一次只收一個 uid，故管線選取需逐一呼叫。  \
+     * 兩者皆無選取時為 no-op。
      */
     watch(
         () => keys.Delete.value,
         (pressed) => {
             if (!pressed) return;
-            const targets = [...selectionStore.selectedNodeIds];
-            if (targets.length === 0) return;
-            editorStore.removeDevices(targets);
+            const deviceTargets = [...selectionStore.selectedNodeIds];
+            const edgeTargets = [...selectionStore.selectedEdgeIds];
+            if (deviceTargets.length === 0 && edgeTargets.length === 0) return;
+            if (deviceTargets.length > 0) editorStore.removeDevices(deviceTargets);
+            edgeTargets.forEach((uid) => editorStore.removeConnection(uid));
             selectionStore.clearSelection();
         },
     );

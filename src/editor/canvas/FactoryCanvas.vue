@@ -6,7 +6,8 @@ import { Background } from '@vue-flow/background';
 import { Controls } from '@vue-flow/controls';
 import { MiniMap } from '@vue-flow/minimap';
 import { VueFlow, EdgeLabelRenderer, useVueFlow } from '@vue-flow/core';
-import type { Connection, NodeDragEvent, NodeMouseEvent } from '@vue-flow/core';
+import type { Connection, EdgeMouseEvent, NodeDragEvent, NodeMouseEvent } from '@vue-flow/core';
+import type { DropdownMenuItem } from '@nuxt/ui';
 import type { DevicePositionSnapshot, EquipmentType, Rotation } from '@/types/editor';
 import type { FactoryEdge, FactoryNode } from '@/types/graph';
 import type { PortMedia } from '@/types/machine';
@@ -71,13 +72,53 @@ const equipmentLabelMap: Record<EquipmentType, string> = {
 const equipmentTypes = Object.keys(equipmentLabelMap) as EquipmentType[];
 
 /**
- * VueFlow 選取範圍變化時，同步選取的節點 id 到 selectionStore。
+ * VueFlow 選取範圍變化時，同步選取的節點 id 與管線 id 到 selectionStore。
  * @param selection VueFlow 提供的選取變化事件內容
  * @example
- * handleSelectionChange({ nodes: [{ id: 'node-1' }] })
+ * handleSelectionChange({ nodes: [{ id: 'node-1' }], edges: [{ id: 'edge-1' }] })
  */
-function handleSelectionChange(selection: { nodes?: Array<{ id: string }> }) {
+function handleSelectionChange(selection: {
+    nodes?: Array<{ id: string }>;
+    edges?: Array<{ id: string }>;
+}) {
     selectionStore.setSelection((selection.nodes ?? []).map((node) => node.id));
+    selectionStore.setEdgeSelection((selection.edges ?? []).map((edge) => edge.id));
+}
+
+/** 管線右鍵選單目前是否展開 */
+const edgeContextMenuOpen = ref(false);
+
+/** 管線右鍵選單目前的目標管線 uid；無選單展開時為 null */
+const edgeContextMenuTargetId = ref<string | null>(null);
+
+/** 管線右鍵選單的錨點螢幕座標，跟隨右鍵點擊位置更新 */
+const edgeContextMenuPosition = ref({ x: 0, y: 0 });
+
+/** 管線右鍵選單項目：目前僅提供刪除該管線 */
+const edgeContextMenuItems = computed<DropdownMenuItem[]>(() => [
+    {
+        label: '刪除管線',
+        icon: 'i-lucide-trash-2',
+        onSelect: () => {
+            if (!edgeContextMenuTargetId.value) return;
+            editorStore.removeConnection(edgeContextMenuTargetId.value);
+            edgeContextMenuTargetId.value = null;
+        },
+    },
+]);
+
+/**
+ * 在管線上按下滑鼠右鍵時，於點擊處開啟刪除選單，並阻擋瀏覽器原生選單。
+ * @param event VueFlow 提供的管線右鍵事件，含目標管線與原生滑鼠事件
+ * @example
+ * handleEdgeContextMenu({ edge, event: mouseEvent } as EdgeMouseEvent)
+ */
+function handleEdgeContextMenu({ edge, event }: EdgeMouseEvent) {
+    event.preventDefault();
+    const mouseEvent = event as MouseEvent;
+    edgeContextMenuTargetId.value = edge.id;
+    edgeContextMenuPosition.value = { x: mouseEvent.clientX, y: mouseEvent.clientY };
+    edgeContextMenuOpen.value = true;
 }
 
 /** CR-01 拿起預覽中的旋轉狀態，僅存在於 placementArmed 期間，放置後隨即由 disarm 重置 */
@@ -351,6 +392,7 @@ function handleConnect(connection: Connection) {
             class="factory-flow"
             @selection-change="handleSelectionChange"
             @connect="handleConnect"
+            @edge-context-menu="handleEdgeContextMenu"
             @node-click="handleNodeClick"
             @pane-click="handlePaneClick"
             @node-drag-start="handleNodeDragStart"
@@ -377,5 +419,18 @@ function handleConnect(connection: Connection) {
                 </div>
             </EdgeLabelRenderer>
         </VueFlow>
+
+        <!-- CR-02 管線右鍵刪除選單：錨點跟隨右鍵座標定位，選單內容由 Nuxt UI 傳送門渲染 -->
+        <div
+            class="pointer-events-none fixed z-50 h-0 w-0"
+            :style="{
+                left: `${edgeContextMenuPosition.x}px`,
+                top: `${edgeContextMenuPosition.y}px`,
+            }"
+        >
+            <UDropdownMenu v-model:open="edgeContextMenuOpen" :items="edgeContextMenuItems">
+                <span />
+            </UDropdownMenu>
+        </div>
     </div>
 </template>
