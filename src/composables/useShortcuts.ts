@@ -9,6 +9,8 @@
  *   - **Ctrl+Y / Cmd+Y**：呼叫 `historyStore.redo()` 取消還原
  *   - **Delete**：刪除目前選取的設備與管線（分別透過 `editorStore.removeDevices()` / `editorStore.removeConnection()`），然後清空選取
  *   - **Space（按住）**：暫時切換至 `pan` 工具；放開回 `select`
+ *   - **Ctrl+R / Cmd+R（暫時性）**：呼叫 `triggerResetCanvas()` 重置畫布。正式入口應為 L3 交付的按鈕 +
+ *     `UModal` 確認框（見 `MILESTONE_0726.md`），本鍵位待該按鈕上線後應移除
  *
  * Copy / Paste 暫未實作 —— 需要先有「clipboard store」概念，待 harry / toby 進入  \
  * CR-01 框選互動細節時再補。
@@ -24,6 +26,26 @@ import { useEventListener, useMagicKeys } from '@vueuse/core';
 import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
 import { useHistoryStore } from '@/store/historyStore';
+
+/**
+ * 重置畫布觸發器（**暫時性**）。  \
+ * `editorStore.resetCanvas()` 目前未走 Command Pattern，操作無法 Ctrl+Z 復原，
+ * 故先跳原生 `window.confirm()` 防呆；待 L3 正式按鈕 + `UModal` 確認框交付後，
+ * 這裡的 `window.confirm()` 應移除，改由呼叫端（按鈕的 UModal 流程）負責確認。  \
+ * 匯出此函式是為了讓日後 L3 按鈕的 L2 wiring（例如 `Navbar.vue`）可以直接 import
+ * 呼叫，不必重寫一次確認邏輯。
+ *
+ * @example
+ * import { triggerResetCanvas } from '@/composables/useShortcuts'
+ * triggerResetCanvas()
+ */
+export function triggerResetCanvas() {
+    const editorStore = useEditorStore();
+    if (!window.confirm('確定要重置畫布嗎？此動作無法復原（Ctrl+Z 不會還原）。')) {
+        return;
+    }
+    editorStore.resetCanvas();
+}
 
 /**
  * 註冊全域快捷鍵 watcher。  \
@@ -80,6 +102,18 @@ export function useShortcuts() {
     useEventListener(window, 'keyup', (event) => {
         if (event.code === 'Space') {
             editorStore.setActiveTool('select');
+        }
+    });
+
+    /**
+     * Ctrl+R / Cmd+R（**暫時性**）：呼叫 `triggerResetCanvas()`。  \
+     * 用原生 `keydown` 監聽（而非 `useMagicKeys`）是為了能 `preventDefault()`，
+     * 攔截瀏覽器原生的「重新整理頁面」行為。
+     */
+    useEventListener(window, 'keydown', (event) => {
+        if (event.key.toLowerCase() === 'r' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            triggerResetCanvas();
         }
     });
 }
