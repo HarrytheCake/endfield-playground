@@ -7,7 +7,6 @@
 
 import type { FactoryNode, FactoryEdge } from './graph';
 import type { Machine } from './machine';
-import type { EdgeFlow } from './flow';
 
 /** 警示等級 */
 export type AlertLevel = 'error' | 'warning';
@@ -46,10 +45,6 @@ export interface ValidationContext {
     getDef: (machineType: string) => Machine | undefined;
     /** 目前選定的基地類型（用於邊界檢查，null = 自由畫布） */
     baseRegion: import('@/store/canvasStore').BaseRegion;
-    /** (CR-09) 記錄每條連線實際傳輸的各品項速率。在尚未計算流量時為 undefined */
-    edgeFlows?: Map<string, EdgeFlow>;
-    /** (CR-09) 記錄發生阻塞的連線 ID。在尚未計算流量時為 undefined */
-    congestedEdges?: Set<string>;
 }
 
 /**
