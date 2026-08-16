@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useMagicKeys } from '@vueuse/core';
+import { useEventListener, useRafFn } from '@vueuse/core';
 import { Background } from '@vue-flow/background';
 import { Controls } from '@vue-flow/controls';
 import { MiniMap } from '@vue-flow/minimap';
@@ -16,6 +16,7 @@ import { useSelectionStore } from '@/store/selectionStore';
 import { useFlowStore } from '@/store/flowStore';
 import { useCanvasStore } from '@/store/canvasStore';
 import { getMachine, getMachineMode } from '@/data/machines';
+import { onComboTriggered, useComboHeld } from '@/composables/useKeybinding';
 import FlowNodeOverlay from './FlowNodeOverlay.vue';
 import PipelineEdge from './PipelineEdge.vue';
 
@@ -41,7 +42,7 @@ const { edgeFlows, congestedEdges } = storeToRefs(flowStore);
 /** 解構 canvasStore 的響應式參照，供 template 綁定畫布格線 */
 const { gridSize } = storeToRefs(canvasStore);
 /** Vue Flow 提供的座標轉換 API；vfEdges 用於流量標籤 overlay 的定位計算 */
-const { screenToFlowCoordinate, edges: vfEdges } = useVueFlow();
+const { screenToFlowCoordinate, edges: vfEdges, viewport, setViewport } = useVueFlow();
 
 /** 需要顯示流量標籤的管線（rate > 0 且已計算） */
 const labeledEdges = computed(() => vfEdges.value.filter((e) => edgeFlows.value.has(e.id)));
@@ -132,45 +133,82 @@ const previewRotation = ref<Rotation>(0);
  */
 const rotateTargetUid = ref<string | null>(null);
 
-/** 監聽鍵盤按鍵狀態，供下方 R 鍵旋轉、Esc 取消放置的 watch 讀取 */
-const keys = useMagicKeys();
-
 /** 拿起狀態結束（放置或取消）時，重置預覽旋轉為 0，避免殘留到下一次拿起 */
 watch(placementArmed, (armed) => {
     if (!armed) previewRotation.value = 0;
 });
 
 /**
- * R 鍵：依序循環 0° → 90° → 180° → 270° → 0°。
+ * 旋轉設備（可配置，預設 R 鍵）：依序循環 0° → 90° → 180° → 270° → 0°。
  * - 拿起預覽中：旋轉 previewRotation（放置時套用）
  * - 非拿起狀態且畫布上有點選中的已放置設備：呼叫 editorStore.rotateDevice 直接旋轉該設備（自動進歷史）
  */
-watch(
-    () => keys.r.value,
-    (pressed) => {
-        if (!pressed) return;
+onComboTriggered('rotateDevice', () => {
+    if (placementArmed.value) {
+        previewRotation.value = ((previewRotation.value + 1) % 4) as Rotation;
+        return;
+    }
 
-        if (placementArmed.value) {
-            previewRotation.value = ((previewRotation.value + 1) % 4) as Rotation;
-            return;
-        }
+    if (!rotateTargetUid.value) return;
+    const target = nodes.value.find((n) => n.id === rotateTargetUid.value);
+    if (!target) return;
+    const current = (target.data?.rotation ?? 0) as Rotation;
+    editorStore.rotateDevice(target.id, ((current + 1) % 4) as Rotation);
+});
 
-        if (!rotateTargetUid.value) return;
-        const target = nodes.value.find((n) => n.id === rotateTargetUid.value);
-        if (!target) return;
-        const current = (target.data?.rotation ?? 0) as Rotation;
-        editorStore.rotateDevice(target.id, ((current + 1) % 4) as Rotation);
-    },
-);
-
-/** Esc 鍵：拿起預覽中按下時取消本次拿起 */
-watch(
-    () => keys.escape.value,
-    (pressed) => {
-        if (!pressed || !placementArmed.value) return;
+/**
+ * Escape 鍵：拿起預覽中按下時取消本次拿起。  \
+ * 固定綁在原生 Escape，**不**透過 keybindingStore 配置——與 `openSettings`（可配置，
+ * 見 `useShortcuts.ts`）共用同一顆實體按鍵時，取消放置永遠優先；即使使用者把
+ * `openSettings` 改綁到別的鍵，Escape 取消放置的行為依然不變。
+ */
+useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && placementArmed.value) {
         editorStore.disarmPlacement();
-    },
+    }
+});
+
+/** 畫面平移速度（px/秒），四個方向共用；不做成可調參數，超出本次範圍 */
+const PAN_SPEED_PER_SECOND = 600;
+
+/** WASD（可配置）持續按住狀態：上／下／左／右 */
+const panUpHeld = useComboHeld('panUp');
+const panDownHeld = useComboHeld('panDown');
+const panLeftHeld = useComboHeld('panLeft');
+const panRightHeld = useComboHeld('panRight');
+
+/** 是否有任一畫面平移方向鍵按住中，控制下方 raf loop 的啟停 */
+const isPanning = computed(
+    () => panUpHeld.value || panDownHeld.value || panLeftHeld.value || panRightHeld.value,
 );
+
+/**
+ * WASD 按住移動畫面：每幀依按住方向與 delta time 位移 Vue Flow 的 viewport。  \
+ * 平移的是 Vue Flow 自身的 viewport（`setViewport`），不是 `canvasStore.offset`——
+ * 後者目前未接上實際畫布渲染。  \
+ * 方向語意：上／左 = 視角往該方向移動（看到更上/左方的內容），故 viewport.x / y 增加；
+ * 下／右則相反。
+ */
+const { pause: pausePan, resume: resumePan } = useRafFn(
+    ({ delta }) => {
+        const distance = (PAN_SPEED_PER_SECOND * delta) / 1000;
+        let dx = 0;
+        let dy = 0;
+        if (panUpHeld.value) dy += distance;
+        if (panDownHeld.value) dy -= distance;
+        if (panLeftHeld.value) dx += distance;
+        if (panRightHeld.value) dx -= distance;
+        if (dx === 0 && dy === 0) return;
+        setViewport({ ...viewport.value, x: viewport.value.x + dx, y: viewport.value.y + dy });
+    },
+    { immediate: false },
+);
+
+/** 僅在至少一個方向鍵按住時啟動 raf loop，放開後暫停，避免長期空轉 */
+watch(isPanning, (panning) => {
+    if (panning) resumePan();
+    else pausePan();
+});
 
 /**
  * 依螢幕座標與設備類型，組出一個可加入畫布的 FactoryNode。
