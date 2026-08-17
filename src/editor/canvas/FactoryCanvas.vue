@@ -6,13 +6,16 @@ import { Background } from '@vue-flow/background';
 import { Controls } from '@vue-flow/controls';
 import { MiniMap } from '@vue-flow/minimap';
 import { VueFlow, EdgeLabelRenderer, useVueFlow } from '@vue-flow/core';
-import type { NodeDragEvent, NodeMouseEvent } from '@vue-flow/core';
+import type { Connection, EdgeMouseEvent, NodeDragEvent, NodeMouseEvent } from '@vue-flow/core';
+import type { DropdownMenuItem } from '@nuxt/ui';
 import type { DevicePositionSnapshot, EquipmentType, Rotation } from '@/types/editor';
-import type { FactoryNode } from '@/types/graph';
+import type { FactoryEdge, FactoryNode } from '@/types/graph';
+import type { PortMedia } from '@/types/machine';
 import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
 import { useFlowStore } from '@/store/flowStore';
 import { useCanvasStore } from '@/store/canvasStore';
+import { getMachine, getMachineMode } from '@/data/machines';
 import FlowNodeOverlay from './FlowNodeOverlay.vue';
 import PipelineEdge from './PipelineEdge.vue';
 
@@ -83,13 +86,53 @@ const equipmentLabelMap: Record<EquipmentType, string> = {
 const equipmentTypes = Object.keys(equipmentLabelMap) as EquipmentType[];
 
 /**
- * VueFlow 選取範圍變化時，同步選取的節點 id 到 selectionStore。
+ * VueFlow 選取範圍變化時，同步選取的節點 id 與管線 id 到 selectionStore。
  * @param selection VueFlow 提供的選取變化事件內容
  * @example
- * handleSelectionChange({ nodes: [{ id: 'node-1' }] })
+ * handleSelectionChange({ nodes: [{ id: 'node-1' }], edges: [{ id: 'edge-1' }] })
  */
-function handleSelectionChange(selection: { nodes?: Array<{ id: string }> }) {
+function handleSelectionChange(selection: {
+    nodes?: Array<{ id: string }>;
+    edges?: Array<{ id: string }>;
+}) {
     selectionStore.setSelection((selection.nodes ?? []).map((node) => node.id));
+    selectionStore.setEdgeSelection((selection.edges ?? []).map((edge) => edge.id));
+}
+
+/** 管線右鍵選單目前是否展開 */
+const edgeContextMenuOpen = ref(false);
+
+/** 管線右鍵選單目前的目標管線 uid；無選單展開時為 null */
+const edgeContextMenuTargetId = ref<string | null>(null);
+
+/** 管線右鍵選單的錨點螢幕座標，跟隨右鍵點擊位置更新 */
+const edgeContextMenuPosition = ref({ x: 0, y: 0 });
+
+/** 管線右鍵選單項目：目前僅提供刪除該管線 */
+const edgeContextMenuItems = computed<DropdownMenuItem[]>(() => [
+    {
+        label: '刪除管線',
+        icon: 'i-lucide-trash-2',
+        onSelect: () => {
+            if (!edgeContextMenuTargetId.value) return;
+            editorStore.removeConnection(edgeContextMenuTargetId.value);
+            edgeContextMenuTargetId.value = null;
+        },
+    },
+]);
+
+/**
+ * 在管線上按下滑鼠右鍵時，於點擊處開啟刪除選單，並阻擋瀏覽器原生選單。
+ * @param event VueFlow 提供的管線右鍵事件，含目標管線與原生滑鼠事件
+ * @example
+ * handleEdgeContextMenu({ edge, event: mouseEvent } as EdgeMouseEvent)
+ */
+function handleEdgeContextMenu({ edge, event }: EdgeMouseEvent) {
+    event.preventDefault();
+    const mouseEvent = event as MouseEvent;
+    edgeContextMenuTargetId.value = edge.id;
+    edgeContextMenuPosition.value = { x: mouseEvent.clientX, y: mouseEvent.clientY };
+    edgeContextMenuOpen.value = true;
 }
 
 /** CR-01 拿起預覽中的旋轉狀態，僅存在於 placementArmed 期間，放置後隨即由 disarm 重置 */
@@ -287,6 +330,63 @@ function handleCanvasDrop(event: DragEvent) {
     placeNodeAtPointer(droppedEquipment, event.clientX, event.clientY);
     editorStore.disarmPlacement();
 }
+
+/**
+ * 自 handle id（`out-0` / `in-1`）解析埠索引；解析不出來時回退埠 0。  \
+ * id 格式與 FlowNodeOverlay.vue 動態產生的 Handle 一致。
+ * @param handle Vue Flow 傳入的 handle id
+ * @example
+ * parsePortIndex('out-1') // → 1
+ */
+function parsePortIndex(handle: string | null | undefined): number {
+    if (!handle) return 0;
+    const matched = handle.match(/-(\d+)$/);
+    return matched ? Number(matched[1]) : 0;
+}
+
+/**
+ * 依來源節點的機型與出發 handle，查出該埠的傳輸媒質（belt／pipe）。  \
+ * 查不到機型 / 型態 / 埠定義時 fallback 為 belt，避免擋下連線操作。
+ * @param sourceNode 連線起點節點
+ * @param sourceHandle 連線起點 handle id
+ * @example
+ * resolveConnectionPortType(sourceNode, 'out-0') // → 'belt'
+ */
+function resolveConnectionPortType(
+    sourceNode: FactoryNode,
+    sourceHandle: string | null | undefined,
+): PortMedia {
+    const machine = sourceNode.data?.machineType
+        ? getMachine(sourceNode.data.machineType)
+        : undefined;
+    if (!machine) return 'belt';
+    const mode = getMachineMode(machine, sourceNode.data?.machineMode);
+    const idx = parsePortIndex(sourceHandle);
+    return mode.output_ports[idx]?.media ?? 'belt';
+}
+
+/**
+ * 使用者拖曳出一條新連線放開時，組出 FactoryEdge 並透過 editorStore.addConnection() 建立管線。  \
+ * 全程走 L1 高階 action，會自動進歷史（可 undo/redo）。
+ * @param connection Vue Flow 提供的連線結果（起點 / 終點節點與 handle id）
+ * @example
+ * handleConnect({ source: 'a', target: 'b', sourceHandle: 'out-0', targetHandle: 'in-0' })
+ */
+function handleConnect(connection: Connection) {
+    const sourceNode = nodes.value.find((n) => n.id === connection.source);
+    if (!sourceNode) return;
+
+    const edge: FactoryEdge = {
+        id: `edge-${crypto.randomUUID()}`,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle,
+        targetHandle: connection.targetHandle,
+        type: 'pipeline',
+        data: { portType: resolveConnectionPortType(sourceNode, connection.sourceHandle) },
+    };
+    editorStore.addConnection(edge);
+}
 </script>
 
 <template>
@@ -305,6 +405,8 @@ function handleCanvasDrop(event: DragEvent) {
             :snap-grid="[gridSize, gridSize]"
             class="factory-flow"
             @selection-change="handleSelectionChange"
+            @connect="handleConnect"
+            @edge-context-menu="handleEdgeContextMenu"
             @node-click="handleNodeClick"
             @pane-click="handlePaneClick"
             @node-drag-start="handleNodeDragStart"
@@ -342,5 +444,18 @@ function handleCanvasDrop(event: DragEvent) {
                 </div>
             </EdgeLabelRenderer>
         </VueFlow>
+
+        <!-- CR-02 管線右鍵刪除選單：錨點跟隨右鍵座標定位，選單內容由 Nuxt UI 傳送門渲染 -->
+        <div
+            class="pointer-events-none fixed z-50 h-0 w-0"
+            :style="{
+                left: `${edgeContextMenuPosition.x}px`,
+                top: `${edgeContextMenuPosition.y}px`,
+            }"
+        >
+            <UDropdownMenu v-model:open="edgeContextMenuOpen" :items="edgeContextMenuItems">
+                <span />
+            </UDropdownMenu>
+        </div>
     </div>
 </template>
