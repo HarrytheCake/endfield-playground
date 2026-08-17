@@ -4,15 +4,20 @@
 
 ## 目前使用中
 
-[0001_20260810_merge-verification-sweep](./0001_20260810_merge-verification-sweep.md) — `in-progress`，待辦待決剩 1/8
+[0003_20260817_pre-master-branch-consolidation](./0003_20260817_pre-master-branch-consolidation.md) — `in-progress`，待辦待決剩 4/5
 
 ## 現在開著的（逐格）
 
+- `0003#1` · **待實作** — 合入 dev/Avery
+- `0003#2` · **待實作** — 合入 dev/paper
+- `0003#3` · **阻塞**（等 `0003#1`、`0003#2`） — 合併後跑全套驗證
+- `0003#4` · **待決斷** — 剩餘四條 branch 的去留與合併順序
 - `0001#8` · **待決斷** — 架構人工對答：七題逐題裁決
 
-> 要做某一格：`python3 docs/dernoson/plan-history/plan-item.py 0001#8`
+> 要做某一格：`python3 docs/dernoson/plan-history/plan-item.py 0003#1`
 > —— 只回那一格的正文與它的依據，不必讀整份計畫。
 
 ## draft / in-progress（流水號降序）
 
+- **0003** [0003_20260817_pre-master-branch-consolidation](./0003_20260817_pre-master-branch-consolidation.md) — `in-progress`，待辦待決剩 4/5
 - **0001** [0001_20260810_merge-verification-sweep](./0001_20260810_merge-verification-sweep.md) — `in-progress`，待辦待決剩 1/8
