@@ -4,7 +4,7 @@
 
 ## 目前使用中
 
-[0003_20260817_pre-master-branch-consolidation](./0003_20260817_pre-master-branch-consolidation.md) — `in-progress`，待辦待決剩 1/5
+[0003_20260817_pre-master-branch-consolidation](./0003_20260817_pre-master-branch-consolidation.md) — `in-progress`，待辦待決剩 1/7
 
 ## 現在開著的（逐格）
 
@@ -16,5 +16,5 @@
 
 ## draft / in-progress（流水號降序）
 
-- **0003** [0003_20260817_pre-master-branch-consolidation](./0003_20260817_pre-master-branch-consolidation.md) — `in-progress`，待辦待決剩 1/5
+- **0003** [0003_20260817_pre-master-branch-consolidation](./0003_20260817_pre-master-branch-consolidation.md) — `in-progress`，待辦待決剩 1/7
 - **0001** [0001_20260810_merge-verification-sweep](./0001_20260810_merge-verification-sweep.md) — `in-progress`，待辦待決剩 1/8
