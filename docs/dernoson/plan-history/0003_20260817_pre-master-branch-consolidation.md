@@ -90,45 +90,94 @@ CLAUDE.md 第 2 節命名慣例；`<script setup>` 沒有 `lang="ts"`；全檔�
 
 因此四條的合併順序不是可以隨便挑的，且 azure9572 的匯入實質上依賴 `0001#8` 的裁決。
 
+### O5 · 2026-08-17 05:40:59+08:00 — 兩條合併乾淨，但 Avery 的檔案卡住 lint
+
+`git merge --no-ff origin/dev/Avery` 與 `git merge --no-ff origin/dev/paper` 都是 ort
+strategy 直接完成，零 conflict，變更檔案數與 O3 記錄的一致。
+
+隨後的驗證四步：
+
+- `pnpm format` —— 通過，但 auto-fix **改寫了 `src/components/ViewTiggleBtn.vue`**（補分號、
+  縮排 2 空格改 4 空格）。純格式，無邏輯變更；不套的話 CI 的 `format-check` 會紅。
+- `pnpm lint` —— **失敗，exit 1**。唯一一個 error：
+  `src/components/ViewTiggleBtn.vue:1:1 The 'lang' attribute of '<script>' is missing
+  vue/block-lang`。`--fix` 修不掉，需要人工加 `lang="ts"`。
+- `pnpm type-check` —— 通過，無 TS error。
+- `pnpm test` —— 通過，28 個測試檔、301 個案例全過。
+
+O3 預測的「lint 可能有意見」成立，且它是唯一的紅燈。這條紅燈完全侷限在 Avery 帶進來的
+單一檔案，不影響既有程式碼 —— 但只要它在，`dev/dernoson` 就不是可以進 master 的狀態。
+
+### O6 · 2026-08-17 05:50:09+08:00 — Avery 改以重建歷史移除，未留 revert 疤痕
+
+- **更新:** O5
+
+使用者看過 O5 後裁定不合 `dev/Avery`，改為請作者重做。移除做法**不是 `git revert`**：
+被 revert 的 merge 會讓 git 認定那些 commit 已經合過，Avery 之後在同一條 branch 上追加
+commit 再合進來時，舊 commit 會被跳過，得靠 `-m` 或重開 branch 才繞得過去。
+
+由於這一輪的三個 commit 都還沒 push（`origin/dev/dernoson` 仍在 `8838faf`），改用
+`git reset --hard 41cd01e` 退回計畫檔 commit，再單獨重合 `origin/dev/paper`（`140dfc5`）。
+重建前先開 `backup/pre-avery-drop` 指向 `e46a122` 保底。
+
+結果：`dev/dernoson` 上不存在任何與 Avery 相關的物件，`src/components/ViewTiggleBtn.vue`
+不在樹上，O5 記錄的 lint 紅燈連同它一起消失。
+
+### O7 · 2026-08-17 05:51:50+08:00 — 移除 Avery 後四步全綠
+
+- **更新:** O5
+
+在只含 `dev/paper` 的樹上重跑：`pnpm format` 通過且**沒有改寫任何檔案**（首跑時被改寫的
+`ViewTiggleBtn.vue` 已不在樹上）、`pnpm lint` exit 0 無 error、`pnpm type-check` 無 TS
+error、`pnpm test` 28 檔 301 案例全過。`git status` 除計畫檔外乾淨。
+
+O5 的唯一紅燈確實隨 Avery 一起消失，沒有第二個問題被它蓋住。`dev/dernoson` 目前在
+`origin/master` 之上多 36 個 commit，全綠。
+
 ## 待辦
 
 ### 1 合入 dev/Avery
 
-- **state:** 待實作
-- **basis:** → O2、O3
+- **state:** 否決
+- **basis:** → O5、O6
 
-以 `--no-ff` 把 `origin/dev/Avery` 合進 `dev/dernoson`。使用者已裁定可直接合入，所以
-**不在合併過程中修改帶進來的檔案** —— O3 記錄的四個品質問題（檔名錯字、命名慣例、缺
-`lang="ts"`、缺 JSDoc、死碼）在合完之後回報，由使用者決定退回作者或另開待辦。
+不合入。`dev/Avery` 帶進來的 `ViewTiggleBtn.vue` 擋住 lint（O5），且問題不只 lint —— 檔名
+錯字、違反 CLAUDE.md 第 2 節目錄慣例、缺 JSDoc、無人 import 的死碼（O3）。使用者裁定退回
+作者重做，不在本 repo 代改。
+
+作者重做後這條要重開一格承載，不要復用本格。
 
 **沿革**
 
 - H1 · 2026-08-17 決斷 —— 使用者裁定可直接合入（使用者）
+- H2 · 2026-08-17 落地 —— `--no-ff` 合入 `4e86d68`，零 conflict → O5
+- H3 · 2026-08-17 否決 —— 使用者改為退回 Avery 重做，合併以重建歷史移除 → O6（取代 H1、H2）
 
 ### 2 合入 dev/paper
 
-- **state:** 待實作
-- **basis:** → O2、O3
+- **state:** 完成
+- **basis:** → O2、O6
 
-以 `--no-ff` 把 `origin/dev/paper` 合進 `dev/dernoson`。無程式碼變更，只有文件與一個 5MB
-的 `.fig`。合併本身零風險，但推上 master 之前要讓使用者確認 5MB 二進位檔進 git 物件庫是
-可接受的（O3）。
+已合入（`140dfc5`）。無程式碼變更，未影響任何驗證。**推上 master 之前仍要讓使用者確認**
+5MB 的 `.fig` 進 git 物件庫是可接受的（O3）—— 那是不可逆的。
 
 **沿革**
 
 - H1 · 2026-08-17 決斷 —— 使用者裁定可直接合入（使用者）
+- H2 · 2026-08-17 落地 —— `--no-ff` 合入，零 conflict；因 0003#1 退回而重合一次 → O6
 
 ### 3 合併後跑全套驗證
 
-- **state:** 待實作
+- **state:** 完成
 - **needs:** 0003#1、0003#2
+- **basis:** → O7
 
-0003#1 與 0003#2 落地後跑 `validate-changes`（format → lint → type-check → test），確認新
-進來的檔案沒有弄壞既有的檢查。`ViewTiggleBtn.vue` 缺 `lang="ts"` 且未被 import，預期
-type-check 不會抓到它，但 lint / format 可能有意見（O3）—— 若真的紅了，回報給使用者，
-**不自己改別人的檔案**。
+在移除 Avery、只留 `dev/paper` 的樹上重跑完 `validate-changes` 全套，四步全綠（O7）。
 
 **沿革**
+
+- H1 · 2026-08-17 落地 —— 首跑（含 Avery）四步僅 lint 紅 → O5
+- H2 · 2026-08-17 落地 —— 移除 Avery 後重跑，四步全綠 → O7
 
 ### 4 剩餘四條 branch 的去留與合併順序
 
