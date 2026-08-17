@@ -15,10 +15,9 @@ import type { Alert, Detector, ValidationContext } from '@/types/validation';
  *
  * @example
  * import { useValidationStore } from '@/store/validationStore'
- * import { E001_deviceOverlap } from '@/lib/validation/detectors/E001_deviceOverlap'
  *
  * const validationStore = useValidationStore()
- * validationStore.registerDetector(E001_deviceOverlap)
+ * validationStore.registerDetector(someDetector)
  * validationStore.run({ devices, connections, getDef })
  */
 export const useValidationStore = defineStore('validation', () => {
@@ -42,10 +41,14 @@ export const useValidationStore = defineStore('validation', () => {
      *
      * @param detector 要註冊的 detector
      * @example
-     * validationStore.registerDetector(E001_deviceOverlap)
+     * validationStore.registerDetector(someDetector)
      */
     function registerDetector(detector: Detector): void {
-        if (detectors.value.some((d) => d.code === detector.code)) return;
+        if (detectors.value.some((d) => d.code === detector.code)) {
+            console.log(`[ValidationStore] detector ${detector.code} already registered`);
+            return;
+        }
+        console.log(`[ValidationStore] registerDetector ${detector.code}`);
         detectors.value = [...detectors.value, detector];
     }
 
@@ -69,15 +72,31 @@ export const useValidationStore = defineStore('validation', () => {
      * @param ctx 驗證上下文
      */
     function run(ctx: ValidationContext): void {
+        console.log('[ValidationStore] run start', {
+            deviceCount: ctx.devices.length,
+            connectionCount: ctx.connections.length,
+            detectors: detectors.value.map((d) => d.code),
+        });
+        console.time('[ValidationStore] run');
         const collected: Alert[] = [];
         for (const detector of detectors.value) {
+            console.time(`[Detector ${detector.code}]`);
+            console.log(`[ValidationStore] detector ${detector.code} start`);
             try {
-                collected.push(...detector.run(ctx));
+                const results = detector.run(ctx);
+                collected.push(...results);
+                console.log(`[ValidationStore] detector ${detector.code} complete`, {
+                    resultCount: results.length,
+                });
             } catch (err) {
                 console.error(`[Detector ${detector.code}] 偵測失敗:`, err);
+            } finally {
+                console.timeEnd(`[Detector ${detector.code}]`);
             }
         }
         alerts.value = collected;
+        console.timeEnd('[ValidationStore] run');
+        console.log('[ValidationStore] run complete', { alerts: alerts.value.length });
     }
 
     /** 清空所有警示與已註冊 detector */
@@ -134,7 +153,7 @@ export const useValidationStore = defineStore('validation', () => {
          *
          * @param detector 要註冊的 detector
          * @example
-         * validationStore.registerDetector(E001_deviceOverlap)
+         * validationStore.registerDetector(someDetector)
          */
         registerDetector,
         /**

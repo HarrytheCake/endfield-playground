@@ -86,9 +86,9 @@ pnpm build
         ```bash
         git checkout master
         ```
-    2. 拉取遠端最新狀態，並清掉本地已對應到「遠端已刪除」的分支：
+    2. 拉取遠端最新狀態，並清掉本地已對應到「遠端已刪除」的分支 (windows powershell)：
         ```bash
-        git pull --prune && git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -D
+        git pull --prune; git branch -vv | Select-String ': gone\]' | ForEach-Object { git branch -D ($_ -split '\s+')[1] }
         ```
     3. 從最新的 `master` 開出自己的新 branch 繼續開發：
         ```bash

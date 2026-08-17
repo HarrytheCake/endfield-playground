@@ -24,6 +24,27 @@
 - 旋轉是整個節點方塊套用 CSS `transform: rotate()`，文字標籤會跟著轉向（採簡易版方案，非 port 精確定位版）
 - 尚未依 `Machine.input_ports` / `output_ports` 用 `rotatePortSide` / `rotatePortOffset` 做 port 精確重新定位
 
+## CR-01 基地選擇 UI（`baseRegion`）
+
+對應任務：[MILESTONE_0726.md](MILESTONE_0726.md)
+
+### 操作方式
+
+- Navbar 右側「基地選擇」按鈕點開下拉選單，選項：武陵地區 / 四號谷地 / 自由畫布
+- 選擇後透過 `canvasStore.setBaseRegion()` 寫入，畫布立即疊加對應格子尺寸的框線（武陵 256×256 格、四號谷地 192×192 格）；選自由畫布則無框線
+- 框線純視覺參考，`pointer-events-none`，框線外仍可正常放置設備
+
+### 涉及檔案
+
+- [BaseRegionSelector/Index.vue](../../src/components/BaseRegionSelector/Index.vue)（L3）：純展示下拉元件，不 import store，靠 `modelValue` / `update:modelValue` 溝通
+- [Navbar.vue](../../src/editor/navbar/Navbar.vue)（L2）：掛載選擇器、讀寫 `canvasStore.baseRegion`
+- [FactoryCanvas.vue](../../src/editor/canvas/FactoryCanvas.vue)（L2）：`baseRegionBoundary` computed，依 `canvasSize.w/h × gridSize` 換算框線像素尺寸，透過既有的 `EdgeLabelRenderer` 容器渲染（沿用其自動跟隨 pan/zoom 的 transform，不需自行處理縮放換算）
+
+### 尚未處理
+
+- E003 detector（偵測設備超出框線、顯示 Error 警示）不在此任務範圍，另開任務處理
+- CR-11 工具列「基地隱藏中繼器」不在此任務範圍
+
 ## 其他排查
 
 - **img_mat 圖片顯示**：實測 dev server 與 `pnpm build` + `pnpm preview` 皆正常顯示（含檔名有空格的 `Amethyst Fiber.png`），本機無法重現使用者回報的「build 後不顯示」問題，待確認實際部署環境後續查
