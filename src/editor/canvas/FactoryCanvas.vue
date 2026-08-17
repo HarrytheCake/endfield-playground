@@ -35,8 +35,22 @@ const { nodes, edges, snapToGrid, activeTool, selectedEquipment, placementArmed 
     storeToRefs(editorStore);
 /** 解構 flowStore 的響應式參照，供流量標籤 overlay 讀取 */
 const { edgeFlows, congestedEdges } = storeToRefs(flowStore);
-/** 解構 canvasStore 的響應式參照，供 template 綁定畫布格線 */
-const { gridSize } = storeToRefs(canvasStore);
+/** 解構 canvasStore 的響應式參照，供 template 綁定畫布格線與基地框線 */
+const { gridSize, canvasSize } = storeToRefs(canvasStore);
+
+/**
+ * 目前選定基地對應的框線像素尺寸；自由畫布（canvasSize 為 null）時不顯示框線。
+ * 換算方式：格數（canvasSize.w / h）× 單格像素（gridSize），與 geometryUtils
+ * 的 0-indexed 格子座標系一致，框線左上角固定對齊 flow 座標原點 (0, 0)。
+ */
+const baseRegionBoundary = computed(() =>
+    canvasSize.value
+        ? {
+              width: canvasSize.value.w * gridSize.value,
+              height: canvasSize.value.h * gridSize.value,
+          }
+        : null,
+);
 /** Vue Flow 提供的座標轉換 API；vfEdges 用於流量標籤 overlay 的定位計算 */
 const { screenToFlowCoordinate, edges: vfEdges } = useVueFlow();
 
@@ -302,8 +316,19 @@ function handleCanvasDrop(event: DragEvent) {
             <Controls />
             <MiniMap />
 
-            <!-- F2：管線流量速率標籤 overlay -->
             <EdgeLabelRenderer>
+                <!-- CR-01 §2.1：基地選擇框線 overlay，純視覺參考、不阻擋擺放 -->
+                <div
+                    v-if="baseRegionBoundary"
+                    class="pointer-events-none absolute border-2 border-emerald-400/70"
+                    :style="{
+                        transform: 'translate(0px, 0px)',
+                        width: `${baseRegionBoundary.width}px`,
+                        height: `${baseRegionBoundary.height}px`,
+                    }"
+                />
+
+                <!-- F2：管線流量速率標籤 overlay -->
                 <div
                     v-for="edge in labeledEdges"
                     :key="edge.id"
