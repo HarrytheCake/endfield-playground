@@ -189,6 +189,45 @@ LF。`git restore .` 後重跑，format 不再改動任何檔案。
 
 清乾淨後四步全綠：format 無改動、lint exit 0、type-check 無 error、test 28 檔 301 案例全過。
 
+### O11 · 2026-08-17 06:22:40+08:00 — cake 三個功能在 branch 上實測通過，Command Pattern 正確
+
+在 `dev/cake` 上實測：
+
+- **addConnection** —— 從 `furnace-A` out-1 拖到 `parts-A` in-1，edges 15 → 16，產生
+  `edge-aa384e9d-…`，`historyStore.canUndo` 轉為 true
+- **removeConnection** —— 右鍵管線彈出「刪除管線」選單，點下去 15 → 14，目標 edge 消失
+- **undo** —— 兩者各自 undo 後都完整復原（15 → 16 → 15、15 → 14 → 15）
+
+18 個節點共 67 顆埠 handle，id 為 `in-N` / `out-N`，source / target 角色與上下左右方位都正確。
+console 零錯誤。`editorStore.addConnection()` / `removeConnection()` 內部都走
+`historyStore.execute()`（`editorStore.ts:574`），L2 沒有自己組 Command，符合 CLAUDE.md 第 5 節。
+
+兩項要注意的設計取捨（作者都已在註解中自承）：`useShortcuts.ts:113-117` 用 `preventDefault()`
+攔截 Ctrl+R 當作重置畫布入口，會蓋掉瀏覽器重新整理，且標明是暫時性入口；
+`editorStore.ts:276-279` 的 `resetCanvas()` 直接改 `nodes.value` / `edges.value`，未走 Command
+Pattern 故不可 undo，作者以 `window.confirm()` 防呆並註明待 L1 補正式 action。
+
+另有一項與 cake 無關：console 每次驗證都噴大量 `[validateChains]` debug log，來源是
+`useFlowEngine.ts:443`，master 的 `bc0c3f9` 就有了，`git diff master...cake` 對它零命中。
+
+### O12 · 2026-08-17 06:35:04+08:00 — cake 合入後全綠；連線拖拉的自動化重測不可靠，非合併回歸
+
+`git merge --no-ff origin/dev/cake` 只有 `FactoryCanvas.vue` 需要 auto-merge（toby 與 cake
+都改過它），git 自行解完、無 conflict。合併後四步驗證全綠：format 無改動、lint exit 0、
+type-check 無 error、test 28 檔 301 案例全過。
+
+合併後在瀏覽器重測，**用合成滑鼠事件拖拉建線一直失敗**（`connectionModeStarted: false`）。
+為了判斷是不是合併造成的回歸，切回 `dev/cake` 用完全相同的手法重跑一次 —— **在 cake 上也
+同樣失敗**。因此這是自動化驅動 Vue Flow 連線狀態機的不可靠，不是合併回歸；O11 當時之所以
+成功，依賴的是當下某個沒被複製到的頁面狀態。
+
+改用不依賴拖拉的路徑驗證合併後的樹：直接呼叫 `editorStore.addConnection()` 建一條
+`parts-A` → `crusher-B1`，edges 15 → 16、edge 有渲染出來、`canUndo` true；`undo()` 後回到
+15、edge 消失、`canRedo` true。同一頁面上 toby 的基地框線 overlay 仍為 `5120px`。
+
+也就是說：**兩人的功能在合併後的同一棵樹上並存無誤**，Command Pattern 往返正確。惟「拖拉
+建線」這條 UI 路徑在合併後的樹上未經自動化重測，證據來自合併前的 O11。
+
 ## 待辦
 
 ### 1 合入 dev/Avery
@@ -239,19 +278,19 @@ LF。`git restore .` 後重跑，format 不再改動任何檔案。
 - **state:** 待決斷
 - **basis:** → O4
 
-原本四條，`dev/toby` 與 `dev/GoodMorning` 已分別在 0003#6、0003#7 裁決完畢，本格剩兩條：
+原本四條，`dev/toby`、`dev/GoodMorning`、`dev/cake` 已分別在 0003#6、0003#7、0003#8 裁決
+完畢，本格只剩 `dev/azure9572`：
 
-- `dev/azure9572` —— detector 註冊方式要與 `dev/dernoson` 的 `overlapDetector` 對齊，這與
-  `0001#8` 第 4 題是同一件事，可能要先在那邊定案。另需決定 `validation_OLD.ts` 與新增的
-  `pnpm-workspace.yaml` 要不要跟著進來。
-- `dev/cake` —— 也動 `FactoryCanvas.vue`（+125）。`dev/toby` 已經先合入並改了同一個檔案
-  （0003#6），所以這條的實際衝突面比 O4 評估時大，合之前要重新試合一次。
+detector 註冊方式要與 `dev/dernoson` 的 `overlapDetector` 對齊，這與 `0001#8` 第 4 題是同一
+件事，可能要先在那邊定案。另需決定 `validation_OLD.ts`（+76 行，看名字是該刪的）與新增的
+`pnpm-workspace.yaml`（+3 行）要不要跟著進來。
 
-裁決收斂後每條開一格承載實際合併。
+裁決收斂後開一格承載實際合併。
 
 **沿革**
 
 - H1 · 2026-08-17 拆格 —— toby 與 GoodMorning 裁決完畢，分別移到 0003#6、0003#7，本格範圍縮為兩條
+- H2 · 2026-08-17 拆格 —— cake 裁決完畢移到 0003#8，本格只剩 azure9572
 
 ### 5 dev/cake_test 與 dev/mbd 不合入
 
@@ -299,3 +338,20 @@ LF。`git restore .` 後重跑，format 不再改動任何檔案。
 **沿革**
 
 - H1 · 2026-08-17 否決 —— 實測確認 branch 無法啟動且功能為 toby 的子集，使用者裁定不合入 → O9
+
+### 8 合入 dev/cake
+
+- **state:** 完成
+- **basis:** → O11、O12
+
+已合入（`ad8e7ae`），帶進 addConnection / removeConnection / resetCanvas 與埠 handle 渲染。
+三個功能在合併前於 branch 上實測通過，Command Pattern 往返正確（O11）；合併後四步驗證全綠，
+並確認與 toby 的基地框線在同一棵樹上並存無誤（O12）。
+
+使用者已知悉並接受兩項設計取捨：Ctrl+R 攔截瀏覽器重新整理、`resetCanvas` 不可 undo（O11）。
+兩者作者都標明為暫時性，待 L3 正式按鈕與 L1 正式 action 交付後應回頭收掉 —— 尚未開格承載。
+
+**沿革**
+
+- H1 · 2026-08-17 決斷 —— 實測三個功能後使用者裁定合入，接受 Ctrl+R 與 resetCanvas 的取捨（使用者）
+- H2 · 2026-08-17 落地 —— `--no-ff` 合入，`FactoryCanvas.vue` auto-merge 無 conflict，驗證全綠 → O12
