@@ -377,12 +377,13 @@ azure 五個都實作了 `Detector` 介面（`{ code, level, run(ctx) }`），�
 實測過（O9）。合併後四步驗證全綠（O10）。
 
 未修的遺留瑕疵：`BaseRegionSelector/Index.vue:10` 的 trigger 標籤寫死「基地選擇」，選完不
-顯示已選項（O9）。使用者尚未決定要請 toby 補、還是另開待辦，不擋合併。
+顯示已選項（O9）。不擋合併，收尾由 0003#11 承載。
 
 **沿革**
 
 - H1 · 2026-08-17 決斷 —— 實測畫面後使用者裁定合入（使用者）
 - H2 · 2026-08-17 落地 —— `--no-ff` 合入，零 conflict，驗證全綠 → O10
+- H3 · 2026-08-17 拆格 —— trigger 標籤瑕疵開為 0003#11 承載（使用者）
 
 ### 7 dev/GoodMorning 不合入
 
@@ -409,9 +410,79 @@ azure 五個都實作了 `Detector` 介面（`{ code, level, run(ctx) }`），�
 並確認與 toby 的基地框線在同一棵樹上並存無誤（O12）。
 
 使用者已知悉並接受兩項設計取捨：Ctrl+R 攔截瀏覽器重新整理、`resetCanvas` 不可 undo（O11）。
-兩者作者都標明為暫時性，待 L3 正式按鈕與 L1 正式 action 交付後應回頭收掉 —— 尚未開格承載。
+兩者作者都標明為暫時性，收尾分別由 0003#9、0003#10 承載。
 
 **沿革**
 
 - H1 · 2026-08-17 決斷 —— 實測三個功能後使用者裁定合入，接受 Ctrl+R 與 resetCanvas 的取捨（使用者）
 - H2 · 2026-08-17 落地 —— `--no-ff` 合入，`FactoryCanvas.vue` auto-merge 無 conflict，驗證全綠 → O12
+- H3 · 2026-08-17 拆格 —— 兩項暫時性設計的收尾分別開為 0003#9、0003#10 承載（使用者）
+
+### 9 用 L3 按鈕取代 Ctrl+R 作為重置畫布入口
+
+- **state:** 待實作
+- **basis:** → O11
+
+`useShortcuts.ts:113-117` 目前用 `preventDefault()` 攔截 Ctrl+R 當作重置畫布的入口，會蓋掉
+瀏覽器的重新整理，影響範圍是全站而非單一頁面。作者標明這是暫時性入口，正式的應該是 L3 交付
+的按鈕搭配 `UModal` 確認框。
+
+本格要做的：向 L3 要一顆重置畫布按鈕，接上後把 `useShortcuts` 裡那段 Ctrl+R 的 `keydown`
+監聽移除。`triggerResetCanvas` 的匯出要保留 —— 它本來就是為了讓按鈕的 L2 wiring 直接 import
+而存在。按鈕接上後 `triggerResetCanvas` 內的 `window.confirm()` 也應移除，改由 `UModal` 流程
+負責確認（這部分與 0003#10 相關但可獨立進行）。
+
+**沿革**
+
+- H1 · 2026-08-17 決斷 —— 使用者裁定開格承載，不隨 cake 合併一起處理（使用者）
+
+### 10 讓 resetCanvas 走 Command Pattern
+
+- **state:** 待實作
+- **basis:** → O11
+
+`editorStore.ts:276-279` 的 `resetCanvas()` 直接改寫 `nodes.value` / `edges.value`，沒有
+`historyStore.execute()`，所以重置畫布無法 Ctrl+Z 復原。目前是靠 `triggerResetCanvas()` 內的
+`window.confirm()` 防呆。
+
+依 CLAUDE.md 第 5 節，這是 L1 要補的 high-level action，不能在 L2 自己組 mutation ——
+cake 沒有假裝它可以 undo 而是誠實留下防呆與註解，處理方式是對的。本格要做的是回報 L1 維護者
+補上會產生 Command 的 `resetCanvas`，補上之後 0003#9 的 `window.confirm()` 就能一併拿掉。
+
+**沿革**
+
+- H1 · 2026-08-17 決斷 —— 使用者裁定開格承載（使用者）
+
+### 11 BaseRegionSelector 的 trigger 要顯示已選基地
+
+- **state:** 待實作
+- **basis:** → O9
+
+`src/components/BaseRegionSelector/Index.vue:10` 把「基地選擇」寫死在 trigger 按鈕裡，選完
+武陵地區 / 四號谷地之後標籤不會變，使用者得展開下拉才知道目前選的是哪一個。實測時
+`canvasStore` 確實有收到選擇（下拉內的 highlight 會跟著移動），純粹是 trigger 沒有反映
+`modelValue`。
+
+這個瑕疵是 toby 從 GoodMorning 的元件繼承下來、未修的部分。屬 L3 職責（純展示，靠 props
+渲染），修法是讓 trigger 依 `modelValue` 顯示對應 `option.label`，無選擇時才顯示「基地選擇」。
+
+**沿革**
+
+- H1 · 2026-08-17 決斷 —— 使用者裁定開格承載，不擋 toby 合併（使用者）
+
+### 12 清掉 validateChains 的 debug console.log
+
+- **state:** 待實作
+- **basis:** → O11
+
+`src/composables/useFlowEngine.ts:443` 的 `validateChains()` 每次執行都會噴出大量
+`[validateChains] 處理 xxx, inEdges: {...}` / `加入可達節點: xxx` 的 console.log，實測時整個
+console 被灌滿，真正的錯誤訊息會被埋掉。
+
+這不是本輪任何一條 branch 造成的 —— `git diff master...cake` 對它零命中，來源是 master 上的
+`bc0c3f9`（CR-04 修 `validateChains` 對無配方節點的處理）留下的除錯輸出。本格要做的是把這些
+console.log 清掉；若確實需要保留除錯能力，改成可開關的形式而非無條件輸出。
+
+**沿革**
+
+- H1 · 2026-08-17 決斷 —— 使用者裁定開格承載（使用者）
