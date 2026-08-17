@@ -228,6 +228,56 @@ type-check 無 error、test 28 檔 301 案例全過。
 也就是說：**兩人的功能在合併後的同一棵樹上並存無誤**，Command Pattern 往返正確。惟「拖拉
 建線」這條 UI 路徑在合併後的樹上未經自動化重測，證據來自合併前的 O11。
 
+### O13 · 2026-08-17 06:48:20+08:00 — azure 的 pnpm-workspace.yaml 是解除安全防護，不是組態改善
+
+該檔只有三行，無 `packages:` 欄位，不會把 repo 變成 monorepo：
+
+```yaml
+onlyBuiltDependencies:
+  - esbuild
+  - vue-demi
+```
+
+這是 pnpm 10 的「允許執行 build script 的白名單」。pnpm v10 起預設封鎖所有相依套件的
+lifecycle script（preinstall / install / postinstall），此檔是跑 `pnpm approve-builds` 後由
+pnpm 自動寫出的。專案 `packageManager` 為 `pnpm@10.7.0`，與 10.6 之後改寫入
+`pnpm-workspace.yaml` 的行為一致。它跟在第一個 detector 的同一個 commit（`6ca1af6`）進來，
+與 detector 工作無關。`package.json` 與 `pnpm-lock.yaml` 皆未動。
+
+查證後確認**本專案不需要 esbuild 的 postinstall**：`node_modules/.modules.yaml` 的
+`pendingBuilds: []`、`esbuild/bin/esbuild` 存在、二進位檔由 optional 平台套件
+`@esbuild/win32-x64@0.27.7` 提供，且 dev server / type-check / test 全部跑綠。
+
+而 2026 年幾起大型 npm 供應鏈攻擊（3 月 Axios、6 月 Mastra 140+ 套件、2025 年 11 月起的
+Shai-Hulud 蠕蟲）機制都是竊取維護者帳號後，靠 install hook 在 `install` 瞬間執行酬載；npm
+自己也已在 v12（2026 年 7 月）改為預設封鎖 install script。因此合入此檔等於**對 esbuild 與
+vue-demi 的未來所有版本永久解除這層封鎖**，換到的只有少一行警告。
+
+結論：不該合。此檔的去留與 detector 的去留是兩件獨立的事。
+
+### O14 · 2026-08-17 06:53:18+08:00 — azure 的五個 detector 是無人註冊的死碼，且缺兩層接線
+
+`dev/azure9572` 的淨變更為五個 detector（E004 / E005 / W001 / W002 / W003）、五份對應測試、
+五份設計文件、`src/types/validation.ts` +5 行、`src/types/validation_OLD.ts` +76 行。該分支上
+測試全綠（32 檔 312 案例）。
+
+但五個 detector **全部零外部引用**。全專案唯一真正呼叫 `registerDetector()` 的應用程式碼是
+`src/app/dev/ValidationTest.vue:163`，註冊的是 `E001_deviceOverlap`。因此這批程式碼有測試覆
+蓋卻沒有接進驗證管線，主畫面與 `/dev/*` 都不會產生任何對應警示 —— **實機檢視看不到東西**。
+
+第二層缺口：`W002` 與 `W003` 依賴 `ValidationContext` 的新欄位 `edgeFlows` / `congestedEdges`，
+但 `useValidation.ts:47-53` 組 context 時只填 `devices` / `connections` / `getDef` /
+`baseRegion`。兩個 detector 開頭即 `if (!ctx.congestedEdges) return []`，所以即使註冊上去也
+永遠回傳空陣列。資料本身存在（`flowStore.edgeFlows` / `congestedEdges`，由 `useFlowEngine`
+產生），只是沒接進驗證管線。
+
+O4 原本擔心的「與 `overlapDetector` 衝突」不成立：azure 完全沒碰 `E001_deviceOverlap.ts`，
+只是新增檔案，合併時 `dev/dernoson` 對該檔的刪除會被保留。真正的分歧是介面不一致 ——
+azure 五個都實作了 `Detector` 介面（`{ code, level, run(ctx) }`），而 `overlapDetector` 是純
+函式 `detectOverlaps(machineList, pipelineList)`。這正是 `0001#8` 第 4 題的內容。
+
+`src/types/validation_OLD.ts` 是 `validation.ts` 的舊副本，全專案零 import，是忘了刪的暫存檔。
+
 ## 待辦
 
 ### 1 合入 dev/Avery
@@ -275,22 +325,32 @@ type-check 無 error、test 28 檔 301 案例全過。
 
 ### 4 剩餘四條 branch 的去留與合併順序
 
-- **state:** 待決斷
-- **basis:** → O4
+- **state:** 待實作
+- **needs:** 0001#8
+- **basis:** → O13、O14
 
 原本四條，`dev/toby`、`dev/GoodMorning`、`dev/cake` 已分別在 0003#6、0003#7、0003#8 裁決
-完畢，本格只剩 `dev/azure9572`：
+完畢，本格只剩 `dev/azure9572`。使用者已裁定**等 `0001#8` 定案 detector 註冊方式之後再合**，
+不在此之前草率接線（O14）。
 
-detector 註冊方式要與 `dev/dernoson` 的 `overlapDetector` 對齊，這與 `0001#8` 第 4 題是同一
-件事，可能要先在那邊定案。另需決定 `validation_OLD.ts`（+76 行，看名字是該刪的）與新增的
-`pnpm-workspace.yaml`（+3 行）要不要跟著進來。
+屆時合併要照這三段處理，性質各不相同：
 
-裁決收斂後開一格承載實際合併。
+- **五個 detector + 五份測試 + 五份設計文件** —— 合入。程式碼實作 `Detector` 介面、寫法與
+  既有 E001 一致、測試全綠，留著比丟掉划算。
+- **`src/types/validation.ts` +5 行** —— 合入。只是在 `ValidationContext` 加兩個 optional
+  欄位，向後相容。
+- **`src/types/validation_OLD.ts`（+76 行）與 `pnpm-workspace.yaml`（+3 行）** —— 不要。前者
+  是零 import 的舊副本（O14），後者是解除 pnpm 對 install script 的封鎖（O13）。合併後補一個
+  刪除 commit。
+
+合入之後這批仍是死碼，要能實際運作還缺兩層接線（註冊點、把 `edgeFlows` / `congestedEdges`
+填進 context），依賴 `0001#8` 的裁決結果，屆時另開格承載。
 
 **沿革**
 
 - H1 · 2026-08-17 拆格 —— toby 與 GoodMorning 裁決完畢，分別移到 0003#6、0003#7，本格範圍縮為兩條
 - H2 · 2026-08-17 拆格 —— cake 裁決完畢移到 0003#8，本格只剩 azure9572
+- H3 · 2026-08-17 決斷 —— 使用者裁定等 0001#8 定案後再合，並確立三段分開處理 → O13、O14（使用者）
 
 ### 5 dev/cake_test 與 dev/mbd 不合入
 
