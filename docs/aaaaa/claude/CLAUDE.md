@@ -163,6 +163,32 @@ V8 相關入口：`todolist_v8.md`、`dev_v8/`。
 V9 相關入口：`todolist_v9.md`、`dev_v9/`（**實作完成**）。
 最新功能完成報告：`docs/aaaaa/report_v4.md`（V4；後續版本應新增對應 `report_vN.md`）。
 
+### 4.7 產品 Roadmap 工作流（docs/roadmap/）
+
+`roadmap/` 與 `dev/` 採**相同的大綱 ↔ 細項結構**，但主題不同：`dev/` 是單一技術版本的實作，`roadmap/` 是跨團隊的階段交付與派工（2026-08-23 → 11-29）。roadmap 與派工為**公開文件**，2026-08-23 起放在 `docs/` 根層。
+
+```text
+docs/
+├── roadmap/
+│   ├── ROADMAP_OUTLINE.md  # 大綱：工項總表、週曆、封鎖追蹤（等同 todolist_vN.md）
+│   └── detail/             # 21 份工項細項（等同 dev_vN/）
+└── work_dispatch/          # 每週派工：WEEK_*.md ＋ 各人資料夾
+```
+
+決策層文件（問卷、commit 分析、個人檔與風險矩陣、Agent 操作文檔、E3 人力調度、派工複查）留在 `docs/aaaaa/collaborator_survey/`，**已 gitignore、不得被公開文件連結**。
+
+| 規則 | 說明 |
+|------|------|
+| 工項 ID | `R-<群組字母><數字>`，如 `R-A1`、`R-C5`；群組 A 對齊／B 擺放／C 連線／D 串通／E 跨月支撐 |
+| 細項檔名 | `{群組字母}{序號}_{snake_case}.md` |
+| 狀態標記 | 同 §4.4（`[ ]`／`[~]`／`[x]`／`[!]`） |
+| 封鎖 | 回寫 [ROADMAP_OUTLINE.md](../../roadmap/ROADMAP_OUTLINE.md) §9 封鎖項目追蹤表 |
+| 改期 | 回寫大綱 §8 週曆；月底門檻必要工項變更須主編＋aaaaa 同意並升版本號 |
+
+**協助 roadmap 相關工作前，先讀 `collaborator_survey/dispatch_private/AGENT_ROADMAP.md`**（含讀檔順序與常見誤判），不要直接翻 21 份細項。CR-04 在本輪主責 R-A2（佔格／port 對資料）、R-C5、R-D1、R-D4，並為 R-C2、R-D3 提供共用純函式。
+
+Roadmap 相關入口：[ROADMAP_OUTLINE.md](../../roadmap/ROADMAP_OUTLINE.md)、[detail/](../../roadmap/detail/)、[work_dispatch/](../../work_dispatch/)；上游 ROADMAP v0.2 與 Agent 操作文檔在決策層（`collaborator_survey/`，未進版控）。
+
 ---
 
 ## 5. 程式碼註解規則
@@ -305,6 +331,10 @@ CR-04 專用 skills / agents 放在 `docs/aaaaa/claude/`，透過根目錄 `.cla
 | [dev_v8/](../dev/dev_v8/) | V8 細項文件 |
 | [todolist_v9.md](../dev/todolist_v9.md) | V9 工項清單（強化視覺化預覽，A–G 完成） |
 | [dev_v9/](../dev/dev_v9/) | V9 細項文件 |
+| `collaborator_survey/dispatch_private/AGENT_ROADMAP.md` | **Roadmap Agent 入口**：讀檔順序、硬規則、常見任務與誤判（決策層，未進版控） |
+| [roadmap/ROADMAP_OUTLINE.md](../../roadmap/ROADMAP_OUTLINE.md) | Roadmap 大綱（2026-08-23 → 11-29）：22 個工項、週曆、封鎖追蹤 |
+| [roadmap/detail/](../../roadmap/detail/) | Roadmap 各工項細項（A1–A4／B1–B5／C1–C5／D1–D5／E1–E2） |
+| [work_dispatch/](../../work_dispatch/) | 每週派工大綱與各人工單（公開） |
 | [MILESTONE_0726.md](../MILESTONE_0726.md) | V6 來源里程碑 |
 | [CONTEXT.md](./CONTEXT.md) | CR-04 專有名詞（PortMedia／machineMode／form／埠一對一） |
 | `spec/04_flow_simulation.md` | 官方功能規格 |
