@@ -35,11 +35,28 @@
 2. 已依使用者指示拿掉 v1 的「底部設備選取列／分類 Tab／搜尋框」（v2 沒有這段設計）
 3. 工具列樣式第一次手刻 `<button>`/`<div>` 被指出跟設計稿不像，已改回用 `UButton`/`USlider` + `:ui` prop 覆寫（`variant="ghost"` 卸掉預設樣式，`:ui.base`/`:ui.leadingIcon` 蓋上設計稿的 55×55 扁平色塊 + `#4E4E4E`/`#EEFD1C` 配色）
 4. 按鈕實際順序已由使用者確認為：**快捷鍵設定 → 匯出 → 匯入 → 基地切換 → 復原 → 取消復原 → botton frame（語意不明，僅視覺）→ 縮放**
-5. **卡住的地方：`pnpm type-check` 因為工具權限被連續中斷，還沒真的跑過**——下一輪接手時第一件事應該是先確認這個檔案 type-check / lint-check / format-check 都過，再手動打開 `http://localhost:5174/dev/paper-fig-main-field`（或重新啟動 dev server）目視比對是否真的貼近 `paperfigv2.css`
+5. **`pnpm type-check` 已於 2026-08-23 這輪重新跑過並通過**（`vue-tsc --build` 全綠）。`pnpm lint-check` 也過。**尚未做的**：目視比對 `http://localhost:5174/dev/paper-fig-main-field`（或重啟 dev server）是否真的貼近 `paperfigv2.css`——這輪沒啟動 dev server，沒有實際看過畫面
+6. **`pnpm format-check` 目前是紅的**，但失敗的 4 個檔案跟 PaperFigMainField 無關，是快捷鍵功能的檔案（見下方 §3.1）——`PaperFigMainField.vue` 本身格式沒問題
+
+### 3.1 意外發現：快捷鍵功能（§2 列為「已完成、已驗證通過」）目前 format-check 不過
+
+2026-08-23 這輪重跑四項驗證時發現，以下 4 個檔案有 Prettier 格式問題（`--check` 印出 warn，非本次改動造成，是既有問題）：
+`src/app/App.vue`、`src/components/ShortcutRow/Index.vue`、`src/composables/useKeybinding.ts`、`src/editor/settings/ShortcutSettingsPanel.vue`。
+下一輪如果要動這些檔案，記得先跑 `prettier --write` 確認範圍後再處理，避免跟自己的改動混在一起看不清楚。
 
 ## 4. Dev Server 狀態
 
-Session 中途有啟動過 `pnpm dev`（背景執行），port 因為 config 變動重啟後跳到 **5174**（不是預設的 5173）。新開聊天時請先確認 dev server 是否還活著（`curl -s -o /dev/null -w '%{http_code}' http://localhost:5174`），不確定就重新啟動一次比較保險。
+Session 中途有啟動過 `pnpm dev`（背景執行），port 因為 config 變動重啟後跳到 **5174**（不是預設的 5173）。2026-08-23 這輪確認 dev server **目前沒有在跑**（`curl` 回傳 000）。新開聊天時請先確認 dev server 是否還活著（`curl -s -o /dev/null -w '%{http_code}' http://localhost:5174`），沒開就重新啟動一次。
+
+## 7. 2026-08-23 這輪的重大事故記錄（下次遇到類似 git 狀態務必先看這段）
+
+這輪一開始 `git status` 顯示 **`Revert currently in progress`**（工作目錄乾淨、無衝突標記），是上一個 session 或其他協作者留下的未完成 revert 序列，跟本文件描述的 CR-01/02/11 工作完全無關。處理過程與教訓：
+
+1. 序列是針對 PR #30（`dev/cake_feature`）合併後的一連串 revert/reapply：`57fe4a2` 合併 PR30 → `0fff4b5`「隨便」→ `25ce07a` revert PR30 → `a0d263b` reapply PR30 → `780ebcf` revert「隨便」，`780ebcf` 是 revert 序列跑到一半、還卡在要 revert `7216b16`（commit message 是「not using」）時停住的狀態。
+2. **`git revert --continue` 後發現 `7216b16`「not using」其實不是垃圾 commit**——它就是 §2 表格裡「快捷鍵可配置化 + WASD 平移 + Esc 設定介面」那批已完成功能的實際內容（`keybindingStore.ts`／`useKeybinding.ts`／`ShortcutRow.vue`／`ShortcutSettingsPanel.vue`／三份 PLAN 文件，980 行新增），繼續 revert 下去會把這批驗證過的功能刪掉。**已確認使用者要 abort，不要繼續 revert。**
+3. **`git revert --abort` 本身也捅了簍子**：它把 `dev/cake` reset 回 revert 序列開始前的 `6d33020`，比 `780ebcf` 早了 3 個 commit（`d6351aa`、`7216b16`、以及一個 merge），導致 `SESSION_HANDOFF.md`、`PR_DESCRIPTION_0823.md`、`DESIGN_clipboardAndEdgeSelectionState.md`、`PaperFigMainField.vue`、`PaperFigBottomBar.vue`、`paperfigv2.css` 這些在 PR30 reapply（`a0d263b`）才加回來的檔案全部從工作目錄消失。**靠 `git reflog` 找回 `780ebcf`，用 `git reset --hard 780ebcf` 復原**，檔案都還在，沒有真的遺失。
+4. **教訓：`git revert --abort` 的 ORIG_HEAD 不一定是「乾淨、你以為的那個起點」**，尤其在多重 revert/reapply 疊過的分支上，abort 前最好先用 `git reflog` 確認 abort 會落在哪個 commit，不要預設它等於「revert 開始前一秒」。
+5. **`dev/cake` 目前跟 `origin/dev/cake` 分叉（本地領先 3 個、origin 領先 56 個 commit，尚未深入比對這 56 個是什麼）**，沒有 push，沒有動 origin。下一輪如果要處理分叉，先看清楚 origin 那 56 個 commit 是什麼再決定要 merge/rebase 還是別的做法，不要用本文件的假設帶入。
 
 ## 5. 這個 repo 已發現但本次沒有一併修的既有問題（下次遇到記得先查這份清單，避免重複調查）
 
