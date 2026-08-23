@@ -40,14 +40,14 @@
 
 ## 4. paper_fig 設計稿 Vue 轉換版 dev 頁面
 
-**變更檔案：** `src/app/dev/PaperFigMockup.vue`（新增）、`src/router/index.ts`
+**變更檔案：** `src/app/dev/PaperFigMainField.vue`（新增）、`src/router/index.ts`
 
 - 將 `src/paper_fig.css`（實為 Figma 匯出的 JSX 標記，非真正 CSS，副檔名誤標且會讓 `prettier --check` 直接 SyntaxError）轉換為正式 `.vue` 元件，**已刪除原始檔案**
 - 轉換時一併清掉 Figma 匯出雜訊：重複兩次的 View Select 區塊只留一份、科學記號角度（`3.5e-15deg`）、alpha=0 透明邊框、浮點誤差像素值、未註冊的 `HarmonyOS_Sans_TC` 字型
 - 接上 5 顆有現成 action 的按鈕：復原/取消復原（`historyStore`）、縮放（`canvasStore.zoom`，**尚未接回真實 viewport，已知限制**）、基地切換（`canvasStore.baseRegion`）、快捷鍵設定（`keybindingStore.openSettingsPanel()`）
 - 其餘按鈕（匯出/匯入、視角切換、分類 Tab、搜尋、底部設備選取列）因缺對應 action 或資料模型，維持靜態視覺並在註解說明原因
 - 中間嵌入真實 `FactoryCanvas.vue`（非重繪），並補呼叫 `useValidation()` + `useFlowEngine()`（順序對齊 `MainLayout.vue`），讓 overlay 正常運作
-- 路由設計：獨立於 `DevLayout` 之外的頂層路由，帶自己的 `import.meta.env.DEV` 守衛，**不**出現在左側 dev 工具導覽列，只能直接切網址到達 `/dev/paper-fig-mockup`
+- 路由設計：獨立於 `DevLayout` 之外的頂層路由，帶自己的 `import.meta.env.DEV` 守衛，**不**出現在左側 dev 工具導覽列，只能直接切網址到達 `/dev/paper-fig-main-field`
 
 ## 明確不在本次範圍內
 

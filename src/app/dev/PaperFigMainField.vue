@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * PaperFigMockup —— Figma 匯出稿（src/app/dev/paperfigv2.css）的 Vue 轉換版
+ * PaperFigMainField —— Figma 匯出稿（src/app/dev/paperfigv2.css）的 Vue 轉換版
  *
  * 僅供設計參考、dev-only。v2 座標顯示 Panel（工具列）與 View Select 是浮在 Canvas
  * 圖層正上方的絕對定位疊層，不是像 v1 那樣上下堆疊的獨立區塊，故本次重建改用 `absolute`
@@ -72,7 +72,7 @@ const baseRegionLabel = computed(
 </script>
 
 <template>
-    <div class="paper-fig-mockup flex flex-col gap-2 bg-[#1a1a1c] p-4 text-white">
+    <div class="paper-fig-main-field flex flex-col gap-2 bg-[#1a1a1c] p-4 text-white">
         <p class="text-xs text-zinc-500">
             設計參考頁（dev-only，v2）——
             工具列／視角列疊在真實畫布上方，僅「復原／取消復原／縮放／基地切換／快捷鍵設定」五顆按鈕為真實功能。

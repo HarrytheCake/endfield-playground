@@ -21,7 +21,7 @@
 | removeConnection（刪管線） | [PLAN_removeConnection.md](PLAN_removeConnection.md) | `selectionStore.ts` 加 `selectedEdgeIds`、Delete 鍵、右鍵選單 |
 | resetCanvas（暫時性 Ctrl+R） | [PLAN_resetCanvas.md](PLAN_resetCanvas.md) | `useShortcuts.ts` 的 `triggerResetCanvas()` |
 | 快捷鍵可配置化 + WASD 平移 + Esc 設定介面 | [PLAN_wasdCameraPan.md](PLAN_wasdCameraPan.md) / [PLAN_configurableShortcuts.md](PLAN_configurableShortcuts.md) / [PLAN_shortcutSettingsPanel.md](PLAN_shortcutSettingsPanel.md) | 新增 `keybindingStore.ts`、`useKeybinding.ts`、`ShortcutRow.vue`、`ShortcutSettingsPanel.vue` |
-| paper_fig 設計稿 Vue 轉換（v1） | 見 [PR_DESCRIPTION_0823.md](PR_DESCRIPTION_0823.md) §4 | 新增 `src/app/dev/PaperFigMockup.vue`，dev-only 路由 `/dev/paper-fig-mockup`，不掛在左側 dev 選單 |
+| paper_fig 設計稿 Vue 轉換（v1） | 見 [PR_DESCRIPTION_0823.md](PR_DESCRIPTION_0823.md) §4 | 新增 `src/app/dev/PaperFigMainField.vue`，dev-only 路由 `/dev/paper-fig-main-field`，不掛在左側 dev 選單 |
 
 以上皆已 commit（見 `git log`：`1649872` 快捷鍵可配置化、`b46537d` paper_fig v1 轉換）。
 
@@ -29,13 +29,13 @@
 
 ## 3. 現在進行中、尚未驗證完成的工作
 
-**`PaperFigMockup.vue` 正在依 `paperfigv2.css`（`src/app/dev/paperfigv2.css`）重做頂部工具列**，這是比 v1 更精確的 Figma 座標匯出（絕對定位疊層，非上下堆疊）。目前進度：
+**`PaperFigMainField.vue` 正在依 `paperfigv2.css`（`src/app/dev/paperfigv2.css`）重做頂部工具列**，這是比 v1 更精確的 Figma 座標匯出（絕對定位疊層，非上下堆疊）。目前進度：
 
 1. 已改成疊層結構：`FactoryCanvas` 鋪底，工具列/視角列 `absolute` 浮在上方（而非 v1 的上下堆疊 flex 區塊）
 2. 已依使用者指示拿掉 v1 的「底部設備選取列／分類 Tab／搜尋框」（v2 沒有這段設計）
 3. 工具列樣式第一次手刻 `<button>`/`<div>` 被指出跟設計稿不像，已改回用 `UButton`/`USlider` + `:ui` prop 覆寫（`variant="ghost"` 卸掉預設樣式，`:ui.base`/`:ui.leadingIcon` 蓋上設計稿的 55×55 扁平色塊 + `#4E4E4E`/`#EEFD1C` 配色）
 4. 按鈕實際順序已由使用者確認為：**快捷鍵設定 → 匯出 → 匯入 → 基地切換 → 復原 → 取消復原 → botton frame（語意不明，僅視覺）→ 縮放**
-5. **卡住的地方：`pnpm type-check` 因為工具權限被連續中斷，還沒真的跑過**——下一輪接手時第一件事應該是先確認這個檔案 type-check / lint-check / format-check 都過，再手動打開 `http://localhost:5174/dev/paper-fig-mockup`（或重新啟動 dev server）目視比對是否真的貼近 `paperfigv2.css`
+5. **卡住的地方：`pnpm type-check` 因為工具權限被連續中斷，還沒真的跑過**——下一輪接手時第一件事應該是先確認這個檔案 type-check / lint-check / format-check 都過，再手動打開 `http://localhost:5174/dev/paper-fig-main-field`（或重新啟動 dev server）目視比對是否真的貼近 `paperfigv2.css`
 
 ## 4. Dev Server 狀態
 
