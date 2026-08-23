@@ -255,7 +255,7 @@ function onNodeClick(id: string) {
         <div
             class="overflow-x-auto rounded-md border border-dashed border-gray-300 bg-zinc-50 dark:border-gray-600 dark:bg-zinc-900/40"
         >
-            <svg :viewBox="viewBox" class="min-h-60 w-full" xmlns="http://www.w3.org/2000/svg">
+            <svg :viewBox="viewBox" class="min-h-[240px] w-full" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <marker
                         id="topo-arrow"

@@ -45,15 +45,6 @@ const router = createRouter({
                 },
             ],
         },
-        // 獨立於 DevLayout 之外：不掛在左側 dev 工具導覽列，只能直接切換網址到達
-        {
-            path: '/dev/paper-fig-main-field',
-            name: 'dev-paper-fig-main-field',
-            component: () => import('@/app/dev/PaperFigMainField.vue'),
-            beforeEnter: () => {
-                return import.meta.env.DEV ? true : '/';
-            },
-        },
         {
             path: '/:pathMatch(.*)*',
             redirect: '/',

@@ -4,21 +4,13 @@
  * 職責屬於 L2 容器層（依 CLAUDE.md §1，「快捷鍵」明列為 L2 範疇）。  \
  * 之所以放在 `src/composables/`，是因為跨 layout 共用，且需要與 L1 stores 直接互動。
  *
- * 所有鍵位皆可經 `keybindingStore` 配置（見 `docs/harry/PLAN_configurableShortcuts.md`），
- * 本檔案只負責「動作觸發時做什麼」，鍵位本身一律透過 `useComboHeld` / `onComboTriggered`
- * 動態讀取 `keybindingStore.resolvedCombo()`，不再硬編字串。
- *
- * 目前支援的快捷鍵（預設鍵位，實際鍵位以 `keybindingStore` 為準）：
+ * 目前支援的快捷鍵：
  *   - **Ctrl+Z / Cmd+Z**：呼叫 `historyStore.undo()` 還原藍圖變更
  *   - **Ctrl+Y / Cmd+Y**：呼叫 `historyStore.redo()` 取消還原
- *   - **Delete**：刪除目前選取的設備與管線，然後清空選取
+ *   - **Delete**：刪除目前選取的設備與管線（分別透過 `editorStore.removeDevices()` / `editorStore.removeConnection()`），然後清空選取
  *   - **Space（按住）**：暫時切換至 `pan` 工具；放開回 `select`
- *   - **Ctrl+R / Cmd+R（暫時性）**：呼叫 `triggerResetCanvas()` 重置畫布。正式入口應為 L3
- *     交付的按鈕 + `UModal` 確認框（見 `MILESTONE_0726.md`），本鍵位待該按鈕上線後應移除
- *   - **Escape**：非拿起預覽狀態時開啟快捷鍵設定介面（拿起預覽中的取消行為固定綁在 Escape，
- *     不受本鍵位配置影響，邏輯在 `FactoryCanvas.vue`）
- *
- * WASD 畫面平移因需要 Vue Flow viewport context，實作於 `FactoryCanvas.vue`，非本檔案範圍。
+ *   - **Ctrl+R / Cmd+R（暫時性）**：呼叫 `triggerResetCanvas()` 重置畫布。正式入口應為 L3 交付的按鈕 +
+ *     `UModal` 確認框（見 `MILESTONE_0726.md`），本鍵位待該按鈕上線後應移除
  *
  * Copy / Paste 暫未實作 —— 需要先有「clipboard store」概念，待 harry / toby 進入  \
  * CR-01 框選互動細節時再補。
@@ -29,12 +21,11 @@
  * useShortcuts()
  */
 
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
+import { useEventListener, useMagicKeys } from '@vueuse/core';
 import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
 import { useHistoryStore } from '@/store/historyStore';
-import { useKeybindingStore } from '@/store/keybindingStore';
-import { onComboTriggered, useComboHeld } from '@/composables/useKeybinding';
 
 /**
  * 重置畫布觸發器（**暫時性**）。  \
@@ -64,45 +55,65 @@ export function useShortcuts() {
     const editorStore = useEditorStore();
     const selectionStore = useSelectionStore();
     const historyStore = useHistoryStore();
-    const keybindingStore = useKeybindingStore();
+    const keys = useMagicKeys();
 
-    /** 復原：由未按下轉為按下瞬間觸發一次 */
-    onComboTriggered('undo', () => historyStore.undo());
-
-    /** 取消復原：由未按下轉為按下瞬間觸發一次 */
-    onComboTriggered('redo', () => historyStore.redo());
+    /** Ctrl+Z 或 Cmd+Z 是否按下 */
+    const isUndo = computed(() => keys['Ctrl+Z'].value || keys['Meta+Z'].value);
+    /** Ctrl+Y 或 Cmd+Y 是否按下 */
+    const isRedo = computed(() => keys['Ctrl+Y'].value || keys['Meta+Y'].value);
 
     /**
-     * 刪除選取的設備與管線，然後清空選取。  \
+     * Delete 鍵：刪除選取的設備與管線，然後清空選取。  \
      * `removeConnection` 一次只收一個 uid，故管線選取需逐一呼叫。  \
      * 兩者皆無選取時為 no-op。
      */
-    onComboTriggered('deleteSelection', () => {
-        const deviceTargets = [...selectionStore.selectedNodeIds];
-        const edgeTargets = [...selectionStore.selectedEdgeIds];
-        if (deviceTargets.length === 0 && edgeTargets.length === 0) return;
-        if (deviceTargets.length > 0) editorStore.removeDevices(deviceTargets);
-        edgeTargets.forEach((uid) => editorStore.removeConnection(uid));
-        selectionStore.clearSelection();
+    watch(
+        () => keys.Delete.value,
+        (pressed) => {
+            if (!pressed) return;
+            const deviceTargets = [...selectionStore.selectedNodeIds];
+            const edgeTargets = [...selectionStore.selectedEdgeIds];
+            if (deviceTargets.length === 0 && edgeTargets.length === 0) return;
+            if (deviceTargets.length > 0) editorStore.removeDevices(deviceTargets);
+            edgeTargets.forEach((uid) => editorStore.removeConnection(uid));
+            selectionStore.clearSelection();
+        },
+    );
+
+    /** Ctrl+Z：呼叫 historyStore 還原上一筆藍圖變更 */
+    watch(isUndo, (pressed) => {
+        if (pressed) historyStore.undo();
     });
 
-    /** 重置畫布（暫時性）：攔截瀏覽器原生 Ctrl+R / Cmd+R 重新整理 */
-    onComboTriggered('resetCanvasTemp', () => triggerResetCanvas(), { preventDefault: true });
+    /** Ctrl+Y：呼叫 historyStore 取消還原 */
+    watch(isRedo, (pressed) => {
+        if (pressed) historyStore.redo();
+    });
 
     /**
-     * 開啟快捷鍵設定介面。  \
-     * 拿起預覽中優先由 `FactoryCanvas.vue` 的固定 Escape 監聽處理取消，本處不重複開面板；
-     * 面板已開啟時本處也不重複觸發，關閉一律交給 `UModal` 自己的 Esc / 外部點擊處理，
-     * 避免兩個 Escape 監聽互踩（見 `docs/harry/PLAN_shortcutSettingsPanel.md` §2）。
+     * Space 鍵按住時暫時切換至 pan 工具（拖移畫布），放開回 select。  \
+     * 使用原生 keydown / keyup 而非 useMagicKeys 是為了精準掌握按下 / 放開時機。
      */
-    onComboTriggered('openSettings', () => {
-        if (editorStore.placementArmed || keybindingStore.isSettingsPanelOpen) return;
-        keybindingStore.openSettingsPanel();
+    useEventListener(window, 'keydown', (event) => {
+        if (event.code === 'Space') {
+            editorStore.setActiveTool('pan');
+        }
+    });
+    useEventListener(window, 'keyup', (event) => {
+        if (event.code === 'Space') {
+            editorStore.setActiveTool('select');
+        }
     });
 
-    /** Space（可配置）持續按住時暫時切換至 pan 工具，放開回 select */
-    const holdPan = useComboHeld('holdPan');
-    watch(holdPan, (held) => {
-        editorStore.setActiveTool(held ? 'pan' : 'select');
+    /**
+     * Ctrl+R / Cmd+R（**暫時性**）：呼叫 `triggerResetCanvas()`。  \
+     * 用原生 `keydown` 監聽（而非 `useMagicKeys`）是為了能 `preventDefault()`，
+     * 攔截瀏覽器原生的「重新整理頁面」行為。
+     */
+    useEventListener(window, 'keydown', (event) => {
+        if (event.key.toLowerCase() === 'r' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            triggerResetCanvas();
+        }
     });
 }
