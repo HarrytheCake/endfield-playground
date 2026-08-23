@@ -14,6 +14,7 @@
  *   - **Delete**：刪除目前選取的設備與管線，然後清空選取
  *   - **Space（按住）**：暫時切換至 `pan` 工具；放開還原為按住前的工具
  *   - **P**：切換管線工具（`connect`），再按一次回到 `select`
+ *   - **X**：切換框選工具（`box-select`），再按一次回到 `pan`
  *   - **Ctrl+R / Cmd+R（暫時性）**：呼叫 `triggerResetCanvas()` 重置畫布。正式入口應為 L3
  *     交付的按鈕 + `UModal` 確認框（見 `MILESTONE_0726.md`），本鍵位待該按鈕上線後應移除
  *   - **Escape**：非拿起預覽狀態時開啟快捷鍵設定介面（拿起預覽中的取消行為固定綁在 Escape，
@@ -120,5 +121,10 @@ export function useShortcuts() {
     /** P（可配置）切換管線工具（connect），再次觸發回到 select */
     onComboTriggered('toggleConnectTool', () => {
         editorStore.setActiveTool(editorStore.activeTool === 'connect' ? 'select' : 'connect');
+    });
+
+    /** X（可配置）切換框選工具（box-select），再次觸發回到 pan */
+    onComboTriggered('toggleBoxSelectTool', () => {
+        editorStore.setActiveTool(editorStore.activeTool === 'box-select' ? 'pan' : 'box-select');
     });
 }
