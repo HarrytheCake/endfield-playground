@@ -16,9 +16,9 @@
                 <p class="font-semibold">驗證系統架構（CR-03）：</p>
                 <ul class="ml-4 space-y-1">
                     <li>
-                        • 本頁掛載時會呼叫
-                        <code>validationStore.registerDetector(E001_deviceOverlap)</code
-                        >，卸載時取消註冊
+                        • 目前沒有任何 detector 註冊到
+                        <code>validationStore</code>，所以警示恆為空；等新的 detector 補上後，於此頁
+                        <code>registerDetector()</code> 即可觀察
                     </li>
                     <li>
                         • 透過 <code>useValidation()</code> 監聽
@@ -33,7 +33,7 @@
                 <p class="mt-3 font-semibold">測試流程：</p>
                 <ol class="ml-4 list-decimal space-y-1">
                     <li>點擊「新增設備 A」「新增與 A 重疊的設備 B」</li>
-                    <li>觀察「目前警示」出現一筆 E001 錯誤</li>
+                    <li>觀察「目前警示」—— 未註冊 detector 時應維持 0 筆</li>
                     <li>點擊「新增不重疊的設備 C」，警示筆數不變</li>
                     <li>點擊「清空所有設備」，警示應歸零</li>
                 </ol>
@@ -145,11 +145,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
 import { useEditorStore } from '@/store/editorStore';
 import { useValidationStore } from '@/store/validationStore';
 import { useValidation } from '@/composables/useValidation';
-import { E001_deviceOverlap } from '@/lib/validation/detectors/E001_deviceOverlap';
 
 /** 藍圖 store：本頁所有測試設備皆透過此 store 擺放 / 清除 */
 const editorStore = useEditorStore();
@@ -157,14 +155,6 @@ const editorStore = useEditorStore();
 const validationStore = useValidationStore();
 /** 啟動 editorStore → validationStore 的自動重跑監聽 */
 useValidation();
-
-/** 掛載時註冊 E001 detector；卸載時取消註冊，避免影響其他頁面 */
-onMounted(() => {
-    validationStore.registerDetector(E001_deviceOverlap);
-});
-onUnmounted(() => {
-    validationStore.unregisterDetector(E001_deviceOverlap.code);
-});
 
 /**
  * 在格子座標 (10,10) 擺放一台 3x3 精煉爐，作為重疊測試的基準設備 A。
