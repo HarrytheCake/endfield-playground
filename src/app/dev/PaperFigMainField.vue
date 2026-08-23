@@ -13,19 +13,26 @@
  * 第一版偷懶只套用 `UButton` 預設外觀（圓角膠囊、預設色）才是跟設計稿長得不像的原因，
  * 不是「不能用 Nuxt UI」。
  *
- * v2 只涵蓋頂部工具列＋視角切換列，沒有 v1 那份「底部設備選取列／分類 Tab／搜尋框」，
- * 故本次一併移除（原本也只是停用的靜態視覺，非本頁重點）。
+ * v2 座標稿本身只涵蓋頂部工具列＋視角切換列，不含 v1 那份「底部設備選取列／分類
+ * Tab／搜尋框」；該區塊改依 `paperfigbottombar.css` 另外還原為 `PaperFigBottomBar.vue`，
+ * 預設收合、按 Z 鍵或畫布下緣的黃色三角形展開（見下方說明），與 v2 稿的頂部區塊分開維護。
  *
  * 只接上「已有現成 store action」的按鈕（復原／取消復原／縮放／基地切換／快捷鍵設定），
  * 其餘（匯出／匯入、視角切換分頁、「botton frame」圖示語意不明）維持純視覺。
+ *
+ * 底部設備選取列（`PaperFigBottomBar.vue`）預設收合，按 Z 鍵或點擊畫布下緣的黃色三角形
+ * 展開/收合。用 flex-col + 條件渲染（非 absolute 疊在畫布上）讓 bottombar 展開時「畫布
+ * 讓出空間」而非蓋住，故 bottombar 顯示時畫布本身會變矮，兩者不重疊。
  */
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { useEventListener } from '@vueuse/core';
 import { useHistoryStore } from '@/store/historyStore';
 import { useCanvasStore, type BaseRegion } from '@/store/canvasStore';
 import { useKeybindingStore } from '@/store/keybindingStore';
 import { useValidation } from '@/composables/useValidation';
 import { useFlowEngine } from '@/composables/useFlowEngine';
 import FactoryCanvas from '@/editor/canvas/FactoryCanvas.vue';
+import PaperFigBottomBar from '@/app/dev/PaperFigBottomBar.vue';
 
 /** 歷史堆疊 store：復原／取消復原按鈕 */
 const historyStore = useHistoryStore();
@@ -67,19 +74,37 @@ function cycleBaseRegion() {
 
 /** 目前基地對應的顯示文字 */
 const baseRegionLabel = computed(
-    () => baseRegionItems.find((item) => item.value === canvasStore.baseRegion)?.label ?? '自由畫布',
+    () =>
+        baseRegionItems.find((item) => item.value === canvasStore.baseRegion)?.label ?? '自由畫布',
 );
+
+/** 底部設備選取列展開狀態，預設收合 */
+const bottomBarOpen = ref(false);
+
+function toggleBottomBar() {
+    bottomBarOpen.value = !bottomBarOpen.value;
+}
+
+/** Z 鍵展開/收合底部設備選取列，固定綁在原生按鍵，本頁僅供設計參考不走 keybindingStore */
+useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+    if ((event.key === 'z' || event.key === 'Z') && !event.repeat) {
+        toggleBottomBar();
+    }
+});
 </script>
 
 <template>
-    <div class="paper-fig-main-field flex flex-col gap-2 bg-[#1a1a1c] p-4 text-white">
-        <p class="text-xs text-zinc-500">
+    <div
+        class="paper-fig-main-field flex h-screen w-screen flex-col gap-2 bg-[#1a1a1c] p-4 text-white"
+    >
+        <p class="shrink-0 text-xs text-zinc-500">
             設計參考頁（dev-only，v2）——
-            工具列／視角列疊在真實畫布上方，僅「復原／取消復原／縮放／基地切換／快捷鍵設定」五顆按鈕為真實功能。
+            工具列／視角列疊在真實畫布上方，僅「復原／取消復原／縮放／基地切換／快捷鍵設定」五顆按鈕為真實功能。按
+            Z 鍵或點畫布下緣的黃色三角形展開/收合底部設備選取列。
         </p>
 
-        <!-- 疊層容器：畫布鋪滿，工具列與視角列絕對定位浮在上方（比照 paperfigv2.css 的疊層結構） -->
-        <div class="relative h-150 w-full overflow-hidden border border-zinc-700">
+        <!-- 疊層容器：畫布鋪滿剩餘空間，工具列與視角列絕對定位浮在上方（比照 paperfigv2.css 的疊層結構） -->
+        <div class="relative min-h-0 w-full flex-1 overflow-hidden border border-zinc-700">
             <!-- 底層：真實的 FactoryCanvas.vue（非重繪，直接複用正式產線畫布元件） -->
             <FactoryCanvas />
 
@@ -203,7 +228,11 @@ const baseRegionLabel = computed(
                             :step="0.1"
                             size="sm"
                             class="flex-1"
-                            :ui="{ track: 'bg-[#3C3C3C]', range: 'bg-[#DADADA]', thumb: 'bg-[#DADADA]' }"
+                            :ui="{
+                                track: 'bg-[#3C3C3C]',
+                                range: 'bg-[#DADADA]',
+                                thumb: 'bg-[#DADADA]',
+                            }"
                         />
                     </div>
                 </div>
@@ -224,6 +253,22 @@ const baseRegionLabel = computed(
                     並列視角
                 </button>
             </div>
+
+            <!-- 底部設備選取列開關：黃色三角形，貼齊畫布下緣置中，按 Z 鍵可達到相同效果 -->
+            <button
+                class="group absolute bottom-0 left-1/2 flex h-4 w-8 -translate-x-1/2 items-end justify-center"
+                :aria-label="bottomBarOpen ? '收合底部設備選取列' : '展開底部設備選取列'"
+                :aria-expanded="bottomBarOpen"
+                @click="toggleBottomBar"
+            >
+                <span
+                    class="size-0 border-x-8 border-b-10 border-x-transparent border-b-[#EEFD1C] opacity-80 transition-transform group-hover:opacity-100"
+                    :class="bottomBarOpen ? 'rotate-180' : ''"
+                />
+            </button>
         </div>
+
+        <!-- 底部設備選取列：flex 排版讓出空間，不疊在畫布上，畫布在其上方 -->
+        <PaperFigBottomBar v-if="bottomBarOpen" />
     </div>
 </template>
