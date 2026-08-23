@@ -12,7 +12,8 @@
  *   - **Ctrl+Z / Cmd+Z**：呼叫 `historyStore.undo()` 還原藍圖變更
  *   - **Ctrl+Y / Cmd+Y**：呼叫 `historyStore.redo()` 取消還原
  *   - **Delete**：刪除目前選取的設備與管線，然後清空選取
- *   - **Space（按住）**：暫時切換至 `pan` 工具；放開回 `select`
+ *   - **Space（按住）**：暫時切換至 `pan` 工具；放開還原為按住前的工具
+ *   - **P**：切換管線工具（`connect`），再按一次回到 `select`
  *   - **Ctrl+R / Cmd+R（暫時性）**：呼叫 `triggerResetCanvas()` 重置畫布。正式入口應為 L3
  *     交付的按鈕 + `UModal` 確認框（見 `MILESTONE_0726.md`），本鍵位待該按鈕上線後應移除
  *   - **Escape**：非拿起預覽狀態時開啟快捷鍵設定介面（拿起預覽中的取消行為固定綁在 Escape，
@@ -35,6 +36,7 @@ import { useSelectionStore } from '@/store/selectionStore';
 import { useHistoryStore } from '@/store/historyStore';
 import { useKeybindingStore } from '@/store/keybindingStore';
 import { onComboTriggered, useComboHeld } from '@/composables/useKeybinding';
+import type { ToolMode } from '@/types/editor';
 
 /**
  * 重置畫布觸發器（**暫時性**）。  \
@@ -100,9 +102,23 @@ export function useShortcuts() {
         keybindingStore.openSettingsPanel();
     });
 
-    /** Space（可配置）持續按住時暫時切換至 pan 工具，放開回 select */
+    /** 暫時切 pan 前的工具，放開後還原（避免把 connect 等工具打回 select） */
+    let toolBeforePan: ToolMode | null = null;
+
+    /** Space（可配置）持續按住時暫時切換至 pan 工具，放開後還原為按住前的工具 */
     const holdPan = useComboHeld('holdPan');
     watch(holdPan, (held) => {
-        editorStore.setActiveTool(held ? 'pan' : 'select');
+        if (held) {
+            toolBeforePan = editorStore.activeTool;
+            editorStore.setActiveTool('pan');
+        } else {
+            editorStore.setActiveTool(toolBeforePan ?? 'select');
+            toolBeforePan = null;
+        }
+    });
+
+    /** P（可配置）切換管線工具（connect），再次觸發回到 select */
+    onComboTriggered('toggleConnectTool', () => {
+        editorStore.setActiveTool(editorStore.activeTool === 'connect' ? 'select' : 'connect');
     });
 }

@@ -28,6 +28,7 @@ const fileName = ref('factory-layout-001.json');
 const tools: Array<{ id: ToolMode; label: string }> = [
     { id: 'select', label: '選取' },
     { id: 'pan', label: '移動畫布' },
+    { id: 'connect', label: '管線' },
 ];
 
 /** 使用者切換基地選擇按鈕時，呼叫 canvasStore 寫入新的基地區域 */

@@ -27,6 +27,7 @@ export const KEYBINDING_ACTIONS: readonly KeybindingAction[] = [
     { id: 'deleteSelection', label: '刪除選取', category: 'selection', defaultCombo: 'Delete' },
     { id: 'rotateDevice', label: '旋轉設備', category: 'selection', defaultCombo: 'R' },
     { id: 'holdPan', label: '暫時切換平移工具', category: 'canvas', defaultCombo: 'Space' },
+    { id: 'toggleConnectTool', label: '切換管線工具', category: 'canvas', defaultCombo: 'P' },
     { id: 'panUp', label: '畫面上移', category: 'canvas', defaultCombo: 'W' },
     { id: 'panDown', label: '畫面下移', category: 'canvas', defaultCombo: 'S' },
     { id: 'panLeft', label: '畫面左移', category: 'canvas', defaultCombo: 'A' },
