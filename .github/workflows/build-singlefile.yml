@@ -1,0 +1,38 @@
+name: Build Singlefile
+
+on:
+    push:
+
+jobs:
+    build-singlefile:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v5
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Build releases (production + mockup)
+              run: pnpm build:releases
+
+            - name: Upload production build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: singlefile-production
+                  path: dist/index.html
+
+            - name: Upload mockup build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: singlefile-mockup
+                  path: dist-mockup/index.html

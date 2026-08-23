@@ -1,8 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import MainLayout from '@/app/layouts/MainLayout.vue';
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes: [
         {
             path: '/',
@@ -51,6 +51,11 @@ const router = createRouter({
             name: 'dev-paper-fig-main-field',
             component: () => import('@/app/dev/PaperFigMainField.vue'),
             beforeEnter: () => {
+                // build 時可用 VITE_INCLUDE_DEV_MOCKUP=true 額外放行（見 scripts/build-releases.mjs），
+                // 供單檔設計參考版分享用；一般 production build 仍照 DEV 守衛擋下
+                if (import.meta.env.VITE_INCLUDE_DEV_MOCKUP === 'true') {
+                    return true;
+                }
                 return import.meta.env.DEV ? true : '/';
             },
         },

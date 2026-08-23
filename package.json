@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:releases": "node scripts/build-releases.mjs",
     "preview": "vite preview",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
@@ -48,6 +49,7 @@
     "tailwindcss": "^4.2.4",
     "typescript": "~6.0.2",
     "vite": "^8.0.10",
+    "vite-plugin-singlefile": "^2.3.3",
     "vitest": "^4.1.6",
     "vue-tsc": "^3.2.7"
   },
