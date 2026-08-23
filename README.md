@@ -56,6 +56,10 @@ pnpm build
 .
 ├─ .github/            # GitHub 設定與 CI workflow
 │  └─ workflows/
+├─ docs/               # 專案文件（見下方「文件在哪裡」）
+│  ├─ roadmap/         # 到 11/29 的工項、里程碑、驗收標準
+│  ├─ work_dispatch/   # 每週派工：每人一份工單
+│  └─ <個人代號>/      # 個人筆記、設計稿
 ├─ spec/               # 規格與設計文件（演算法 / UI 等）
 ├─ src/                # 前端主要程式碼
 │  ├─ app/             # App 殼層與 layout
@@ -68,6 +72,14 @@ pnpm build
 │  └─ composables/     # 可重用邏輯
 └─ README.md
 ```
+
+## 文件在哪裡
+
+| 你想知道 | 打開 |
+|----------|------|
+| **我這週要交什麼** | [docs/work_dispatch/](./docs/work_dispatch/) → 找自己的代號資料夾 |
+| 到 11/29 的整體計畫 | [docs/roadmap/ROADMAP_OUTLINE.md](./docs/roadmap/ROADMAP_OUTLINE.md) |
+| 其他文件的入口 | [docs/README.md](./docs/README.md) |
 
 ## 開發者守則
 

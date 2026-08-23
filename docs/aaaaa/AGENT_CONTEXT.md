@@ -362,3 +362,38 @@ Phase 1 完成後再進行 Phase 2（調度券 / 倉庫預估）。
 **V6（完成）**：
 - [V6 總覽](./dev/todolist_v6.md) — 已解鎖
 - [MILESTONE_0726.md](./MILESTONE_0726.md) — §0 結案回應
+
+**產品 Roadmap（2026-08-23 → 11-29，規劃完成待執行）**：
+- [ROADMAP_OUTLINE.md](../roadmap/ROADMAP_OUTLINE.md) — 大綱：22 個工項、週曆、封鎖追蹤（**公開**）
+- [roadmap/detail/](../roadmap/detail/) — 各工項細項（A1–A4／B1–B5／C1–C5／D1–D5／E1–E2；**公開**）
+- [work_dispatch/](../work_dispatch/) — 每週派工與各人工單（**公開**）
+- 決策層（未進版控，見 `docs/aaaaa/collaborator_survey/`）：Agent 操作文檔 `dispatch_private/AGENT_ROADMAP.md`、上游 ROADMAP v0.2、問卷與 commit 分析、個人檔與風險矩陣、E3 人力調度、派工複查報告
+
+詳見下方 §產品 Roadmap 文件。
+
+---
+
+## 🗺️ 產品 Roadmap 文件（docs/roadmap/）
+
+`docs/roadmap/` 為 **2026-08-23 → 11-29 產品 roadmap 的執行文件**，結構與 `dev/` 相同（大綱 ↔ 細項資料夾），但主題是**跨團隊的階段交付與派工**，不是單一版本的技術實作。2026-08-23 起它與 `docs/work_dispatch/` 一併移出個人資料夾，改放 `docs/` 根層，全員可讀。
+
+| 檔案 | 職責 |
+|------|------|
+| [ROADMAP_OUTLINE.md](../roadmap/ROADMAP_OUTLINE.md) | 大綱：工項總表、群組、週曆、封鎖追蹤、DoD；**不寫長篇技術細節** |
+| [roadmap/detail/](../roadmap/detail/) | 21 份工項細項：背景、決策、檔案計畫、週切片、DoD、風險頂替 |
+| [work_dispatch/](../work_dispatch/) | 每週派工大綱與各人工單 |
+| `collaborator_survey/dispatch_private/AGENT_ROADMAP.md` | **Agent 操作文檔**：讀檔順序、硬規則、常見任務流程、常見誤判（決策層，未進版控） |
+
+**Agent 若要協助 roadmap 相關工作（產週工單、執行工項、回報進度），先讀 `dispatch_private/AGENT_ROADMAP.md`，不要直接翻 21 份細項。**
+
+**公開／未公開分界：** `docs/roadmap/` 與 `docs/work_dispatch/` 是全員可讀的公開文件，**不得**寫入或連結問卷、commit 分析、個人檔、風險等級與查勤名單；那些一律留在 `docs/aaaaa/collaborator_survey/`（已 gitignore）。
+
+| 群組 | 里程碑 | 主題 | 擋門檻的必要工項 |
+|------|--------|------|------------------|
+| R-A | 2026-08-30 | 對齊：能打開、能放一台、佔格與資料一致 | A1、A2 |
+| R-B | 2026-09-27 | 擺放：真機器選單、擺放鏈、旋轉、資訊、單刪 | B1、B2、B4 |
+| R-C | 2026-10-25 | 連線：port 對 port、90 度彎折、拖移、源素材 | C1、C2、C3、C5 |
+| R-D | 2026-11-29 | 串通：右側產耗、重疊與配方警訊、JSON 存讀 | D1、D2、D4、D5 |
+| R-E | 跨月 | 支撐：codegen 維運、三層守門、風險備援 | — |
+
+**與 CR-04 的關係：** aaaaa 在本輪主責 R-A2（佔格／port 對資料）、R-C5／R-D1／R-D4（引擎與 IO 側），並為 R-C2、R-D3 提供共用純函式。上游來源為主編已確認的 ROADMAP v0.2（決策層文件，未進版控）。
