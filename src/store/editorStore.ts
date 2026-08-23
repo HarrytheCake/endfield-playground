@@ -443,6 +443,45 @@ export const useEditorStore = defineStore('editor', () => {
     }
 
     /**
+     * 批次旋轉設備：每台各自從自己目前的 rotation 前進一格（0→1→2→3→0）。  \
+     * 整組視為單一歷史項目，一次 undo 即可全部還原。
+     *
+     * @param uids 要旋轉的設備 uid 陣列
+     * @example
+     * editorStore.rotateDevices(['a', 'b'])
+     */
+    function rotateDevices(uids: string[]): void {
+        if (uids.length === 0) return;
+        const historyStore = useHistoryStore();
+        const targetSet = new Set(uids);
+        const previous = new Map<string, Rotation>();
+        for (const n of nodes.value) {
+            if (targetSet.has(n.id)) previous.set(n.id, (n.data?.rotation ?? 0) as Rotation);
+        }
+        if (previous.size === 0) return;
+        const next = new Map<string, Rotation>();
+        previous.forEach((r, id) => next.set(id, ((r + 1) % 4) as Rotation));
+        const applyRotations = (map: Map<string, Rotation>) => {
+            nodes.value = nodes.value.map((n) =>
+                map.has(n.id)
+                    ? { ...n, data: { ...(n.data ?? { label: '' }), rotation: map.get(n.id)! } }
+                    : n,
+            );
+        };
+        historyStore.execute({
+            id: crypto.randomUUID(),
+            type: HistoryRecordType.MachineRotation,
+            label: `旋轉 ${previous.size} 台設備`,
+            execute() {
+                applyRotations(next);
+            },
+            undo() {
+                applyRotations(previous);
+            },
+        });
+    }
+
+    /**
      * 批次刪除設備（連帶刪除其相關管線）。  \
      * 整組視為單一歷史項目。
      *
@@ -702,6 +741,15 @@ export const useEditorStore = defineStore('editor', () => {
          * editorStore.rotateDevice('node-uuid', 1)
          */
         rotateDevice,
+        /**
+         * 批次旋轉設備：每台各自從自己目前的 rotation 前進一格。  \
+         * 整組視為單一歷史項目，一次 undo 即可全部還原。
+         *
+         * @param uids 要旋轉的設備 uid 陣列
+         * @example
+         * editorStore.rotateDevices(['a', 'b'])
+         */
+        rotateDevices,
         /**
          * 批次刪除設備（連帶刪除其相關管線）。  \
          * 整組視為單一歷史項目。

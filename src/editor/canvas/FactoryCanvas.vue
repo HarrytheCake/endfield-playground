@@ -56,7 +56,14 @@ const baseRegionBoundary = computed(() =>
         : null,
 );
 /** Vue Flow 提供的座標轉換 API；vfEdges 用於流量標籤 overlay 的定位計算 */
-const { screenToFlowCoordinate, edges: vfEdges, viewport, setViewport } = useVueFlow();
+const {
+    screenToFlowCoordinate,
+    edges: vfEdges,
+    viewport,
+    setViewport,
+    getSelectedNodes,
+    getSelectedEdges,
+} = useVueFlow();
 
 /** 需要顯示流量標籤的管線（rate > 0 且已計算） */
 const labeledEdges = computed(() => vfEdges.value.filter((e) => edgeFlows.value.has(e.id)));
@@ -87,18 +94,20 @@ const equipmentLabelMap: Record<EquipmentType, string> = {
 const equipmentTypes = Object.keys(equipmentLabelMap) as EquipmentType[];
 
 /**
- * VueFlow 選取範圍變化時，同步選取的節點 id 與管線 id 到 selectionStore。
- * @param selection VueFlow 提供的選取變化事件內容
- * @example
- * handleSelectionChange({ nodes: [{ id: 'node-1' }], edges: [{ id: 'edge-1' }] })
+ * 同步 Vue Flow 內部選取狀態（`getSelectedNodes` / `getSelectedEdges`）到 selectionStore。
+ *
+ * 原本掛的是 `@selection-change` 事件，但這個版本的 Vue Flow（`@vue-flow/core@1.48`）
+ * 根本沒有這個事件——監聽器從未被觸發，導致 selectionStore 的節點選取永遠是空的
+ * （管線選取則是巧合下沒被影響，因為刪管線走的是別的路徑）。改為直接 watch
+ * Vue Flow 自己的 `getSelectedNodes` / `getSelectedEdges` computed，兩者無論是單點點擊
+ * 或框選拖曳都會正確反映，不再需要区分「單點擊不觸發」的假設。
  */
-function handleSelectionChange(selection: {
-    nodes?: Array<{ id: string }>;
-    edges?: Array<{ id: string }>;
-}) {
-    selectionStore.setSelection((selection.nodes ?? []).map((node) => node.id));
-    selectionStore.setEdgeSelection((selection.edges ?? []).map((edge) => edge.id));
-}
+watch(getSelectedNodes, (selected) => {
+    selectionStore.setSelection(selected.map((node) => node.id));
+});
+watch(getSelectedEdges, (selected) => {
+    selectionStore.setEdgeSelection(selected.map((edge) => edge.id));
+});
 
 /** 管線右鍵選單目前是否展開 */
 const edgeContextMenuOpen = ref(false);
@@ -140,10 +149,11 @@ function handleEdgeContextMenu({ edge, event }: EdgeMouseEvent) {
 const previewRotation = ref<Rotation>(0);
 
 /**
- * 目前點選、可用 R 鍵旋轉的已放置設備 uid。
+ * 目前點選、可用 R 鍵旋轉的已放置設備 uid（單點點擊時的 fallback 記錄）。
  *
- * 未使用 selectionStore，是因為 Vue Flow 單純點擊節點時並不會觸發 selection-change
- * （該事件僅在框選拖曳時才會發出），無法反映單點選取狀態，故改由 handleNodeClick 直接記錄。
+ * 修正 `getSelectedNodes` 同步 bug 後，`selectionStore` 現在單點點擊與框選都會正確反映，
+ * 這份 fallback 理論上已經很少用到（R 鍵優先看 `selectionStore`），但保留作為
+ * `selectionStore` 意外為空時的備援，不在本次範圍內整個拔除。
  */
 const rotateTargetUid = ref<string | null>(null);
 
@@ -152,14 +162,25 @@ watch(placementArmed, (armed) => {
     if (!armed) previewRotation.value = 0;
 });
 
+/** 切到框選工具時，清空單點點擊記錄的旋轉目標，避免殘留的單選狀態與框選結果混淆 */
+watch(activeTool, (tool) => {
+    if (tool === 'box-select') rotateTargetUid.value = null;
+});
+
 /**
  * 旋轉設備（可配置，預設 R 鍵）：依序循環 0° → 90° → 180° → 270° → 0°。
  * - 拿起預覽中：旋轉 previewRotation（放置時套用）
- * - 非拿起狀態且畫布上有點選中的已放置設備：呼叫 editorStore.rotateDevice 直接旋轉該設備（自動進歷史）
+ * - 有框選（`selectionStore`，1 台以上皆算）：呼叫 editorStore.rotateDevices 批次旋轉，整組進單一歷史項目
+ * - 無框選、改用單點點擊記錄的 rotateTargetUid：呼叫 editorStore.rotateDevice 旋轉該設備（自動進歷史）
  */
 onComboTriggered('rotateDevice', () => {
     if (placementArmed.value) {
         previewRotation.value = ((previewRotation.value + 1) % 4) as Rotation;
+        return;
+    }
+
+    if (selectionStore.selectedNodeIds.length > 0) {
+        editorStore.rotateDevices(selectionStore.selectedNodeIds);
         return;
     }
 
@@ -429,6 +450,11 @@ function handleConnect(connection: Connection) {
 
 <template>
     <div class="panel h-full overflow-hidden" @dragover.prevent @drop="handleCanvasDrop">
+        <!--
+            Vue Flow 這個版本沒有 `selectionOnDrag` prop（曾誤用過，靜默無效果）。
+            框選改用 `selectionKeyCode`：傳入字面 boolean `true`（而非按鍵字串）時，
+            只要 panOnDrag 未啟用，左鍵拖曳就會直接框選，不需要按住任何修飾鍵。
+        -->
         <VueFlow
             v-model:nodes="nodes"
             v-model:edges="edges"
@@ -438,11 +464,10 @@ function handleConnect(connection: Connection) {
             :nodes-draggable="true"
             :zoom-on-scroll="true"
             :pan-on-drag="activeTool === 'pan'"
-            :selection-on-drag="activeTool === 'box-select'"
+            :selection-key-code="activeTool === 'box-select' ? true : undefined"
             :snap-to-grid="snapToGrid"
             :snap-grid="[gridSize, gridSize]"
             class="factory-flow"
-            @selection-change="handleSelectionChange"
             @connect="handleConnect"
             @edge-context-menu="handleEdgeContextMenu"
             @node-click="handleNodeClick"

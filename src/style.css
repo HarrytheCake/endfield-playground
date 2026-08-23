@@ -138,6 +138,16 @@ body,
     background-color: transparent;
 }
 
+/*
+ * Vue Flow 預設選取框顏色（8% 不透明度淡藍）疊在深色畫布背景上幾乎看不見，
+ * 加大不透明度並換成較亮的琥珀色以確保框選拖曳時使用者看得到範圍。
+ */
+.vue-flow__selection,
+.vue-flow__nodesselection-rect {
+    background: rgba(250, 204, 21, 0.12);
+    border: 1px dashed rgba(250, 204, 21, 0.85);
+}
+
 .toolbar-bottom {
     display: flex;
     flex-direction: column;
