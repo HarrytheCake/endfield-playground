@@ -133,9 +133,24 @@ body,
  * Vue Flow 預設佈景（theme-default.css）會給 .vue-flow__node-default 外層加上白色背景，
  * 但節點的實際背景已由 FlowNodeOverlay.vue 內層自繪；旋轉時內外層footprint 不再重疊，
  * 若不清掉外層白色，旋轉後會露出外層未旋轉的白色背景。
+ *
+ * 同一條規則也帶了 `padding: 10px`、固定 `width: 150px`、`border-width: 1px`——
+ * 這個外層 wrapper 才是 Vue Flow 實際用 `transform: translate(x, y)` 定位到
+ * node.position 的元素，FlowNodeOverlay.vue 的內層 div（帶精確的
+ * width/height = machine 尺寸 × gridSize）只是它的子元素。10px padding 會把
+ * 內層方塊往右下推 10px，讓方塊邊緣對不齊背景格線；固定 150px 寬則會讓外層
+ * wrapper 比內層方塊還寬，兩者外框不重疊。外層 width 改 auto 後會整個貼合內層
+ * 內容，但 auto 寬度下 border 一律疊加在內容外側（不受 box-sizing 影響，因為
+ * 沒有固定寬度可供內縮），若不歸零這個看不見的 1px 邊框，方塊會比內層精確尺寸
+ * 多出上下左右各 1px，格數越小（例如 1×1 機器）比例上溢出越明顯。全部歸零，
+ * 讓外層 wrapper 完全貼合內層方塊，對齊點與尺寸才會剛好等於 node.position 與
+ * machine 尺寸 × gridSize。
  */
 .vue-flow__node.vue-flow__node-default {
     background-color: transparent;
+    padding: 0;
+    width: auto;
+    border-width: 0;
 }
 
 /*

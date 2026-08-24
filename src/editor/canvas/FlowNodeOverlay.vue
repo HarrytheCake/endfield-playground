@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia';
 import type { FactoryNodeData } from '@/types/graph';
 import type { PortDef, PortSide } from '@/types/machine';
 import { useFlowStore } from '@/store/flowStore';
+import { useCanvasStore } from '@/store/canvasStore';
 import { getMachine, getMachineMode } from '@/data/machines';
 import { rotatePortSide } from '@/utils/portUtils';
 
@@ -15,6 +16,10 @@ const props = defineProps<NodeProps<FactoryNodeData>>();
 /** FlowEngine 計算結果 store，讀取本節點的效率與是否為非合法鏈路 */
 const flowStore = useFlowStore();
 const { nodeEfficiencies, invalidChainUids } = storeToRefs(flowStore);
+
+/** 畫布視圖狀態 store：格線像素大小，供節點外框佔格尺寸換算使用 */
+const canvasStore = useCanvasStore();
+const { gridSize } = storeToRefs(canvasStore);
 
 /** 0~1 效率，undefined 表示尚未計算 */
 const efficiency = computed(() => nodeEfficiencies.value.get(props.id));
@@ -57,6 +62,27 @@ const activeMode = computed(() =>
     machine.value ? getMachineMode(machine.value, props.data.machineMode) : undefined,
 );
 
+/**
+ * 節點外框像素尺寸：機器原始 width／height × gridSize。  \
+ * 找不到機型時（機型未設定或資料缺漏）不設定尺寸，退回瀏覽器依內容自動撐開。  \
+ * 永遠用原始（未依 rotation 交換）尺寸——旋轉後的視覺寬高互換已由 `rootStyle`
+ * 的 `transform: rotate()` 處理，這裡若也交換等於交換兩次，會轉回錯的方向
+ * （見 `docs/work_dispatch/toby/GUIDE_node_footprint_notes.md` §1）。
+ */
+const footprintStyle = computed(() => {
+    if (!machine.value) return {};
+    return {
+        width: `${machine.value.width * gridSize.value}px`,
+        height: `${machine.value.height * gridSize.value}px`,
+    };
+});
+
+/** 根節點合併後的 style：外框佔格尺寸 + 既有的旋轉 transform，避免兩個 :style 互踩 */
+const rootStyle = computed(() => ({
+    ...footprintStyle.value,
+    transform: `rotate(${rotationDeg.value}deg)`,
+}));
+
 /** Vue Flow Position 對照表：key 為旋轉換算後的方位，只餵給 `<Handle position>` 做連線方向判斷用 */
 const sideToPosition: Record<PortSide, Position> = {
     top: Position.Top,
@@ -67,7 +93,8 @@ const sideToPosition: Record<PortSide, Position> = {
 
 /**
  * 複製 Vue Flow 內建 `.vue-flow__handle-{side}` class 的絕對定位樣式，
- * 但鍵在**未旋轉的原始 side**上（而非 `<Handle position>` 傳入的旋轉後 side）。
+ * 但鍵在**未旋轉的原始 side**上（而非 `<Handle position>` 傳入的旋轉後 side），
+ * 且沿邊座標改用 `port.offset` 對到的實際格子中心點（像素），不再是同側埠數量的均分百分比。
  *
  * 背景：根節點仍套用 `transform: rotate(${rotationDeg}deg)`（見上方 `rotationDeg`，
  * 不可移除），會把整張卡片（含 Handle）一起轉到正確的畫面位置——這部分視覺表現
@@ -81,28 +108,29 @@ const sideToPosition: Record<PortSide, Position> = {
  * 視覺座標（維持既有、已經正確的視覺表現，交給父層 transform 帶去正確的最終方位），
  * 藉此徹底蓋掉 Vue Flow 依旋轉後 `position` 值自動套用的 class 樣式。
  *
- * @param side 原始（0° 旋轉時）方位
- * @param percent 同側多顆埠時的分佈百分比
+ * 沿邊座標算法與 `MachineShape.vue` 的 `portLine()` 一致：`offset` 是「該埠在第幾格」
+ * （top／bottom 由左往右數，left／right 由上往下數，0 為第一格），乘上 `gridSize`
+ * 取得該格左上角像素，加 0.5 格取中心點——W0823-T1 footprint 尺寸讓方塊已是真實
+ * `machine.width/height × gridSize`，這裡才有意義用像素而非百分比對齊格子中心。
+ *
+ * @param port 要算樣式的埠定義（含原始 side／offset）
+ * @param gridSize 格線像素大小
  */
 function visualStyleForOriginalSide(
-    side: PortSide,
-    percent: number,
+    port: PortDef,
+    gridSize: number,
 ): Record<'top' | 'left' | 'right' | 'bottom' | 'transform', string> {
     const base = { top: 'auto', left: 'auto', right: 'auto', bottom: 'auto' };
-    switch (side) {
+    const center = `${(port.offset + 0.5) * gridSize}px`;
+    switch (port.side) {
         case 'top':
-            return { ...base, top: '0', left: `${percent}%`, transform: 'translate(-50%, -50%)' };
+            return { ...base, top: '0', left: center, transform: 'translate(-50%, -50%)' };
         case 'bottom':
-            return {
-                ...base,
-                bottom: '0',
-                left: `${percent}%`,
-                transform: 'translate(-50%, 50%)',
-            };
+            return { ...base, bottom: '0', left: center, transform: 'translate(-50%, 50%)' };
         case 'left':
-            return { ...base, left: '0', top: `${percent}%`, transform: 'translate(-50%, -50%)' };
+            return { ...base, left: '0', top: center, transform: 'translate(-50%, -50%)' };
         case 'right':
-            return { ...base, right: '0', top: `${percent}%`, transform: 'translate(50%, -50%)' };
+            return { ...base, right: '0', top: center, transform: 'translate(50%, -50%)' };
     }
 }
 
@@ -110,32 +138,19 @@ function visualStyleForOriginalSide(
  * 依埠清單與其在陣列中的索引，算出每顆 Handle 的顯示位置與 id。
  *
  * `position` prop 用 `rotatePortSide` 換算後的方位，只給 Vue Flow 判斷連線方向；
- * 實際視覺座標（`style`）維持用**原始未旋轉的 side** 計算，兩者刻意不同，
- * 原因見 `visualStyleForOriginalSide` 的說明。
- *
- * 同側有多顆埠時，沿該（原始）邊均分排列避免重疊；id 保留原始索引供 useFlowEngine 解析埠媒質。
+ * 實際視覺座標（`style`）維持用**原始未旋轉的 side／offset** 計算，兩者刻意不同，
+ * 原因見 `visualStyleForOriginalSide` 的說明。id 保留原始索引供 useFlowEngine 解析埠媒質。
  *
  * @param ports 埠定義清單（input_ports 或 output_ports）
  * @param idPrefix handle id 前綴，'in' 或 'out'
  * @returns 每顆 Handle 所需的 id / position / 排列樣式
  */
 function layoutHandles(ports: readonly PortDef[], idPrefix: 'in' | 'out') {
-    const sideCounts = new Map<PortSide, number>();
-    for (const port of ports) {
-        sideCounts.set(port.side, (sideCounts.get(port.side) ?? 0) + 1);
-    }
-    const sideSeen = new Map<PortSide, number>();
-    return ports.map((port, index) => {
-        const total = sideCounts.get(port.side) ?? 1;
-        const seen = sideSeen.get(port.side) ?? 0;
-        sideSeen.set(port.side, seen + 1);
-        const percent = ((seen + 1) / (total + 1)) * 100;
-        return {
-            id: `${idPrefix}-${index}`,
-            position: sideToPosition[rotatePortSide(port.side, rotation.value)],
-            style: visualStyleForOriginalSide(port.side, percent),
-        };
-    });
+    return ports.map((port, index) => ({
+        id: `${idPrefix}-${index}`,
+        position: sideToPosition[rotatePortSide(port.side, rotation.value)],
+        style: visualStyleForOriginalSide(port, gridSize.value),
+    }));
 }
 
 /** 輸入埠對應的 Handle 清單（target），空機型 / 無輸入埠時為空陣列 */
@@ -165,9 +180,9 @@ function efficiencyColorClass(eff: number): string {
 
 <template>
     <div
-        class="relative min-w-25 rounded border bg-zinc-800 px-3 py-2 text-sm text-white"
+        class="relative rounded border bg-zinc-800 px-3 py-2 text-sm text-white"
         :class="isInvalid ? 'border-dashed border-gray-500 opacity-50' : 'border-zinc-600'"
-        :style="{ transform: `rotate(${rotationDeg}deg)` }"
+        :style="rootStyle"
     >
         <!-- 輸入埠 Handle：依 machine.modes[].input_ports 動態產生，id 為 in-{埠索引} -->
         <Handle
