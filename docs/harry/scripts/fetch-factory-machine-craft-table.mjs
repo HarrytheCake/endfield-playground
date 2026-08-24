@@ -1,6 +1,7 @@
 /**
  * 從 data.akedata.wiki 抓取最新版本的 TableCfg 資料表
- * （FactoryMachineCraftTable.json、FactoryBuildingTable.json、I18nTextTable_CN.json）
+ * （FactoryMachineCraftTable.json、FactoryBuildingTable.json、FactoryBuildingItemTable.json、
+ * FactoryItemTable.json、I18nTextTable_CN.json），並快取建築面板大圖示
  *
  * 用法：
  *   node docs/harry/scripts/fetch-factory-machine-craft-table.mjs
@@ -11,6 +12,9 @@
  *   2. 下載 SOURCE_TABLE_NAMES 各資料表；I18nTextTable_CN.json 全表約 140k 筆、10MB+，
  *      只把 SOURCE_TABLE_NAMES 內各筆資料 "id" 欄位實際引用到的 id 對應文字留下，其餘丟棄
  *   3. 落地存到 docs/harry/dev/data/<TableName>.json（資料夾不存在則建立）
+ *   4. 用 FactoryBuildingTable.json 的 buildingId 透過 FactoryBuildingItemTable.json 換出對應
+ *      itemId，下載 sprites/itemiconbig/<itemId>.png，落地存到 docs/harry/dev/icons/<buildingId>.png
+ *      （沒有對應 itemId，或該 itemId 沒有大圖示，就跳過並記錄，不視為錯誤）
  *
  * 注意：抽取 "id" 參照時必須用 fetch 回應的原始文字（regex），不能先 JSON.parse 再讀欄位——
  * 這些 id 是超過 Number.MAX_SAFE_INTEGER 的 int64，JSON.parse 轉成 JS number 會直接失真
@@ -24,12 +28,21 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HARRY_ROOT = join(__dirname, '..');
 const DEST_DIR = join(HARRY_ROOT, 'dev', 'data');
+const ICON_DEST_DIR = join(HARRY_ROOT, 'dev', 'icons');
 
 const MANIFEST_URL = 'https://data.akedata.wiki/manifest.json';
 const DATA_HOST = 'https://data.akedata.wiki';
+const ICON_SHEET_URL = `${DATA_HOST}/public/images/assets/beyond/dynamicassets/gameplay/ui/sprites/itemiconbig`;
 
 /** 完整下載、原樣落地的資料表檔名，皆位於 <tableCfgPath>/ 底下 */
-const SOURCE_TABLE_NAMES = ['FactoryMachineCraftTable.json', 'FactoryBuildingTable.json'];
+const SOURCE_TABLE_NAMES = [
+    'FactoryMachineCraftTable.json',
+    'FactoryBuildingTable.json',
+    'FactoryBuildingItemTable.json',
+    'FactoryItemTable.json',
+];
+const BUILDING_TABLE_NAME = 'FactoryBuildingTable.json';
+const BUILDING_ITEM_TABLE_NAME = 'FactoryBuildingItemTable.json';
 
 /** 只保留被 SOURCE_TABLE_NAMES 引用到的 id 的翻譯表 */
 const I18N_TABLE_NAME = 'I18nTextTable_CN.json';
@@ -91,6 +104,27 @@ async function fetchJson(url, label) {
     }
 }
 
+/**
+ * 下載二進位檔（圖片），404 視為「無此圖示」而非致命錯誤，回傳 null。
+ * @param {string} url
+ * @returns {Promise<Buffer | null>}
+ */
+async function fetchBinary(url) {
+    let res;
+    try {
+        res = await fetch(url);
+    } catch (err) {
+        console.warn(
+            `[fetch-factory-machine-craft-table] 圖示連線失敗，略過：${url}（${/** @type {Error} */ (err).message}）`,
+        );
+        return null;
+    }
+    if (!res.ok) {
+        return null;
+    }
+    return Buffer.from(await res.arrayBuffer());
+}
+
 async function main() {
     console.log(`[fetch-factory-machine-craft-table] 模式：${dryRun ? 'dry-run' : 'write'}`);
     console.log('');
@@ -150,6 +184,38 @@ async function main() {
     );
     tables.push({ name: I18N_TABLE_NAME, data: filteredI18n });
 
+    const buildingTable = /** @type {Record<string, { id: string }>} */ (
+        tables.find((t) => t.name === BUILDING_TABLE_NAME)?.data
+    );
+    const buildingItemTable =
+        /** @type {Record<string, { buildingId: string, itemId: string }>} */ (
+            tables.find((t) => t.name === BUILDING_ITEM_TABLE_NAME)?.data
+        );
+    const itemIdByBuildingId = new Map(
+        Object.values(buildingItemTable ?? {}).map((entry) => [entry.buildingId, entry.itemId]),
+    );
+
+    /** @type {{ buildingId: string, buffer: Buffer }[]} */
+    const icons = [];
+    let noItemMapping = 0;
+    let noBigIcon = 0;
+    for (const buildingId of Object.keys(buildingTable ?? {})) {
+        const itemId = itemIdByBuildingId.get(buildingId);
+        if (!itemId) {
+            noItemMapping++;
+            continue;
+        }
+        const buffer = await fetchBinary(`${ICON_SHEET_URL}/${itemId}.png`);
+        if (!buffer) {
+            noBigIcon++;
+            continue;
+        }
+        icons.push({ buildingId, buffer });
+    }
+    console.log(
+        `[fetch-factory-machine-craft-table] 建築圖示：${icons.length}/${Object.keys(buildingTable ?? {}).length} 個成功快取（${noItemMapping} 個無 itemId 對照，${noBigIcon} 個查無大圖示）`,
+    );
+
     if (dryRun) {
         console.log('');
         console.log('[fetch-factory-machine-craft-table] dry-run 完成，未寫入檔案');
@@ -168,6 +234,18 @@ async function main() {
         writeFileSync(destFile, output, 'utf8');
         console.log(
             `[fetch-factory-machine-craft-table] 完成：已寫入 ${rel(destFile)}（${output.length} bytes）`,
+        );
+    }
+
+    if (icons.length > 0 && !existsSync(ICON_DEST_DIR)) {
+        mkdirSync(ICON_DEST_DIR, { recursive: true });
+        console.log(`[fetch-factory-machine-craft-table] 已建立目錄 ${rel(ICON_DEST_DIR)}`);
+    }
+    for (const { buildingId, buffer } of icons) {
+        const destFile = join(ICON_DEST_DIR, `${buildingId}.png`);
+        writeFileSync(destFile, buffer);
+        console.log(
+            `[fetch-factory-machine-craft-table] 完成：已寫入 ${rel(destFile)}（${buffer.length} bytes）`,
         );
     }
 }

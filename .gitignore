@@ -42,3 +42,8 @@ __pycache__/
 
 # 決策層文件（問卷、commit 分析、個人檔與風險矩陣、派工複查）：不進版控
 docs/aaaaa/collaborator_survey
+
+# docs/harry：從 data.akedata.wiki 下載的可重生資料快取與圖示
+# 用 docs/harry/scripts/fetch-factory-machine-craft-table.mjs 隨時可重新產生，不進版控
+docs/harry/dev/data/
+docs/harry/dev/icons/

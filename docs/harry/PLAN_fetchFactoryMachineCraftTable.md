@@ -21,6 +21,18 @@
 - 修法：抽取 id 時改用 `fetch` 回應的**原始未解析文字**跑 regex `"id":\s*(-?\d+)`，維持原始位數字串；`I18nTextTable_CN.json` 的 key 本身是字串（物件 key 不受 JSON number 精度影響），照常 `JSON.parse` 後用字串比對即可
 - `SOURCE_TABLE_NAMES`（完整落地）與 `I18N_TABLE_NAME`（篩選後落地）分開處理，篩選邏輯集中在 `main()` 內一段，不額外拆檔案避免過度抽象
 
+**追加三（同一輪內）：** `SOURCE_TABLE_NAMES` 加入 `FactoryBuildingItemTable.json`（同層路徑，實測 200）。該表只是 `buildingId` ↔ `itemId` 字串對照（103 筆），沒有數值型 `id` 欄位，因此不會貢獻新的 i18n 引用 id（仍是 528 個），純粹補齊資料集。
+
+**追加四（同一輪內）：** `SOURCE_TABLE_NAMES` 再加入 `FactoryItemTable.json`（同層路徑，實測 200，538 筆）。每筆的 `id` 是自身字串識別碼（如 `item_activity_xiranite_bottle`），同樣沒有巢狀 `{id, text}` 數值型欄位，i18n 引用 id 集合仍是 528 個不變——`SOURCE_TABLE_NAMES` 迴圈本身已通用處理任何新加的表，之後再加表只要該表真的有數值型 `id` 參照，篩選會自動涵蓋，不需要另外改邏輯。
+
+**追加五（同一輪內）：** 快取建築面板大圖示。使用者直接給出正確範例 URL：`sprites/itemiconbig/item_port_mix_pool_1.png`——關鍵是**檔名用的是 itemId，不是 iconId**（跟先前研究 v2-item.js 時發現的個人物品詳情頁用數值 iconId 是不同的慣例，建築面板圖示這裡直接用 itemId 字串）。
+
+實作重點：
+- 圖示 URL 組法：`FactoryBuildingTable.json` 每筆的 `id`（buildingId）→ 查 `FactoryBuildingItemTable.json` 對應 `itemId` → `https://data.akedata.wiki/public/images/assets/beyond/dynamicassets/gameplay/ui/sprites/itemiconbig/<itemId>.png`
+- 實測 108 個建築中 103 個有 itemId 對照，其中 92 個真的有大圖示（其餘 11 個是裝飾/土壤類建築，查無大圖示，回應 404）；5 個建築完全沒有 itemId 對照。兩種情況都**跳過並記錄計數，不視為致命錯誤**（`fetchBinary` 對 404 回傳 `null`，呼叫端累加 `noItemMapping`/`noBigIcon` 計數器）
+- 落地路徑刻意選擇 `docs/harry/dev/icons/<buildingId>.png`（用 buildingId 命名，不是原始 itemId），因為下游若要從 `FactoryBuildingTable.json` 的 `id` 直接查圖示，不需要再重新做一次 buildingId→itemId 的 join；這個 join 已經在 script 裡做掉了
+- 已驗證下載到的 92 張圖片裡 91 張是不同內容（md5 兩兩比對），唯一重複的一對 `power_port_1.png`/`power_terminal_1.png` 是合理的真實共用圖示，不是偵測到某種預設佔位圖的訊號
+
 ## 2. manifest.json 結構確認（已用 curl 實測）
 
 ```json
@@ -54,7 +66,8 @@ https://data.akedata.wiki/public/1.4.4/9433094-12/TableCfg/FactoryMachineCraftTa
 ## 4. 檔案規劃
 
 - 新增 `docs/harry/scripts/fetch-factory-machine-craft-table.mjs`
-- 新增（執行後自動產生）`docs/harry/dev/data/FactoryMachineCraftTable.json`、`docs/harry/dev/data/FactoryBuildingTable.json`、`docs/harry/dev/data/I18nTextTable_CN.json`
+- 新增（執行後自動產生）`docs/harry/dev/data/FactoryMachineCraftTable.json`、`docs/harry/dev/data/FactoryBuildingTable.json`、`docs/harry/dev/data/FactoryBuildingItemTable.json`、`docs/harry/dev/data/FactoryItemTable.json`、`docs/harry/dev/data/I18nTextTable_CN.json`
+- 新增（執行後自動產生）`docs/harry/dev/icons/<buildingId>.png`（約 92 張建築面板大圖示）
 - 下載清單集中在腳本內 `TABLE_NAMES` 常數陣列，之後要再加表只需加一行檔名
 - 不改 `package.json`，直接用 `node docs/harry/scripts/fetch-factory-machine-craft-table.mjs` 執行（使用者決定）
 
