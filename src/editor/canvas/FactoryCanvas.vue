@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, provide, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useEventListener, useRafFn } from '@vueuse/core';
 import { Background } from '@vue-flow/background';
@@ -19,11 +19,12 @@ import { getMachine, getMachineMode } from '@/data/machines';
 import { onComboTriggered, useComboHeld } from '@/composables/useKeybinding';
 import FlowNodeOverlay from './FlowNodeOverlay.vue';
 import PipelineEdge from './PipelineEdge.vue';
+import { PIPELINE_GRID_SIZE_KEY } from './injectionKeys';
 
 /** 自訂節點型別：覆寫 default，加入效率 overlay */
 const nodeTypes = { default: FlowNodeOverlay };
 
-/** 自訂邊型別：pipeline 依 bendPoints 畫出直角折線管線（CR-02 §2.3） */
+/** 自訂邊型別：pipeline 依 buildPipelinePath 即時算出直角折線頂點（R-C3） */
 const edgeTypes = { pipeline: PipelineEdge };
 
 /** 藍圖 store：畫布上的節點 / 邊與工具狀態的唯一資料來源 */
@@ -41,6 +42,10 @@ const { nodes, edges, snapToGrid, activeTool, selectedEquipment, placementArmed 
 const { edgeFlows, congestedEdges } = storeToRefs(flowStore);
 /** 解構 canvasStore 的響應式參照，供 template 綁定畫布格線與基地框線 */
 const { gridSize, canvasSize } = storeToRefs(canvasStore);
+
+/** 把 gridSize 注入給 PipelineEdge.vue（L3），讓管線折線中繼點可吸附格線，
+ *  同時不必讓 L3 直接 import canvasStore（見 `injectionKeys.ts`） */
+provide(PIPELINE_GRID_SIZE_KEY, gridSize);
 
 /**
  * 目前選定基地對應的框線像素尺寸；自由畫布（canvasSize 為 null）時不顯示框線。

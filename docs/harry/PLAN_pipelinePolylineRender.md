@@ -7,6 +7,8 @@
 - `src/utils/pipelinePath.ts`（新建，純函式）
 - `src/__tests__/utils/pipelinePath.test.ts`（新建）
 - `src/editor/canvas/PipelineEdge.vue`（L3，改吃自己既有的 props 算路徑）
+- `src/editor/canvas/injectionKeys.ts`（新建，provide/inject key）
+- `src/editor/canvas/FactoryCanvas.vue`（追加：`provide` gridSize，見 §5）
 
 ---
 
@@ -60,10 +62,18 @@ const path = computed(() => {
 
 ## 3. 明確排除範圍
 
-- 不做真正貼齊背景格線的「bend 座標吸附到 gridSize 倍數」——中繼點取兩端中點，只保證線段本身純水平／垂直（軸對齊），不保證中繼點恰好落在格線交點上。真要做到這點需要 `canvasStore.gridSize`，但 `PipelineEdge.vue` 不能 import store，勢必得改 `FactoryCanvas.vue` 把 gridSize 當 prop 傳下來——本次依使用者選擇不做，僅做「純水平/垂直」
 - 不做 `invalid`／`congested` 狀態視覺（C3 §4.4，屬 C2／D1 範疇）
 - 不做避讓其他設備、不做手動拖曳中段調整（C3 §7 明列不做）
-- 不改 `FactoryEdgeData` 型別、不改 `FactoryCanvas.vue`、不改 `editorStore.ts`
+- 不改 `FactoryEdgeData` 型別、不改 `editorStore.ts`
+
+## 5. 追加：中繼點吸附格線（使用者後續要求）
+
+原本 §3 排除「bend 座標吸附到 gridSize 倍數」，因為做這件事需要 `canvasStore.gridSize`，而 `PipelineEdge.vue` 不能 import store。使用者後續要求補上，改用 `provide`／`inject`（而非 `useCanvasStore()`）解法：
+
+- `FactoryCanvas.vue`：`provide(PIPELINE_GRID_SIZE_KEY, gridSize)`（`gridSize` 是既有的 `storeToRefs(canvasStore)` 響應式參照，本來就存在，只加一行 `provide`）
+- `PipelineEdge.vue`：`inject(PIPELINE_GRID_SIZE_KEY, ref(20))` 讀取，傳給 `buildPipelinePath(from, to, gridSize.value)` 當第三個選填參數
+- `buildPipelinePath` 新增選填的 `gridSize?: number` 參數：只吸附 Z 形的中繼點（本函式自己算出來的座標），**不吸附 L 形的轉角或任何端點**——端點是實際埠座標，吸附會讓線離開埠的瞬間多一段偏移，看起來沒對準埠
+- 這技術上仍算「touch FactoryCanvas.vue」，但只加一行 `provide`，不修改既有邏輯、不新增 Pinia action、不違反 L3 不 import store 的規則（inject 不是 import store）
 
 ## 4. 驗證方式
 
