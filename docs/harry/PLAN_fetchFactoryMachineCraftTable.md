@@ -13,6 +13,14 @@
 
 **追加（同一輪內）：** 除了 `FactoryMachineCraftTable.json`，同一支 script 也下載 `FactoryBuildingTable.json`、`I18nTextTable_CN.json`。兩次使用者提的路徑都寫成「`../<TableName>`」（意指 tableCfgPath 的上一層），但實測 `public/<ver>/<hotfix>/<TableName>.json`（不含 `TableCfg`）皆回應 404；實際存在且回應 200 的都是跟 `FactoryMachineCraftTable.json` 同一層的 `public/<ver>/<hotfix>/TableCfg/<TableName>.json`。已按此實測結果實作，並非照字面路徑。
 
+**追加二（同一輪內）：** `I18nTextTable_CN.json` 全表 140,783 筆、11MB，但 `FactoryMachineCraftTable.json`/`FactoryBuildingTable.json` 實際只引用其中約 528 個 id（526 筆有對應翻譯）。改為只落地被引用到的子集，檔案從 ~11MB 降到 ~23KB。
+
+實作重點：
+- 引用關係藏在兩表各筆資料裡形如 `"desc": {"id": 1234567890123456789, "text": ""}` 的欄位，`id` 是 int64
+- **關鍵坑**：這些 id 超過 `Number.MAX_SAFE_INTEGER`（2^53），若照原本流程先 `JSON.parse` 整份回應再讀欄位，JS number 會直接失真（尾數捨去成 0），之後永遠比對不到 `I18nTextTable_CN.json` 的原始 key（本輪一開始已提交的 `docs/harry/dev/data/*.json` 就是這樣壞掉的，因為 `JSON.stringify(data, null, 2)` 落地時已經回不去了）
+- 修法：抽取 id 時改用 `fetch` 回應的**原始未解析文字**跑 regex `"id":\s*(-?\d+)`，維持原始位數字串；`I18nTextTable_CN.json` 的 key 本身是字串（物件 key 不受 JSON number 精度影響），照常 `JSON.parse` 後用字串比對即可
+- `SOURCE_TABLE_NAMES`（完整落地）與 `I18N_TABLE_NAME`（篩選後落地）分開處理，篩選邏輯集中在 `main()` 內一段，不額外拆檔案避免過度抽象
+
 ## 2. manifest.json 結構確認（已用 curl 實測）
 
 ```json
