@@ -35,11 +35,11 @@ Storybook 是一個把**單一元件從整個畫面裡拆出來單獨看**的地
 
 畫面分成三塊：
 
-| 位置 | 它叫 | 白話 |
-| --- | --- | --- |
-| 左邊 | Sidebar | 有哪些元件、每個元件有哪些狀態 |
-| 中間 | Canvas | 這個元件單獨長什麼樣 |
-| 下面 | Addon panel | 改參數、看檢查結果的地方 |
+| 位置 | 它叫        | 白話                           |
+| ---- | ----------- | ------------------------------ |
+| 左邊 | Sidebar     | 有哪些元件、每個元件有哪些狀態 |
+| 中間 | Canvas      | 這個元件單獨長什麼樣           |
+| 下面 | Addon panel | 改參數、看檢查結果的地方       |
 
 ### 左邊側欄
 
@@ -85,9 +85,19 @@ http://localhost:6006/?path=/story/l3-statspanel-powersummary--deficit
 
 ---
 
-## 怎麼互動以確認設計內容符合構想
+## 怎麼確認設計內容符合構想
 
-### 一、先把所有狀態點過一遍
+### 一、先切到這個人的 branch
+
+點選 vscode 左下角的 branch，選擇對方的 branch。
+
+找不到 branch 的話，打開 terminal 輸入 `git fetch`。
+
+左下角切換 branch 名字後，按一下那個迴轉按鈕，就能更新到對方的最新狀態了。
+
+![](7.png)
+
+### 二、先把所有狀態點過一遍
 
 側欄上一個元件底下列的每一個 story，就是工程師實作出來的每一種狀態。**一個個點過去**，對照你的設計稿看有沒有漏。
 
@@ -95,7 +105,7 @@ http://localhost:6006/?path=/story/l3-statspanel-powersummary--deficit
 
 如果你的設計稿有某個狀態，但側欄裡找不到對應的 story——那就是漏了，要回報。
 
-### 二、用 Controls 自己造狀態
+### 三、用 Controls 自己造狀態
 
 側欄列的是工程師想到的狀態。你可以用下面的 Controls 造出他沒想到的：
 
@@ -105,20 +115,20 @@ http://localhost:6006/?path=/story/l3-statspanel-powersummary--deficit
 
 這是最容易抓到問題的做法，而且不用麻煩任何人。
 
-### 三、用 viewport 看不同寬度
+### 四、用 viewport 看不同寬度
 
 上方工具列的 viewport 圖示可以切換手機／平板／桌機。RWD 的設計是你負責的，這裡可以直接驗。
 
-### 四、看 Accessibility 分頁
+### 五、看 Accessibility 分頁
 
 ![](./5.png)
 
 每次 story 渲染完，Storybook 會自動拿一個叫 axe-core 的開源檢查引擎掃一遍畫面，結果分成三欄：
 
-| 欄位 | 意思 |
-| --- | --- |
-| Violations | 規則檢查失敗 |
-| Passes | 規則檢查通過 |
+| 欄位         | 意思                       |
+| ------------ | -------------------------- |
+| Violations   | 規則檢查失敗               |
+| Passes       | 規則檢查通過               |
 | Inconclusive | 引擎判不出來，需要人看一眼 |
 
 `Inconclusive` 最常見的成因是文字疊在圖片、漸層或半透明背景上，引擎拿不到背後真正的顏色，就算不出對比度。這種要你自己看。
@@ -129,7 +139,7 @@ http://localhost:6006/?path=/story/l3-statspanel-powersummary--deficit
 
 所以 `Violations` 非零時值得回報，它指出來的通常是真的；是 0 的時候不代表這個元件的無障礙沒問題，該用的人工判斷還是要用。
 
-### 五、對不上的時候怎麼回報
+### 六、對不上的時候怎麼回報
 
 附這四樣，工程師才不用來回問：
 
@@ -137,6 +147,14 @@ http://localhost:6006/?path=/story/l3-statspanel-powersummary--deficit
 2. **story 名**（例如「邊界：供電不足」）
 3. **網址**（直接複製瀏覽器網址列）
 4. **截圖**，如果你有改過 Controls 的參數，也一起寫上改了什麼
+
+### 七、審核通過怎麼 approve PR
+
+去 [github Pull Requests 分頁](https://github.com/dernoson/endfield-playground/pulls)，選擇對方交出來的那個 PR。
+
+點到如下的畫面，選擇 approve，並給出你的銳評 (如果你希望他改東西，那就選 `Request changes`)。
+
+![](8.png)
 
 ---
 
