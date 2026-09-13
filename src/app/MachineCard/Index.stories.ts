@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import MachineCard from './Index.vue';
 import type { Formula } from './types';
-import defaultItemImage from './item.png';
+import defaultItemImage from '@/components/FormulaItem/item.png';
 
 const meta = {
     title: 'L3/MachineCard',

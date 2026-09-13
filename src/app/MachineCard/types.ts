@@ -1,14 +1,6 @@
-/**
- * 配方中的單一物品項目規格。
- */
-export interface FormulaItem {
-    /** 物品名稱 */
-    name: string;
-    /** 物品圖標的圖片網址或本地資源路徑，未提供時使用預設圖標 */
-    image?: string;
-    /** 物品數量 */
-    amount: number;
-}
+import type { FormulaItem } from '@/components/FormulaItem/types';
+
+export type { FormulaItem };
 
 /**
  * 單一配方的生產規格，包含生產週期與進出原料。

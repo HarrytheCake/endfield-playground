@@ -1,37 +1,32 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useScroll } from '@vueuse/core';
 import FormulaItem from '@/components/FormulaItem/Index.vue';
 import type { Formula } from './types';
 
 /** 單一配方展示元件之屬性定義 */
-const props = defineProps<{
+defineProps<{
     /** 所要呈現的單一配方資料（包含週期、原料與產物） */
     singleformula: Formula;
 }>();
 
 const rowRef = ref<HTMLElement | null>(null);
-const canScrollLeft = ref(false);
-const canScrollRight = ref(false);
-const isDragging = ref(false);
+
+// 透過 VueUse 自動追蹤橫向滾動與邊界到達狀態
+const { arrivedState } = useScroll(rowRef, {
+    offset: { right: 3 },
+});
+
+const canScrollLeft = computed(() => !arrivedState.left);
+const canScrollRight = computed(() => !arrivedState.right);
 const canScroll = computed(() => canScrollLeft.value || canScrollRight.value);
 
+const isDragging = ref(false);
 let startX = 0;
 let startScrollLeft = 0;
 let hasMoved = false;
 
-/** 檢查當前橫向滾動容器狀態，動態決定兩側提示是否顯示 */
-function updateScrollHints(): void {
-    const el = rowRef.value;
-    if (!el) return;
-    canScrollLeft.value = el.scrollLeft > 1;
-    canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
-}
-
-function onScroll(): void {
-    updateScrollHints();
-}
-
-/** 處理滑鼠按下事件，啟動拖曳滾動監聽 */
+/** 處理滑鼠按下事件，啟動基礎拖曳滾動監聽 */
 function onMouseDown(e: MouseEvent): void {
     if (e.button !== 0) return;
     const el = rowRef.value;
@@ -47,7 +42,7 @@ function onMouseDown(e: MouseEvent): void {
     window.addEventListener('mouseup', onMouseUp);
 }
 
-/** 處理滑鼠移動事件，依滑鼠位移更新滾動位置 */
+/** 處理滑鼠移動事件，基礎 1:1 跟隨滑鼠位移 */
 function onMouseMove(e: MouseEvent): void {
     if (!isDragging.value) return;
     const el = rowRef.value;
@@ -57,6 +52,7 @@ function onMouseMove(e: MouseEvent): void {
     if (Math.abs(dx) > 3) {
         hasMoved = true;
     }
+
     el.scrollLeft = startScrollLeft - dx;
 }
 
@@ -76,28 +72,31 @@ function onClickCapture(e: MouseEvent): void {
     }
 }
 
+/** 基礎滑鼠滾輪水平滾動，並阻斷外層垂直滾動穿透（Scroll Chaining 阻斷） */
+function onWheel(e: WheelEvent): void {
+    const el = rowRef.value;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+
+    e.preventDefault();
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    el.scrollLeft += delta;
+}
+
 onMounted(() => {
-    nextTick(() => {
-        updateScrollHints();
-    });
-    window.addEventListener('resize', updateScrollHints);
+    const el = rowRef.value;
+    if (el) {
+        el.addEventListener('wheel', onWheel, { passive: false });
+    }
 });
 
 onUnmounted(() => {
-    window.removeEventListener('resize', updateScrollHints);
+    const el = rowRef.value;
+    if (el) {
+        el.removeEventListener('wheel', onWheel);
+    }
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
 });
-
-watch(
-    () => props.singleformula,
-    () => {
-        nextTick(() => {
-            updateScrollHints();
-        });
-    },
-    { deep: true },
-);
 </script>
 
 <template>
@@ -109,7 +108,6 @@ watch(
                 ref="rowRef"
                 class="formula-row"
                 :class="{ 'can-scroll': canScroll, 'is-dragging': isDragging }"
-                @scroll="onScroll"
                 @mousedown="onMouseDown"
                 @click.capture="onClickCapture"
             >
@@ -171,7 +169,7 @@ watch(
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 10px 14px 8px 14px;
+    padding: 10px 0 8px 14px;
     gap: 3px;
     background: rgba(43, 43, 43, 0.2);
     border-radius: 4px;
@@ -184,6 +182,16 @@ watch(
     /* 隱藏滾動條 */
     scrollbar-width: none;
     -ms-overflow-style: none;
+}
+
+/* 確保 Flex 容器在溢出滾動時末端完整保留 14px 右側留白，避免最後一個物品被切邊 */
+.formula-row::after {
+    content: '';
+    display: block;
+    width: 14px;
+    min-width: 14px;
+    height: 1px;
+    flex-shrink: 0;
 }
 
 .formula-row.can-scroll {
