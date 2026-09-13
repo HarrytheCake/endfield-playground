@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import FormulaItem from '@/components/FormulaItem/Index.vue';
 import type { Formula } from './types';
 
@@ -12,6 +12,12 @@ const props = defineProps<{
 const rowRef = ref<HTMLElement | null>(null);
 const canScrollLeft = ref(false);
 const canScrollRight = ref(false);
+const isDragging = ref(false);
+const canScroll = computed(() => canScrollLeft.value || canScrollRight.value);
+
+let startX = 0;
+let startScrollLeft = 0;
+let hasMoved = false;
 
 /** 檢查當前橫向滾動容器狀態，動態決定兩側提示是否顯示 */
 function updateScrollHints(): void {
@@ -25,6 +31,51 @@ function onScroll(): void {
     updateScrollHints();
 }
 
+/** 處理滑鼠按下事件，啟動拖曳滾動監聽 */
+function onMouseDown(e: MouseEvent): void {
+    if (e.button !== 0) return;
+    const el = rowRef.value;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+
+    e.preventDefault();
+    isDragging.value = true;
+    hasMoved = false;
+    startX = e.pageX;
+    startScrollLeft = el.scrollLeft;
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+}
+
+/** 處理滑鼠移動事件，依滑鼠位移更新滾動位置 */
+function onMouseMove(e: MouseEvent): void {
+    if (!isDragging.value) return;
+    const el = rowRef.value;
+    if (!el) return;
+
+    const dx = e.pageX - startX;
+    if (Math.abs(dx) > 3) {
+        hasMoved = true;
+    }
+    el.scrollLeft = startScrollLeft - dx;
+}
+
+/** 處理滑鼠放開事件，解除拖曳監聽 */
+function onMouseUp(): void {
+    if (!isDragging.value) return;
+    isDragging.value = false;
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+}
+
+/** 若曾發生拖曳行為，阻止點擊冒泡避免誤觸上層卡片點擊事件 */
+function onClickCapture(e: MouseEvent): void {
+    if (hasMoved) {
+        e.stopPropagation();
+        hasMoved = false;
+    }
+}
+
 onMounted(() => {
     nextTick(() => {
         updateScrollHints();
@@ -34,6 +85,8 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('resize', updateScrollHints);
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
 });
 
 watch(
@@ -52,7 +105,14 @@ watch(
         <div class="duration">週期 {{ singleformula.duration }}s</div>
 
         <div class="formula-row-wrapper">
-            <div ref="rowRef" class="formula-row" @scroll="onScroll">
+            <div
+                ref="rowRef"
+                class="formula-row"
+                :class="{ 'can-scroll': canScroll, 'is-dragging': isDragging }"
+                @scroll="onScroll"
+                @mousedown="onMouseDown"
+                @click.capture="onClickCapture"
+            >
                 <template v-for="(item, index) in singleformula.input" :key="`in-${index}`">
                     <span v-if="index > 0" class="operator plus">+</span>
                     <FormulaItem :item="item" />
@@ -118,10 +178,26 @@ watch(
     overflow-x: auto;
     overflow-y: hidden;
     color: #cfcfcf;
+    user-select: none;
+    -webkit-user-select: none;
 
     /* 隱藏滾動條 */
     scrollbar-width: none;
     -ms-overflow-style: none;
+}
+
+.formula-row.can-scroll {
+    cursor: grab;
+}
+
+.formula-row.is-dragging {
+    cursor: grabbing;
+}
+
+.formula-row :deep(img) {
+    -webkit-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
 }
 
 .formula-row::-webkit-scrollbar {
