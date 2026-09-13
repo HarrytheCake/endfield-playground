@@ -13,7 +13,7 @@ import type { StorybookConfig } from '@storybook/vue3-vite';
  */
 const config: StorybookConfig = {
     /** story 檔與元件同資料夾，對齊 CLAUDE.md 第 2 節的元件資料夾慣例 */
-    stories: ['../src/components/**/*.stories.ts'],
+    stories: ['../src/components/**/*.stories.ts', '../src/app/**/*.stories.ts'],
 
     /** docs 依 defineProps 的 JSDoc 產生 props 表；a11y 檢查純展示層的可及性 */
     addons: ['@storybook/addon-docs', '@storybook/addon-a11y'],

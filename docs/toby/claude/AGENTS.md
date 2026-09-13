@@ -122,6 +122,49 @@ Agents：
 - `dependency-grapher`：只讀分析相依關係並輸出 Mermaid markdown，不修改原始碼。
 - `test-writer`：建立或更新 Vitest 測試，測試檔鏡射至 `src/__tests__/`。
 
+### A.10 Storybook 開發守則
+
+完整操作方式參考 `tutorial/storybook/developer.md`。使用 `pnpm storybook` 啟動元件開發環境，
+預設網址為 `http://localhost:6006`；它可與 `pnpm dev` 同時執行。交付前可用
+`pnpm build-storybook` 驗證靜態建置。
+
+- Story 與元件放在同一資料夾，命名為 `<元件檔名>.stories.ts`。
+- `title` 統一使用 `L3/<資料夾>/<元件>`。
+- Story 的 export 名稱使用英文，介面顯示名稱透過 `name` 使用繁體中文。
+- 每個元件至少提供一個預設狀態及一個邊界狀態，例如空資料、極端值、`null` 或超長文字。
+- Nuxt UI 已在 `.storybook/preview.ts` 註冊，Story 不需要自行安裝或包裝。
+- Vue Flow 節點與連線必須使用 `.storybook/vueFlowHarness.ts` 的 `nodeHarness` 或
+  `edgeHarness`；此類 Story 的 meta 不設定 `component`，只暴露元件真正需要的資料。
+- 嚴禁在 `.storybook/preview.ts` 註冊 Pinia，避免掩蓋 L3 元件直接依賴 store 的違規。
+- 修改 `.storybook/preview.ts` 的 import 後必須重啟 Storybook；Tailwind 任意尺寸必須帶單位，
+  例如 `h-[600px]`。
+
+提交前應實際開啟 Story，檢查 Controls、各邊界狀態與 Accessibility 分頁。axe-core 的
+`Violations` 應逐項確認，但零違規不代表完整無障礙；鍵盤流程、焦點順序與螢幕閱讀器仍需人工測試，
+且目前 Accessibility 結果不會阻擋 CI。
+
+### A.11 工單分析與分步方式
+
+`docs/toby/dev/` 用於保存工單分析、執行切片、驗收案例與交付證據。開始實作前，應先依
+下列順序分析；不要只根據工單標題推測需求：
+
+1. **確認來源與基準**：閱讀最新工單、相關規格及既有交接文件；確認目前分支並執行
+   `git status --short --branch`，區分既有變更與本次工作。
+2. **界定範圍**：列出允許修改、禁止修改及刻意不處理的檔案與行為，並將需求改寫成
+   可觀察的驗收條件。文件互相矛盾時，記錄落差，不自行擴大範圍。
+3. **追蹤資料流**：從使用者事件沿著元件、store、domain data、computed 與輸出 UI 逐段追查；
+   核對 ID、名稱、型別、單位及空值契約，並閱讀直接相關測試確認既有行為。
+4. **分類問題**：分開記錄本工單缺陷、上游接線／資料契約問題、既有基準問題及文件落差。
+   若修正必須觸及禁止檔案，保留證據並停止，不以旁路修改掩蓋根因。
+5. **拆分步驟**：依「範圍確認 → 資料接線 → UI／核心實作 → 手動驗收 → 品質門檻」切成
+   可獨立執行與驗收的小步驟；每一步都寫明目標、修改檔案、限制、驗收條件及下一步。
+6. **驗證與交付**：涵蓋正常、空值、多選／多筆、極端值及已知上游失敗案例；最後檢查 diff、
+   執行品質指令，並摘要修改檔案、操作方式、驗證結果與尚未解決的上游問題。
+
+分析文件命名為 `<工單>_analysis.md`，分步索引為 `<工單>_steps.md`，各步驟使用
+`<工單>_step_NN_<主題>.md`。除非使用者要求留下分析紀錄，否則先在對話中完成分析，
+不得因套用此流程而自行建立 planning 文件。
+
 ## B. 專案架構導覽
 
 ## 1. 專案定位與技術棧
@@ -146,6 +189,7 @@ Agents：
 - VueUse
 - Tailwind CSS
 - Vitest
+- Storybook
 
 ## 2. 整體資料流
 
@@ -215,6 +259,12 @@ StatsPanel 和 InspectorSidebar，並啟動 validation 與 FlowEngine watcher。
 ### `vitest.config.ts`
 
 設定 Vitest Node 測試環境及 `@` alias。
+
+### `.storybook/`
+
+設定 Vue 3 + Vite 的元件開發環境。`preview.ts` 提供 Nuxt UI 與全域樣式；
+`vueFlowHarness.ts` 讓 Vue Flow 節點和連線在真實畫布環境中渲染。Story 檔案與元件共置於
+`src/components/`，並以 `*.stories.ts` 命名。
 
 ### `tsconfig.app.json`
 
@@ -604,6 +654,10 @@ Dev SVG 的尺寸、旋轉、port 座標及顯示格計算。
 ### `docs/`
 
 開發紀錄、資料來源、roadmap、工作分派和個人交接文件。
+
+`docs/toby/dev/` 保存 Toby 工單的分析摘要與分步執行文件。內容應呈現範圍、資料流、已知阻礙、
+驗收案例與品質門檻；它是決策和交付證據，不是原始碼需求的替代品。若內容與最新工單或程式碼
+不一致，應標明日期與差異，並以使用者確認後的範圍為準。
 
 ### `dist/`
 
