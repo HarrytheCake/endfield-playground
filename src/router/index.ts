@@ -53,6 +53,11 @@ const router = createRouter({
                     name: 'dev-layout-l1-preview',
                     component: () => import('@/app/dev/LayoutL1Preview.vue'),
                 },
+                {
+                    path: 'grid-viewport',
+                    name: 'dev-grid-viewport',
+                    component: () => import('@/app/dev/GridViewportDemo.vue'),
+                },
             ],
         },
         // 獨立於 DevLayout 之外：不掛在左側 dev 工具導覽列，只能直接切換網址到達

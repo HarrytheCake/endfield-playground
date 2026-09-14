@@ -107,6 +107,12 @@ const devPages = [
         icon: '🧩',
         description: 'V11：fixture＋resolveConnections／toTopology',
     },
+    {
+        path: '/dev/grid-viewport',
+        name: '格點視窗',
+        icon: '🖱️',
+        description: 'W0907-H1：平移／縮放／座標換算演示',
+    },
 ];
 </script>
 
