@@ -115,7 +115,7 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
 
 - [x] **V12-D1** `/dev` 頁：載入 mock fixture → 經 `layoutStore` 顯示 devices／pipelines／connections；可切換已連接／斷線；不接 editorStore
   - 細項：[dev_v12/D1_dev_store_preview.md](./dev_v12/D1_dev_store_preview.md)
-  - 產物：`LayoutStorePreview.vue`；路由 `/dev/layout-store-preview`；DevLayout 導覽
+  - 產物：`LayoutStorePreview.vue`；獨立入口 `dev/layout-store-preview.html`（不掛 `src/router`／`DevLayout`）
 
 ---
 
@@ -134,7 +134,7 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
 |----|---------|---------|----------|
 | B1 | — | — | **已解除**（文件收斂完成） |
 | C1 | — | — | **已解除**（layoutStore＋四釘測綠） |
-| D1 | — | — | **已解除**（`/dev/layout-store-preview`） |
+| D1 | — | — | **已解除**（`dev/layout-store-preview.html` 獨立入口） |
 | E1 | — | — | **已解除**（證據＋解鎖句；PR 待合入） |
 | — | **不動** editorStore／ToolbarPanel／GridCanvas／viewport | — | 本版硬鎖 |
 
@@ -179,7 +179,7 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
 | A1 定案 | 形狀／唯讀／回傳／dev／解鎖 | [x] | 9 項 |
 | B1 殘項 | V11 文件收斂 | [x] | 前置完成 |
 | C1 store | layoutStore＋四釘測 | [x] | 測綠；擋門檻程式面完成 |
-| D1 演示 | /dev 週會 | [x] | `/dev/layout-store-preview` |
+| D1 演示 | /dev 週會 | [x] | `dev/layout-store-preview.html`（獨立入口） |
 | E1 驗收 | 品質閘＋解鎖句 | [x] | 見 evidence/E1_unlock |
 
 ---
@@ -199,3 +199,15 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
 - **V12-C1 完成：** `layoutStore`＋`PlacementResult`；四釘測綠；`editorStore` 測原樣綠；type-check 過；`addPipeline` 亦做佔格檢查
 - **V12-D1 完成：** `/dev/layout-store-preview`；真實機器＋預設／點格放置＋自動 belt；未接 editorStore
 - 分支建議：`dev/aaaaa0907`
+
+### 2026-09-14
+
+- **PR [#45](https://github.com/dernoson/endfield-playground/pull/45) review 修訂：**
+  - §1 `loadSnapshot` 全量評估；`PlacementResult` 帶 `conflicts`／`invalidIds`；操作只歸咎涉及的 id；另出 `layoutIssues`
+  - §2 `addPipeline` 補座標檢查；併同擋「<2 點」與「非軸對齊」（`getPipelineOccupiedCells` 前置條件）
+  - §3 `removeDevice`／`removePipeline` 改回 `PlacementResult`
+  - §4 store return 成員補 JSDoc
+  - §5 撤回 `src/router`／`DevLayout.vue`；dev 頁改 Vite 獨立 HTML 入口（進度存證頁與主線互不牽動）
+  - §6 所有變更 action 經 `historyStore` 組 Command；dev 頁有 Undo／Redo
+  - §7 補點兩埠自動拉線與手動拉線；併修埠方向、手動轉角、undo 後選取殘留
+- 品質閘：41 檔 772 測試綠；type-check／lint／format 綠；`pnpm build` 不含 dev 頁

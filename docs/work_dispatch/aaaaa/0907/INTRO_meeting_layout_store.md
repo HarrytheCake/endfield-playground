@@ -6,7 +6,7 @@
 | 對象 | 週會／協作者（aaaaa 本週工項） |
 | 工單 | [W0907-A0](./W0907-A0_layout_store_model.md) |
 | PR | [#45](https://github.com/dernoson/endfield-playground/pull/45) |
-| 演示頁 | `/dev/layout-store-preview` |
+| 演示頁 | `dev/layout-store-preview.html`（Vite 獨立入口；不經 `src/router`） |
 | 執行計畫 | [todolist_v12](../../../aaaaa/dev/todolist_v12.md) |
 | 撰寫 | aaaaa |
 | 最後更新 | 2026-09-12 |
@@ -22,7 +22,7 @@
 |----|-----|
 | 交付什麼？ | store 契約＋可互動 `/dev` 演示＋解鎖句 |
 | 解鎖了什麼？ | store 可依賴；**擺放／選取仍鎖**（本週仍只讀） |
-| 現場看哪？ | `pnpm dev` → `/dev/layout-store-preview` |
+| 現場看哪？ | `pnpm dev` → `http://localhost:5173/dev/layout-store-preview.html` |
 
 **解鎖句：**
 
@@ -67,18 +67,23 @@ layout.toSnapshot()          // 匯出；不含 connections
 
 ### 1.3 和 V11／舊世界的差別
 
-| | V11 `/dev/layout-l1-preview` | V12 `/dev/layout-store-preview` |
+| | V11 `/dev/layout-l1-preview` | V12 `dev/layout-store-preview.html` |
 |--|------------------------------|--------------------------------|
+| 入口 | 掛在 `src/router` | **獨立 HTML 入口**（不動他人檔、不進 production bundle） |
 | 資料路徑 | fixture → 純函式 | fixture／真實機器 → **layoutStore** |
 | 能否放置 | 否（只切場景） | 是（預設點／點格） |
-| 能否拉 belt | 否 | 是（兩機自動 belt，BFS 繞機身） |
+| 能否拉 belt | 否 | 是（兩機自動／兩埠自動／手動，BFS 繞機身） |
+| undo／redo | 否 | 是（store 內接 `historyStore`） |
 | 與 editorStore | 不接 | **不接**（平行新建） |
 
 ---
 
 ## 2. 功能展示（週會操作腳本）
 
-**準備：** `pnpm dev` → 左側 Dev 導覽「佈局 store」或網址 `/dev/layout-store-preview`
+**準備：** `pnpm dev` → 網址 `http://localhost:5173/dev/layout-store-preview.html`
+
+> 演示頁是開發進度存證，刻意**不掛**在 `src/router`／`DevLayout.vue`（他人本週的檔），  \
+> 改用 Vite 的獨立 HTML 入口，兩邊互不牽動。
 
 ### 2.1 放置真實機器（約 30 秒）
 
@@ -87,14 +92,15 @@ layout.toSnapshot()          // 匯出；不含 connections
 3. 按「放到預設點」**或**直接點格點空格
 4. 紫條 `devices` 應增加；格上出現佔格；**綠圓＝輸出埠、橙方＝輸入埠**
 
-### 2.2 自動拉 belt（約 30 秒）
+### 2.2 拉 belt 三種方式（約 45 秒）
 
-1. 再放一台（兩機之間留空）
-2. 點第一台（藍框＝起點）→ 點第二台（紫框＝終點）
-3. 按「自動拉 belt」
+1. **點兩機**：點第一台（藍框＝起點）→ 點第二台（紫框＝終點）→「自動拉 belt」
+2. **點兩埠**：切「點兩埠拉線」→ 點一個輸出（綠圓）與一個輸入（橙方），順序不限
+3. **手動**：切「手動拉線」→ 依序點格 →「完成手動拉線」；斜著點會自動補轉角
 4. 應出現綠線；`pipelines`／`connections` 非 0；已接埠變白邊高亮
 
-> 塑型機埠在上下：路徑會 **BFS 繞開機身**，避免誤報 overlap。
+> 塑型機埠在上下：路徑會 **BFS 繞開機身**，避免誤報 overlap。  \
+> belt 一律以輸出為起點；`resolveConnections` 對反向路徑兩端仍非 null，故由頁面擺正。
 
 ### 2.3 放置失敗語意（約 15 秒）
 
@@ -122,7 +128,7 @@ V12 頁才是「證明 A0 契約」的演示。
         ├─ devices／pipelines（state）
         └─ connections（getter → resolveConnections）
                 │
-                ├─ 本週：/dev/layout-store-preview 消費
+                ├─ 本週：dev/layout-store-preview.html 消費
                 └─ 9/14：GridCanvas × viewport 整合再接 store
 ```
 
@@ -149,7 +155,7 @@ V12 頁才是「證明 A0 契約」的演示。
 |------------------|--------|
 | `src/store/layoutStore.ts` | `editorStore` |
 | `src/types/layout.ts`（`PlacementResult`） | `GridCanvas.vue` |
-| `/dev/layout-store-preview`＋utils | `ToolbarPanel.vue` |
+| `LayoutStorePreview.vue`＋utils＋獨立入口 | `ToolbarPanel.vue`／`src/router`／`DevLayout.vue` |
 | 相關測試 | `FactoryCanvas`／Vue Flow 加深 |
 
 ---

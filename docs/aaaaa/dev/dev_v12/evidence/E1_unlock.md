@@ -31,8 +31,8 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
 見 [V12_acceptance_guide §4](../V12_acceptance_guide.md)／[D1](../D1_dev_store_preview.md)：
 
 ```text
-pnpm dev → /dev/layout-store-preview
-選真實機器 → 放置 → 兩機自動 belt → 重疊回傳 overlap
+pnpm dev → http://localhost:5173/dev/layout-store-preview.html
+選真實機器 → 放置 → 兩機／兩埠／手動拉 belt → 重疊回傳 overlap（紅框只在重疊者）
 ```
 
 ---

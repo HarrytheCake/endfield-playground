@@ -64,11 +64,11 @@ pnpm test src/__tests__/store/editorStore.test.ts
 詳見 [D1](./D1_dev_store_preview.md)：
 
 ```text
-1. pnpm dev → /dev/layout-store-preview
+1. pnpm dev → http://localhost:5173/dev/layout-store-preview.html
 2. 選真實機器 →「放到預設點」或點空格；紫條 devices 增加
-3. 點兩台設備（藍起點／紫終點）→「自動拉 belt」→ 綠線；connections 非 null
-4. 故意重疊放置 → last=overlap（不 throw）
-5. 確認未接 editorStore／未改 ToolbarPanel
+3. 拉 belt 三式：點兩機／點兩埠（綠圓＋橙方）／手動點格 → 綠線；connections 非 null
+4. 故意重疊放置 → store=overlap（不 throw）；紅框只在真正重疊的設備
+5. Undo／Redo 可退回；確認未接 editorStore／未改 ToolbarPanel／`src/router`
 ```
 
 **本項為週會報告必要；未交則不得標個人驗收完成。**
