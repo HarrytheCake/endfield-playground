@@ -52,24 +52,25 @@ jobs:
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   COMMITS_JSON: ${{ toJSON(github.event.commits) }}
+                  COMPARE_URL: ${{ github.event.compare }}
               run: |
                   BRANCH="${GITHUB_REF#refs/heads/}"
                   COUNT=$(echo "$COMMITS_JSON" | jq 'length')
                   [ "$COUNT" = "0" ] && exit 0
 
                   LABEL=$([ "$COUNT" = "1" ] && echo "1 new commit" || echo "$COUNT new commits")
-                  REPO_NAME=$(echo "${{ github.repository }}" | cut -d/ -f2)
+                  REPO_NAME=$(echo "$GITHUB_REPOSITORY" | cut -d/ -f2)
                   DESC=$(echo "$COMMITS_JSON" | jq -r '.[0:6] | map(
                     "[`\(.id[0:7])`](\(.url)) \(.message | split("\n")[0] | .[0:60]) - \(.author.name)"
                   ) | join("\n")')
 
                   jq -n \
                     --arg title "[$REPO_NAME:$BRANCH] $LABEL" \
-                    --arg url   "${{ github.event.compare }}" \
+                    --arg url   "$COMPARE_URL" \
                     --arg desc  "$DESC" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
-                    --arg ahref "https://github.com/${{ github.actor }}" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
+                    --arg ahref "https://github.com/$GITHUB_ACTOR" \
                     '{embeds:[{color:5793266,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon,url:$ahref}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
@@ -82,10 +83,12 @@ jobs:
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   PR_BODY_JSON: ${{ toJSON(github.event.pull_request.body) }}
+                  ACTION: ${{ github.event.action }}
+                  MERGED: ${{ github.event.pull_request.merged }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  PR_URL: ${{ github.event.pull_request.html_url }}
               run: |
-                  ACTION="${{ github.event.action }}"
-                  MERGED="${{ github.event.pull_request.merged }}"
-
                   if [ "$ACTION" = "closed" ] && [ "$MERGED" = "true" ]; then
                     LABEL="merged";            COLOR=10181046
                   elif [ "$ACTION" = "closed" ]; then
@@ -105,11 +108,11 @@ jobs:
                   BODY=$(echo "$PR_BODY_JSON" | jq -r '. // "" | .[0:300]')
 
                   jq -n \
-                    --arg title "[${{ github.repository }}] Pull request $LABEL: #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}" \
-                    --arg url   "${{ github.event.pull_request.html_url }}" \
+                    --arg title "[$GITHUB_REPOSITORY] Pull request $LABEL: #$PR_NUMBER $PR_TITLE" \
+                    --arg url   "$PR_URL" \
                     --arg desc  "$BODY" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     --argjson color $COLOR \
                     '{embeds:[{color:$color,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
@@ -123,8 +126,11 @@ jobs:
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   REVIEW_BODY_JSON: ${{ toJSON(github.event.review.body) }}
+                  STATE: ${{ github.event.review.state }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  REVIEW_URL: ${{ github.event.review.html_url }}
               run: |
-                  STATE="${{ github.event.review.state }}"
                   case "$STATE" in
                     approved)           LABEL="approved";              COLOR=5763719  ;;
                     changes_requested)  LABEL="requested changes on";  COLOR=15548997 ;;
@@ -135,11 +141,11 @@ jobs:
                   BODY=$(echo "$REVIEW_BODY_JSON" | jq -r '. // "" | .[0:300]')
 
                   jq -n \
-                    --arg title "[${{ github.repository }}] ${{ github.actor }} $LABEL PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" \
-                    --arg url   "${{ github.event.review.html_url }}" \
+                    --arg title "[$GITHUB_REPOSITORY] $GITHUB_ACTOR $LABEL PR #$PR_NUMBER: $PR_TITLE" \
+                    --arg url   "$REVIEW_URL" \
                     --arg desc  "$BODY" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     --argjson color $COLOR \
                     '{embeds:[{color:$color,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
@@ -153,15 +159,18 @@ jobs:
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   COMMENT_BODY_JSON: ${{ toJSON(github.event.comment.body) }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  COMMENT_URL: ${{ github.event.comment.html_url }}
               run: |
                   BODY=$(echo "$COMMENT_BODY_JSON" | jq -r '. // "" | .[0:300]')
 
                   jq -n \
-                    --arg title "[${{ github.repository }}] New review comment on PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" \
-                    --arg url   "${{ github.event.comment.html_url }}" \
+                    --arg title "[$GITHUB_REPOSITORY] New review comment on PR #$PR_NUMBER: $PR_TITLE" \
+                    --arg url   "$COMMENT_URL" \
                     --arg desc  "$BODY" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     '{embeds:[{color:15105570,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
@@ -174,8 +183,11 @@ jobs:
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   ISSUE_BODY_JSON: ${{ toJSON(github.event.issue.body) }}
+                  ACTION: ${{ github.event.action }}
+                  ISSUE_NUMBER: ${{ github.event.issue.number }}
+                  ISSUE_TITLE: ${{ github.event.issue.title }}
+                  ISSUE_URL: ${{ github.event.issue.html_url }}
               run: |
-                  ACTION="${{ github.event.action }}"
                   case "$ACTION" in
                     opened)   COLOR=5763719  ;;
                     closed)   COLOR=15548997 ;;
@@ -189,11 +201,11 @@ jobs:
                   fi
 
                   jq -n \
-                    --arg title "[${{ github.repository }}] Issue $ACTION: #${{ github.event.issue.number }} ${{ github.event.issue.title }}" \
-                    --arg url   "${{ github.event.issue.html_url }}" \
+                    --arg title "[$GITHUB_REPOSITORY] Issue $ACTION: #$ISSUE_NUMBER $ISSUE_TITLE" \
+                    --arg url   "$ISSUE_URL" \
                     --arg desc  "$BODY" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     --argjson color $COLOR \
                     '{embeds:[{color:$color,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
@@ -207,17 +219,20 @@ jobs:
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   COMMENT_BODY_JSON: ${{ toJSON(github.event.comment.body) }}
+                  IS_PR: ${{ github.event.issue.pull_request != null }}
+                  ISSUE_NUMBER: ${{ github.event.issue.number }}
+                  ISSUE_TITLE: ${{ github.event.issue.title }}
+                  COMMENT_URL: ${{ github.event.comment.html_url }}
               run: |
-                  IS_PR="${{ github.event.issue.pull_request != null }}"
                   KIND=$([ "$IS_PR" = "true" ] && echo "PR" || echo "issue")
                   BODY=$(echo "$COMMENT_BODY_JSON" | jq -r '. // "" | .[0:300]')
 
                   jq -n \
-                    --arg title "[${{ github.repository }}] New comment on $KIND #${{ github.event.issue.number }}: ${{ github.event.issue.title }}" \
-                    --arg url   "${{ github.event.comment.html_url }}" \
+                    --arg title "[$GITHUB_REPOSITORY] New comment on $KIND #$ISSUE_NUMBER: $ISSUE_TITLE" \
+                    --arg url   "$COMMENT_URL" \
                     --arg desc  "$BODY" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     '{embeds:[{color:15105570,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
@@ -229,17 +244,17 @@ jobs:
             - name: Send create-ref embed
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  REF_TYPE: ${{ github.event.ref_type }}
+                  REF: ${{ github.event.ref }}
               run: |
-                  REF_TYPE="${{ github.event.ref_type }}"
-                  REF="${{ github.event.ref }}"
-                  REPO_URL="https://github.com/${{ github.repository }}"
+                  REPO_URL="https://github.com/$GITHUB_REPOSITORY"
 
                   if [ "$REF_TYPE" = "tag" ]; then
-                    TITLE="[${{ github.repository }}] New tag created: $REF"
+                    TITLE="[$GITHUB_REPOSITORY] New tag created: $REF"
                     URL="$REPO_URL/releases/tag/$REF"
                     COLOR=16705372
                   else
-                    TITLE="[${{ github.repository }}] New branch created: $REF"
+                    TITLE="[$GITHUB_REPOSITORY] New branch created: $REF"
                     URL="$REPO_URL/tree/$REF"
                     COLOR=5793266
                   fi
@@ -247,8 +262,8 @@ jobs:
                   jq -n \
                     --arg title "$TITLE" \
                     --arg url   "$URL" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     --argjson color $COLOR \
                     '{embeds:[{color:$color,title:$title,url:$url,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
@@ -261,14 +276,15 @@ jobs:
             - name: Send delete-ref embed
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  REF_TYPE: ${{ github.event.ref_type }}
+                  REF: ${{ github.event.ref }}
               run: |
-                  REF_TYPE="${{ github.event.ref_type }}"
                   LABEL=$([ "$REF_TYPE" = "tag" ] && echo "Tag" || echo "Branch")
 
                   jq -n \
-                    --arg title "[${{ github.repository }}] $LABEL deleted: ${{ github.event.ref }}" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg title "[$GITHUB_REPOSITORY] $LABEL deleted: $REF" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     '{embeds:[{color:15548997,title:$title,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
@@ -281,17 +297,19 @@ jobs:
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   RELEASE_BODY_JSON: ${{ toJSON(github.event.release.body) }}
+                  PRERELEASE: ${{ github.event.release.prerelease }}
+                  TAG_NAME: ${{ github.event.release.tag_name }}
+                  RELEASE_URL: ${{ github.event.release.html_url }}
               run: |
-                  PRERELEASE="${{ github.event.release.prerelease }}"
                   LABEL=$([ "$PRERELEASE" = "true" ] && echo "pre-release" || echo "release")
                   BODY=$(echo "$RELEASE_BODY_JSON" | jq -r '. // "" | .[0:400]')
 
                   jq -n \
-                    --arg title "[${{ github.repository }}] New $LABEL published: ${{ github.event.release.tag_name }}" \
-                    --arg url   "${{ github.event.release.html_url }}" \
+                    --arg title "[$GITHUB_REPOSITORY] New $LABEL published: $TAG_NAME" \
+                    --arg url   "$RELEASE_URL" \
                     --arg desc  "$BODY" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     '{embeds:[{color:16705372,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
@@ -303,11 +321,13 @@ jobs:
             - name: Send workflow run embed
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+                  RUN_NAME: ${{ github.event.workflow_run.name }}
+                  BRANCH: ${{ github.event.workflow_run.head_branch }}
+                  RUN_URL: ${{ github.event.workflow_run.html_url }}
               run: |
-                  CONCLUSION="${{ github.event.workflow_run.conclusion }}"
-                  NAME=$(echo "${{ github.event.workflow_run.name }}" | tr '[:upper:]' '[:lower:]')
-                  BRANCH="${{ github.event.workflow_run.head_branch }}"
-                  REPO_NAME=$(echo "${{ github.repository }}" | cut -d/ -f2)
+                  NAME=$(echo "$RUN_NAME" | tr '[:upper:]' '[:lower:]')
+                  REPO_NAME=$(echo "$GITHUB_REPOSITORY" | cut -d/ -f2)
 
                   case "$CONCLUSION" in
                     success) COLOR=5763719 ;;
@@ -317,7 +337,7 @@ jobs:
 
                   jq -n \
                     --arg title "[$REPO_NAME] $NAME $CONCLUSION on $BRANCH" \
-                    --arg url   "${{ github.event.workflow_run.html_url }}" \
+                    --arg url   "$RUN_URL" \
                     --argjson color $COLOR \
                     '{embeds:[{color:$color,title:$title,url:$url}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
@@ -330,9 +350,12 @@ jobs:
             - name: Send check run embed
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  CONCLUSION: ${{ github.event.check_run.conclusion }}
+                  CHECK_NAME: ${{ github.event.check_run.name }}
+                  BRANCH: ${{ github.event.check_run.check_suite.head_branch }}
+                  CHECK_URL: ${{ github.event.check_run.html_url }}
               run: |
-                  CONCLUSION="${{ github.event.check_run.conclusion }}"
-                  REPO_NAME=$(echo "${{ github.repository }}" | cut -d/ -f2)
+                  REPO_NAME=$(echo "$GITHUB_REPOSITORY" | cut -d/ -f2)
                   case "$CONCLUSION" in
                     success) COLOR=5763719 ;;
                     failure) COLOR=15548997 ;;
@@ -340,8 +363,8 @@ jobs:
                   esac
 
                   jq -n \
-                    --arg title "[$REPO_NAME] ${{ github.event.check_run.name }} $CONCLUSION on ${{ github.event.check_run.check_suite.head_branch }}" \
-                    --arg url   "${{ github.event.check_run.html_url }}" \
+                    --arg title "[$REPO_NAME] $CHECK_NAME $CONCLUSION on $BRANCH" \
+                    --arg url   "$CHECK_URL" \
                     --argjson color $COLOR \
                     '{embeds:[{color:$color,title:$title,url:$url}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
@@ -354,12 +377,14 @@ jobs:
             - name: Send fork embed
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  FORK_NAME: ${{ github.event.forkee.full_name }}
+                  FORK_URL: ${{ github.event.forkee.html_url }}
               run: |
                   jq -n \
-                    --arg title "[${{ github.repository }}] Repository forked to ${{ github.event.forkee.full_name }}" \
-                    --arg url   "${{ github.event.forkee.html_url }}" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg title "[$GITHUB_REPOSITORY] Repository forked to $FORK_NAME" \
+                    --arg url   "$FORK_URL" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     '{embeds:[{color:5793266,title:$title,url:$url,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
@@ -371,12 +396,13 @@ jobs:
             - name: Send member added embed
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+                  MEMBER_LOGIN: ${{ github.event.member.login }}
               run: |
                   jq -n \
-                    --arg title "[${{ github.repository }}] New collaborator added: ${{ github.event.member.login }}" \
-                    --arg url   "https://github.com/${{ github.repository }}" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg title "[$GITHUB_REPOSITORY] New collaborator added: $MEMBER_LOGIN" \
+                    --arg url   "https://github.com/$GITHUB_REPOSITORY" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     '{embeds:[{color:5763719,title:$title,url:$url,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
 
@@ -389,18 +415,20 @@ jobs:
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   DISCUSSION_BODY_JSON: ${{ toJSON(github.event.discussion.body) }}
+                  ACTION: ${{ github.event.action }}
+                  DISCUSSION_TITLE: ${{ github.event.discussion.title }}
+                  DISCUSSION_URL: ${{ github.event.discussion.html_url }}
               run: |
-                  ACTION="${{ github.event.action }}"
                   BODY=""
                   if [ "$ACTION" = "created" ]; then
                     BODY=$(echo "$DISCUSSION_BODY_JSON" | jq -r '. // "" | .[0:300]')
                   fi
 
                   jq -n \
-                    --arg title "[${{ github.repository }}] Discussion $ACTION: ${{ github.event.discussion.title }}" \
-                    --arg url   "${{ github.event.discussion.html_url }}" \
+                    --arg title "[$GITHUB_REPOSITORY] Discussion $ACTION: $DISCUSSION_TITLE" \
+                    --arg url   "$DISCUSSION_URL" \
                     --arg desc  "$BODY" \
-                    --arg name  "${{ github.actor }}" \
-                    --arg icon  "https://github.com/${{ github.actor }}.png" \
+                    --arg name  "$GITHUB_ACTOR" \
+                    --arg icon  "https://github.com/$GITHUB_ACTOR.png" \
                     '{embeds:[{color:5793266,title:$title,url:$url,description:$desc,author:{name:$name,icon_url:$icon}}]}' \
                     | curl -sS -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK"
