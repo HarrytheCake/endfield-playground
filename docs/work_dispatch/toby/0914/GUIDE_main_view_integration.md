@@ -1,65 +1,54 @@
 # GUIDE｜W0914-T1 主畫面接入：怎麼做
 
-配 [W0914-T1](./W0914-T1_main_view_integration.md) 看。這份只講「怎麼做」，範圍與驗收看工單。
+配 [W0914-T1](./W0914-T1_main_view_integration.md) 看。範圍與驗收看工單。
+
+**開工條件：[#45](https://github.com/dernoson/endfield-playground/pull/45) 已合入 master。** 合入前先讀這份、對好檔案計畫即可，不要先用 fixture 頂替接線。
 
 ---
 
-## 1. 先跑起來，確認你在改的是哪個畫面
+## 1. 先跑起來
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-打開首頁。你會看到：上面 Navbar、左邊可收合的專案選單、**中間一大塊畫布**、下面工具列、右邊 Inspector。
+首頁：Navbar、左側專案選單、**中間畫布**、下方工具列、右側產線總覽（StatsPanel）、更右側 Inspector。
 
-**中間那塊就是你要換的東西。** 它現在是 `src/editor/canvas/FactoryCanvas.vue`（Vue Flow 版），掛在 `src/app/layouts/MainLayout.vue` 的 `area-canvas` 裡。
-
-順便確認上週的東西還在：`src/editor/layout/GridCanvas.vue` 已經在 master 上了（[#46](https://github.com/dernoson/endfield-playground/pull/46) 合入）。
+**中間那塊**現在是 `FactoryCanvas.vue`，掛在 `MainLayout.vue` 的 `area-canvas`。  
+確認 `src/editor/layout/GridCanvas.vue` 已在 master（#46），且 `src/store/layoutStore.ts` 已在 master（#45）。
 
 ---
 
-## 2. 容器骨架（可照抄）
+## 2. 容器骨架（合入 #45 後可照抄）
 
-新建 `src/editor/layout/LayoutView.vue`。這是**最小可跑版本**，資料先走 fixture：
+新建 `src/editor/layout/LayoutView.vue`：
 
 ```vue
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { onMounted } from 'vue';
 import GridCanvas from '@/editor/layout/GridCanvas.vue';
-import FactoryCanvas from '@/editor/canvas/FactoryCanvas.vue';
-import { getMockLayoutScenario } from '@/data/mockLayout';
+import { useLayoutStore } from '@/store/layoutStore';
+import { getMockLayoutScenario, toLayoutSnapshot } from '@/data/mockLayout';
 
-/** 是否使用新格點畫布；關閉時退回舊 Vue Flow 畫布 */
-const useGridCanvas = ref(true);
+const layout = useLayoutStore();
 
-// TODO(W0914-T1): #45 合入後改讀 useLayoutStore()
-/** 暫時資料來源：L1 預覽 fixture */
-const scenario = computed(() => getMockLayoutScenario('connected'));
+onMounted(() => {
+    // 首次進畫面若沒資料，載一組 fixture 當初始內容（僅此一處用 mock）
+    if (layout.devices.length === 0) {
+        layout.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')));
+    }
+});
 </script>
 
 <template>
-    <div class="relative h-full w-full">
-        <GridCanvas
-            v-if="useGridCanvas"
-            :devices="scenario.devices"
-            :pipelines="scenario.pipelines"
-        />
-        <FactoryCanvas v-else />
-
-        <UButton
-            class="absolute top-2 right-2"
-            size="xs"
-            variant="soft"
-            @click="useGridCanvas = !useGridCanvas"
-        >
-            {{ useGridCanvas ? '切回舊畫布' : '切到新畫布' }}
-        </UButton>
+    <div class="relative h-full w-full overflow-auto">
+        <GridCanvas :devices="layout.devices" :pipelines="layout.pipelines" />
     </div>
 </template>
 ```
 
-然後把 `MainLayout.vue` 的那三行換掉：
+`MainLayout.vue`：
 
 ```diff
 -import FactoryCanvas from '@/editor/canvas/FactoryCanvas.vue';
@@ -73,67 +62,37 @@ const scenario = computed(() => getMockLayoutScenario('connected'));
  </div>
 ```
 
-到這裡就已經達成一句話驗收了。剩下的是把資料來源換成真的。
+**本週不做切換開關。** 舊 `FactoryCanvas` 留在 repo 裡即可，照稿的視角切換器下週另派。
 
 ---
 
-## 3. #45 合入後，把資料換成 store
+## 3. layoutStore 讀取面
 
-`layoutStore` 的讀取面（合入後可用）：
+| 你要的 | 怎麼拿 |
+|--------|--------|
+| 設備 | `layout.devices`（readonly） |
+| 管線 | `layout.pipelines` |
+| 衍生連線 | `layout.connections`（本週可不畫） |
+| 初始資料 | `layout.loadSnapshot(...)` |
 
-| 你要的 | 怎麼拿 | 注意 |
-|--------|--------|------|
-| 設備陣列 | `layout.devices` | `readonly`，不能直接改 |
-| 管線陣列 | `layout.pipelines` | 同上 |
-| 衍生連線 | `layout.connections` | 是 getter，每次重算；本週不需要 |
-| 目前佈局的問題 | `layout.layoutIssues` | 之後畫紅框用；本週不需要 |
-| 塞一組初始資料進去 | `layout.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')))` | 有人手上沒資料時，畫面才不會全空 |
-
-改法：
-
-```ts
-import { useLayoutStore } from '@/store/layoutStore';
-import { getMockLayoutScenario, toLayoutSnapshot } from '@/data/mockLayout';
-
-const layout = useLayoutStore();
-
-// 首次進畫面若沒有資料，載入一組 fixture 當初始內容
-if (layout.devices.length === 0) {
-    layout.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')));
-}
-```
-
-template 那邊改成 `:devices="layout.devices"`、`:pipelines="layout.pipelines"`。
-
-`readonly` 造成型別不合時**不要用 `as any` 硬轉**——在 PR 或 Discord 貼一行給 aaaaa 看，讀取面的型別是他負責的。
+`readonly` 造成型別不合時**不要 `as any`**——貼型別給 aaaaa。
 
 ---
 
-## 4. 接 harry 的平移縮放（可選，看 #47 有沒有合入）
+## 4. 接 harry 的平移縮放（可選）
 
-`useGridViewport` 是一個 composable，回傳目前的平移／縮放狀態與事件處理。用法看他 PR body 那行說明（他會寫平移用哪個鍵、縮放範圍多少）。
-
-接的方式是**在你的容器外層包一個會動的 `<g>` 或 CSS transform**，不是去改他的檔：
-
-```text
-LayoutView.vue（你的）
-  ├─ useGridViewport()  ← import 他的 composable，允許
-  └─ GridCanvas.vue（你的）  ← 若需要吃 transform，你改這支
-```
-
-`GridCanvas` 目前是自己算 `width`／`height` 的固定 SVG。要支援縮放，最省的做法是在外層 `div` 套 CSS `transform: translate(...) scale(...)`，**先不要動 SVG 內部的座標計算**——那會連帶影響上週已經對好的佔格。
+#47 合入後，在 `LayoutView` **import** `useGridViewport`，外層套 transform。需要改 `GridCanvas` 才接得上時——那支檔是你的，你改；請他 Discord 說明要什麼。
 
 ---
 
 ## 5. 常見錯誤
 
-| 症狀 | 原因 | 怎麼修 |
-|------|------|--------|
-| 畫布是空的 | store 裡沒資料 | 用 §3 的 `loadSnapshot` 載 fixture |
-| 設備方塊只有一格，但機器是 3×3 | `machineType` 在 `src/data/machines.ts` 查不到 | 用 fixture 裡的 `splitter` 先驗證，再換別的機型 |
-| 畫布被裁切／看不到全部 | `area-canvas` 的高度是 grid 給的，SVG 比它大 | 容器加 `overflow-auto`（`GridCanvas` 自己已有一層） |
-| type-check 抱怨 `readonly` | 把 `readonly` 陣列傳進要求可變陣列的 prop | 貼型別給 aaaaa，不要 `as any` |
-| lint 抱怨 import 順序 | 專案有 import 排序規則 | `pnpm lint` 會自動修大部分 |
+| 症狀 | 怎麼修 |
+|------|--------|
+| 畫布空的 | `loadSnapshot` 載初始內容 |
+| 只有一格 | `machineType` 查不到；先用 fixture 的 `splitter` |
+| type-check 抱怨 readonly | 找 aaaaa，不要硬轉 |
+| 不小心做了角落切換鈕 | 本週範圍外；拿掉 |
 
 ---
 
@@ -142,8 +101,8 @@ LayoutView.vue（你的）
 ```bash
 pnpm type-check
 pnpm lint-check
-grep -n "store\|vue-flow" src/editor/layout/GridCanvas.vue   # 應該沒有輸出
-git diff --stat                                              # 應該只有 3 支檔
+grep -n "store\|vue-flow" src/editor/layout/GridCanvas.vue   # 應無輸出
+git diff --stat
 ```
 
-三支檔＝`LayoutView.vue`（新）、`MainLayout.vue`、（若你改了）`GridCanvas.vue`。
+預期檔：`LayoutView.vue`（新）、`MainLayout.vue`、（若需要）`GridCanvas.vue`。

@@ -4,9 +4,9 @@
 |------|-------|
 | 週次 | 2026-09-14 → 2026-09-20 |
 | 等級 | **確定・最優先**（本週唯一必要條件的前置） |
-| 擋門檻 | **是**（9/27 必要項已擴大為 B1＋B2＋B4，本項是 B2／B4 的共同前置） |
+| 擋門檻 | **是**（T1 開工前置；9/27 硬綁仍只押 B1。B2／B4 擴大必要項已撤回） |
 | 對應 PR | [#45](https://github.com/dernoson/endfield-playground/pull/45)（開著；依 review 收尾） |
-| 上游 | [WEEK_20260914](../../WEEK_20260914.md)、[ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) v1.8 §R-B2 |
+| 上游 | [WEEK_20260914](../../WEEK_20260914.md) v1.1、[ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) v1.9 |
 | 產能參考 | 自報 3–5h；本項優先吃滿 |
 | 合入序 | **#45 排第一**，其後才是 #47、#48 |
 
@@ -16,9 +16,11 @@
 
 上週 [A0](../0907/W0907-A0_layout_store_model.md) 的四點契約已經寫完並開了 PR，但**正式樹上還沒有 store**：`origin/master` 目前 `src/store/layoutStore.ts` 不存在。本週的事只有一件——**把它送進 master**。
 
-過關的一句話：**master 上有 `useLayoutStore()`，toby 的容器 import 得到，不用再抱 fixture。**
+過關的一句話：**master 上有 `useLayoutStore()`，toby 的容器 import 得到。**
 
-這條線本週從「加分」升級成**擋門檻**：主編 9/14 已裁定 B2（擺放）與 B4（選取）回列 9/27 必要項，兩者都要吃你的 store。
+本項是 **T1 開工前置**（主編 09/15：#45 合入後 toby 才開工，不以 fixture 頂替）。
+
+**關於 B2／B4：** PR #45 review 時曾誤以為要提前列 9/27 必要——主編已撤回。M2 恢復**硬綁 B1**；擺放／選取等佈局底層接完再開。你若超前做 A1 草案，**交了就審，不限制速度**。
 
 ---
 
@@ -102,4 +104,4 @@ src/__tests__/app/layoutStorePreviewUtils.test.ts
 
 ## 8. 未交頂替
 
-**無頂替。** 本項未合入時，9/27 的 B2／B4 必要項須於 9/20 週日會依 [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) §11 重新降級，由主編書面裁定縮到哪。見 [WEEK_20260914](../../WEEK_20260914.md) §2.1。
+**無頂替。** 本項未合入時，toby T1 **不得開工**（主編裁）。9/27 硬綁仍是 B1；B2／B4 不因本項未合而自動升格為必要。
