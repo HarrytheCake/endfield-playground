@@ -1,14 +1,18 @@
 <script setup lang="ts">
 /**
- * V12-D1 — `/dev/layout-store-preview` 佈局 store 互動演示
+ * V12-D1 — 佈局 store 互動演示（開發進度存證頁）
+ *
+ * 入口是 Vite 獨立 HTML，不掛 `src/router`／`DevLayout.vue`：
+ * `pnpm dev` → `http://localhost:5173/dev/layout-store-preview.html`  \
+ *（見 `src/app/dev/standalone/layoutStorePreviewMain.ts`）
  *
  * 資料：toolbarMachines 真實機器列＋layoutStore 讀寫。  \
- * 操作：預設點放置／點格放置／移動／刪除／兩機自動拉 belt。  \
+ * 操作：預設點放置／點格放置／移動／刪除／兩機自動拉 belt／兩埠自動拉／手動拉線。  \
  * **不** import editorStore；不改 ToolbarPanel／GridCanvas。
  */
 import { computed, ref } from 'vue';
 import type { MachineCategory } from '@/types/machine';
-import type { PlacementResult, PlacedDevice } from '@/types/layout';
+import type { PlacementResult, PlacedDevice, PortDirection } from '@/types/layout';
 import { getMachineById } from '@/data/machines';
 import {
     getMockLayoutScenario,
@@ -23,10 +27,12 @@ import {
     type ToolbarMachineRow,
 } from '@/editor/toolbar/toolbarMachines';
 import { useLayoutStore } from '@/store/layoutStore';
+import { useHistoryStore } from '@/store/historyStore';
 import { getDeviceOccupiedCells } from '@/utils/layout/deviceOccupancy';
 import { deviceSizeFromMachine, toDeviceFootprint } from '@/utils/layout/toFootprint';
 import {
     buildBlockedXy,
+    findRoutableBeltBetweenAnchors,
     findRoutableBeltWaypoints,
     listPortAnchors,
 } from '@/app/dev/layoutStorePreviewUtils';
@@ -38,7 +44,18 @@ const GRID_H = 10;
 /** 預設落點（按鈕「放到預設點」） */
 const DEFAULT_PLACE: { x: number; y: number; z: number } = { x: 2, y: 2, z: 0 };
 
+/** belt 互動模式 */
+type BeltMode = 'device' | 'port' | 'manual';
+
+interface PortPick {
+    deviceId: string;
+    kind: PortDirection;
+    x: number;
+    y: number;
+}
+
 const layoutStore = useLayoutStore();
+const historyStore = useHistoryStore();
 
 const machineTag = ref<MachineCategory>(DEFAULT_TOOLBAR_MACHINE_TAG);
 const selectedMachineId = ref<string>(
@@ -47,7 +64,13 @@ const selectedMachineId = ref<string>(
 const placeCursor = ref<{ x: number; y: number; z: number }>({ ...DEFAULT_PLACE });
 const selectedDeviceId = ref<string | null>(null);
 const beltTargetId = ref<string | null>(null);
+const beltMode = ref<BeltMode>('device');
+const portFrom = ref<PortPick | null>(null);
+const portTo = ref<PortPick | null>(null);
+const manualWaypoints = ref<Array<{ x: number; y: number; z: number }>>([]);
 const lastResult = ref<PlacementResult | null>(null);
+/** 頁面自身的失敗訊息（例如繞不出路徑）；與 store 判定分開 */
+const uiError = ref<string | null>(null);
 const statusMsg = ref('選機器 → 放到預設點或點空格；點兩台設備後可拉 belt');
 
 let uidSeq = 0;
@@ -61,6 +84,22 @@ const machineRows = computed(() => listToolbarMachines(machineTag.value));
 const selectedRow = computed(
     () => machineRows.value.find((r) => r.id === selectedMachineId.value) ?? null,
 );
+
+/** 真正出錯的 id（來自 layoutIssues） */
+const issueIds = computed(() => {
+    const ids = new Set<string>();
+    const issues = layoutStore.layoutIssues;
+    if (issues.ok) return ids;
+    if (issues.reason === 'overlap') {
+        for (const [a, b] of issues.conflicts) {
+            ids.add(a);
+            ids.add(b);
+        }
+    } else if (issues.invalidIds) {
+        for (const id of issues.invalidIds) ids.add(id);
+    }
+    return ids;
+});
 
 /** 設備佔格（xy） */
 const deviceCells = computed(() => {
@@ -120,7 +159,7 @@ const linkedAnchorKeys = computed(() => {
  *
  * - 綠圓＝輸出；橙方＝輸入
  * - 已連線端點加大＋白描邊高亮
- * - 選為 belt 起點／終點的設備埠再加粗外圈
+ * - 選為 belt 起點／終點的設備埠再加粗外圈；埠模式另標 portFrom／portTo
  */
 const portMarkers = computed(() => {
     const markers: Array<{
@@ -131,6 +170,7 @@ const portMarkers = computed(() => {
         deviceId: string;
         linked: boolean;
         emphasis: boolean;
+        picked: boolean;
     }> = [];
 
     for (const device of layoutStore.devices) {
@@ -139,6 +179,13 @@ const portMarkers = computed(() => {
 
         for (const a of listPortAnchors(device, 'output')) {
             const xy = `${a.x},${a.y}`;
+            const picked =
+                (portFrom.value?.x === a.x &&
+                    portFrom.value?.y === a.y &&
+                    portFrom.value.deviceId === device.id) ||
+                (portTo.value?.x === a.x &&
+                    portTo.value?.y === a.y &&
+                    portTo.value.deviceId === device.id);
             markers.push({
                 key: `out-${device.id}-${xy}`,
                 x: a.x,
@@ -147,10 +194,18 @@ const portMarkers = computed(() => {
                 deviceId: device.id,
                 linked: linkedAnchorKeys.value.has(xy),
                 emphasis: emphasizeOut,
+                picked,
             });
         }
         for (const a of listPortAnchors(device, 'input')) {
             const xy = `${a.x},${a.y}`;
+            const picked =
+                (portFrom.value?.x === a.x &&
+                    portFrom.value?.y === a.y &&
+                    portFrom.value.deviceId === device.id) ||
+                (portTo.value?.x === a.x &&
+                    portTo.value?.y === a.y &&
+                    portTo.value.deviceId === device.id);
             markers.push({
                 key: `in-${device.id}-${xy}`,
                 x: a.x,
@@ -159,6 +214,7 @@ const portMarkers = computed(() => {
                 deviceId: device.id,
                 linked: linkedAnchorKeys.value.has(xy),
                 emphasis: emphasizeIn,
+                picked,
             });
         }
     }
@@ -186,13 +242,25 @@ function portRefLabel(
     return `${ref.deviceId}.${ref.portType}[${ref.portIndex}]`;
 }
 
+/** 頁面自身的失敗（找不到路徑等）；不是 store 的判定，不混進 lastResult */
+function failLocally(msg: string): void {
+    uiError.value = msg;
+    statusMsg.value = `失敗（頁面）：${msg}`;
+}
+
 function applyResult(result: PlacementResult, okMsg: string): void {
     lastResult.value = result;
+    uiError.value = null;
     if (result.ok) {
         statusMsg.value = okMsg;
-    } else {
-        statusMsg.value = `失敗：${result.reason}`;
+        return;
     }
+    if (result.reason === 'overlap') {
+        statusMsg.value = `失敗：overlap（${result.conflicts.map(([a, b]) => `${a}↔${b}`).join(', ')}）`;
+        return;
+    }
+    const ids = result.invalidIds?.join(', ') ?? '';
+    statusMsg.value = ids ? `失敗：invalid（${ids}）` : '失敗：invalid';
 }
 
 function buildDevice(row: ToolbarMachineRow, x: number, y: number): PlacedDevice {
@@ -208,6 +276,21 @@ function buildDevice(row: ToolbarMachineRow, x: number, y: number): PlacedDevice
 function selectMachine(row: ToolbarMachineRow): void {
     selectedMachineId.value = row.id;
     statusMsg.value = `已選機器：${row.name}（${row.sizeText}）`;
+}
+
+function setBeltMode(mode: BeltMode): void {
+    beltMode.value = mode;
+    portFrom.value = null;
+    portTo.value = null;
+    manualWaypoints.value = [];
+    uiError.value = null;
+    if (mode === 'device') {
+        statusMsg.value = '設備模式：點兩台設備後按「自動拉 belt」';
+    } else if (mode === 'port') {
+        statusMsg.value = '埠模式：先點輸出埠（綠），再點輸入埠（橙）自動拉線';
+    } else {
+        statusMsg.value = '手動模式：依序點格子加 waypoints，再按「完成手動拉線」';
+    }
 }
 
 function placeAt(x: number, y: number): void {
@@ -250,7 +333,11 @@ function moveSelected(dx: number, dy: number): void {
         return;
     }
     const device = layoutStore.devices.find((d) => d.id === id);
-    if (!device) return;
+    if (!device) {
+        syncSelectionWithStore();
+        failLocally('選取的設備已不存在（可能被刪除或 undo），請重新點選');
+        return;
+    }
     const next = {
         x: device.position.x + dx,
         y: device.position.y + dy,
@@ -266,30 +353,34 @@ function removeSelected(): void {
         statusMsg.value = '請先點選一台已放置設備';
         return;
     }
-    layoutStore.removeDevice(id);
-    if (beltTargetId.value === id) beltTargetId.value = null;
-    selectedDeviceId.value = null;
-    lastResult.value = { ok: true };
-    statusMsg.value = `已刪除 ${id}（管線保留，可能斷線）`;
+    const result = layoutStore.removeDevice(id);
+    applyResult(result, `已刪除 ${id}（管線保留，可能斷線）`);
+    syncSelectionWithStore();
 }
 
 function clearAll(): void {
-    layoutStore.loadSnapshot({ devices: [], pipelines: [] });
+    const result = layoutStore.loadSnapshot({ devices: [], pipelines: [] });
     selectedDeviceId.value = null;
     beltTargetId.value = null;
-    lastResult.value = null;
-    statusMsg.value = '已清空；可從工具列選機放置';
+    portFrom.value = null;
+    portTo.value = null;
+    manualWaypoints.value = [];
+    applyResult(result, '已清空；可從工具列選機放置');
 }
 
 function loadFixture(id: MockLayoutScenarioId): void {
-    layoutStore.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario(id)));
+    const result = layoutStore.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario(id)));
     selectedDeviceId.value = null;
     beltTargetId.value = null;
-    lastResult.value = { ok: true };
-    statusMsg.value = `已載入 fixture：${id}`;
+    portFrom.value = null;
+    portTo.value = null;
+    manualWaypoints.value = [];
+    applyResult(result, `已載入 fixture：${id}`);
 }
 
 function onDeviceClick(deviceId: string): void {
+    if (beltMode.value !== 'device') return;
+
     if (!selectedDeviceId.value) {
         selectedDeviceId.value = deviceId;
         beltTargetId.value = null;
@@ -306,12 +397,149 @@ function onDeviceClick(deviceId: string): void {
     statusMsg.value = `起點 ${selectedDeviceId.value} → 終點 ${deviceId}；可按「自動拉 belt」`;
 }
 
+function tryAutoBeltBetweenPorts(from: PortPick, to: PortPick): void {
+    const blocked = buildBlockedXy(layoutStore.devices, layoutStore.pipelines);
+    const waypoints = findRoutableBeltBetweenAnchors(
+        { x: from.x, y: from.y },
+        { x: to.x, y: to.y },
+        blocked,
+    );
+    if (!waypoints) {
+        failLocally('兩埠之間找不到不穿過設備／既有管線的路徑');
+        return;
+    }
+    const result = layoutStore.addPipeline({
+        id: nextUid('belt'),
+        media: 'belt',
+        waypoints,
+    });
+    applyResult(
+        result,
+        `已拉 belt（埠）：${from.deviceId}@(${from.x},${from.y}) → ${to.deviceId}@(${to.x},${to.y})`,
+    );
+    if (result.ok) {
+        portFrom.value = null;
+        portTo.value = null;
+    }
+}
+
+function samePort(a: PortPick, b: PortPick): boolean {
+    return a.deviceId === b.deviceId && a.kind === b.kind && a.x === b.x && a.y === b.y;
+}
+
+/**
+ * 埠模式：湊成一對就拉線。
+ *
+ * `resolveConnections` 起點偏好 output、終點偏好 input，  \
+ * 反向畫出的 belt 兩端仍非 null（會誤顯示「已連接」），  \
+ * 所以這裡固定把 output 當起點，先點 input 只是順序不同而非反向。
+ */
+function onPortClick(port: PortPick, evt: MouseEvent): void {
+    evt.stopPropagation();
+    if (beltMode.value !== 'port') {
+        statusMsg.value = '請先切到「點兩埠拉線」模式';
+        return;
+    }
+
+    const first = portFrom.value;
+    if (!first) {
+        portFrom.value = port;
+        portTo.value = null;
+        statusMsg.value = `埠起點：${port.kind === 'output' ? '輸出' : '輸入'} ${port.deviceId}@(${port.x},${port.y})；再點另一端`;
+        return;
+    }
+
+    if (samePort(first, port)) {
+        portFrom.value = null;
+        portTo.value = null;
+        statusMsg.value = '已取消埠起點';
+        return;
+    }
+
+    if (first.kind === port.kind) {
+        portFrom.value = port;
+        portTo.value = null;
+        failLocally(
+            `belt 必須由輸出接到輸入；兩端都是${port.kind === 'output' ? '輸出' : '輸入'}埠，已改以此埠為起點`,
+        );
+        return;
+    }
+
+    if (first.deviceId === port.deviceId) {
+        failLocally('同一台設備的輸出接自己的輸入沒有意義，請換一台');
+        return;
+    }
+
+    const out = first.kind === 'output' ? first : port;
+    const inp = first.kind === 'output' ? port : first;
+    portFrom.value = out;
+    portTo.value = inp;
+    tryAutoBeltBetweenPorts(out, inp);
+}
+
+/**
+ * 手動模式加一點。
+ *
+ * 佔格展開要求逐段軸對齊（見 `getPipelineOccupiedCells` 前置條件），  \
+ * 斜著點會被 store 判 invalid，所以這裡先補一個明示的轉角點（先水平再垂直）。
+ */
+function appendManualWaypoint(x: number, y: number): void {
+    const last = manualWaypoints.value[manualWaypoints.value.length - 1];
+    if (last && last.x === x && last.y === y) return;
+
+    const added: Array<{ x: number; y: number; z: number }> = [];
+    if (last && last.x !== x && last.y !== y) {
+        added.push({ x, y: last.y, z: 0 });
+    }
+    added.push({ x, y, z: 0 });
+
+    manualWaypoints.value = [...manualWaypoints.value, ...added];
+    uiError.value = null;
+    statusMsg.value =
+        added.length > 1
+            ? `已補轉角 (${x},${last!.y})；手動 waypoints=${manualWaypoints.value.length}`
+            : `手動 waypoints=${manualWaypoints.value.length}；點「完成手動拉線」或繼續點格`;
+}
+
+function commitManualBelt(): void {
+    if (manualWaypoints.value.length < 2) {
+        statusMsg.value = '手動拉線至少需要 2 個 waypoints';
+        return;
+    }
+    const result = layoutStore.addPipeline({
+        id: nextUid('belt'),
+        media: 'belt',
+        waypoints: manualWaypoints.value.map((w) => ({ ...w })),
+    });
+    applyResult(result, `已手動拉 belt（waypoints=${manualWaypoints.value.length}）`);
+    if (result.ok) {
+        manualWaypoints.value = [];
+    }
+}
+
+function clearManualDraft(): void {
+    manualWaypoints.value = [];
+    statusMsg.value = '已清除手動草稿';
+}
+
 function onGridClick(evt: MouseEvent): void {
     const svg = evt.currentTarget as SVGSVGElement;
     const rect = svg.getBoundingClientRect();
     const gx = Math.floor((evt.clientX - rect.left) / CELL);
     const gy = Math.floor((evt.clientY - rect.top) / CELL);
     if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) return;
+
+    if (beltMode.value === 'manual') {
+        appendManualWaypoint(gx, gy);
+        placeCursor.value = { x: gx, y: gy, z: 0 };
+        return;
+    }
+
+    if (beltMode.value === 'port') {
+        placeCursor.value = { x: gx, y: gy, z: 0 };
+        statusMsg.value = '埠模式請點綠／橙埠標記（不要點設備本體）';
+        return;
+    }
 
     const owner = cellOwner.value.get(`${gx},${gy}`);
     if (owner) {
@@ -332,14 +560,17 @@ function autoBelt(): void {
     }
     const fromDev = layoutStore.devices.find((d) => d.id === fromId);
     const toDev = layoutStore.devices.find((d) => d.id === toId);
-    if (!fromDev || !toDev) return;
+    if (!fromDev || !toDev) {
+        syncSelectionWithStore();
+        failLocally('選取的設備已不存在（可能被刪除或 undo），請重新點選');
+        return;
+    }
 
     /** 封鎖＝所有設備佔格＋既有管線（路徑須繞開，否則 addPipeline 會 overlap） */
     const blocked = buildBlockedXy(layoutStore.devices, layoutStore.pipelines);
     const waypoints = findRoutableBeltWaypoints(fromDev, toDev, blocked);
     if (!waypoints) {
-        lastResult.value = { ok: false, reason: 'invalid' };
-        statusMsg.value = '失敗：invalid（找不到不穿過設備的 belt 路徑；試加大兩機間距或換方向）';
+        failLocally('找不到不穿過設備的 belt 路徑；試加大兩機間距或換方向');
         return;
     }
 
@@ -351,13 +582,56 @@ function autoBelt(): void {
     applyResult(result, `已拉 belt：${fromId} → ${toId}（waypoints=${waypoints.length}）`);
 }
 
+/** undo／redo 或刪除後，丟掉指向已不存在設備／埠的選取 */
+function syncSelectionWithStore(): void {
+    const alive = new Set(layoutStore.devices.map((d) => d.id));
+    if (selectedDeviceId.value && !alive.has(selectedDeviceId.value)) {
+        selectedDeviceId.value = null;
+    }
+    if (beltTargetId.value && !alive.has(beltTargetId.value)) {
+        beltTargetId.value = null;
+    }
+    if (portFrom.value && !alive.has(portFrom.value.deviceId)) {
+        portFrom.value = null;
+    }
+    if (portTo.value && !alive.has(portTo.value.deviceId)) {
+        portTo.value = null;
+    }
+}
+
+function undoLast(): void {
+    if (!historyStore.canUndo) {
+        statusMsg.value = '沒有可 undo 的操作';
+        return;
+    }
+    const cmd = historyStore.undo();
+    syncSelectionWithStore();
+    lastResult.value = null;
+    uiError.value = null;
+    statusMsg.value = `已 undo：${cmd?.label ?? ''}`;
+}
+
+function redoLast(): void {
+    if (!historyStore.canRedo) {
+        statusMsg.value = '沒有可 redo 的操作';
+        return;
+    }
+    const cmd = historyStore.redo();
+    syncSelectionWithStore();
+    lastResult.value = null;
+    uiError.value = null;
+    statusMsg.value = `已 redo：${cmd?.label ?? ''}`;
+}
+
 function deviceStroke(deviceId: string): string {
+    if (issueIds.value.has(deviceId)) return '#dc2626';
     if (deviceId === selectedDeviceId.value) return '#2563eb';
     if (deviceId === beltTargetId.value) return '#7c3aed';
     return '#0284c7';
 }
 
 function deviceFill(deviceId: string): string {
+    if (issueIds.value.has(deviceId)) return '#fecaca';
     if (deviceId === selectedDeviceId.value) return '#bfdbfe';
     if (deviceId === beltTargetId.value) return '#ddd6fe';
     return '#bae6fd';
@@ -388,8 +662,9 @@ const snapshotSummary = computed(() => {
             </h2>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 真實機器（<code>toolbarMachines</code>）→
-                <code>layoutStore</code> 讀寫演示。含預設點放置、點格放置、移動／刪除、兩機自動拉
-                belt。不接 editorStore／不改 ToolbarPanel。
+                <code>layoutStore</code>
+                讀寫演示。含放置／移動／刪除、兩機自動拉、兩埠自動拉、手動拉線、undo／redo。
+                獨立入口（不掛 <code>src/router</code>）；不接 editorStore／不改 ToolbarPanel。
             </p>
         </header>
 
@@ -400,21 +675,22 @@ const snapshotSummary = computed(() => {
             pipelines={{ layoutStore.pipelines.length }} · connections={{
                 layoutStore.connections.length
             }}
-            · 游標 ({{ placeCursor.x }},{{ placeCursor.y }})
+            · 游標 ({{ placeCursor.x }},{{ placeCursor.y }}) · mode={{ beltMode }}
         </div>
 
         <p
             class="rounded border px-3 py-2 text-sm"
             :class="
-                lastResult && !lastResult.ok
+                uiError || (lastResult && !lastResult.ok)
                     ? 'border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-100'
                     : 'border-gray-200 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
             "
         >
             {{ statusMsg }}
-            <span v-if="lastResult" class="ml-2 font-mono text-xs"
-                >last={{ lastResult.ok ? 'ok' : lastResult.reason }}</span
+            <span v-if="lastResult && !uiError" class="ml-2 font-mono text-xs"
+                >store={{ lastResult.ok ? 'ok' : lastResult.reason }}</span
             >
+            <span v-if="uiError" class="ml-2 font-mono text-xs">store=（未呼叫）</span>
         </p>
 
         <!-- 真實機器（toolbar 資料） -->
@@ -464,6 +740,60 @@ const snapshotSummary = computed(() => {
             class="space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
         >
             <h3 class="text-sm font-semibold text-gray-900 dark:text-white">預設操作</h3>
+            <div class="flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    class="rounded-lg border px-3 py-1.5 text-sm"
+                    :class="
+                        beltMode === 'device'
+                            ? 'border-violet-500 bg-violet-50 text-violet-900 dark:bg-violet-950'
+                            : 'border-gray-200 dark:border-gray-600'
+                    "
+                    @click="setBeltMode('device')"
+                >
+                    點兩機拉線
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg border px-3 py-1.5 text-sm"
+                    :class="
+                        beltMode === 'port'
+                            ? 'border-violet-500 bg-violet-50 text-violet-900 dark:bg-violet-950'
+                            : 'border-gray-200 dark:border-gray-600'
+                    "
+                    @click="setBeltMode('port')"
+                >
+                    點兩埠拉線
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg border px-3 py-1.5 text-sm"
+                    :class="
+                        beltMode === 'manual'
+                            ? 'border-violet-500 bg-violet-50 text-violet-900 dark:bg-violet-950'
+                            : 'border-gray-200 dark:border-gray-600'
+                    "
+                    @click="setBeltMode('manual')"
+                >
+                    手動拉線
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg border px-3 py-1.5 text-sm dark:border-gray-600"
+                    :disabled="!historyStore.canUndo"
+                    @click="undoLast"
+                >
+                    Undo
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg border px-3 py-1.5 text-sm dark:border-gray-600"
+                    :disabled="!historyStore.canRedo"
+                    @click="redoLast"
+                >
+                    Redo
+                </button>
+            </div>
             <div class="flex flex-wrap gap-2">
                 <button
                     type="button"
@@ -547,9 +877,26 @@ const snapshotSummary = computed(() => {
                 <button
                     type="button"
                     class="rounded-lg border border-violet-500 bg-violet-600 px-3 py-2 text-sm text-white"
+                    :disabled="beltMode !== 'device'"
                     @click="autoBelt"
                 >
-                    自動拉 belt（起點→終點）
+                    自動拉 belt（兩機）
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg border border-emerald-500 bg-emerald-600 px-3 py-2 text-sm text-white"
+                    :disabled="beltMode !== 'manual' || manualWaypoints.length < 2"
+                    @click="commitManualBelt"
+                >
+                    完成手動拉線（{{ manualWaypoints.length }}）
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg border px-3 py-2 text-sm dark:border-gray-600"
+                    :disabled="manualWaypoints.length === 0"
+                    @click="clearManualDraft"
+                >
+                    清手動草稿
                 </button>
                 <button
                     type="button"
@@ -560,7 +907,9 @@ const snapshotSummary = computed(() => {
                 </button>
             </div>
             <p class="text-xs text-gray-500">
-                藍框＝起點選取；紫框＝belt 終點。點空格＝放置選中機器。
+                設備模式：藍／紫框＝起終點。埠模式：點綠圓（輸出）與橙方（輸入）各一，順序不限，
+                store 內固定以輸出為起點。手動：依序點格，斜著點會自動補轉角。紅框＝`layoutIssues`
+                指出的真正出錯 id。
             </p>
         </section>
 
@@ -677,50 +1026,105 @@ const snapshotSummary = computed(() => {
                     />
                 </g>
 
-                <!-- belt 埠錨點：綠＝輸出、橙＝輸入；已連線／選取高亮 -->
-                <g class="pointer-events-none">
+                <!-- 手動草稿路徑 -->
+                <g v-if="manualWaypoints.length > 0" class="pointer-events-none">
+                    <path
+                        v-if="manualWaypoints.length > 1"
+                        :d="pipelinePath(manualWaypoints)"
+                        fill="none"
+                        stroke="#9333ea"
+                        stroke-width="2"
+                        stroke-dasharray="5 4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                    <circle
+                        v-for="(wp, wi) in manualWaypoints"
+                        :key="`manual-${wi}`"
+                        :cx="(wp.x + 0.5) * CELL"
+                        :cy="(wp.y + 0.5) * CELL"
+                        r="3"
+                        fill="#a855f7"
+                    />
+                </g>
+
+                <!-- belt 埠錨點：綠＝輸出、橙＝輸入；埠模式可點 -->
+                <g>
                     <template v-for="port in portMarkers" :key="port.key">
-                        <!-- 選取強調外圈 -->
                         <circle
-                            v-if="port.emphasis"
+                            v-if="port.emphasis || port.picked"
                             :cx="(port.x + 0.5) * CELL"
                             :cy="(port.y + 0.5) * CELL"
                             r="9"
                             fill="none"
-                            :stroke="port.kind === 'output' ? '#2563eb' : '#7c3aed'"
+                            :stroke="
+                                port.picked
+                                    ? '#db2777'
+                                    : port.kind === 'output'
+                                      ? '#2563eb'
+                                      : '#7c3aed'
+                            "
                             stroke-width="2"
                             stroke-dasharray="3 2"
+                            class="pointer-events-none"
                         />
-                        <!-- 輸出＝圓 -->
                         <circle
                             v-if="port.kind === 'output'"
                             :cx="(port.x + 0.5) * CELL"
                             :cy="(port.y + 0.5) * CELL"
-                            :r="port.linked || port.emphasis ? 6 : 4.5"
+                            :r="port.linked || port.emphasis || port.picked ? 6 : 4.5"
                             :fill="port.linked ? '#15803d' : '#22c55e'"
-                            :stroke="port.linked ? '#fff' : '#14532d'"
-                            :stroke-width="port.linked ? 2 : 1"
+                            :stroke="port.linked || port.picked ? '#fff' : '#14532d'"
+                            :stroke-width="port.linked || port.picked ? 2 : 1"
+                            class="cursor-pointer"
+                            @click="
+                                onPortClick(
+                                    {
+                                        deviceId: port.deviceId,
+                                        kind: port.kind,
+                                        x: port.x,
+                                        y: port.y,
+                                    },
+                                    $event,
+                                )
+                            "
                         />
-                        <!-- 輸入＝方 -->
                         <rect
                             v-else
-                            :x="(port.x + 0.5) * CELL - (port.linked || port.emphasis ? 5.5 : 4)"
-                            :y="(port.y + 0.5) * CELL - (port.linked || port.emphasis ? 5.5 : 4)"
-                            :width="port.linked || port.emphasis ? 11 : 8"
-                            :height="port.linked || port.emphasis ? 11 : 8"
+                            :x="
+                                (port.x + 0.5) * CELL -
+                                (port.linked || port.emphasis || port.picked ? 5.5 : 4)
+                            "
+                            :y="
+                                (port.y + 0.5) * CELL -
+                                (port.linked || port.emphasis || port.picked ? 5.5 : 4)
+                            "
+                            :width="port.linked || port.emphasis || port.picked ? 11 : 8"
+                            :height="port.linked || port.emphasis || port.picked ? 11 : 8"
                             rx="1.5"
                             :fill="port.linked ? '#c2410c' : '#f97316'"
-                            :stroke="port.linked ? '#fff' : '#7c2d12'"
-                            :stroke-width="port.linked ? 2 : 1"
+                            :stroke="port.linked || port.picked ? '#fff' : '#7c2d12'"
+                            :stroke-width="port.linked || port.picked ? 2 : 1"
+                            class="cursor-pointer"
+                            @click="
+                                onPortClick(
+                                    {
+                                        deviceId: port.deviceId,
+                                        kind: port.kind,
+                                        x: port.x,
+                                        y: port.y,
+                                    },
+                                    $event,
+                                )
+                            "
                         />
                     </template>
                 </g>
             </svg>
             <p class="mt-2 text-xs text-gray-500">
-                點空格放置；點設備選取（再點另一台當 belt 終點）。
-                <span class="text-green-700 dark:text-green-400">綠圓＝輸出埠</span>；
-                <span class="text-orange-700 dark:text-orange-400">橙方＝輸入埠</span>；白邊＝已接
-                belt。紫虛線＝預設游標。
+                設備模式點空格放置／點設備選取；埠模式點綠／橙埠；手動模式點格加 waypoints。
+                <span class="text-green-700 dark:text-green-400">綠圓＝輸出</span>；
+                <span class="text-orange-700 dark:text-orange-400">橙方＝輸入</span>。
             </p>
         </div>
 

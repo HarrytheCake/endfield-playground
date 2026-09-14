@@ -6,6 +6,7 @@ import {
     axisAlignedWaypoints,
     bestBeltAnchors,
     buildBlockedXy,
+    findRoutableBeltBetweenAnchors,
     findRoutableBeltWaypoints,
     listPortAnchors,
     pathHitsBlocked,
@@ -13,6 +14,7 @@ import {
 import type { PlacedDevice } from '@/types/layout';
 import { createPinia, setActivePinia } from 'pinia';
 import { useLayoutStore } from '@/store/layoutStore';
+import { isAxisAlignedPath } from '@/utils/layout/pipelineGeometry';
 
 describe('axisAlignedWaypoints', () => {
     it('水平再垂直走 L 形', () => {
@@ -68,6 +70,29 @@ describe('findRoutableBeltWaypoints — shaping_machine 迴歸', () => {
 
         expect(path).not.toBeNull();
         expect(path!.length).toBeGreaterThanOrEqual(2);
+        expect(pathHitsBlocked(path!, blocked)).toBe(false);
+    });
+
+    it('繞線結果逐段軸對齊（store 佔格展開的前置條件）', () => {
+        const a = shaping('a', 2, 2);
+        const b = shaping('b', 11, 3);
+        const blocked = buildBlockedXy([a, b]);
+        const path = findRoutableBeltWaypoints(a, b, blocked);
+
+        expect(path).not.toBeNull();
+        expect(isAxisAlignedPath(path!)).toBe(true);
+    });
+
+    it('固定兩錨點亦可繞線', () => {
+        const a = shaping('a', 2, 2);
+        const b = shaping('b', 11, 3);
+        const blocked = buildBlockedXy([a, b]);
+        const outs = listPortAnchors(a, 'output');
+        const ins = listPortAnchors(b, 'input');
+        expect(outs.length).toBeGreaterThan(0);
+        expect(ins.length).toBeGreaterThan(0);
+        const path = findRoutableBeltBetweenAnchors(outs[0], ins[0], blocked);
+        expect(path).not.toBeNull();
         expect(pathHitsBlocked(path!, blocked)).toBe(false);
     });
 

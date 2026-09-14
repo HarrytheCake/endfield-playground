@@ -245,6 +245,23 @@ export function compressGridPath(cells: AnchorCell[]): Position[] {
 }
 
 /**
+ * 找一條不撞設備／既有管線的 belt 路徑（固定兩錨點 × BFS）
+ */
+export function findRoutableBeltBetweenAnchors(
+    from: AnchorCell,
+    to: AnchorCell,
+    blockedXy: ReadonlySet<string>,
+): Position[] | null {
+    if (from.x === to.x && from.y === to.y) return null;
+    const cells = bfsGridPath(from, to, blockedXy);
+    if (!cells || cells.length < 2) return null;
+    const path = compressGridPath(cells);
+    if (path.length < 2) return null;
+    if (pathHitsBlocked(path, blockedXy)) return null;
+    return path;
+}
+
+/**
  * 找一條不撞設備／既有管線的 belt 路徑（所有埠對 × BFS）
  */
 export function findRoutableBeltWaypoints(
