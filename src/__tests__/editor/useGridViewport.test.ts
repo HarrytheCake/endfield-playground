@@ -2,7 +2,8 @@
  * W0907-H1 useGridViewport 單元測試
  *
  * 測試對象：src/editor/layout/useGridViewport.ts
- * 重點：座標換算來回一致（§3-1 契約）、縮放上下限、縮放錨點不變性、平移累加。
+ * 重點：座標換算來回一致（§3-1 契約）、縮放上下限、縮放錨點不變性、平移累加、
+ * 非有限數（NaN／Infinity）輸入防呆。
  */
 
 import { describe, it, expect } from 'vitest';
@@ -14,10 +15,10 @@ describe('cellToScreen / screenToCell — 來回一致', () => {
     it('預設 zoom=1、offset=(0,0) 時，任意格子來回換算不變', () => {
         const viewport = useGridViewport();
         for (const cell of [
-            { x: 0, y: 0 },
-            { x: 3, y: 5 },
-            { x: 11, y: 7 },
-            { x: 100, y: 42 },
+            { x: 0, y: 0, z: 0 },
+            { x: 3, y: 5, z: 0 },
+            { x: 11, y: 7, z: 0 },
+            { x: 100, y: 42, z: 0 },
         ]) {
             expect(viewport.screenToCell(viewport.cellToScreen(cell))).toEqual(cell);
         }
@@ -27,9 +28,9 @@ describe('cellToScreen / screenToCell — 來回一致', () => {
         const viewport = useGridViewport();
         viewport.panBy(37, -19);
         for (const cell of [
-            { x: 0, y: 0 },
-            { x: 4, y: 2 },
-            { x: -3, y: 8 },
+            { x: 0, y: 0, z: 0 },
+            { x: 4, y: 2, z: 0 },
+            { x: -3, y: 8, z: 0 },
         ]) {
             expect(viewport.screenToCell(viewport.cellToScreen(cell))).toEqual(cell);
         }
@@ -39,9 +40,9 @@ describe('cellToScreen / screenToCell — 來回一致', () => {
         const viewport = useGridViewport();
         viewport.zoomAt({ x: 0, y: 0 }, 2);
         for (const cell of [
-            { x: 0, y: 0 },
-            { x: 6, y: 9 },
-            { x: 20, y: 1 },
+            { x: 0, y: 0, z: 0 },
+            { x: 6, y: 9, z: 0 },
+            { x: 20, y: 1, z: 0 },
         ]) {
             expect(viewport.screenToCell(viewport.cellToScreen(cell))).toEqual(cell);
         }
@@ -52,9 +53,9 @@ describe('cellToScreen / screenToCell — 來回一致', () => {
         viewport.panBy(-51, 88);
         viewport.zoomAt({ x: 200, y: 150 }, 1.75);
         for (const cell of [
-            { x: 0, y: 0 },
-            { x: 15, y: 3 },
-            { x: 9, y: 30 },
+            { x: 0, y: 0, z: 0 },
+            { x: 15, y: 3, z: 0 },
+            { x: 9, y: 30, z: 0 },
         ]) {
             expect(viewport.screenToCell(viewport.cellToScreen(cell))).toEqual(cell);
         }
@@ -62,7 +63,15 @@ describe('cellToScreen / screenToCell — 來回一致', () => {
 
     it('cellToScreen 回傳該格左上角像素座標', () => {
         const viewport = useGridViewport({ cellSize: 28 });
-        expect(viewport.cellToScreen({ x: 2, y: 3 })).toEqual({ x: 56, y: 84 });
+        expect(viewport.cellToScreen({ x: 2, y: 3, z: 0 })).toEqual({ x: 56, y: 84 });
+    });
+
+    it('cellToScreen 忽略 z；screenToCell 固定回傳 z: 0', () => {
+        const viewport = useGridViewport({ cellSize: 28 });
+        expect(viewport.cellToScreen({ x: 2, y: 3, z: 0 })).toEqual(
+            viewport.cellToScreen({ x: 2, y: 3, z: 1 }),
+        );
+        expect(viewport.screenToCell({ x: 56, y: 84 }).z).toBe(0);
     });
 });
 
@@ -158,5 +167,59 @@ describe('reset()', () => {
         viewport.reset();
         expect(viewport.offset.value).toEqual({ x: 0, y: 0 });
         expect(viewport.zoom.value).toBe(1);
+    });
+});
+
+// ─── 非有限數輸入防呆 ───────────────────────────────────────────────────────────
+
+describe('非有限數（NaN／Infinity）輸入防呆', () => {
+    it('panBy(NaN, 0) 整次呼叫視為無效，offset 不變', () => {
+        const viewport = useGridViewport();
+        viewport.panBy(10, 20);
+        const before = { ...viewport.offset.value };
+        viewport.panBy(NaN, 0);
+        expect(viewport.offset.value).toEqual(before);
+        expect(Number.isFinite(viewport.offset.value.x)).toBe(true);
+    });
+
+    it('panBy(Infinity, 0) 整次呼叫視為無效，offset 不變', () => {
+        const viewport = useGridViewport();
+        const before = { ...viewport.offset.value };
+        viewport.panBy(Infinity, 0);
+        expect(viewport.offset.value).toEqual(before);
+    });
+
+    it('zoomAt(anchor, NaN) 整次呼叫視為無效，zoom／offset 都不變', () => {
+        const viewport = useGridViewport();
+        viewport.panBy(5, 5);
+        const beforeZoom = viewport.zoom.value;
+        const beforeOffset = { ...viewport.offset.value };
+        viewport.zoomAt({ x: 10, y: 10 }, NaN);
+        expect(viewport.zoom.value).toBe(beforeZoom);
+        expect(viewport.offset.value).toEqual(beforeOffset);
+        expect(Number.isFinite(viewport.zoom.value)).toBe(true);
+    });
+
+    it('zoomAt 的 anchor 含 NaN 時整次呼叫視為無效', () => {
+        const viewport = useGridViewport();
+        const beforeZoom = viewport.zoom.value;
+        viewport.zoomAt({ x: NaN, y: 10 }, 2);
+        expect(viewport.zoom.value).toBe(beforeZoom);
+    });
+
+    it('zoomBy(anchor, NaN) 整次呼叫視為無效', () => {
+        const viewport = useGridViewport();
+        const beforeZoom = viewport.zoom.value;
+        viewport.zoomBy({ x: 10, y: 10 }, NaN);
+        expect(viewport.zoom.value).toBe(beforeZoom);
+        expect(Number.isFinite(viewport.zoom.value)).toBe(true);
+    });
+
+    it('非有限數呼叫之後，視窗仍可正常運作（不需 reset() 救回）', () => {
+        const viewport = useGridViewport();
+        viewport.panBy(NaN, NaN);
+        viewport.zoomAt({ x: 0, y: 0 }, NaN);
+        viewport.panBy(10, 20);
+        expect(viewport.offset.value).toEqual({ x: 10, y: 20 });
     });
 });

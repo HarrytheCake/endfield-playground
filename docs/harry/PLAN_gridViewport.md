@@ -4,6 +4,8 @@
 **對應工單：** [docs/work_dispatch/harry/0907/W0907-H1_grid_viewport.md](../work_dispatch/harry/0907/W0907-H1_grid_viewport.md)
 **相關檔案：** `src/editor/layout/useGridViewport.ts`（新，composable）、`src/app/dev/GridViewportDemo.vue`（新）、`src/router/index.ts`、`src/app/dev/DevLayout.vue`、`src/__tests__/editor/useGridViewport.test.ts`（新）
 
+> **Review 後更新（0914）：** 原本設計的 `Cell { x, y }` 已改用既有的 `@/types/euclideanSpace` `Position { x, y, z }`——review 指出佈局相關型別（`PlacedDevice`／`Pipeline`／`GridCanvas`）都用 `Position`，另立型別會讓 9/14 整合時兩邊互轉。`z` 在換算裡不參與計算：`cellToScreen` 忽略輸入的 `z`；`screenToCell` 固定回傳 `z: 0`（地面層），呼叫端要處理其他層需自行覆寫。另外補上 `zoomAt`／`zoomBy`／`panBy` 對非有限數（`NaN`／`Infinity`）輸入的防呆（整次呼叫視為無效並忽略），避免視窗狀態壞死。下面第 3 節保留原始設計紀錄，實作已依此更新。
+
 ---
 
 ## 1. 範疇判定

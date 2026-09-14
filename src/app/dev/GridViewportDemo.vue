@@ -10,17 +10,19 @@
  */
 import { computed, ref } from 'vue';
 import { useGridViewport, type ScreenPoint } from '@/editor/layout/useGridViewport';
+import type { Position } from '@/types/euclideanSpace';
 
 /** 展示用虛擬格線範圍（格），數字大一點方便測試平移/縮放時格線跑出畫面外 */
 const VIRTUAL_GRID_SIZE = 40;
 
+/** 本頁的格點視窗狀態與操作函式，見 `useGridViewport` 的型別與註解 */
 const viewport = useGridViewport();
 
 /** SVG 畫布容器的 DOM 參照，事件座標需相對於它算，而非整個視窗 */
 const svgRef = ref<SVGSVGElement | null>(null);
 
-/** 目前滑鼠所在的格子座標；顯示用，滑鼠移出畫布時為 null */
-const hoverCell = ref<{ x: number; y: number } | null>(null);
+/** 目前滑鼠所在的格子座標；顯示用，滑鼠移出畫布時為 null（`z` 固定為 0，本頁不使用） */
+const hoverCell = ref<Position | null>(null);
 
 /** 中鍵拖曳中的起始螢幕座標；非拖曳中為 null */
 const dragStart = ref<ScreenPoint | null>(null);
