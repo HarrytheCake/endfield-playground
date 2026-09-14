@@ -33,25 +33,30 @@ function useLayoutStore(): {
   readonly devices: Readonly<PlacedDevice[]>;
   readonly pipelines: Readonly<Pipeline[]>;
   readonly connections: Readonly<Connection[]>; // getter
-  loadSnapshot(snapshot: LayoutSnapshot): void;
+  readonly layoutIssues: LayoutIssues;          // 全量問題（invalid＋overlap 並列）
+  loadSnapshot(snapshot: LayoutSnapshot): LayoutIssues;
   toSnapshot(): LayoutSnapshot;
   addDevice(device: PlacedDevice): PlacementResult;
-  removeDevice(id: string): void;
+  removeDevice(id: string): PlacementResult;
   moveDevice(id: string, position: Position): PlacementResult;
   addPipeline(pipeline: Pipeline): PlacementResult;
-  removePipeline(id: string): void;
+  removePipeline(id: string): PlacementResult;
 };
 ```
+
+> 兩輪 review 後的定案：單一操作回 `PlacementResult`（一次一個 reason 夠用）；  \
+> 聚合面（`layoutIssues`／`loadSnapshot`）回 {@link LayoutIssues}，讓 invalid 與 overlap 同時回報。
 
 ### 2.2 Action 行為摘要
 
 | Action | 行為 |
 |--------|------|
-| `loadSnapshot` | 覆寫 devices／pipelines（深拷貝） |
+| `loadSnapshot` | 覆寫 devices／pipelines（深拷貝）；回該快照的**全部**問題（仍會載入，供 L2 畫紅框） |
 | `toSnapshot` | 匯出 `{ devices, pipelines }`（不含 connections；深拷貝） |
-| `addDevice`／`moveDevice` | 重疊 → `{ ok: false, reason: 'overlap' }`；缺定義／重複 id → `invalid`；成功才寫入 |
-| `removeDevice` | 刪設備；管線保留（可斷線） |
-| `addPipeline`／`removePipeline` | 管線 CRUD＋佔格檢查；不維護 Connection state |
+| `addDevice`／`moveDevice` | 座標三軸須有限；重疊 → `overlap`＋`conflicts`；缺定義／id 不唯一 → `invalid`；成功才寫入 |
+| `removeDevice`／`removePipeline` | 刪除；找不到或 id 不唯一 → `invalid`；管線保留（可斷線） |
+| `addPipeline` | 管線 CRUD＋佔格檢查（≥2 點、座標有限、逐段軸對齊）；不維護 Connection state |
+| 全部變更 action | 於 store 內組 Command 推入 `historyStore`；L2 只呼叫 `undo()`／`redo()` |
 
 ---
 

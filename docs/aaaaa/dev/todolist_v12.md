@@ -211,3 +211,15 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
   - §6 所有變更 action 經 `historyStore` 組 Command；dev 頁有 Undo／Redo
   - §7 補點兩埠自動拉線與手動拉線；併修埠方向、手動轉角、undo 後選取殘留
 - 品質閘：41 檔 772 測試綠；type-check／lint／format 綠；`pnpm build` 不含 dev 頁
+
+### 2026-09-15（第二輪 review 修訂）
+
+- **§1 聚合回報：** 新增 `LayoutIssues`（`ok`／`invalidIds`／`conflicts`），`layoutIssues` 與
+  `loadSnapshot` 改回此型別，invalid 與 overlap **同時**回報；載入時併查設備座標與重複 id
+  （設備／管線共用一個 id 命名空間），不合法者排除於佔格之外，`move`／`remove` 遇 id 不唯一亦擋下
+- **§2 z 有限數：** `addDevice`／`moveDevice` 改用 `positionFinite`（x／y／z），
+  修掉 z 為 `NaN`／`Infinity` 時被回報成 `overlap: [['a','a']]` 的問題
+- **§3 演示頁掛法：** 說明「共用 store／污染 history」與「非工項交付物」後，
+  主編確認維持獨立 HTML 入口（見 [D1 §2.1](./dev_v12/D1_dev_store_preview.md)）
+- **§4 `historyStore` 全域堆疊：** 本 PR 不處理，保留於 PR 說明「待決」
+- 品質閘：41 檔 **784** 測試綠；type-check／lint 綠

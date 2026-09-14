@@ -29,7 +29,7 @@ V11 `/dev/layout-l1-preview` 只切 fixture，與初版 V12 頁面同構。
 | fixture | 一鍵載入 connected／broken（備援） |
 | 禁止 | 未 import `editorStore`；未改 GridCanvas／ToolbarPanel／`src/router`／`DevLayout.vue` |
 
-### 2.1 為何不掛 `src/router`
+### 2.1 為何不掛 `src/router`（主編 2026-09-15 確認保留）
 
 dev 頁是**開發進度存證**：進度推進到 V12 之後只作歷史檢視，  \
 不該影響專案主線，也不該被主線牽動。掛進 `src/router`／`DevLayout.vue`  \
@@ -42,6 +42,14 @@ pnpm dev → http://localhost:5173/dev/layout-store-preview.html
 
 `vite build` 只吃根目錄 `index.html`，故本頁**不進** production bundle  \
 （實測 `dist/` 只有 `index.html`，且無 `LayoutStorePreview` chunk）。
+
+另一個理由是共用 state：原本掛在 `/dev` 底下會與主編輯器共用同一個 Pinia，  \
+演示頁的操作會寫進佈局 store 並污染 `historyStore`。獨立入口自建 `createApp`＋`createPinia`，  \
+演示用的資料與歷史都關在自己的 app 裡。
+
+**決議紀錄：** 第二輪 review 曾要求改回掛 `/dev` 路由（CLAUDE.md §1 規則 2 的 dev 頁慣例）。  \
+2026-09-15 說明上述理由後，主編確認「demo 頁面我就不限制那麼多了」，**維持獨立入口**。  \
+本頁不在工項交付物內，只為說明串接方法而存在，不是最終頁面。
 
 ---
 

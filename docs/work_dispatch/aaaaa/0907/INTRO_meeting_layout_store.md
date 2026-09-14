@@ -54,15 +54,16 @@ const layout = useLayoutStore()
 layout.devices
 layout.pipelines
 layout.connections
+layout.layoutIssues          // → LayoutIssues；紅框畫這裡指的 id
 
-// 寫
-layout.loadSnapshot(snapshot)
+// 寫（單一操作 → PlacementResult；快照 → LayoutIssues）
+layout.loadSnapshot(snapshot) // → LayoutIssues（invalid 與 overlap 並列）
 layout.addDevice(device)      // → PlacementResult
-layout.moveDevice(id, pos)   // → PlacementResult
-layout.removeDevice(id)      // 管線保留（可斷線）
-layout.addPipeline(pipeline) // → PlacementResult
-layout.removePipeline(id)
-layout.toSnapshot()          // 匯出；不含 connections
+layout.moveDevice(id, pos)    // → PlacementResult
+layout.removeDevice(id)       // → PlacementResult；管線保留（可斷線）
+layout.addPipeline(pipeline)  // → PlacementResult
+layout.removePipeline(id)     // → PlacementResult
+layout.toSnapshot()           // 匯出；不含 connections
 ```
 
 ### 1.3 和 V11／舊世界的差別
@@ -143,11 +144,13 @@ V12 頁才是「證明 A0 契約」的演示。
 
 ### 3.3 讀取面約定（給接線的人）
 
-1. 用 `useLayoutStore()`；讀 `devices`／`pipelines`／`connections`
+1. 用 `useLayoutStore()`；讀 `devices`／`pipelines`／`connections`／`layoutIssues`
 2. **不要**直接 `devices.push(...)`；改呼叫 action
-3. 放置／移動先看 `PlacementResult.ok`；`overlap`／`invalid` 自行決定 UI
-4. `connections` 不要當可寫 state；改管線／設備後會重算
-5. 不要改 `editorStore` 簽名；藍圖 JSON 遷移不在本週
+3. 放置／移動先看 `PlacementResult.ok`；`overlap` 帶 `conflicts`、`invalid` 帶 `invalidIds`，紅框只畫這些 id
+4. 快照載入看 `LayoutIssues`：`invalidIds` 與 `conflicts` 可能同時非空，兩者都要畫
+5. `connections` 不要當可寫 state；改管線／設備後會重算
+6. undo／redo 只呼叫 `historyStore.undo()`／`redo()`；**不要**自己組 Command
+7. 不要改 `editorStore` 簽名；藍圖 JSON 遷移不在本週
 
 ### 3.4 檔案邊界
 

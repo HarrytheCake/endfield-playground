@@ -44,18 +44,28 @@ function useLayoutStore(): {
   readonly devices: Readonly<PlacedDevice[]>;
   readonly pipelines: Readonly<Pipeline[]>;
   readonly connections: Readonly<Connection[]>; // getter → resolveConnections
-  loadSnapshot(snapshot: LayoutSnapshot): void;
+  readonly layoutIssues: LayoutIssues;          // 全量問題；L2 據此畫紅框
+  loadSnapshot(snapshot: LayoutSnapshot): LayoutIssues;
   toSnapshot(): LayoutSnapshot;
   addDevice(device: PlacedDevice): PlacementResult;
-  removeDevice(id: string): void;
+  removeDevice(id: string): PlacementResult;
   moveDevice(id: string, position: Position): PlacementResult;
   addPipeline(pipeline: Pipeline): PlacementResult;
-  removePipeline(id: string): void;
+  removePipeline(id: string): PlacementResult;
 };
 
+/** 單一操作：一次一個 reason */
 type PlacementResult =
   | { ok: true }
-  | { ok: false; reason: 'overlap' | 'invalid' };
+  | { ok: false; reason: 'overlap'; conflicts: [string, string][] }
+  | { ok: false; reason: 'invalid'; invalidIds?: string[] };
+
+/** 聚合面：invalid 與 overlap 可同時回報 */
+interface LayoutIssues {
+  ok: boolean;
+  invalidIds: string[];
+  conflicts: [string, string][];
+}
 ```
 
 ---
