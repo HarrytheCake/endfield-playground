@@ -1,7 +1,7 @@
 # V11-H1 證據 — 工具列真實機器
 
-**日期：** 2026-09-01  
-**分支：** `dev/aaaaa0831-h1`（基於 master @ PR #40 合入後）
+**日期：** 2026-09-01（合入狀態：2026-09-11 收斂——PR [#43](https://github.com/dernoson/endfield-playground/pull/43) **已於 2026-09-04 MERGED**）  
+**分支：** `dev/aaaaa0831-h1`（基於 master @ PR #40 合入後；現已合入 master）
 
 ---
 

@@ -9,10 +9,10 @@
  *
  * | 舊 | 新（目標） | V11-B1 狀態 |
  * |----|------------|-------------|
- * | `nodes`／`edges` | `devices`／`pipelines`；`connections` 為衍生 | 僅型別；**不動** store |
+ * | `nodes`／`edges` | `devices`／`pipelines`；`connections` 為衍生 | 型別已落地；平行 `layoutStore`（V12）不改 `editorStore` |
  * | `addConnection`／`removeConnection` | 廢除；改管線 path actions | 註記 |
  * | `removeDevices` 連帶刪邊 | 管線留在原地（可斷線） | 註記 |
- * | 藍圖 JSON `nodes`／`edges` | `devices`／`pipelines` | 註記 |
+ * | 藍圖 JSON `nodes`／`edges` | `devices`／`pipelines` | 註記（遷移不在 V12） |
  */
 
 import type { Position } from '@/types/euclideanSpace';
@@ -112,4 +112,42 @@ export interface Connection {
 export interface LayoutSnapshot {
     devices: PlacedDevice[];
     pipelines: Pipeline[];
+}
+
+/**
+ * 放置／移動失敗原因（V12 layoutStore）
+ *
+ * - `overlap`：與既有設備或管線佔格衝突
+ * - `invalid`：缺機器定義、找不到 uid、重複 id、座標不合法等
+ */
+export type PlacementFailReason = 'overlap' | 'invalid';
+
+/**
+ * 放置合法性結果；**不 throw**，供 L2 決定是否畫紅框
+ *
+ * `overlap` 時帶 `conflicts`（detectOverlaps 的 id 配對），紅框只落在真正重疊者。  \
+ * `invalid` 時可帶 `invalidIds`（缺定義／非法座標的物件）。
+ */
+export type PlacementResult =
+    | { ok: true }
+    | { ok: false; reason: 'overlap'; conflicts: [string, string][] }
+    | { ok: false; reason: 'invalid'; invalidIds?: string[] };
+
+/**
+ * 佈局整體檢查結果；**同時**帶所有類別的問題
+ *
+ * 單一操作用 {@link PlacementResult}（一次一個 reason 就夠）；  \
+ * 但整份佈局可能同時有「未知機型」與「兩台重疊」，只回一種 reason 會讓  \
+ * L2 漏掉另一種的紅框，故聚合面另立本型別。
+ *
+ * `invalidIds` 的物件**不參與**重疊偵測：缺機器定義或座標非有限者無法展開佔格，  \
+ * id 重複者無法把佔格歸給哪一個，硬算只會得到「自己跟自己重疊」這種無意義配對。
+ */
+export interface LayoutIssues {
+    /** `invalidIds` 與 `conflicts` 皆空時為 true */
+    ok: boolean;
+    /** 不合法者：缺機器定義、座標非有限、id 空或重複、管線路徑不良構 */
+    invalidIds: string[];
+    /** 重疊的 id 配對；來自 `detectOverlaps` */
+    conflicts: [string, string][];
 }

@@ -2,15 +2,16 @@
 
 | meta | value |
 |------|-------|
-| 版本 | **v1.5（2026-08-31）** |
+| 版本 | **v1.6（2026-09-11）** |
 | 用途 | 供 AI Agent 讀取，協助執行 [ROADMAP_OUTLINE.md](../../../roadmap/ROADMAP_OUTLINE.md) 規劃的工項與每週派工 |
-| 對應大綱 | [ROADMAP_OUTLINE.md](../../../roadmap/ROADMAP_OUTLINE.md) **v1.5** |
+| 對應大綱 | [ROADMAP_OUTLINE.md](../../../roadmap/ROADMAP_OUTLINE.md) **v1.6** |
 | 細項資料夾 | [detail/](../../../roadmap/detail/) |
-| 本週公開派工 | [WEEK_20260831](../../../work_dispatch/WEEK_20260831.md)、[WEEK_20260907](../../../work_dispatch/WEEK_20260907.md) |
+| 本週公開派工 | [WEEK_20260907](../../../work_dispatch/WEEK_20260907.md) v1.1 |
 | 佈局定案（公開） | [LAYOUT_REWRITE_EARLY_START_0831](../../LAYOUT_REWRITE_EARLY_START_0831.md) |
-| 本週決策層 | [0831/](./0831/)（定案／會議／複查／E3 週切片／Agent 週摘要） |
-| 上週決策層 | [0823/](./0823/) |
-| 相鄰文檔 | [AGENT_CONTEXT.md](../../AGENT_CONTEXT.md)（CR-04 技術上下文）、[claude/CLAUDE.md](../../claude/CLAUDE.md)（CR-04 開發守則） |
+| 本週 Agent 約束 | [AGENT_WEEK_0907](./AGENT_WEEK_0907.md) |
+| 本週決策層 | [0907/](../collaborator_survey/dispatch_private/0907/)（複查／E3／口頭稿） |
+| 上週決策層 | [0831/](../collaborator_survey/dispatch_private/0831/) |
+| 相鄰文檔 | [AGENT_CONTEXT.md](../../AGENT_CONTEXT.md)（CR-04 技術上下文）、[claude/CLAUDE.md](./CLAUDE.md)（CR-04 開發守則） |
 | 語言 | 繁體中文（API 名稱、路徑、專有名詞除外） |
 
 > 本檔只談 **roadmap 執行與派工操作**。FlowEngine 演算法、型別速查、跨 CR 契約請讀 [AGENT_CONTEXT.md](../../AGENT_CONTEXT.md)；程式碼註解與提交規則請讀 [claude/CLAUDE.md](../../claude/CLAUDE.md)。不要在本檔重複那些內容。
@@ -43,7 +44,7 @@
 | 執行某個工項 | 本檔 → 該工項 detail 全文 → 若涉佈局／畫布：先確認 **L1 是否已宣告** → [AGENT_CONTEXT](../../AGENT_CONTEXT.md) → [claude/CLAUDE.md](../../claude/CLAUDE.md) |
 | 回答「現在進度如何」 | 大綱 §2／§3–§7 勾選 ＋ §8 週曆 ＋ §9 封鎖表 ＋ 當週 `WEEK_*.md` |
 | 更新工項狀態 | 該工項 detail §11 開發日誌 → 大綱對應勾選 → §9 封鎖表 |
-| 佈局／L1／L2 閘門問題 | [EARLY_START](../../LAYOUT_REWRITE_EARLY_START_0831.md) → [0831/DECISION](./0831/DECISION_20260831_svg_l1_first.md) → [0831/AGENT_WEEK](./0831/AGENT_WEEK_0831.md) |
+| 佈局／L1／L2／store 閘門問題 | [EARLY_START](../../LAYOUT_REWRITE_EARLY_START_0831.md) → [WEEK_0907](../../../work_dispatch/WEEK_20260907.md) → [AGENT_WEEK_0907](./AGENT_WEEK_0907.md) → [todolist_v12](../dev/todolist_v12.md) |
 | 新增或修改工項 | 本檔 §7 → 先提問，取得負責人同意才動 |
 
 **不要一次讀完全部 detail。** 只讀當前任務相關的那幾份。
@@ -54,32 +55,30 @@
 
 ```text
 docs/roadmap/               ← 公開
-├── ROADMAP_OUTLINE.md      大綱 v1.5：工項、§1.6 佈局決策、週曆、封鎖、DoD
+├── ROADMAP_OUTLINE.md      大綱：工項、§1.6 佈局決策、週曆、封鎖、DoD
 └── detail/                 工項細項（E3 人員細節不公開）
 
 docs/aaaaa/
 ├── LAYOUT_REWRITE_DISPATCH_IMPACT_0825.md   8/25 首次派工影響（公開）
 ├── LAYOUT_REWRITE_EARLY_START_0831.md       8/31 SVG 提前＋L1 最優（公開定案）
+├── claude/
+│   ├── AGENT_ROADMAP.md                     本檔
+│   └── AGENT_WEEK_0907.md                   本週 Agent 強制約束
 └── collaborator_survey/dispatch_private/    ← 未進版控
-    ├── AGENT_ROADMAP.md                     本檔
-    ├── 0823/                                上週決策層
-    │   ├── REVIEW_20260823.md
-    │   ├── E3_risk_backup_staffing.md       R-E3 長版（跨月）
-    │   └── DISPATCH_IMPACT_20260825_layout_rewrite.md
-    └── 0831/                                本週決策層
-        ├── DECISION_20260831_svg_l1_first.md
-        ├── MEETING_20260830_layout_reassign.md
-        ├── REVIEW_20260831.md
-        ├── E3_risk_backup_staffing.md       本週人力切片（短）
-        └── AGENT_WEEK_0831.md
+    ├── 0823/                                決策層封存
+    ├── 0831/                                上週決策層
+    └── 0907/                                本週決策層
+        ├── REVIEW_20260907.md
+        ├── E3_risk_backup_staffing.md
+        └── INTRO_A0_layout_store.md         週會口頭稿（A0）
 
 docs/work_dispatch/         ← 公開正式派工
-├── WEEK_20260831.md        本週大綱 v1.5
-├── WEEK_20260907.md        下週（依 L1 宣告分支）
-└── <code>/<MMDD>/W*.md     例：aaaaa/0831/W0831-A0_*.md
+├── WEEK_20260831.md        上週
+├── WEEK_20260907.md        本週大綱 v1.1
+└── <code>/<MMDD>/W*.md     例：aaaaa/0907/W0907-A0_*.md
 ```
 
-結構等同 `docs/aaaaa/dev/` 的 `todolist_vN.md` ↔ `dev_vN/`：大綱只放清單與狀態，長篇在 detail；**決策層**放風險等級、會議裁示、Agent 週約束。
+結構等同 `docs/aaaaa/dev/` 的 `todolist_vN.md` ↔ `dev_vN/`：大綱只放清單與狀態，長篇在 detail；**決策層**放風險等級、會議裁示；Agent 週約束放 `claude/AGENT_WEEK_*.md`。
 
 ### 上游與周邊
 
@@ -161,7 +160,7 @@ docs/work_dispatch/         ← 公開正式派工
 
 **此表為快照，以 [ROADMAP_OUTLINE.md](../../../roadmap/ROADMAP_OUTLINE.md) §2–§7 為準。** 兩處不一致時以大綱為準，並修正本表。
 
-**本週（0831）公開工單速查：** A0（L1 最優）＞ A1（B1）＞ D0 閘門 ＞ S1／G1／P1／M1 不強綁 ＞ T1／H0 等宣告 ＞ Z0／V0 暫停。詳見 [WEEK_20260831](../../../work_dispatch/WEEK_20260831.md) 與 [0831/AGENT_WEEK](./0831/AGENT_WEEK_0831.md)。
+**本週（0907）公開工單速查：** A0（layoutStore 最優・擋門檻）＞ D0 閘門 ＞ T1／H1 只讀薄片 ＞ S1 確定 ＞ P1／G1／V1 加分 ＞ M0／Z0 暫停。詳見 [WEEK_20260907](../../../work_dispatch/WEEK_20260907.md) 與 [AGENT_WEEK_0907](./AGENT_WEEK_0907.md)。
 
 ---
 
@@ -260,7 +259,8 @@ detail 是規劃快照，程式碼會演進。發現不符時：
 | 快捷鍵 | `src/composables/useShortcuts.ts` | B5、C4 |
 | E001 detector | `src/lib/validation/detectors/E001_deviceOverlap.ts` | D2 |
 | Dev 除錯頁 | `src/app/dev/FlowEngineTest.vue`、`DevTopologySvg.vue`、`ValidationTest.vue` | A2、C1、D1、D5 |
-| 佈局 L1 打底（本週最優） | 見 [W0831-A0](../../../work_dispatch/aaaaa/0831/W0831-A0_layout_l1_foundation.md) | layout-L1 |
+| 佈局 L1 打底（已合入） | 見 [W0831-A0](../../../work_dispatch/aaaaa/0831/W0831-A0_layout_l1_foundation.md) | layout-L1 |
+| 佈局 store（本週最優） | 見 [W0907-A0](../../../work_dispatch/aaaaa/0907/W0907-A0_layout_store_model.md) | layout-store |
 
 ---
 
@@ -317,5 +317,6 @@ Agent 產出的 markdown 須符合既有慣例：
 
 | 版 | 日期 | 說明 |
 |----|------|------|
+| v1.6 | 2026-09-11 | 本週改 0907：A0＝layoutStore；檔案地圖加 0907／AGENT_WEEK_0907；速查對齊 WEEK v1.1 |
 | v1.5 | 2026-08-31 | 對齊 ROADMAP v1.5：SVG 提前定案、L1 最優、L2 閘門；檔案地圖改 0823／0831；工項狀態快照更新；誤判表補佈局／A0 |
 | v1.0 | 2026-08-22 | 建立；對應 ROADMAP_OUTLINE v1.0 與 detail |

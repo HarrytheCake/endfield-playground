@@ -8,6 +8,7 @@
 | 前置 | [PR #40](https://github.com/dernoson/endfield-playground/pull/40) 已合入（L1 純函式＋型別） |
 | 上游 | [WEEK_20260907](../../WEEK_20260907.md)、[ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) v1.6 R-B2 |
 | 產能參考 | 自報 3–5h |
+| 會議介紹 | [INTRO_meeting_layout_store.md](./INTRO_meeting_layout_store.md)（使用／展示／連接） |
 
 ---
 

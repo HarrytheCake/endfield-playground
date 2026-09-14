@@ -8,7 +8,7 @@
 **上游：** [LAYOUT_REWRITE_EARLY_START_0831](../LAYOUT_REWRITE_EARLY_START_0831.md)、[佈局視角渲染層自建_初步規劃與評估](../佈局視角渲染層自建_初步規劃與評估.md)、[R-B2](../../roadmap/detail/B2_placement_chain.md)  
 **門檻週：** 2026-08-31 → 2026-09-06  
 **開發分支：** A0→`dev/aaaaa0831`（已合入）；A1→`dev/aaaaa0831-h1`  
-**狀態總覽：** `[x]` A–H 完成；A0 PR [#40](https://github.com/dernoson/endfield-playground/pull/40) **已合入 master**；A1 PR [#43](https://github.com/dernoson/endfield-playground/pull/43) 待合入  
+**狀態總覽：** `[x]` A–H **完成**；A0 PR [#40](https://github.com/dernoson/endfield-playground/pull/40)、A1 PR [#43](https://github.com/dernoson/endfield-playground/pull/43) **皆已合入 master**（#43＝2026-09-04）  
 **驗收指南：** [dev_v11/V11_acceptance_guide.md](./dev_v11/V11_acceptance_guide.md)
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -196,7 +196,7 @@ layout-L1：types/layout + resolveConnections + toTopology 可測已推；L2 可
 ### 品質閘
 
 - [x] `pnpm type-check`／`lint-check`／本範圍 `test` 可過（layout 59＋toolbar 4＝63）
-- [x] A0 PR #40 含下游消費者與 Breaking 註記；A1 PR 待開（含 H1 下游段落）
+- [x] A0 PR #40 含下游消費者與 Breaking 註記；A1 PR #43 已合入（含 H1 下游段落）
 
 ---
 
@@ -244,8 +244,12 @@ layout-L1：types/layout + resolveConnections + toTopology 可測已推；L2 可
 - **V11-G1 完成：** 品質閘過；解鎖句已發；證據 `evidence/G1_unlock.md`；PR #40 已合入 master
 - **V11-H1 完成：** 工具列真實機器分類列表與五顆並存；點選＝本地＋console；不接 store
 
+### 2026-09-11
+
+- V12-B1 收斂：確認 PR [#43](https://github.com/dernoson/endfield-playground/pull/43) 已於 2026-09-04 MERGED；本檔狀態總覽／品質閘改為已合入；V11 **結案**（後續 store 見 [todolist_v12](./todolist_v12.md)）
+
 ### 2026-09-01
 
 - PR #40 合入 master；H1 自最新 master 切 `dev/aaaaa0831-h1` 續推
 - 新增 [V11_acceptance_guide.md](./dev_v11/V11_acceptance_guide.md)、[H1_acceptance.md](./dev_v11/evidence/H1_acceptance.md)
-- 回寫 W0831-A0／A1 與 WEEK_20260831 驗收步驟；A1 PR [#43](https://github.com/dernoson/endfield-playground/pull/43) 待 review_gate 合入
+- 回寫 W0831-A0／A1 與 WEEK_20260831 驗收步驟；A1 PR [#43](https://github.com/dernoson/endfield-playground/pull/43)（其後已合入，見 2026-09-11）
