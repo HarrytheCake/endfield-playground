@@ -6,11 +6,15 @@
  *   2. 放置重疊回傳 ok:false，不 throw
  *   3. 讀取面 readonly（外部 mutate 不影響內部）
  *   4. loadSnapshot(toLayoutSnapshot(scenario)) → toSnapshot 等值
+ *
+ * Review 補釘：loadSnapshot 全量評估、操作只歸咎 involved id、
+ * addPipeline 座標、remove* 回傳、history 進棧。
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useLayoutStore } from '@/store/layoutStore';
+import { useHistoryStore } from '@/store/historyStore';
 import { getMockLayoutScenario, toLayoutSnapshot } from '@/data/mockLayout';
 import type { PlacedDevice, Pipeline } from '@/types/layout';
 
@@ -85,7 +89,7 @@ describe('useLayoutStore — connections getter', () => {
         const store = useLayoutStore();
         store.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')));
 
-        store.removeDevice('src');
+        expect(store.removeDevice('src')).toEqual({ ok: true });
 
         expect(store.devices.map((d) => d.id)).toEqual(['dst']);
         expect(store.pipelines).toHaveLength(1);
@@ -96,7 +100,7 @@ describe('useLayoutStore — connections getter', () => {
         const store = useLayoutStore();
         store.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')));
 
-        store.removePipeline('pipe-ok');
+        expect(store.removePipeline('pipe-ok')).toEqual({ ok: true });
 
         expect(store.pipelines).toHaveLength(0);
         expect(store.connections).toHaveLength(0);
@@ -115,13 +119,19 @@ describe('useLayoutStore — PlacementResult（不 throw）', () => {
         expect(store.devices[0].id).toBe('a');
     });
 
-    it('addDevice 重疊回傳 ok:false reason:overlap，不寫入', () => {
+    it('addDevice 重疊回傳 ok:false reason:overlap＋conflicts，不寫入', () => {
         const store = useLayoutStore();
         expect(store.addDevice(makeSplitter('a', 0, 0)).ok).toBe(true);
 
         const result = store.addDevice(makeSplitter('b', 0, 0));
 
-        expect(result).toEqual({ ok: false, reason: 'overlap' });
+        expect(result.ok).toBe(false);
+        if (result.ok) return;
+        expect(result.reason).toBe('overlap');
+        if (result.reason === 'overlap') {
+            expect(result.conflicts.some(([x, y]) => x === 'a' || y === 'a')).toBe(true);
+            expect(result.conflicts.some(([x, y]) => x === 'b' || y === 'b')).toBe(true);
+        }
         expect(store.devices).toHaveLength(1);
         expect(store.devices[0].id).toBe('a');
     });
@@ -133,7 +143,8 @@ describe('useLayoutStore — PlacementResult（不 throw）', () => {
 
         const result = store.moveDevice('b', { x: 0, y: 0, z: 0 });
 
-        expect(result).toEqual({ ok: false, reason: 'overlap' });
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.reason).toBe('overlap');
         expect(store.devices.find((d) => d.id === 'b')?.position).toEqual({ x: 3, y: 0, z: 0 });
     });
 
@@ -153,6 +164,7 @@ describe('useLayoutStore — PlacementResult（不 throw）', () => {
         expect(store.moveDevice('missing', { x: 0, y: 0, z: 0 })).toEqual({
             ok: false,
             reason: 'invalid',
+            invalidIds: ['missing'],
         });
         expect(
             store.addDevice({
@@ -161,11 +173,12 @@ describe('useLayoutStore — PlacementResult（不 throw）', () => {
                 position: { x: 0, y: 0, z: 0 },
                 rotation: 0,
             }),
-        ).toEqual({ ok: false, reason: 'invalid' });
+        ).toEqual({ ok: false, reason: 'invalid', invalidIds: ['bad'] });
         expect(store.addDevice(makeSplitter('dup', 0, 0)).ok).toBe(true);
         expect(store.addDevice(makeSplitter('dup', 10, 0))).toEqual({
             ok: false,
             reason: 'invalid',
+            invalidIds: ['dup'],
         });
     });
 
@@ -181,8 +194,165 @@ describe('useLayoutStore — PlacementResult（不 throw）', () => {
         };
 
         expect(store.addPipeline(pipe)).toEqual({ ok: true });
-        expect(store.addPipeline(pipe)).toEqual({ ok: false, reason: 'invalid' });
+        expect(store.addPipeline(pipe)).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['p1'],
+        });
         expect(store.pipelines).toHaveLength(1);
+    });
+
+    it('addPipeline waypoints 含 NaN → invalid，不寫入', () => {
+        const store = useLayoutStore();
+        const result = store.addPipeline({
+            id: 'bad-pipe',
+            media: 'belt',
+            waypoints: [
+                { x: NaN, y: 0, z: 0 },
+                { x: 1, y: 0, z: 0 },
+            ],
+        });
+
+        expect(result).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['bad-pipe'],
+        });
+        expect(store.pipelines).toHaveLength(0);
+    });
+
+    it('addPipeline 斜向一段 → invalid（佔格展開會憑空多一個轉角）', () => {
+        const store = useLayoutStore();
+        const result = store.addPipeline({
+            id: 'diag',
+            media: 'belt',
+            waypoints: [
+                { x: 0, y: 0, z: 0 },
+                { x: 4, y: 3, z: 0 },
+            ],
+        });
+
+        expect(result).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['diag'],
+        });
+        expect(store.pipelines).toHaveLength(0);
+    });
+
+    it('addPipeline 只有一點 → invalid（不成路徑）', () => {
+        const store = useLayoutStore();
+
+        expect(
+            store.addPipeline({
+                id: 'dot',
+                media: 'belt',
+                waypoints: [{ x: 0, y: 0, z: 0 }],
+            }),
+        ).toEqual({ ok: false, reason: 'invalid', invalidIds: ['dot'] });
+        expect(store.pipelines).toHaveLength(0);
+    });
+
+    it('removeDevice／removePipeline 找不到 id → invalid', () => {
+        const store = useLayoutStore();
+
+        expect(store.removeDevice('nope')).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['nope'],
+        });
+        expect(store.removePipeline('nope')).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['nope'],
+        });
+    });
+});
+
+describe('useLayoutStore — loadSnapshot 評估與操作歸咎', () => {
+    beforeEach(() => freshStore());
+
+    it('快照兩台已重疊：loadSnapshot 回 overlap＋conflicts；遠處新增仍 ok', () => {
+        const store = useLayoutStore();
+        const loadResult = store.loadSnapshot({
+            devices: [makeSplitter('a', 0, 0), makeSplitter('b', 0, 0)],
+            pipelines: [],
+        });
+
+        expect(loadResult.ok).toBe(false);
+        if (!loadResult.ok && loadResult.reason === 'overlap') {
+            expect(loadResult.conflicts.length).toBeGreaterThan(0);
+        }
+        expect(store.devices).toHaveLength(2);
+
+        const add = store.addDevice(makeSplitter('c', 40, 40));
+        expect(add).toEqual({ ok: true });
+        expect(store.devices.map((d) => d.id)).toContain('c');
+    });
+
+    it('快照含未知機型：loadSnapshot 回 invalid；遠處新增／管線仍 ok', () => {
+        const store = useLayoutStore();
+        const loadResult = store.loadSnapshot({
+            devices: [
+                {
+                    id: 'ghost',
+                    machineType: 'not_a_real_machine_zzz',
+                    position: { x: 0, y: 0, z: 0 },
+                    rotation: 0,
+                },
+            ],
+            pipelines: [],
+        });
+
+        expect(loadResult).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['ghost'],
+        });
+
+        expect(store.addDevice(makeSplitter('far', 40, 40))).toEqual({ ok: true });
+        expect(
+            store.addPipeline({
+                id: 'p-far',
+                media: 'belt',
+                waypoints: [
+                    { x: 50, y: 50, z: 0 },
+                    { x: 51, y: 50, z: 0 },
+                ],
+            }),
+        ).toEqual({ ok: true });
+    });
+});
+
+describe('useLayoutStore — historyStore', () => {
+    beforeEach(() => freshStore());
+
+    it('addDevice 後 undo 還原；redo 再套用', () => {
+        const store = useLayoutStore();
+        const history = useHistoryStore();
+
+        expect(store.addDevice(makeSplitter('a', 0, 0)).ok).toBe(true);
+        expect(store.devices).toHaveLength(1);
+        expect(history.canUndo).toBe(true);
+
+        history.undo();
+        expect(store.devices).toHaveLength(0);
+
+        history.redo();
+        expect(store.devices).toHaveLength(1);
+        expect(store.devices[0].id).toBe('a');
+    });
+
+    it('removeDevice 後 undo 還原設備', () => {
+        const store = useLayoutStore();
+        const history = useHistoryStore();
+
+        store.addDevice(makeSplitter('a', 0, 0));
+        store.removeDevice('a');
+        expect(store.devices).toHaveLength(0);
+
+        history.undo();
+        expect(store.devices.map((d) => d.id)).toEqual(['a']);
     });
 });
 

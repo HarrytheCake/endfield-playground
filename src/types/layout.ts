@@ -124,5 +124,11 @@ export type PlacementFailReason = 'overlap' | 'invalid';
 
 /**
  * 放置合法性結果；**不 throw**，供 L2 決定是否畫紅框
+ *
+ * `overlap` 時帶 `conflicts`（detectOverlaps 的 id 配對），紅框只落在真正重疊者。  \
+ * `invalid` 時可帶 `invalidIds`（缺定義／非法座標的物件）。
  */
-export type PlacementResult = { ok: true } | { ok: false; reason: PlacementFailReason };
+export type PlacementResult =
+    | { ok: true }
+    | { ok: false; reason: 'overlap'; conflicts: [string, string][] }
+    | { ok: false; reason: 'invalid'; invalidIds?: string[] };
