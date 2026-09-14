@@ -409,11 +409,11 @@ export const useLayoutStore = defineStore('layout', () => {
         /** 衍生連線（getter；唯讀面） */
         connections: readonly(connections),
         /**
-         * 目前佈局的全部問題（供 L2 對真正重疊／無效 id 畫紅框）
+         * 目前佈局的全部問題（供 L2 對真正重疊／無效 id 畫紅框；唯讀面）
          *
          * invalid 與 overlap 並存時**兩者都回**；見 {@link LayoutIssues}。
          */
-        layoutIssues,
+        layoutIssues: readonly(layoutIssues),
         /**
          * 覆寫目前佈局（深拷貝）；回傳該快照的**全部**問題（`invalidIds` 與 `conflicts` 並列）。  \
          * 仍會載入快照（讓 L2 能對真正出錯的 id 畫紅框）；進歷史以便 undo。

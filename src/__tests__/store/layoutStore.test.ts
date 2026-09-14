@@ -506,6 +506,22 @@ describe('useLayoutStore — 讀取面 readonly', () => {
         expect(store.devices.map((d) => d.id)).not.toContain('hack');
     });
 
+    it('直接 mutate layoutIssues 清單不影響 store 回報的問題', () => {
+        const store = useLayoutStore();
+        store.loadSnapshot({
+            devices: [makeSplitter('a', 0, 0), makeSplitter('b', 0, 0)],
+            pipelines: [],
+        });
+
+        try {
+            (store.layoutIssues.conflicts as [string, string][]).length = 0;
+        } catch {
+            // 部分環境對 readonly 賦值會 throw，亦可接受
+        }
+
+        expect(store.layoutIssues.conflicts).toEqual([['a', 'b']]);
+    });
+
     it('改 toSnapshot 回傳值不回寫 store', () => {
         const store = useLayoutStore();
         store.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')));
