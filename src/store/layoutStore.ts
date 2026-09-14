@@ -15,7 +15,13 @@
 import { computed, readonly, ref } from 'vue';
 import { defineStore } from 'pinia';
 import type { Position } from '@/types/euclideanSpace';
-import type { LayoutSnapshot, PlacementResult, PlacedDevice, Pipeline } from '@/types/layout';
+import type {
+    LayoutIssues,
+    LayoutSnapshot,
+    PlacementResult,
+    PlacedDevice,
+    Pipeline,
+} from '@/types/layout';
 import type { DeviceFootprint, PipelineFootprint } from '@/types/footprint';
 import { HistoryRecordType } from '@/types/history';
 import { getMachineById } from '@/data/machines';
@@ -63,23 +69,15 @@ function clonePipeline(pipeline: Pipeline): Pipeline {
 }
 
 /**
- * 組 footprint；缺機器定義者列入 invalidIds（不中斷整批）
+ * 三軸皆為有限數
+ *
+ * z 一起檢查：`getDeviceOccupiedCells` 會沿 z 展開，非有限的 z 會讓佔格 key  \
+ * 全部塌成同一格，於是同一台設備被回報成「自己跟自己重疊」。
  */
-function collectDeviceFootprints(deviceList: PlacedDevice[]): {
-    footprints: DeviceFootprint[];
-    invalidIds: string[];
-} {
-    const footprints: DeviceFootprint[] = [];
-    const invalidIds: string[] = [];
-    for (const device of deviceList) {
-        const machine = getMachineById(device.machineType);
-        if (!machine) {
-            invalidIds.push(device.id);
-            continue;
-        }
-        footprints.push(toDeviceFootprint(device, deviceSizeFromMachine(machine)));
-    }
-    return { footprints, invalidIds };
+function positionFinite(position: Position): boolean {
+    return (
+        Number.isFinite(position.x) && Number.isFinite(position.y) && Number.isFinite(position.z)
+    );
 }
 
 /**
@@ -90,31 +88,52 @@ function collectDeviceFootprints(deviceList: PlacedDevice[]): {
  */
 function pipelineWaypointsValid(pipeline: Pipeline): boolean {
     if (pipeline.waypoints.length < 2) return false;
-    const finite = pipeline.waypoints.every(
-        (w) => Number.isFinite(w.x) && Number.isFinite(w.y) && Number.isFinite(w.z),
-    );
-    if (!finite) return false;
+    if (!pipeline.waypoints.every(positionFinite)) return false;
     return isAxisAlignedPath(pipeline.waypoints);
 }
 
 /**
- * 全量評估目前佈局（供 loadSnapshot 回報既有問題）
+ * 全量檢查佈局，一次回報**所有**問題（invalid 與 overlap 並存時兩者都回）
+ *
+ * 設備與管線共用一個 id 命名空間：`detectOverlaps` 的配對混用兩者，  \
+ * 同名就無法判斷紅框該畫在誰身上，故重複 id 一律列 invalid 並排除於佔格之外。
  */
-function assessLayout(deviceList: PlacedDevice[], pipelineList: Pipeline[]): PlacementResult {
-    const { footprints, invalidIds } = collectDeviceFootprints(deviceList);
-    if (invalidIds.length > 0) {
-        return { ok: false, reason: 'invalid', invalidIds };
+function collectLayoutIssues(deviceList: PlacedDevice[], pipelineList: Pipeline[]): LayoutIssues {
+    const idCounts = new Map<string, number>();
+    for (const item of [...deviceList, ...pipelineList]) {
+        idCounts.set(item.id, (idCounts.get(item.id) ?? 0) + 1);
     }
-    const badPipes = pipelineList.filter((p) => !pipelineWaypointsValid(p)).map((p) => p.id);
-    if (badPipes.length > 0) {
-        return { ok: false, reason: 'invalid', invalidIds: badPipes };
+
+    /** id 空或重複者無法歸屬佔格，直接視為不合法 */
+    const idUsable = (id: string): boolean => Boolean(id) && (idCounts.get(id) ?? 0) === 1;
+
+    const invalidIds = new Set<string>();
+    const deviceFootprints: DeviceFootprint[] = [];
+    for (const device of deviceList) {
+        const machine = getMachineById(device.machineType);
+        if (!idUsable(device.id) || !positionFinite(device.position) || !machine) {
+            invalidIds.add(device.id);
+            continue;
+        }
+        deviceFootprints.push(toDeviceFootprint(device, deviceSizeFromMachine(machine)));
     }
-    const pipelineFootprints: PipelineFootprint[] = pipelineList.map((p) => toPipelineFootprint(p));
-    const conflicts = detectOverlaps(footprints, pipelineFootprints);
-    if (conflicts.length > 0) {
-        return { ok: false, reason: 'overlap', conflicts };
+
+    const pipelineFootprints: PipelineFootprint[] = [];
+    for (const pipeline of pipelineList) {
+        if (!idUsable(pipeline.id) || !pipelineWaypointsValid(pipeline)) {
+            invalidIds.add(pipeline.id);
+            continue;
+        }
+        pipelineFootprints.push(toPipelineFootprint(pipeline));
     }
-    return { ok: true };
+
+    const conflicts = detectOverlaps(deviceFootprints, pipelineFootprints);
+
+    return {
+        ok: invalidIds.size === 0 && conflicts.length === 0,
+        invalidIds: [...invalidIds],
+        conflicts,
+    };
 }
 
 /**
@@ -128,25 +147,14 @@ function assessInvolving(
     pipelineList: Pipeline[],
     involvedIds: ReadonlySet<string>,
 ): PlacementResult {
-    const { footprints, invalidIds } = collectDeviceFootprints(deviceList);
-    const involvedInvalid = invalidIds.filter((id) => involvedIds.has(id));
+    const issues = collectLayoutIssues(deviceList, pipelineList);
+
+    const involvedInvalid = issues.invalidIds.filter((id) => involvedIds.has(id));
     if (involvedInvalid.length > 0) {
         return { ok: false, reason: 'invalid', invalidIds: involvedInvalid };
     }
 
-    for (const pipe of pipelineList) {
-        if (!involvedIds.has(pipe.id)) continue;
-        if (!pipelineWaypointsValid(pipe)) {
-            return { ok: false, reason: 'invalid', invalidIds: [pipe.id] };
-        }
-    }
-
-    const pipelineFootprints: PipelineFootprint[] = pipelineList
-        .filter((p) => pipelineWaypointsValid(p))
-        .map((p) => toPipelineFootprint(p));
-    const conflicts = detectOverlaps(footprints, pipelineFootprints).filter(
-        ([a, b]) => involvedIds.has(a) || involvedIds.has(b),
-    );
+    const conflicts = issues.conflicts.filter(([a, b]) => involvedIds.has(a) || involvedIds.has(b));
     if (conflicts.length > 0) {
         return { ok: false, reason: 'overlap', conflicts };
     }
@@ -166,24 +174,26 @@ export const useLayoutStore = defineStore('layout', () => {
     const connections = computed(() => resolveConnections(devices.value, pipelines.value));
 
     /**
-     * 目前佈局的全量問題（供 L2 對真正重疊／無效 id 畫紅框）
+     * 目前佈局的全部問題（供 L2 對真正重疊／無效 id 畫紅框）
+     *
+     * invalid 與 overlap 並存時**兩者都回**；見 {@link LayoutIssues}。
      */
-    const layoutIssues = computed(() => assessLayout(devices.value, pipelines.value));
+    const layoutIssues = computed(() => collectLayoutIssues(devices.value, pipelines.value));
 
     /**
-     * 覆寫目前佈局（深拷貝）；回傳全量評估，既有 overlap／invalid 帶 conflicts／invalidIds。  \
+     * 覆寫目前佈局（深拷貝）；回傳該快照的**全部**問題（`invalidIds` 與 `conflicts` 並列）。  \
      * 仍會載入快照（讓 L2 能對真正出錯的 id 畫紅框）；進歷史以便 undo。
      *
      * @param snapshot 純資料快照；connections 不在內
      */
-    function loadSnapshot(snapshot: LayoutSnapshot): PlacementResult {
+    function loadSnapshot(snapshot: LayoutSnapshot): LayoutIssues {
         const historyStore = useHistoryStore();
         const before = cloneSnapshot({
             devices: devices.value,
             pipelines: pipelines.value,
         });
         const after = cloneSnapshot(snapshot);
-        const result = assessLayout(after.devices, after.pipelines);
+        const result = collectLayoutIssues(after.devices, after.pipelines);
 
         historyStore.execute({
             id: crypto.randomUUID(),
@@ -221,7 +231,7 @@ export const useLayoutStore = defineStore('layout', () => {
         if (!device.id || devices.value.some((d) => d.id === device.id)) {
             return { ok: false, reason: 'invalid', invalidIds: device.id ? [device.id] : [] };
         }
-        if (!Number.isFinite(device.position.x) || !Number.isFinite(device.position.y)) {
+        if (!positionFinite(device.position)) {
             return { ok: false, reason: 'invalid', invalidIds: [device.id] };
         }
         if (!getMachineById(device.machineType)) {
@@ -252,12 +262,13 @@ export const useLayoutStore = defineStore('layout', () => {
     }
 
     /**
-     * 刪除設備；管線保留（可變成斷線）。找不到 id 回 invalid。
+     * 刪除設備；管線保留（可變成斷線）。找不到或 id 不唯一時回 invalid。
      *
      * @param id 設備 uid
      */
     function removeDevice(id: string): PlacementResult {
-        if (!devices.value.some((d) => d.id === id)) {
+        /** 同 id 有多台時刪除會一次砍兩台，語意不明，擋掉 */
+        if (devices.value.filter((d) => d.id === id).length !== 1) {
             return { ok: false, reason: 'invalid', invalidIds: [id] };
         }
 
@@ -285,7 +296,12 @@ export const useLayoutStore = defineStore('layout', () => {
      * @param position 新佔格左上角
      */
     function moveDevice(id: string, position: Position): PlacementResult {
-        if (!Number.isFinite(position.x) || !Number.isFinite(position.y)) {
+        if (!positionFinite(position)) {
+            return { ok: false, reason: 'invalid', invalidIds: [id] };
+        }
+
+        /** 快照可能塞進同 id 的兩台；此時動哪一台都是猜，直接擋掉 */
+        if (devices.value.filter((d) => d.id === id).length !== 1) {
             return { ok: false, reason: 'invalid', invalidIds: [id] };
         }
 
@@ -358,12 +374,13 @@ export const useLayoutStore = defineStore('layout', () => {
     }
 
     /**
-     * 刪除管線。找不到 id 回 invalid。
+     * 刪除管線。找不到或 id 不唯一時回 invalid。
      *
      * @param id 管線 uid
      */
     function removePipeline(id: string): PlacementResult {
-        if (!pipelines.value.some((p) => p.id === id)) {
+        /** 同 id 有多條時刪除會一次砍兩條，語意不明，擋掉 */
+        if (pipelines.value.filter((p) => p.id === id).length !== 1) {
             return { ok: false, reason: 'invalid', invalidIds: [id] };
         }
 
@@ -391,10 +408,14 @@ export const useLayoutStore = defineStore('layout', () => {
         pipelines: readonly(pipelines),
         /** 衍生連線（getter；唯讀面） */
         connections: readonly(connections),
-        /** 目前佈局全量問題（L2 對真正出錯的 id 畫紅框） */
+        /**
+         * 目前佈局的全部問題（供 L2 對真正重疊／無效 id 畫紅框）
+         *
+         * invalid 與 overlap 並存時**兩者都回**；見 {@link LayoutIssues}。
+         */
         layoutIssues,
         /**
-         * 覆寫目前佈局（深拷貝）；回傳全量評估，既有 overlap／invalid 帶 conflicts／invalidIds。  \
+         * 覆寫目前佈局（深拷貝）；回傳該快照的**全部**問題（`invalidIds` 與 `conflicts` 並列）。  \
          * 仍會載入快照（讓 L2 能對真正出錯的 id 畫紅框）；進歷史以便 undo。
          *
          * @param snapshot 純資料快照；connections 不在內
@@ -411,7 +432,7 @@ export const useLayoutStore = defineStore('layout', () => {
          */
         addDevice,
         /**
-         * 刪除設備；管線保留（可變成斷線）。找不到 id 回 invalid。
+         * 刪除設備；管線保留（可變成斷線）。找不到或 id 不唯一時回 invalid。
          *
          * @param id 設備 uid
          */
@@ -431,7 +452,7 @@ export const useLayoutStore = defineStore('layout', () => {
          */
         addPipeline,
         /**
-         * 刪除管線。找不到 id 回 invalid。
+         * 刪除管線。找不到或 id 不唯一時回 invalid。
          *
          * @param id 管線 uid
          */

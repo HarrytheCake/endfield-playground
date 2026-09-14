@@ -12,7 +12,7 @@
  */
 import { computed, ref } from 'vue';
 import type { MachineCategory } from '@/types/machine';
-import type { PlacementResult, PlacedDevice, PortDirection } from '@/types/layout';
+import type { LayoutIssues, PlacementResult, PlacedDevice, PortDirection } from '@/types/layout';
 import { getMachineById } from '@/data/machines';
 import {
     getMockLayoutScenario,
@@ -85,18 +85,14 @@ const selectedRow = computed(
     () => machineRows.value.find((r) => r.id === selectedMachineId.value) ?? null,
 );
 
-/** 真正出錯的 id（來自 layoutIssues） */
+/** 真正出錯的 id（來自 layoutIssues；invalid 與 overlap 並存時兩者都畫） */
 const issueIds = computed(() => {
     const ids = new Set<string>();
     const issues = layoutStore.layoutIssues;
-    if (issues.ok) return ids;
-    if (issues.reason === 'overlap') {
-        for (const [a, b] of issues.conflicts) {
-            ids.add(a);
-            ids.add(b);
-        }
-    } else if (issues.invalidIds) {
-        for (const id of issues.invalidIds) ids.add(id);
+    for (const id of issues.invalidIds) ids.add(id);
+    for (const [a, b] of issues.conflicts) {
+        ids.add(a);
+        ids.add(b);
     }
     return ids;
 });
@@ -248,6 +244,25 @@ function failLocally(msg: string): void {
     statusMsg.value = `失敗（頁面）：${msg}`;
 }
 
+/** 快照載入結果：`invalidIds` 與 `conflicts` 可同時非空，兩者都要講 */
+function applyIssues(issues: LayoutIssues, okMsg: string): void {
+    lastResult.value = null;
+    if (issues.ok) {
+        uiError.value = null;
+        statusMsg.value = okMsg;
+        return;
+    }
+    const parts: string[] = [];
+    if (issues.invalidIds.length > 0) {
+        parts.push(`invalid：${issues.invalidIds.join(', ')}`);
+    }
+    if (issues.conflicts.length > 0) {
+        parts.push(`overlap：${issues.conflicts.map(([a, b]) => `${a}↔${b}`).join(', ')}`);
+    }
+    uiError.value = parts.join('｜');
+    statusMsg.value = `${okMsg}；快照本身有問題 → ${parts.join('｜')}`;
+}
+
 function applyResult(result: PlacementResult, okMsg: string): void {
     lastResult.value = result;
     uiError.value = null;
@@ -276,6 +291,15 @@ function buildDevice(row: ToolbarMachineRow, x: number, y: number): PlacedDevice
 function selectMachine(row: ToolbarMachineRow): void {
     selectedMachineId.value = row.id;
     statusMsg.value = `已選機器：${row.name}（${row.sizeText}）`;
+}
+
+/** 清掉選取與草稿（切模式、載入快照時用） */
+function resetInteractionState(): void {
+    selectedDeviceId.value = null;
+    beltTargetId.value = null;
+    portFrom.value = null;
+    portTo.value = null;
+    manualWaypoints.value = [];
 }
 
 function setBeltMode(mode: BeltMode): void {
@@ -359,23 +383,15 @@ function removeSelected(): void {
 }
 
 function clearAll(): void {
-    const result = layoutStore.loadSnapshot({ devices: [], pipelines: [] });
-    selectedDeviceId.value = null;
-    beltTargetId.value = null;
-    portFrom.value = null;
-    portTo.value = null;
-    manualWaypoints.value = [];
-    applyResult(result, '已清空；可從工具列選機放置');
+    const issues = layoutStore.loadSnapshot({ devices: [], pipelines: [] });
+    resetInteractionState();
+    applyIssues(issues, '已清空；可從工具列選機放置');
 }
 
 function loadFixture(id: MockLayoutScenarioId): void {
-    const result = layoutStore.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario(id)));
-    selectedDeviceId.value = null;
-    beltTargetId.value = null;
-    portFrom.value = null;
-    portTo.value = null;
-    manualWaypoints.value = [];
-    applyResult(result, `已載入 fixture：${id}`);
+    const issues = layoutStore.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario(id)));
+    resetInteractionState();
+    applyIssues(issues, `已載入 fixture：${id}`);
 }
 
 function onDeviceClick(deviceId: string): void {

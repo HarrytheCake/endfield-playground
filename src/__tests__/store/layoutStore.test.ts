@@ -33,6 +33,16 @@ function makeSplitter(id: string, x: number, y: number): PlacedDevice {
     };
 }
 
+/** 缺機器定義的設備（machineType 不存在） */
+function makeGhost(id: string): PlacedDevice {
+    return {
+        id,
+        machineType: 'not_a_real_machine_zzz',
+        position: { x: 0, y: 0, z: 0 },
+        rotation: 0,
+    };
+}
+
 describe('useLayoutStore — snapshot 對稱', () => {
     beforeEach(() => freshStore());
 
@@ -272,17 +282,14 @@ describe('useLayoutStore — PlacementResult（不 throw）', () => {
 describe('useLayoutStore — loadSnapshot 評估與操作歸咎', () => {
     beforeEach(() => freshStore());
 
-    it('快照兩台已重疊：loadSnapshot 回 overlap＋conflicts；遠處新增仍 ok', () => {
+    it('快照兩台已重疊：loadSnapshot 回 conflicts；遠處新增仍 ok', () => {
         const store = useLayoutStore();
-        const loadResult = store.loadSnapshot({
+        const issues = store.loadSnapshot({
             devices: [makeSplitter('a', 0, 0), makeSplitter('b', 0, 0)],
             pipelines: [],
         });
 
-        expect(loadResult.ok).toBe(false);
-        if (!loadResult.ok && loadResult.reason === 'overlap') {
-            expect(loadResult.conflicts.length).toBeGreaterThan(0);
-        }
+        expect(issues).toEqual({ ok: false, invalidIds: [], conflicts: [['a', 'b']] });
         expect(store.devices).toHaveLength(2);
 
         const add = store.addDevice(makeSplitter('c', 40, 40));
@@ -290,25 +297,14 @@ describe('useLayoutStore — loadSnapshot 評估與操作歸咎', () => {
         expect(store.devices.map((d) => d.id)).toContain('c');
     });
 
-    it('快照含未知機型：loadSnapshot 回 invalid；遠處新增／管線仍 ok', () => {
+    it('快照含未知機型：loadSnapshot 回 invalidIds；遠處新增／管線仍 ok', () => {
         const store = useLayoutStore();
-        const loadResult = store.loadSnapshot({
-            devices: [
-                {
-                    id: 'ghost',
-                    machineType: 'not_a_real_machine_zzz',
-                    position: { x: 0, y: 0, z: 0 },
-                    rotation: 0,
-                },
-            ],
+        const issues = store.loadSnapshot({
+            devices: [makeGhost('ghost')],
             pipelines: [],
         });
 
-        expect(loadResult).toEqual({
-            ok: false,
-            reason: 'invalid',
-            invalidIds: ['ghost'],
-        });
+        expect(issues).toEqual({ ok: false, invalidIds: ['ghost'], conflicts: [] });
 
         expect(store.addDevice(makeSplitter('far', 40, 40))).toEqual({ ok: true });
         expect(
@@ -321,6 +317,141 @@ describe('useLayoutStore — loadSnapshot 評估與操作歸咎', () => {
                 ],
             }),
         ).toEqual({ ok: true });
+    });
+});
+
+describe('useLayoutStore — layoutIssues 一次回報所有問題（review 2 之 §1）', () => {
+    beforeEach(() => freshStore());
+
+    it('未知機型＋兩台重疊：invalidIds 與 conflicts 同時回報', () => {
+        const store = useLayoutStore();
+        const issues = store.loadSnapshot({
+            devices: [makeGhost('ghost'), makeSplitter('a', 0, 0), makeSplitter('b', 0, 0)],
+            pipelines: [],
+        });
+
+        expect(issues).toEqual({
+            ok: false,
+            invalidIds: ['ghost'],
+            conflicts: [['a', 'b']],
+        });
+        expect(store.layoutIssues).toEqual(issues);
+    });
+
+    it('非軸對齊管線＋兩台重疊：兩類問題同時回報', () => {
+        const store = useLayoutStore();
+        const issues = store.loadSnapshot({
+            devices: [makeSplitter('a', 0, 0), makeSplitter('b', 0, 0)],
+            pipelines: [
+                {
+                    id: 'diag',
+                    media: 'belt',
+                    waypoints: [
+                        { x: 20, y: 20, z: 0 },
+                        { x: 24, y: 23, z: 0 },
+                    ],
+                },
+            ],
+        });
+
+        expect(issues).toEqual({
+            ok: false,
+            invalidIds: ['diag'],
+            conflicts: [['a', 'b']],
+        });
+    });
+
+    it('設備座標 x: NaN → 載入時列 invalid（不再靜默寫入）', () => {
+        const store = useLayoutStore();
+        const issues = store.loadSnapshot({
+            devices: [
+                {
+                    id: 'nan',
+                    machineType: 'splitter',
+                    position: { x: NaN, y: 0, z: 0 },
+                    rotation: 0,
+                },
+            ],
+            pipelines: [],
+        });
+
+        expect(issues).toEqual({ ok: false, invalidIds: ['nan'], conflicts: [] });
+    });
+
+    it('兩台同 id → 列 invalid，且 move／remove 該 id 被擋下', () => {
+        const store = useLayoutStore();
+        const issues = store.loadSnapshot({
+            devices: [makeSplitter('dup', 0, 0), makeSplitter('dup', 8, 0)],
+            pipelines: [],
+        });
+
+        expect(issues).toEqual({ ok: false, invalidIds: ['dup'], conflicts: [] });
+        expect(store.moveDevice('dup', { x: 2, y: 2, z: 0 })).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['dup'],
+        });
+        expect(store.removeDevice('dup')).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['dup'],
+        });
+        expect(store.devices).toHaveLength(2);
+    });
+
+    it('設備與管線同 id → 兩者皆列 invalid（配對無法歸屬）', () => {
+        const store = useLayoutStore();
+        const issues = store.loadSnapshot({
+            devices: [makeSplitter('same', 0, 0)],
+            pipelines: [
+                {
+                    id: 'same',
+                    media: 'belt',
+                    waypoints: [
+                        { x: 30, y: 30, z: 0 },
+                        { x: 31, y: 30, z: 0 },
+                    ],
+                },
+            ],
+        });
+
+        expect(issues).toEqual({ ok: false, invalidIds: ['same'], conflicts: [] });
+    });
+
+    it('乾淨快照 → ok:true 且兩個清單皆空', () => {
+        const store = useLayoutStore();
+        const issues = store.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')));
+
+        expect(issues).toEqual({ ok: true, invalidIds: [], conflicts: [] });
+    });
+});
+
+describe('useLayoutStore — z 納入有限數檢查（review 2 之 §2）', () => {
+    beforeEach(() => freshStore());
+
+    it.each([NaN, Infinity, -Infinity])('addDevice z=%p → invalid（不是 overlap）', (z) => {
+        const store = useLayoutStore();
+        const result = store.addDevice({
+            id: 'a',
+            machineType: 'splitter',
+            position: { x: 0, y: 0, z },
+            rotation: 0,
+        });
+
+        expect(result).toEqual({ ok: false, reason: 'invalid', invalidIds: ['a'] });
+        expect(store.devices).toHaveLength(0);
+    });
+
+    it.each([NaN, Infinity, -Infinity])('moveDevice z=%p → invalid（不是 overlap）', (z) => {
+        const store = useLayoutStore();
+        store.addDevice(makeSplitter('a', 0, 0));
+
+        expect(store.moveDevice('a', { x: 1, y: 1, z })).toEqual({
+            ok: false,
+            reason: 'invalid',
+            invalidIds: ['a'],
+        });
+        expect(store.devices[0].position).toEqual({ x: 0, y: 0, z: 0 });
     });
 });
 

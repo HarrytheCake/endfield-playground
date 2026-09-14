@@ -132,3 +132,22 @@ export type PlacementResult =
     | { ok: true }
     | { ok: false; reason: 'overlap'; conflicts: [string, string][] }
     | { ok: false; reason: 'invalid'; invalidIds?: string[] };
+
+/**
+ * 佈局整體檢查結果；**同時**帶所有類別的問題
+ *
+ * 單一操作用 {@link PlacementResult}（一次一個 reason 就夠）；  \
+ * 但整份佈局可能同時有「未知機型」與「兩台重疊」，只回一種 reason 會讓  \
+ * L2 漏掉另一種的紅框，故聚合面另立本型別。
+ *
+ * `invalidIds` 的物件**不參與**重疊偵測：缺機器定義或座標非有限者無法展開佔格，  \
+ * id 重複者無法把佔格歸給哪一個，硬算只會得到「自己跟自己重疊」這種無意義配對。
+ */
+export interface LayoutIssues {
+    /** `invalidIds` 與 `conflicts` 皆空時為 true */
+    ok: boolean;
+    /** 不合法者：缺機器定義、座標非有限、id 空或重複、管線路徑不良構 */
+    invalidIds: string[];
+    /** 重疊的 id 配對；來自 `detectOverlaps` */
+    conflicts: [string, string][];
+}
