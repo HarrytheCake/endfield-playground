@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import Navbar from '@/editor/navbar/Navbar.vue';
 import ProjectSidebar from '@/editor/sidebar/ProjectSidebar.vue';
 import ToolbarPanel from '@/editor/toolbar/ToolbarPanel.vue';
-import FactoryCanvas from '@/editor/canvas/FactoryCanvas.vue';
+import LayoutView from '@/editor/layout/LayoutView.vue';
 import InspectorSidebar from '@/editor/inspector/InspectorSidebar.vue';
 import StatsPanel from '@/components/StatsPanel/Index.vue';
 import { useFlowEngine } from '@/composables/useFlowEngine';
@@ -35,7 +35,7 @@ useFlowEngine();
 
             <div class="workspace-main">
                 <div class="area-canvas">
-                    <FactoryCanvas />
+                    <LayoutView />
                 </div>
                 <section class="area-toolbar">
                     <ToolbarPanel />
