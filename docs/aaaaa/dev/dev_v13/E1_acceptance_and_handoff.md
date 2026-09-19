@@ -40,13 +40,14 @@ R-C2、R-D4 狀態由 [!] 改 [ ]（已定義、待實作），實作分別排 1
 
 本版動的是 roadmap 公開文件，**回寫不是選配**（[AGENT_ROADMAP §4.4 規則 19](../../claude/AGENT_ROADMAP.md)：封鎖一律回寫大綱 §9）。
 
-| # | 檔 | 動作 |
-|---|----|------|
-| 1 | [roadmap/detail/C2](../../../roadmap/detail/C2_add_connection_contract.md) | §3／§4／§5／§6／§10 改寫；meta 狀態 `[!]` → `[ ]`；§11 補日誌 |
-| 2 | [roadmap/detail/D4](../../../roadmap/detail/D4_blueprint_json_io.md) | §3／§4／§5／§8／§10 改寫；meta 狀態 `[!]` → `[ ]`；§11 補日誌 |
-| 3 | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) §5／§6 | R-C2、R-D4 的 `[!]` 勾選改 `[ ]`，刪掉「待重新定義／待重訂格式」的註 |
-| 4 | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) §9 封鎖表 | C2、D4 兩列解除；解除條件寫「V13 重訂完成（2026-09-19）」 |
-| 5 | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) 版本紀錄 | 升版並記一行；改期／狀態變更不得只留口頭（規則 20） |
+| # | 檔 | 動作 | 狀態 |
+|---|----|------|------|
+| 1 | [roadmap/detail/C2](../../../roadmap/detail/C2_add_connection_contract.md) | §3／§4／§5／§6／§10 改寫；meta 狀態 `[!]` → `[ ]`；§11 補日誌 | **已回寫** |
+| 2 | [roadmap/detail/D4](../../../roadmap/detail/D4_blueprint_json_io.md) | §3／§4／§5／§8／§10 改寫；meta 狀態 `[!]` → `[ ]`；§11 補日誌 | **已回寫** |
+| 3 | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) §5／§6 | R-C2、R-D4 的 `[!]` 勾選改 `[ ]`，刪掉「待重新定義／待重訂格式」的註 | **已回寫** |
+| 4 | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) §9 封鎖表 | C2、D4 兩列解除；解除條件寫「V13 重訂完成（2026-09-19）」 | **已回寫** |
+| 5 | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) 版本紀錄 | 升版並記一行；改期／狀態變更不得只留口頭（規則 20） | **已回寫（v1.10）** |
+| 6 | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) §1.2／§2／§8 | 藍圖格式定案句、§2 工項總表 R-C2 名稱、§8 的 10/04 與 11/22 備註 | **已回寫**（回寫過程追加） |
 
 > §5 的升版需要主編知情。R-C2／R-D4 **不是**在改月底門檻必要項清單（兩者本來就是必要項，只是從「待定義」變「已定義」），依 [AGENT_ROADMAP §7](../../claude/AGENT_ROADMAP.md) 不需要主編＋aaaaa 雙簽；但 PR 仍由主編合入。
 
@@ -97,11 +98,11 @@ C2 的週切片因此把「內部防線」從 10/18 提前到 10/11。
 
 ## 7. DoD（本細項）
 
-- [ ] C1＋C2＋D1 各自 DoD 滿足
-- [ ] §3 五項上游回寫完成
+- [x] C1＋C2＋D1 各自 DoD 滿足
+- [x] §3 上游回寫完成（五項＋追加一項）
 - [ ] [驗收指南](./V13_acceptance_guide.md)步驟可跑通
 - [ ] PR 可審；body 含 §2.1／§4／§5
-- [ ] 未發任何解鎖句
+- [x] 未發任何解鎖句
 
 ---
 
@@ -112,3 +113,6 @@ C2 的週切片因此把「內部防線」從 10/18 提前到 10/11。
 - 定：本版不發解鎖句，改用範圍宣告（§2）
 - 列出五項上游回寫；確認 C2／D4 脫離 `[!]` 不屬「變更門檻必要項清單」，不需雙簽
 - 整理 §5 兩項風險下降，供週會與 10 月排程引用
+- **下午：§3 回寫全數執行完畢**，ROADMAP_OUTLINE 升 v1.10。回寫時追加第 6 項——
+  §1.2 的藍圖格式列、§2 工項總表的 R-C2 名稱、§8 里程碑表的 10/04 與 11/22 備註都還帶著「待重訂」字樣，
+  原清單漏列。教訓：**同一句話會散在大綱好幾處**，只查 §9 封鎖表會漏
