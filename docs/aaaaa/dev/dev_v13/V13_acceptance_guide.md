@@ -17,6 +17,8 @@
 
 V13 執行計畫：[todolist_v13.md](../todolist_v13.md)＋本目錄 `dev_v13/`。
 
+**想跳過細讀的話**，[evidence/A1_dod.md](./evidence/A1_dod.md) 已把 W0914-A0（7 條）與 W0914-A1（5 條）的 DoD 逐條列出查證方式與結果，並附可自行重跑的 `git`／`gh` 指令。本指南是**內容**檢查，那份是**條件**檢查，兩者不重複。
+
 **A1 不在 WEEK §0.1 的 V1–V7 之列**——它是次優、不擋門檻。本週 aaaaa 對應的公開驗收項是 **V1（`layoutStore` 進 master）**，已於 2026-09-14 隨 PR [#45](https://github.com/dernoson/endfield-playground/pull/45) 達成，驗收步驟見 [V12_acceptance_guide](../dev_v12/V12_acceptance_guide.md)。
 
 ---
@@ -43,7 +45,7 @@ V13 執行計畫：[todolist_v13.md](../todolist_v13.md)＋本目錄 `dev_v13/`�
 | 新增規則 7 | 斷線管線合法；`from`／`to` 為 `null` 不算違規 |
 | §4.3 型別 | discriminated union；`ok` 為 discriminant；**無** `message` 欄位 |
 | 描述函式 | `describeConnectFailure` 有出現，且說明 L3 不組文案的原則仍成立 |
-| §4.5 | 「端點判定必須與 `resolveConnections` 共用」有寫成明文 |
+| §4.4 | 「端點判定必須與 `resolveConnections` 共用」有寫成明文（獨立一節，非夾在別節裡） |
 | §5 落點 | `src/utils/layout/connectRules.ts`（**不是** `src/utils/`） |
 | §5／§8／§10 | 已**移除**改 `editorStore.addConnection`／標 Breaking／10/11 跨 CR 協商 |
 | meta | 狀態 `[ ]`；`最後更新` 2026-09-19 |
@@ -61,7 +63,7 @@ V13 執行計畫：[todolist_v13.md](../todolist_v13.md)＋本目錄 `dev_v13/`�
 | 舊檔政策 | 「不讀舊檔」＋**資訊缺口**理由（舊檔沒有路徑資訊，轉換等於憑空造圖） |
 | 拒絕提示 | 有一句面向使用者的提示文字 |
 | §4.4 | 已改為沿用 `layoutStore.loadSnapshot`；CR-01 協商需求已移除 |
-| 兩道驗證 | 形狀（`parseBlueprint`）／語意（`LayoutIssues`）分開，且寫明「形狀錯全拒、語意違規載入並警示」 |
+| §4.6／§4.6.1 兩道驗證 | 形狀（`parseBlueprint`）／語意（`LayoutIssues`）分開，且寫明「形狀錯全拒、語意違規載入並警示」 |
 | §8 依賴 | `primaryOutput` 已滿足；新增對 C2 `canConnect` 的依賴 |
 | meta | 狀態 `[ ]`；`最後更新` 2026-09-19 |
 
@@ -117,4 +119,5 @@ git diff --name-only origin/master
 | [C2_d4_blueprint_format.md](./C2_d4_blueprint_format.md) | D4 schema 與舊檔政策 |
 | [D1_placement_precheck_gap.md](./D1_placement_precheck_gap.md) | 0921 落子前置 |
 | [E1_acceptance_and_handoff.md](./E1_acceptance_and_handoff.md) | PR、回寫、交接 |
+| [evidence/A1_dod.md](./evidence/A1_dod.md) | A0／A1 工單 DoD 逐條查證證據 |
 | [W0914-A1](../../../work_dispatch/aaaaa/0914/W0914-A1_connection_blueprint_contract.md) | 公開工單與 DoD |
