@@ -87,7 +87,7 @@
 | 2 | ROADMAP_OUTLINE §5／§6 勾選、§9 封鎖表解除、版本紀錄升版 | aaaaa；[E1 §3](../dev/dev_v13/E1_acceptance_and_handoff.md) | **已done（v1.10）**；回寫時另發現 §1.2／§2／§8 也帶「待重訂」字樣，一併補 |
 | 3 | 回寫 todolist_v13 狀態 | Agent／aaaaa | **已done**（A–E 全 `[x]`） |
 | 4 | REVIEW／E3 日誌補一行 | 決策層 `0914/` | **已done**；另新建 `PENDING_DECISIONS_20260920` |
-| 5 | 0921 交接摘要貼 PR body 或 Discord | aaaaa | **待 PR 開出** |
+| 5 | 0921 交接摘要貼 PR body 或 Discord | aaaaa | **已done**（[#51](https://github.com/dernoson/endfield-playground/pull/51) body） |
 | 6 | 工單 DoD 逐條查證證據 | aaaaa；[evidence/A1_dod.md](../dev/dev_v13/evidence/A1_dod.md) | **已done**（負責人 9/19 追加） |
 | — | **不動** CLAUDE §4.6 索引、AGENT_ROADMAP 版本 | 負責人 9/19 裁示；已知過期，下次一併補 | 維持 |
 

@@ -10,6 +10,7 @@
 **門檻週：** 2026-09-14 → 2026-09-20（**9/27 門檻倒數第二週**）
 **開發分支：** `dev/aaaaa0914`
 **狀態總覽：** **`[x]` 全版交付完成**（2026-09-19）。A–E 五項全交；兩份 detail 脫離 `[!]`，ROADMAP_OUTLINE 升 v1.10
+**對應 PR：** [#51](https://github.com/dernoson/endfield-playground/pull/51)（2026-09-19 送出；15 檔全在 `docs/`，零 `src/`）
 **驗收指南：** [dev_v13/V13_acceptance_guide.md](./dev_v13/V13_acceptance_guide.md)
 **待確認問題：** [dispatch_private/0914/PENDING_DECISIONS_20260920.md](../collaborator_survey/dispatch_private/0914/PENDING_DECISIONS_20260920.md)（10 項，**全部不阻擋本版**）
 

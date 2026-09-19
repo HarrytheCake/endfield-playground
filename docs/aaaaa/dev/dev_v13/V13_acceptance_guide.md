@@ -12,7 +12,7 @@
 
 | 工項 | 內容 | PR | 分支 |
 |------|------|-----|------|
-| A1 契約重訂 | C2 規則表＋`ConnectResult`；D4 v2 schema＋舊檔政策 | 待開 | `dev/aaaaa0914` |
+| A1 契約重訂 | C2 規則表＋`ConnectResult`；D4 v2 schema＋舊檔政策 | [#51](https://github.com/dernoson/endfield-playground/pull/51) | `dev/aaaaa0914` |
 | （追加）0921 前置 | `canPlaceDevice` 缺口盤點與簽章草案 | 同上 | 同上 |
 
 V13 執行計畫：[todolist_v13.md](../todolist_v13.md)＋本目錄 `dev_v13/`。
