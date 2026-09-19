@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.0（2026-09-19；A0 已合入，重心轉 A1 契約重訂＋不干擾合入帶寬）** |
+| version | **v1.1（2026-09-19 下午；A1 交付完成、§4 五項回寫全數執行、待確認問題分級後延後）** |
 | 用途 | 供 Agent 執行本週派工／改工單時的**強制約束**；細節以公開 WEEK 與個人工單為準 |
 | 公開 | [WEEK_0914](../../work_dispatch/WEEK_20260914.md) v1.1、[W0914-A0](../../work_dispatch/aaaaa/0914/W0914-A0_layout_store_land.md)、[W0914-A1](../../work_dispatch/aaaaa/0914/W0914-A1_connection_blueprint_contract.md) |
 | 執行計畫 | [todolist_v13](../dev/todolist_v13.md)、[dev_v13/](../dev/dev_v13/) |
@@ -81,14 +81,15 @@
 
 ## 4. 本週結束應更新
 
-| # | 動作 | 誰／何處 |
-|---|------|----------|
-| 1 | C2／D4 兩份 detail 狀態 `[!]` → `[ ]`，各補開發日誌 | aaaaa；`roadmap/detail/` |
-| 2 | ROADMAP_OUTLINE §5／§6 勾選、§9 封鎖表解除、版本紀錄升版 | aaaaa；[E1 §3](../dev/dev_v13/E1_acceptance_and_handoff.md) |
-| 3 | 回寫 todolist_v13 狀態 | Agent／aaaaa |
-| 4 | REVIEW／E3 日誌補一行 | 決策層 `0914/` |
-| 5 | 0921 交接摘要貼 PR body 或 Discord | aaaaa |
-| — | **不動** CLAUDE §4.6 索引、AGENT_ROADMAP 版本 | 負責人 9/19 裁示；已知過期，下次一併補 |
+| # | 動作 | 誰／何處 | 狀態 |
+|---|------|----------|------|
+| 1 | C2／D4 兩份 detail 狀態 `[!]` → `[ ]`，各補開發日誌 | aaaaa；`roadmap/detail/` | **已done** |
+| 2 | ROADMAP_OUTLINE §5／§6 勾選、§9 封鎖表解除、版本紀錄升版 | aaaaa；[E1 §3](../dev/dev_v13/E1_acceptance_and_handoff.md) | **已done（v1.10）**；回寫時另發現 §1.2／§2／§8 也帶「待重訂」字樣，一併補 |
+| 3 | 回寫 todolist_v13 狀態 | Agent／aaaaa | **已done**（A–E 全 `[x]`） |
+| 4 | REVIEW／E3 日誌補一行 | 決策層 `0914/` | **已done**；另新建 `PENDING_DECISIONS_20260920` |
+| 5 | 0921 交接摘要貼 PR body 或 Discord | aaaaa | **待 PR 開出** |
+| 6 | 工單 DoD 逐條查證證據 | aaaaa；[evidence/A1_dod.md](../dev/dev_v13/evidence/A1_dod.md) | **已done**（負責人 9/19 追加） |
+| — | **不動** CLAUDE §4.6 索引、AGENT_ROADMAP 版本 | 負責人 9/19 裁示；已知過期，下次一併補 | 維持 |
 
 ---
 
@@ -96,15 +97,17 @@
 
 以 [WEEK_20260914 §0.1](../../work_dispatch/WEEK_20260914.md) 為準。
 
-| 項 | 對象 | 本週實況（截至 9/19） |
+| 項 | 對象 | 本週實況（截至 9/19 下午，`gh` 實查） |
 |----|------|----------------------|
-| **V1** | aaaaa A0 | **達成**；#45 於 09-14 合入 |
-| V2 | toby T1 | PR #50 開著（9/18 送出），待審 |
+| **V1** | aaaaa A0 | **達成**；#45 於 09-14T17:12:28Z 合入（merge `f95ed9f`） |
+| V2 | toby T1 | PR #50 開著（9/18 送出），**最後活動 9/18T15:32，尚無 review** |
 | V3 | harry H1 | 達成；#47 於 09-14 合入 |
-| V4 | shirone S1 | 未達；`src/app/StatsPanel/` 尚不存在 |
-| V5 | goodmorning G1 | 未達；#48 自 9/13 開著 |
+| V4 | shirone S1 | 未達；`src/app/StatsPanel/` 不存在，仍在 `src/components/StatsPanel/`（10 檔） |
+| V5 | goodmorning G1 | 未達；#48 自 9/13 開著，**最後活動 9/14T17:37，已 5 天無動靜** |
 
-**A1 不在 V1–V7 之列**（次優、不擋門檻），個人步驟見 [V13_acceptance_guide](../dev/dev_v13/V13_acceptance_guide.md)。
+**A1 不在 V1–V7 之列**（次優、不擋門檻），個人步驟見 [V13_acceptance_guide](../dev/dev_v13/V13_acceptance_guide.md)；工單條件查證見 [evidence/A1_dod.md](../dev/dev_v13/evidence/A1_dod.md)。
+
+V2／V4／V5 三項不是 aaaaa 的工項，**也不阻擋 A1**。它們要在 9/20 週會報告並決策，清單見決策層 [PENDING_DECISIONS_20260920](../collaborator_survey/dispatch_private/0914/PENDING_DECISIONS_20260920.md)。
 
 > 判定實況一律以 `git`／`gh` 為準，不以文件宣稱為準——這是 V12-B1 學到的教訓。
 
@@ -117,3 +120,9 @@
 - v1.0：A0 於週初即合入，重心改為 A1 契約重訂；禁止表以「還開著的 PR 所屬檔案」為主軸
 - 契約形狀寫死（C2 union／D4 v2 拒舊檔／canPlaceDevice 回傳沿用 PlacementResult）
 - 對齊 WEEK v1.1、todolist_v13、dispatch_private/0914
+- **v1.1（下午）：** A1 交付完成，§4 回寫五項全數執行（第 5 項待 PR）；§5 驗收對照改以 `gh` 實查數據填寫
+- 新增 §4 第 6 項：工單 DoD 逐條查證證據。**理由**——本週兩張工單共 12 條 DoD，
+  過去只在 todolist 勾選，審閱者無從得知「怎麼查的」。獨立一份證據檔並附重現指令，
+  比在 todolist 塞一堆查證細節好讀。建議後續版本沿用
+- 待確認問題經分級後確認**全部不阻擋本週開發**，故先交付、後決策；
+  分級原則建議寫進 AGENT_ROADMAP §7（目前只說「不確定就問」，未區分「現在得問」與「可先做完再問」）
