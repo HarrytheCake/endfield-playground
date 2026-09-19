@@ -168,15 +168,17 @@ export interface BlueprintFile {
 
 ## 8. DoD（本細項）
 
-- [ ] [D4 detail](../../../roadmap/detail/D4_blueprint_json_io.md) §4.1 schema 已換成 §3.1 的 `devices`／`pipelines` v2
-- [ ] §3.2 的「version 跳 2」理由已寫進 detail（一句話以上）
-- [ ] §3.3 的「不讀舊檔」政策與資訊缺口理由已寫進 detail
-- [ ] D4 §4.4 已改寫為「沿用 `loadSnapshot`」；CR-01 協商需求與對應風險已移除
-- [ ] D4 §4 新增一節說明兩道驗證（§4.2）與「形狀錯全拒、語意違規載入並警示」（§4.3）
-- [ ] D4 §5 檔案計畫、§8 依賴表已更新
-- [ ] D4 §3 現況盤點已對上 `LayoutSnapshot`／`toSnapshot`／`loadSnapshot`
-- [ ] D4 meta 狀態 `[!]` → `[ ]`，`最後更新` 改 2026-09-19
-- [ ] D4 §11 補開發日誌一則
+> 下表左欄的節號指**產物** [detail/D4](../../../roadmap/detail/D4_blueprint_json_io.md)，括號內指**本檔**。
+
+- [x] detail/D4 §4.1 schema 已換成本檔 §3.1 的 `devices`／`pipelines` v2
+- [x] 本檔 §3.2 的「version 跳 2」理由已寫進 detail（落在 **detail/D4 §4.2**）
+- [x] 本檔 §3.3 的「不讀舊檔」政策與資訊缺口理由已寫進 detail（落在 **detail/D4 §4.3**）
+- [x] detail/D4 §4.4 已改寫為「沿用 `loadSnapshot`」；CR-01 協商需求與對應風險已移除
+- [x] detail/D4 新增 **§4.6／§4.6.1** 說明兩道驗證與「形狀錯全拒、語意違規載入並警示」（源自本檔 §4.2／§4.3）
+- [x] detail/D4 §5 檔案計畫、§8 依賴表已更新
+- [x] detail/D4 §3 現況盤點已對上 `LayoutSnapshot`／`toSnapshot`／`loadSnapshot`
+- [x] detail/D4 meta 狀態 `[!]` → `[ ]`，`最後更新` 改 2026-09-19
+- [x] detail/D4 §11 補開發日誌一則
 
 ---
 
@@ -189,3 +191,5 @@ export interface BlueprintFile {
   CR-01 協商需求與「新 action 未獲同意」風險消失
 - 補 §4.2 兩道驗證與 §4.3「形狀錯全拒、語意違規載入並警示」的分界；後者原 detail 未定義
 - 確認 `primaryOutput` 在新模型是 `PlacedDevice` 頂層欄位 → 原 C5 依賴已自動滿足
+- **產物已落地：** detail/D4 全檔改寫，§8 DoD 全數勾選。本檔 §4.2／§4.3 的兩道驗證在產物中編為
+  **§4.6／§4.6.1**，DoD 已標明對應關係

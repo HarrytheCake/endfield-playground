@@ -217,14 +217,16 @@ export function describeConnectFailure(result: ConnectResult): string | null;
 
 ## 8. DoD（本細項）
 
-- [ ] [C2 detail](../../../roadmap/detail/C2_add_connection_contract.md) §4.1 規則表已換成 §3 的六條重判＋新增規則 7
-- [ ] C2 §4.3 型別已換成 §4.3 的 union；`message` 去留與理由已寫入
-- [ ] C2 §4.2／§5 落點已改為 `src/utils/layout/connectRules.ts`＋`layoutStore.addPipeline`
-- [ ] C2 §5／§8／§10 中「改 `editorStore.addConnection`／標 Breaking／10/11 跨 CR 協商」已移除，並在 §11 記錄移除理由
-- [ ] C2 §6 週切片已更新
-- [ ] C2 §4.5 的「端點判定必須共用」已寫進 detail（這是實作者最容易漏的一條）
-- [ ] C2 meta 狀態 `[!]` → `[ ]`，`最後更新` 改 2026-09-19
-- [ ] C2 §11 補開發日誌一則
+> 下表左欄的節號指**產物** [detail/C2](../../../roadmap/detail/C2_add_connection_contract.md)，括號內指**本檔**。
+
+- [x] detail/C2 §4.1 規則表已換成本檔 §3 的六條重判＋新增規則 7
+- [x] detail/C2 §4.3 型別已換成本檔 §4.3 的 union；`message` 去留與理由已寫入
+- [x] detail/C2 §4.2／§5 落點已改為 `src/utils/layout/connectRules.ts`＋`layoutStore.addPipeline`
+- [x] detail/C2 §5／§8／§10 中「改 `editorStore.addConnection`／標 Breaking／10/11 跨 CR 協商」已移除，並在 §11 記錄移除理由
+- [x] detail/C2 §6 週切片已更新（內部防線由 10/18 提前至 10/11）
+- [x] 本檔 §4.5 的「端點判定必須共用」已寫進 detail，落在 **detail/C2 §4.4**（這是實作者最容易漏的一條）
+- [x] detail/C2 meta 狀態 `[!]` → `[ ]`，`最後更新` 改 2026-09-19
+- [x] detail/C2 §11 補開發日誌一則
 
 ---
 
@@ -237,3 +239,5 @@ export function describeConnectFailure(result: ConnectResult): string | null;
 - 六條規則判定：1／2／3 改寫、4 成立、5 由 3 吸收作廢、6 已由 store 涵蓋作廢；新增規則 7 斷線放行
 - 定案回傳形狀＝discriminated union（[A1 §2.2](./A1_scope_decision.md)）；`message` 改由 `describeConnectFailure` 出
 - 發現跨 CR 協商需求消失（§5.2）：連線動作落在 `layoutStore.addPipeline`，不碰 `editorStore`
+- **產物已落地：** detail/C2 全檔改寫，§8 DoD 全數勾選。本檔 §4.5 的共用約束在產物中編為 **§4.4**，
+  DoD 已標明對應關係——兩份文件各自獨立編號，交叉引用時要寫清楚指的是哪一份
