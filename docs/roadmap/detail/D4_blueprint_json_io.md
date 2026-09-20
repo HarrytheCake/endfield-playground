@@ -87,12 +87,14 @@ interface BlueprintFile {
 
 `version` 在原 §4.5 就寫明「現在沒有遷移邏輯，但必須寫進檔案，是留給下一輪的鉤子」。**現在就是那個下一輪。** 若重用 `1`，既有的 v1 檔會通過版本檢查、然後在欄位層炸開——錯誤訊息會變成「缺少 devices 欄位」而不是「這是舊版檔案」。跳 2 讓拒絕發生在第一個檢查點。
 
-### 4.3 舊檔政策：不讀（凍結）
+### 4.3 舊檔政策：不讀（凍結・2026-09-20 主編確認）
 
 | 方案 | 採用 |
 |------|------|
 | **不讀舊檔；匯入 `version: 1` 直接拒絕整檔並提示** | **是** |
 | 提供一次性 `nodes`／`edges` → `devices`／`pipelines` 轉換 | 否 |
+
+> 此為 2026-09-20 主編對 PR [#51](https://github.com/dernoson/endfield-playground/pull/51) 的三項決斷之一（「舊藍圖不轉換，v2 拒讀 v1」）。**11 月驗收時不得視為缺陷**，要改須依 §11 另開工項。
 
 **理由是資訊缺口，不是工作量。** 舊格式的 `edges` 用 `sourcePortId`／`targetPortId`（handle）表達「A 的這個埠連到 B 的那個埠」；新模型的 `Pipeline` 用 `waypoints` 表達**實體路徑**，連接則由端點是否落在埠錨點上衍生。**舊檔裡沒有任何路徑資訊。**
 
@@ -146,22 +148,28 @@ interface BlueprintFile {
 
 **分界一句話：形狀錯 → 全拒；語意違規 → 載入並警示。**
 
-### 4.7 方案比較：驗證機制
+### 4.7 驗證機制：Zod（2026-09-20 主編核准）
 
 | 方案 | 作法 | 優點 | 缺點 | 採用 |
 |------|------|------|------|------|
 | A. 不驗證，直接 `JSON.parse` | 最省 | — | 壞檔會讓畫布進入半損毀狀態，比不能載入更糟 | 否 |
-| B. 手寫型別守衛 | 逐欄檢查 | 無新依賴 | 冗長；欄位增加時容易漏 | 備選 |
-| **C. Zod schema** | 宣告式驗證 | 錯誤訊息可讀；與型別同源 | 新增依賴 | **是（若專案已有或可加）** |
+| ~~B. 手寫型別守衛~~ | 逐欄檢查 | 無新依賴 | 冗長；欄位增加時容易漏 | ~~備選~~（已不需要） |
+| **C. Zod schema** | 宣告式驗證 | 錯誤訊息可讀；與型別同源 | 新增依賴 | **是・已核准** |
 
-若引入 Zod 需經主編同意（新依賴）。未獲同意則退回 B，但**驗證本身不可省**。
+新依賴已於 2026-09-20 獲主編核准（PR [#51](https://github.com/dernoson/endfield-playground/pull/51) 三項決斷之一），**方案 B 的退路不再需要**。
+
+實作時要守住兩件事：
+
+1. **schema 與型別同源**，不得手抄第二份。`BlueprintFile` 以 `z.infer<typeof blueprintSchema>` 導出，而非另寫 `interface` 再靠人工對齊——後者會在 `PlacedDevice` 加欄位時默默漂移
+2. **Zod 只負責 §4.6 的第一道（形狀）**。語意檢查仍歸 `loadSnapshot` 的 `LayoutIssues`；不要把「機型是否存在」塞進 schema，那需要讀機器資料表，會讓純函式失去可測性
 
 ## 5. 檔案計畫
 
 | 動作 | 檔案 | 說明 |
 |------|------|------|
-| 新建 | `src/types/blueprint.ts` | `BlueprintFile` v2 |
+| 新建 | `src/types/blueprint.ts` | `blueprintSchema`（Zod）＋ `BlueprintFile = z.infer<...>` v2 |
 | 新建 | `src/utils/layout/blueprintIo.ts` | `serializeBlueprint`／`parseBlueprint`（純函式） |
+| 修改 | `package.json` | 加 `zod` 依賴（2026-09-20 已獲核准）；**只加這一個**，不順手升級其他套件 |
 | 新建 | `src/__tests__/utils/layout/blueprintIo.test.ts` | round-trip、壞檔拒絕、**v1 拒絕**、缺欄位拒絕、管線路徑不良構拒絕 |
 | 唯讀 | `src/store/layoutStore.ts` | 用既有 `toSnapshot`／`loadSnapshot`；**不新增 action** |
 | 修改 | `src/editor/navbar/Navbar.vue` | Save／Load 按鈕與檔案選擇（L2；owner 依 11 月派工） |
@@ -194,7 +202,7 @@ interface BlueprintFile {
 | [B2](./B2_placement_chain.md)、[C1](./C1_port_hit_and_draft.md) | 要先有東西可存；仍 `[!]`／`[ ]` |
 | [C2](./C2_add_connection_contract.md) `canConnect` | **新增依賴**：§4.6.1 匯入端過濾需要它；C2 的 10/04 純函式是本項前置 |
 | ~~[C5](./C5_source_primary_output.md) `primaryOutput` 在 node.data 內~~ | **已滿足**：新模型中 `primaryOutput` 是 `PlacedDevice` 頂層欄位 |
-| Zod 依賴（若採用） | 主編同意；否則退回手寫守衛 |
+| ~~Zod 依賴~~ | **已核准（2026-09-20）**；不再需要手寫守衛的退路 |
 | ~~CR-01 同意 `loadBlueprint`~~ | **已移除**（§4.4：沿用 `loadSnapshot`，不碰 `editorStore`） |
 
 ## 9. DoD
@@ -204,6 +212,7 @@ interface BlueprintFile {
 - [ ] 匯出 → 重新整理 → 匯入，畫面與匯出前一致
 - [ ] **`version: 1` 的檔被拒絕**，且提示文字說明是舊版格式
 - [ ] 壞檔（缺欄位／型別不符／版本不符）被拒絕且畫布維持原狀
+- [ ] `BlueprintFile` 由 `z.infer` 導出，非手抄第二份型別（§4.7）
 - [ ] 語意違規（未知機型／重疊）觸發 undo 並拒絕；連線違規則載入並警示（§4.6）
 - [ ] round-trip 測試通過（序列化再解析得到等價結構）
 - [ ] 匯入後 Undo 一次可還原（`loadSnapshot` 的 Macro）
@@ -217,13 +226,19 @@ interface BlueprintFile {
 |------|------|
 | 壞檔讓畫布半損毀 | §4.5 全有或全無＋§4.6 兩道驗證 |
 | 繞過連線規則載入非法管線 | §4.6.1 匯入後跑 `canConnect` 並警示；引擎側既有檢查兜底 |
-| 新依賴（Zod）未獲同意 | 退回手寫型別守衛，驗證不可省 |
+| ~~新依賴（Zod）未獲同意~~ | **已消除（2026-09-20）：** 主編核准引入 |
+| Zod schema 與 `PlacedDevice` 型別漂移 | §4.7：schema 為單一來源，型別以 `z.infer` 導出；DoD 列入檢查 |
 | C2 未如期交付 → §4.6.1 無法做 | 匯入端過濾降級為「不查連線」，記為技術債；不擋 11/29 主線 |
 | ~~新 action 未獲同意~~ | **已移除**（§4.4） |
 
 **未交頂替：** 無。這是驗收劇本第 7 步。若 11/22 未完成，最低限度提供「匯出」單向功能（讓成果不會遺失），匯入延到下一輪——但這會讓門檻降級，須在 11/22 會上明確記錄。
 
 ## 11. 開發日誌
+
+### 2026-09-20
+- **主編核准引入 Zod**（PR [#51](https://github.com/dernoson/endfield-playground/pull/51) review）。§4.7 改為已核准、方案 B 退路移除；§5 補 `package.json`；§8 依賴與 §10 風險結案
+- §4.7 補兩條實作約束：schema 為單一來源（型別以 `z.infer` 導出）、Zod 只管形狀不管語意。**前者是新風險**——有了 schema 之後，最容易發生的是有人另寫一份 `interface` 再靠人工對齊，`PlacedDevice` 加欄位時會默默漂移
+- **主編確認舊藍圖不轉換**（v2 拒讀 v1）。§4.3 由 aaaaa 提案升為主編決斷，11 月驗收不得視為缺陷
 
 ### 2026-09-19
 - **依新模型重訂完成，狀態 `[!]` → `[ ]`。** schema 改 `devices`／`pipelines`；`version` 跳 **2**；**不讀舊檔**（§4.3，理由為資訊缺口：舊檔無路徑資訊，轉換等於憑空造圖）

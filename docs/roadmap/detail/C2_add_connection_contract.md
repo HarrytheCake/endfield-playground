@@ -5,7 +5,7 @@
 | 對應大綱 | [ROADMAP_OUTLINE.md](../ROADMAP_OUTLINE.md) §5 |
 | 里程碑 | M3（2026-10-25）；純函式最遲 10/4 |
 | 擋門檻 | **是** |
-| 建議主責／備援 | aaaaa（規則純函式）＋L2（呼叫端，owner 待定）／— |
+| 建議主責／備援 | aaaaa（規則純函式）＋**toby**（L2 呼叫端；2026-09-20 主編裁）／— |
 | 性質 | 純函式 ＋ 接線 |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)（已完成）、`layoutStore`（PR #45 已合入） |
 | 狀態 | `[ ]` **已定義、待實作**（2026-09-19 依新模型重訂完成） |
@@ -194,7 +194,7 @@ export function describeConnectFailure(result: ConnectResult): string | null
 | 新建 | `src/__tests__/utils/layout/connectRules.test.ts` | §4.1 四條有效規則各一正一反；規則 7 斷線放行；`malformed` |
 | 重構 | `src/utils/layout/resolveConnections.ts` | 提出共用的錨點展開與命中判定（§4.4）；對外行為不變 |
 | 修改 | `src/store/layoutStore.ts` | `addPipeline` 內部呼叫 `canConnect`（**aaaaa 主責檔；非 Breaking**） |
-| 修改 | L2 佈局容器（owner 待定） | draft 放開前呼叫 `canConnect` 決定 highlight 顏色 |
+| 修改 | L2 佈局容器（**toby**） | draft 放開前呼叫 `canConnect` 決定 highlight 顏色 |
 | 唯讀 | `src/composables/useFlowEngine.ts` | 確認媒質判定共用，不複製邏輯 |
 | **不碰** | `editorStore.addConnection`、環路偵測、引擎既有檢查 | |
 
@@ -223,7 +223,8 @@ export function describeConnectFailure(result: ConnectResult): string | null
 |------|------|
 | [A2](./A2_grid_and_port_alignment.md)（埠資料正確） | **已完成** |
 | `layoutStore`（PR #45） | **已合入 master**（2026-09-14） |
-| L2 呼叫端 owner | **待定**；10/18 切片需要，最遲 10 月首週派工時決 |
+| 佈局容器在 master（PR #50） | **已合入 master**（2026-09-20）；10/18 切片有容器可接 |
+| L2 呼叫端 owner | **toby**（2026-09-20 主編裁；原「待定」已結案） |
 
 **跨 CR 協商需求已消失（2026-09-19）：** 舊版要求「修改 `editorStore.addConnection`，屬 CR-01 主責，須標 Breaking 並最遲 10/11 提出」。新模型下連線動作落在 `layoutStore.addPipeline`，是 aaaaa 主責檔，**不需要主編點頭、不屬 Breaking**。
 
@@ -246,12 +247,18 @@ export function describeConnectFailure(result: ConnectResult): string | null
 | 規則散成兩套 | §4.2 決策；DoD 列入 code review 檢查 |
 | **錨點判定寫成兩份** | §4.4 硬約束；症狀是「預檢說可以、實際解出另一條連線」，極難查 |
 | 過度限制導致合理產線連不起來 | 環路明確排除；規則 7 放行斷線；規則清單凍結，新增規則須另開工項 |
-| L2 呼叫端無 owner | 10 月首週派工時決；純函式先行不受影響 |
+| ~~L2 呼叫端無 owner~~ | **已消除（2026-09-20）：** 主編裁定為 toby |
 | ~~改 `addConnection` 破壞既有 L2 MVP~~ | **已移除**（§8：不碰 `editorStore`） |
+| toby 同期還要接 B2 擺放鏈與 C1 draft，10/18 可能排不下 | 純函式 10/04 先行、內部防線 10/11 已提前，**L2 那一刀延後不影響 10/25 門檻的「不會建立非法管線」**，只影響即時視覺回饋 |
 
 **未交頂替：** 若純函式未完成，10/25 門檻降級為「連得起來但不檢查型別」，並在該日記錄為技術債，11 月由引擎側的既有檢查兜底（使用者會看到鏈路 invalid 而非即時回饋）。
 
 ## 11. 開發日誌
+
+### 2026-09-20
+- **主編裁示：L2 呼叫端為 toby**（PR [#51](https://github.com/dernoson/endfield-playground/pull/51) review）。§8 的「owner 待定」與 §10 對應風險結案；meta 建議主責與 §5 檔案計畫同步
+- 同日 PR [#50](https://github.com/dernoson/endfield-playground/pull/50) 合入 master，佈局容器已在樹上 → §8 補一列；10/18 切片有容器可接
+- §10 新增一條**替代**風險：toby 同期還要接 B2 與 C1，10/18 可能排不下。這不擋 10/25 門檻——`addPipeline` 的內部防線（10/11）已能保證不建立非法管線，L2 那一刀只影響即時視覺
 
 ### 2026-09-19
 - **依新模型重訂完成，狀態 `[!]` → `[ ]`。** 六條原規則逐條重判：1／2／3 改寫、4 成立、5 由 3 吸收作廢、6 已由 `addPipeline` 涵蓋作廢；新增規則 7「斷線管線合法」
