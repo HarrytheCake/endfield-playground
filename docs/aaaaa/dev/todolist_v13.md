@@ -81,7 +81,8 @@ A 定案 → B V12 收斂（前置）
 - R-C2 實作（10/04 純函式門檻）：依本版 §4 重訂後的規則表與 ConnectResult 形狀開工
 - R-D4 實作（11/08 純函式）：依本版 BlueprintFile v2 schema；loadSnapshot 已可當 loadBlueprint 用
 - R-B2 擺放鏈（0921 起）：依 D1 的 canPlaceDevice 簽章草案；本版不實作
-- L2（toby／harry／goodmorning）：本版不改任何 src/，對 #48／#50 零影響
+- L2（toby／harry）：本版不改任何 src/，對 #50 零影響
+- L3（goodmorning）：ToolbarPanel 限視覺，不在 L2 之列；本版對 #48 亦零影響
 ```
 
 ### 交付宣告（本版不發解鎖句）
@@ -206,6 +207,14 @@ A 定案 → B V12 收斂（前置）
 ---
 
 ## 開發日誌
+
+### 2026-09-20｜主編 review 回應
+
+- **謬誤更正（主編指出）：** §下游消費者原寫「L2（toby／harry／goodmorning）」，**goodmorning 不屬 L2**。
+  他的 [W0914-G1](../../work_dispatch/goodmorning/0914/W0914-G1_toolbar_land.md) 本週是 `ToolbarPanel.vue` **限視覺**（L3 呈現），
+  該工單 §不做 自己就寫明「把工具列接到新畫布的落子＝**L2 的接線，9/21 起**」。我把「開著 PR 的三個人」直接當成 L2 名單，
+  是拿**合入帶寬**的分組去套**分層**——兩者不是同一組人
+- 主編三項決斷已落檔，見 [detail/C2 §8](../../roadmap/detail/C2_add_connection_contract.md)、[detail/D4 §4.7](../../roadmap/detail/D4_blueprint_json_io.md)
 
 ### 2026-09-19（下午）｜全版交付
 
