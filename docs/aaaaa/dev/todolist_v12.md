@@ -7,8 +7,10 @@
 **正式工單：** [W0907-A0](../../work_dispatch/aaaaa/0907/W0907-A0_layout_store_model.md)（最優・擋 9/27 前置）  
 **上游：** [WEEK_20260907](../../work_dispatch/WEEK_20260907.md) v1.1、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) v1.6 R-B2、[EARLY_START](../LAYOUT_REWRITE_EARLY_START_0831.md)  
 **門檻週：** 2026-09-07 → 2026-09-13  
-**開發分支：** `dev/aaaaa0907`（建議）  
-**狀態總覽：** `[x]` A–E 完成（E1 待 PR 合入；證據與解鎖句已落）  
+**開發分支：** `dev/aaaaa0907`  
+**狀態總覽：** **`[x]` 全版結案**（A–E 完成；PR [#45](https://github.com/dernoson/endfield-playground/pull/45) 已於 2026-09-14T17:12:28Z 合入 master，merge commit `f95ed9f`）  
+**收斂於：** [V13-B1](./dev_v13/B1_v12_residue_close.md)（2026-09-19）  
+**後續版本：** [todolist_v13](./todolist_v13.md)（W0914-A1 契約重訂草案＋0921 落子前置）  
 **驗收指南：** [dev_v12/V12_acceptance_guide.md](./dev_v12/V12_acceptance_guide.md)  
 **解鎖證據：** [dev_v12/evidence/E1_unlock.md](./dev_v12/evidence/E1_unlock.md)
 
@@ -135,7 +137,7 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
 | B1 | — | — | **已解除**（文件收斂完成） |
 | C1 | — | — | **已解除**（layoutStore＋四釘測綠） |
 | D1 | — | — | **已解除**（`dev/layout-store-preview.html` 獨立入口） |
-| E1 | — | — | **已解除**（證據＋解鎖句；PR 待合入） |
+| E1 | — | — | **已解除**（證據＋解鎖句；#45 已合入 master） |
 | — | **不動** editorStore／ToolbarPanel／GridCanvas／viewport | — | 本版硬鎖 |
 
 ---
@@ -144,7 +146,7 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
 
 ### A0 主線（對照 WEEK §0.1 V1）
 
-- [x] `src/store/layoutStore.ts` 在 master 或可審 PR
+- [x] `src/store/layoutStore.ts` **已在 master**（#45 合入；`git cat-file -e origin/master:src/store/layoutStore.ts` 成立）
 - [x] `connections` 為 getter（呼叫 `resolveConnections`）；非 state
 - [x] action 最小集：載入快照、加／刪設備、移動、加／刪管線；重疊回傳 `PlacementResult`
 - [x] return 面 `readonly()`；測試證明不可直接 mutate 讀取面
@@ -223,3 +225,13 @@ layout-store：useLayoutStore 可讀寫 devices／pipelines；connections 為 ge
   主編確認維持獨立 HTML 入口（見 [D1 §2.1](./dev_v12/D1_dev_store_preview.md)）
 - **§4 `historyStore` 全域堆疊：** 本 PR 不處理，保留於 PR 說明「待決」
 - 品質閘：41 檔 **784** 測試綠；type-check／lint 綠
+
+### 2026-09-19（V13-B1 收斂；本版結案）
+
+- **PR [#45](https://github.com/dernoson/endfield-playground/pull/45) 已合入 master：** 2026-09-14T17:12:28Z，merge commit `f95ed9f`。W0914-A0 的
+  「master 上有 `useLayoutStore()`」已成立，A0 不在 V13 另立工項
+- 回寫本檔狀態總覽、封鎖表 E1、DoD「在 master 或可審 PR」三處過期寫法；
+  [evidence/E1_unlock.md §6](./dev_v12/evidence/E1_unlock.md) PR 狀態由「待審」改 MERGED
+- **帶入 V13 的待決一項：** `historyStore` 全域堆疊（V12 PR §4 遺留）。依負責人 2026-09-19 裁示
+  **不進 V13 範圍**，只在 [todolist_v13](./todolist_v13.md) 待決追蹤表留列，等佈局殼接完再議
+- **無程式殘刀。** V13 為純文件版本（C2／D4 草案＋0921 落子前置盤點），不帶 V12 未竟實作

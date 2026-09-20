@@ -1,11 +1,11 @@
 # Roadmap 大綱｜2026-08-23 → 2026-11-29
 
-**版本：** v1.9（2026-09-15；PR #49 勘誤：S1＝產線總覽、撤回 M2 必要項擴大、T1 等 #45）
+**版本：** v1.10（2026-09-19；W0914-A1：R-C2／R-D4 依新模型重訂完成，兩項封鎖解除）
 **建立日期：** 2026-08-22
 **規劃：** aaaaa
 **守門與合入：** dernoson（主編）
 **上游來源：** 主編提出並確認的 ROADMAP v0.2（決策層原始文件，未公開；其內容已完整拆進本檔與 `detail/`）
-**狀態總覽：** **M1 成立。** L1／只讀殼／B1 切片維持。**W0914：** 主畫面接入進行中（T1 等 #45）；**擺放／選取仍鎖至佈局底層接完**；**M2 硬綁恢復為只押 B1**（9/14 擴大為誤會，已撤回）。右側本週＝**產線總覽 StatsPanel**（非 B4）。詳見 [WEEK_20260914](../work_dispatch/WEEK_20260914.md) v1.1。
+**狀態總覽：** **M1 成立。** L1／只讀殼／B1 切片維持。**W0914：** `layoutStore` **#45 已合入 master**（9/14）、viewport **#47 已合入**；主畫面接入 #50 待審、工具列 #48 待審；**擺放／選取仍鎖至佈局底層接完**；**M2 硬綁恢復為只押 B1**。右側本週＝**產線總覽 StatsPanel**（非 B4）。**R-C2／R-D4 兩項自 8/25 起的封鎖已於 9/19 解除**（見 §9）。詳見 [WEEK_20260914](../work_dispatch/WEEK_20260914.md) v1.1。
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 
@@ -51,7 +51,7 @@
 | 關鍵路徑限制 | 月底門檻必要條件只派 `risk ≤ 中`。**9 月程式必要實質以 aaaaa／B1 為主**。~~9/14 曾擴大 M2 含 B2／B4~~ → **9/15 撤回**：恢復「渲染層／底層未接完前不把必要項押在 L2 強綁」；M2 **硬綁 B1** |
 | 資料流 | `data_1` → `pnpm sync:aaaaa-data` → `docs/aaaaa/data` → `pnpm generate:src-data` → `src/data` |
 | 速率 | belt 30／min、pipe 60／min（沿用 V8／V9） |
-| 藍圖格式 | 原 `{ version, planId?, nodes, edges }`；**⚠ 待重訂**為 `devices`／`pipelines`（`connections` 衍生不存）——§9 R-D4；與佈局自建同一決策鏈 |
+| 藍圖格式 | **`{ version: 2, planId?, devices, pipelines }`**（2026-09-19 重訂定案）。`connections` 為衍生值不儲存；**舊 v1 檔不讀**，匯入直接拒絕。見 [detail/D4](./detail/D4_blueprint_json_io.md) §4 |
 
 ### 1.3 非目標（11/29 前不做）
 
@@ -135,7 +135,7 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | R-B4 | 選取與設備資訊面板 | M2 | L2 攤平＋L3 呈現 | 接線＋畫面 | **是** | [B4](./detail/B4_selection_inspector.md) |
 | R-B5 | 刪除單台 | M2 | toby／harry | 接線 | 否 | [B5](./detail/B5_delete_single_device.md) |
 | R-C1 | Port 命中與 draft 連線 | M3 | L2 主責 | 接線 | **是** | [C1](./detail/C1_port_hit_and_draft.md) |
-| R-C2 | ~~addConnection 契約與型別檢查~~ **待重新定義**（§9） | M3 | aaaaa（規則）＋L2 | 純函式＋接線 | **是** | [C2](./detail/C2_add_connection_contract.md) |
+| R-C2 | 連線契約與型別檢查（**2026-09-19 已重訂**） | M3 | aaaaa（規則）＋L2（owner 待定） | 純函式＋接線 | **是** | [C2](./detail/C2_add_connection_contract.md) |
 | R-C3 | 管線折線與 90 度彎折渲染 | M3 | L3 | 畫面 | **是** | [C3](./detail/C3_pipeline_polyline_render.md) |
 | R-C4 | 拖移進歷史 | M3 | L2 | 接線 | 否 | [C4](./detail/C4_move_into_history.md) |
 | R-C5 | 源節點素材設定 | M3 | aaaaa（action）＋L2 | 接線 | **是** | [C5](./detail/C5_source_primary_output.md) |
@@ -192,8 +192,8 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 - [!] **R-C1** Port 命中與 draft 連線：port 點可見、可點選、拖出暫時折線，放開命中另一 port 才成立
   - 細項：[detail/C1_port_hit_and_draft.md](./detail/C1_port_hit_and_draft.md)（等 B2；harry W0823-H1 已交工具態快捷鍵，屬連線前置加分）
-- [!] **R-C2** ~~addConnection 契約與型別檢查~~：**2026-08-25 起待重新定義**——佈局自建後連接為衍生值、不儲存，`addConnection` 已無標的；新契約排 9 月首週 v1.2（見 §9）
-  - 細項：[detail/C2_add_connection_contract.md](./detail/C2_add_connection_contract.md)（**內容待更新**）
+- [ ] **R-C2** 連線契約與型別檢查（佈局模型版）：`canConnect(draft, layout)` 純函式回傳可／不可＋理由碼；`layoutStore.addPipeline` 內部作最終防線；L2 draft 期間呼叫決定 highlight
+  - 細項：[detail/C2_add_connection_contract.md](./detail/C2_add_connection_contract.md)（**2026-09-19 依新模型重訂完成**：六條原規則三改寫／一成立／兩作廢，新增「斷線管線合法」；不碰 `editorStore.addConnection`）
 - [ ] **R-C3** 管線折線與 90 度彎折渲染：`PipelineEdge` 畫正交折線，違規線段給紅色視覺
   - 細項：[detail/C3_pipeline_polyline_render.md](./detail/C3_pipeline_polyline_render.md)
 - [ ] **R-C4** 拖移進歷史：拖曳結束呼叫 `commitDeviceMove(uids, before)`，Undo 可還原位置
@@ -213,8 +213,8 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
   - 細項：[detail/D2_e001_overlap_alert.md](./detail/D2_e001_overlap_alert.md)（W0823-S1＋layout 收斂已合入 PR #36；`/dev/validation-test` 可觀察；**右側 Tips 列表未做**；shirone 轉調後純函式 owner 待移交）
 - [~] **R-D3** 配方類警訊：缺輸入／缺輸出（E004／E005）與材料組合不符（W001）至少一類上右側，與 azure 草稿收斂成一套
   - 細項：[detail/D3_recipe_alerts.md](./detail/D3_recipe_alerts.md)（**W001 已合入 master** PR #35；E004／E005 仍在舊分支 `dev/azure9572`；ID 表未凍結；右側未接）
-- [!] **R-D4** 最小藍圖 JSON 匯出／匯入：~~`{ version, planId?, nodes, edges }`~~ ＋ Zod 驗證；頂欄 Save／Load。**2026-08-25 起格式待重訂**——儲存形狀改為 `devices`／`pipelines`，`connections` 為衍生值不儲存（見 §9）
-  - 細項：[detail/D4_blueprint_json_io.md](./detail/D4_blueprint_json_io.md)（**內容待更新**）
+- [ ] **R-D4** 最小藍圖 JSON 匯出／匯入：`{ version: 2, planId?, devices, pipelines }` ＋ Zod 驗證；頂欄 Save／Load
+  - 細項：[detail/D4_blueprint_json_io.md](./detail/D4_blueprint_json_io.md)（**2026-09-19 依新模型重訂完成**：version 跳 2、**不讀舊檔**、匯入沿用 `layoutStore.loadSnapshot` 不新增 action）
 - [ ] **R-D5** 驗收劇本與彩排：8 步劇本文件化，11/22 先彩排一次，11/29 正式演示
   - 細項：[detail/D5_acceptance_rehearsal.md](./detail/D5_acceptance_rehearsal.md)
 
@@ -250,14 +250,14 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | **09/13** | **佈局自建；L2 薄片** | **部分達成。** T1 GridCanvas 只讀＝**#46 合入**；S1 MachineCard＝**#41 合入**；A0 layoutStore＝**#45 仍開**（解鎖句已發於分支）；H1 viewport＝#47 待合；G1＝#48 踩鎖；P1／V1 未交。見 [WEEK_20260907](../work_dispatch/WEEK_20260907.md) |
 | **09/20** | **主畫面只讀接入＋store 合入** | #45 進 master；T1（#45 後）掛 GridCanvas；#47／#48；S1＝StatsPanel→`src/app/`。**切換器本週不做。** 見 [WEEK_20260914](../work_dispatch/WEEK_20260914.md) v1.1 |
 | 09/27 | **M2 門檻** | **硬綁 B1**。B2／B4 視底層是否接完再列；否則依 §11 |
-| 10/04 | C1、C2 | 兩個 port 能連一條直線，型別對才允許。**C2 定義待 v1.2⁺ 重訂** |
+| 10/04 | C1、C2 | 兩個 port 能連一條直線，型別對才允許。**C2 定義已於 2026-09-19 重訂完成**；本週切片＝錨點判定提共用＋`connectRules.ts`＋測試 |
 | 10/11 | C3 | 彎折點 90 度；違規線段有紅色視覺 |
 | 10/18 | C4、C5 | 拖移進歷史（或明寫「本週只移不 Undo」並排進 10/25）；源素材可設 |
 | 10/25 | **C1＋C2＋C3＋C5（門檻）** | 步驟 3 ＋ 4 單物 ＋ 6 |
 | 11/01 | D1 | 右側產耗表接 `itemSummary`，空產線有空狀態。**空狀態切片已由 W0823-M1 提前交** |
 | 11/08 | D2 | 兩台重疊 → 右側一條訊息。**E001 純函式＋dev 頁已就位**；缺右側 Tips |
 | 11/15 | D3 | 缺輸入或輸出、材料組合不符，至少一類上右側。**W001 純函式已合入**；缺右側與 ID 表 |
-| 11/22 | D4、D5 | JSON 匯出下載；匯入還原；**驗收劇本彩排一次**。**D4 格式待重訂** |
+| 11/22 | D4、D5 | JSON 匯出下載；匯入還原；**驗收劇本彩排一次**。**D4 格式已於 2026-09-19 重訂完成**（v2；舊檔不讀） |
 | 11/29 | **D1＋D2＋D4＋D5（門檻）** | 步驟 7～10 串在同一條演示產線上 |
 
 ---
@@ -269,8 +269,8 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | R-B2 | 只讀殼 #46 已合。落子仍等 **store 合入＋主畫面只讀接入站穩＋再解鎖互動** | aaaaa（#45）；toby（T1） | store 進 master ＋ 佈局視角＝新殼 → 再開落子 | `[!]` **本週只讀接入中**。**不列 M2 硬綁**（9/15 撤回擴大） |
 | R-B3 | 旋轉牽涉 port side／offset 換算；依賴擺放鏈 | R-B2；原等 R-A2 | **A2 已完成**（`rotatePort` pad-to-square＋測試全綠）→ A2 條件解除；仍等 B2／佈局層 | `[!]`（A2 依賴已清） |
 | R-C1 | 依賴 R-B2 擺放鏈可用 | R-B2 | B2 於 9/27 門檻通過（或依 §11 改降級方案） | `[!]` |
-| **R-C2** | 佈局自建後連接改為衍生值、不儲存，`addConnection`／`removeConnection` 廢除，**本工項原定義失去標的**（2026-08-25） | 主編＋aaaaa 依 §11 重新定義並改版本號 | 新的連接判定契約寫入 §2 工項總表 | `[!]` **待重新定義**（原排 9 月首週；**W0907 未做**，續順延） |
-| **R-D4** | §1.2 已定案的藍圖格式 `{ version, planId?, nodes, edges }` 不再是儲存形狀（改 `devices`／`pipelines`）（2026-08-25） | 同上 | §1.2 藍圖格式改版並確認 Zod schema 對象 | `[!]` **待重訂格式**（原排 9 月首週；**W0907 未做**，續順延） |
+| ~~R-C2~~ | ~~佈局自建後連接改為衍生值、不儲存，`addConnection`／`removeConnection` 廢除，本工項原定義失去標的（2026-08-25）~~ | — | — | **已解除（2026-09-19）：** W0914-A1 依新模型重訂完成，契約寫入 [detail/C2](./detail/C2_add_connection_contract.md) §4 與 §5；狀態改 `[ ]` 待實作（純函式 10/04）。**順帶消除**原「改 `editorStore.addConnection` 須標 Breaking、10/11 前提跨 CR 協商」之依賴 |
+| ~~R-D4~~ | ~~§1.2 已定案的藍圖格式 `{ version, planId?, nodes, edges }` 不再是儲存形狀（改 `devices`／`pipelines`）（2026-08-25）~~ | — | — | **已解除（2026-09-19）：** 格式重訂為 `{ version: 2, planId?, devices, pipelines }`，舊檔不讀；狀態改 `[ ]` 待實作（純函式 11/08）。**順帶消除**原「CR-01 同意新增 `loadBlueprint`」之依賴（沿用 `layoutStore.loadSnapshot`） |
 | ~~R-D3~~ | ~~shirone 與 azure9572 同域不同 ID~~ | — | — | **部分解除（8/30）：** W001 已合入 master（PR #35）。E004／E005 仍在 `dev/azure9572`；ID 表未凍結；右側未接。改標 `[~]`，不再列本表 |
 | ~~R-D2~~ | ~~detector 註冊入口需集中~~ | — | — | **已解除（8/30）：** 使用端顯式 `registerDetector`；E001 於 `/dev/validation-test` 掛上。整項改 `[~]`（缺右側 Tips）。shirone 轉調 → 後續 owner 待移交 aaaaa |
 
@@ -333,6 +333,7 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 | 版 | 日期 | 說明 |
 |----|------|------|
+| **v1.10** | **2026-09-19** | **W0914-A1 契約重訂：** R-C2 連線契約與 R-D4 藍圖格式依 `PlacedDevice`／`Pipeline` 新模型重寫，**§9 兩項封鎖解除**，狀態 `[!]` → `[ ]`；§1.2 藍圖格式定案為 `{ version: 2, devices, pipelines }`、舊檔不讀；§8 的 10/04 與 11/22 備註更新。**順帶消除兩項跨 CR 協商依賴**（C2 不改 `editorStore.addConnection`；D4 沿用 `loadSnapshot`） |
 | **v1.9** | **2026-09-15** | **PR #49 勘誤：** S1＝產線總覽 StatsPanel→`src/app/`；**撤回 M2 必要項擴大**（恢復硬綁 B1）；T1 等 #45；切換器下週另派；paper 命名結案 |
 | **v1.8** | **2026-09-14 晚** | 0914 派工初版（M2 擴大／右側＝B4 等條已由 v1.9 覆寫） |
 | **v1.7** | **2026-09-14** | **W0907 回寫：** GridCanvas 只讀 **#46 合入**；MachineCard **#41 合入**；layoutStore **#45 待合**；viewport #47 待合；§8／§9／§9.1 更新；B2 改等 store 合入＋整合 |
