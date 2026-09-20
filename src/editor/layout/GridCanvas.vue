@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, type DeepReadonly } from 'vue';
 import { getMachineById } from '@/data/machines';
 import type { PlacedDevice, Pipeline } from '@/types/layout';
 import { getDeviceOccupiedCells } from '@/utils/layout/deviceOccupancy';
@@ -8,9 +8,9 @@ import { deviceSizeFromMachine, toDeviceFootprint } from '@/utils/layout/toFootp
 /** GridCanvas 的唯讀輸入資料 */
 interface Props {
     /** 要顯示的已放置設備 */
-    devices: PlacedDevice[];
+    devices: readonly DeepReadonly<PlacedDevice>[];
     /** 要顯示的管線 */
-    pipelines: Pipeline[];
+    pipelines: readonly DeepReadonly<Pipeline>[];
     /** 每一格的像素尺寸 */
     cellSize?: number;
     /** 畫布橫向格數 */
@@ -75,7 +75,7 @@ const deviceCells = computed<RenderedDeviceCell[]>(() => {
  * @param waypoints 管線依序經過的絕對格點
  * @returns SVG path 的 d attribute；沒有 waypoint 時回傳空字串
  */
-function pipelinePath(waypoints: Pipeline['waypoints']): string {
+function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
     return waypoints
         .map((waypoint, index) => {
             const centerX = (waypoint.x + 0.5) * props.cellSize;
