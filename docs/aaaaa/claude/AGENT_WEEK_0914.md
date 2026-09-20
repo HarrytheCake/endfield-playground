@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.1（2026-09-19 下午；A1 交付完成、§4 五項回寫全數執行、待確認問題分級後延後）** |
+| version | **v1.2（2026-09-20；主編 review 三項決斷落檔、L2 分層謬誤更正、#50 已合入）** |
 | 用途 | 供 Agent 執行本週派工／改工單時的**強制約束**；細節以公開 WEEK 與個人工單為準 |
 | 公開 | [WEEK_0914](../../work_dispatch/WEEK_20260914.md) v1.1、[W0914-A0](../../work_dispatch/aaaaa/0914/W0914-A0_layout_store_land.md)、[W0914-A1](../../work_dispatch/aaaaa/0914/W0914-A1_connection_blueprint_contract.md) |
 | 執行計畫 | [todolist_v13](../dev/todolist_v13.md)、[dev_v13/](../dev/dev_v13/) |
@@ -46,7 +46,7 @@
 
 | 禁止 | 理由 |
 |------|------|
-| 碰 `src/editor/layout/LayoutView.vue`／`GridCanvas.vue`／`src/app/layouts/MainLayout.vue` | **toby PR #50 開著**（9/18 送出），這三個檔正在他的 diff 裡 |
+| 碰 `src/editor/layout/LayoutView.vue`／`GridCanvas.vue`／`src/app/layouts/MainLayout.vue` | ~~toby PR #50 開著~~ → **#50 已於 09-20T12:57:30Z 合入**。禁止理由改為「仍是 toby 主責檔」（規則 17），不再是 diff 衝突 |
 | 碰 `src/editor/toolbar/ToolbarPanel.vue`＋stories | **goodmorning PR #48 開著**；本週 owner 是他（限視覺） |
 | 碰 `src/editor/layout/useGridViewport.ts`、`src/router/*` | harry 的檔 |
 | 動 `src/` 任何路徑（**含 `src/types/layout.ts`**） | 本版為純文件；工單雖允許型別草案，負責人 9/19 決定不用該額度（[V13-A1 §2.1](../dev/dev_v13/A1_scope_decision.md)） |
@@ -65,6 +65,8 @@
 
 | 項 | 結論 |
 |----|------|
+| **C2 L2 呼叫端** | **toby**（2026-09-20 主編裁） |
+| **D4 驗證機制** | **Zod，已核准**（2026-09-20）；手寫守衛退路作廢。schema 為單一來源，型別以 `z.infer` 導出 |
 | C2 回傳 | **discriminated union**，`ok` 為 discriminant；對齊 `PlacementResult` |
 | C2 `message` | **不放進 union**；另出 `describeConnectFailure()` |
 | C2 規則 5／6 | **作廢**（被規則 3 吸收／已由 `addPipeline` 涵蓋） |
@@ -100,7 +102,7 @@
 | 項 | 對象 | 本週實況（截至 9/19 下午，`gh` 實查） |
 |----|------|----------------------|
 | **V1** | aaaaa A0 | **達成**；#45 於 09-14T17:12:28Z 合入（merge `f95ed9f`） |
-| V2 | toby T1 | PR #50 開著（9/18 送出），**最後活動 9/18T15:32，尚無 review** |
+| **V2** | toby T1 | **達成**；#50 於 09-20T12:57:30Z 合入（主編 APPROVED，merge `4c2c062`）。兩項過渡限制（初始 snapshot 進 history、工具列拖放無反應）經主編認定為預期行為 |
 | V3 | harry H1 | 達成；#47 於 09-14 合入 |
 | V4 | shirone S1 | 未達；`src/app/StatsPanel/` 不存在，仍在 `src/components/StatsPanel/`（10 檔） |
 | V5 | goodmorning G1 | 未達；#48 自 9/13 開著，**最後活動 9/14T17:37，已 5 天無動靜** |
@@ -126,3 +128,11 @@ V2／V4／V5 三項不是 aaaaa 的工項，**也不阻擋 A1**。它們要在 9
   比在 todolist 塞一堆查證細節好讀。建議後續版本沿用
 - 待確認問題經分級後確認**全部不阻擋本週開發**，故先交付、後決策；
   分級原則建議寫進 AGENT_ROADMAP §7（目前只說「不確定就問」，未區分「現在得問」與「可先做完再問」）
+
+### 2026-09-20
+
+- **v1.2：** 主編 review #51，接受全部內容並給三項決斷（v1 拒讀、引入 Zod、C2 呼叫端＝toby），§3 契約形狀表補兩列
+- **謬誤更正：** 我把「本週開著 PR 的三個人」當成 L2 名單，但 goodmorning 本週是 `ToolbarPanel.vue` 限視覺，屬 L3。
+  **合入帶寬的分組 ≠ 分層的分組**——這條要記住，禁止表本來就是照「誰的檔」寫的，不該反過來拿它推分層
+- #50 合入 → §2 禁止表第一列的理由由「diff 衝突」改為「仍是 toby 主責檔」；§5 的 V2 改達成
+- 待決 C-1（C2 呼叫端）／C-2（Zod）結案；C-3（`historyStore`）續掛

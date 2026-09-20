@@ -154,8 +154,8 @@ A 定案 → B V12 收斂（前置）
 | `createPlacedDevice` 工廠 | `label` 預設值屬呈現決策 | paper＋aaaaa | **否** | 0921 派工（B-2） |
 | `rotateDevice` action（R-B3） | 排序視 B2 進度 | 主編 | **否** | 0921 派工（B-3） |
 | belt 佈線純函式升格 | 現住 `src/app/dev/layoutStorePreviewUtils.ts`（dev-only） | C3 owner | **否** | B2／C3 開刀時（B-4） |
-| R-C2 的 L2 呼叫端 owner | 10/18 draft highlight 那一刀 | 主編 | **否** | 10 月首週派工（C-1） |
-| Zod 依賴（D4 驗證） | 新依賴需同意；否則退回手寫守衛 | 主編 | **否** | 11/08 前（C-2） |
+| ~~R-C2 的 L2 呼叫端 owner~~ | ~~10/18 draft highlight 那一刀~~ | — | — | **已決（2026-09-20）：toby** |
+| ~~Zod 依賴（D4 驗證）~~ | ~~新依賴需同意~~ | — | — | **已決（2026-09-20）：核准引入**，手寫守衛退路移除 |
 | `historyStore` 全域堆疊 | V12 PR §4 遺留；佈局與舊藍圖共用單一堆疊，undo 會跨領域跳 | 主編 | **否** | 佈局殼接完後（C-3） |
 | — | **不動** `src/`／`editorStore`／toby／goodmorning／harry 的檔 | — | — | 本版硬鎖 |
 
@@ -214,7 +214,14 @@ A 定案 → B V12 收斂（前置）
   他的 [W0914-G1](../../work_dispatch/goodmorning/0914/W0914-G1_toolbar_land.md) 本週是 `ToolbarPanel.vue` **限視覺**（L3 呈現），
   該工單 §不做 自己就寫明「把工具列接到新畫布的落子＝**L2 的接線，9/21 起**」。我把「開著 PR 的三個人」直接當成 L2 名單，
   是拿**合入帶寬**的分組去套**分層**——兩者不是同一組人
-- 主編三項決斷已落檔，見 [detail/C2 §8](../../roadmap/detail/C2_add_connection_contract.md)、[detail/D4 §4.7](../../roadmap/detail/D4_blueprint_json_io.md)
+- **主編三項決斷已落檔：**
+  1. 舊藍圖不轉換（v2 拒讀 v1）→ [detail/D4 §4.3](../../roadmap/detail/D4_blueprint_json_io.md)；由 aaaaa 提案升為主編決斷
+  2. 引入 Zod → [detail/D4 §4.7](../../roadmap/detail/D4_blueprint_json_io.md)；手寫守衛退路移除，另補「schema 為單一來源」約束
+  3. R-C2 的 L2 呼叫端＝toby → [detail/C2 §8](../../roadmap/detail/C2_add_connection_contract.md)
+- 上表待決 **C-1／C-2 結案**；C-3（`historyStore` 全域堆疊）續掛
+- **PR [#50](https://github.com/dernoson/endfield-playground/pull/50) 於 2026-09-20T12:57:30Z 合入 master**（主編 APPROVED）。
+  佈局容器已在樹上 → 本版非目標中「碰 `src/editor/layout/*`」的封鎖理由消失，但本版仍不動 `src/`；
+  影響的是 detail/C2 的 10/18 切片有容器可接，已回寫該檔 §8
 
 ### 2026-09-19（下午）｜全版交付
 
