@@ -113,6 +113,12 @@ const devPages = [
         icon: '🖱️',
         description: 'W0907-H1：平移／縮放／座標換算演示',
     },
+    {
+        path: '/dev/pipeline-polyline',
+        name: '管線折線',
+        icon: '📏',
+        description: 'W0921-H1：逐段方向／轉角／違規標紅演示',
+    },
 ];
 </script>
 
