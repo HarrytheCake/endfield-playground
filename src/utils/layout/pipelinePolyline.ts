@@ -83,14 +83,24 @@ export function buildPipelinePolyline(waypoints: readonly Position[]): PipelineP
     }
 
     const corners: PolylineCorner[] = [];
-    for (let i = 1; i < segments.length; i++) {
-        const prev = segments[i - 1];
-        const curr = segments[i];
-        if (prev.orientation === curr.orientation) continue;
-        const rightAngle =
-            (prev.orientation === 'horizontal' && curr.orientation === 'vertical') ||
-            (prev.orientation === 'vertical' && curr.orientation === 'horizontal');
-        corners.push({ at: curr.from, rightAngle });
+    /**
+     * 上一段「非零長度」線段的方向；零長度段（重複點）本身沒有方向，不能代表
+     * 轉折前後的任一側，否則同一個點會因為「前段→零長度段」「零長度段→後段」
+     * 兩次方向不同的比對各記一次轉角，變成重複的假轉角。跳過零長度段，
+     * 永遠拿「上一個有方向的線段」跟「下一個有方向的線段」比較。
+     */
+    let lastOrientation: SegmentOrientation | null = null;
+    for (const segment of segments) {
+        const isZeroLength = segment.from.x === segment.to.x && segment.from.y === segment.to.y;
+        if (isZeroLength) continue;
+
+        if (lastOrientation !== null && lastOrientation !== segment.orientation) {
+            const rightAngle =
+                (lastOrientation === 'horizontal' && segment.orientation === 'vertical') ||
+                (lastOrientation === 'vertical' && segment.orientation === 'horizontal');
+            corners.push({ at: segment.from, rightAngle });
+        }
+        lastOrientation = segment.orientation;
     }
 
     return {
