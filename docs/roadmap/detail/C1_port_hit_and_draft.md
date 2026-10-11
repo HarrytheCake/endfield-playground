@@ -9,7 +9,7 @@
 | 性質 | 接線（L2） |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)、[B2](./B2_placement_chain.md)、[B3](./B3_rotation_90.md) |
 | 狀態 | `[ ]` 依賴已清（B2 點擊落子在 master）；W1004 不派，切片 10/11 |
-| 最後更新 | 2026-10-04 |
+| 最後更新 | 2026-10-10（命中 API 更名 `hitTestPortAt`） |
 
 ---
 
@@ -48,11 +48,17 @@
 
 ### 4.2 命中判定為純函式
 
-命中判定（滑鼠座標是否落在某個埠的熱區內）由 aaaaa 提供純函式，L2 只呼叫：
+命中判定（點是否落在某個埠的熱區內）由 aaaaa 提供純函式，L2 只呼叫。  
+**輸入為格點座標**（螢幕像素 ↔ 格點由 L2 換算；熱區半徑以格為單位）。
 
 ```text
-findPortAt(point, nodes, getMachine) → { nodeUid, portId, side, media } | null
+hitTestPortAt(point, devices, getMachine?) →
+  { deviceId, portType, portIndex, side, media } | null
+  // ＝ PortRef ＋ side ＋ media（與 Connection／canConnect 同一套埠鍵）
 ```
+
+> **命名（2026-10-10）：** 勿與 `portAnchorIndex.findPortAt`（格點**精確**匹配，供 `resolveConnections`／`canConnect`）混淆。熱區命中＝**`hitTestPortAt`**＠`src/utils/layout/portHitTest.ts`。  
+> 舊草案用詞 `findPortAt`／`nodeUid`／`portId`／`deviceUid` 作廢。
 
 理由：這段邏輯需要吃 rotation、mode、格點座標，與 [A2](./A2_grid_and_port_alignment.md)／[B3](./B3_rotation_90.md) 同源。放在容器裡會變成第三套埠位置算法，日後必然與渲染分歧。
 
@@ -76,8 +82,9 @@ findPortAt(point, nodes, getMachine) → { nodeUid, portId, side, media } | null
 |------|------|------|
 | 修改 | `src/editor/canvas/FactoryCanvas.vue` | draft local ref、pointer 事件、命中 highlight |
 | 修改 | `src/components/MachineShape.vue` | 埠點 hover 樣式（L3，只吃 props） |
-| 新建 | `src/utils/portHitTest.ts` | `findPortAt` 純函式（aaaaa） |
-| 新建 | `src/__tests__/utils/portHitTest.test.ts` | 含 rotation 與多 mode 案例 |
+| 新建 | `src/utils/layout/portHitTest.ts` | `hitTestPortAt` 純函式（aaaaa） |
+| 新建 | `src/__tests__/utils/layout/portHitTest.test.ts` | 含 rotation 與多 mode 案例 |
+| 不動 | `src/utils/layout/portAnchorIndex.ts` 的 `findPortAt` | 格點精確匹配；與熱區命中分工 |
 | 唯讀 | `src/utils/portUtils.ts`、`src/app/dev/topologyPortUtils.ts` | |
 | **不碰** | `addConnection` 規則、折線渲染、自動路徑規劃 | |
 
@@ -130,6 +137,9 @@ findPortAt(point, nodes, getMachine) → { nodeUid, portId, side, media } | null
 **未交頂替：** 無。本項是 10/25 門檻的必要條件；若 10/11 仍未動工，須在該日會上把範圍砍到「只支援水平／垂直相鄰兩台的直線連線」，保住門檻的最小形態。
 
 ## 11. 開發日誌
+
+### 2026-10-10
+- 命中 API 更名 **`hitTestPortAt`**（與既有格點 `findPortAt` 分工）；回傳對齊 `PortRef`＋side＋media；輸入＝格點。W1004-A0／V15 同步
 
 ### 2026-08-22
 - 建檔。draft 存放位置經三方案比較後定為 L2 local，理由是避免污染 FlowEngine 的 watch 觸發
