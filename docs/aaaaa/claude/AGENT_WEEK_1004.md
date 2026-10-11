@@ -16,7 +16,7 @@
 ## 0. 三十秒結論
 
 **V15＝W1004-A0 兩支 L1 純函式。**  
-①／B1／② 已完成，② 在 #60 待合。**③ 熱區圓心已改埠視覺邊心**，後續 PR 分支 `dev/aaaaa1004-hitTestPortAt`。  
+①／B1／② 已完成，② 在 [#60](https://github.com/dernoson/endfield-playground/pull/60)。**③** [#65](https://github.com/dernoson/endfield-playground/pull/65)（熱區圓心＝埠視覺邊心）。  
 本週不派 C1 UI、不碰正式頁換殼檔；C5 action 排 10/11–10/18。  
 **仍待定：** C1 的 L2 owner（PENDING A-2）。
 

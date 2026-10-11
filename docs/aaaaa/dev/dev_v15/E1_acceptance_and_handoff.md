@@ -32,7 +32,7 @@
 | 範圍 | 文件＋`devicesOutsideBase`；`hitTestPortAt` 已移出（審查阻擋，見 [D1 §8](./D1_port_hit_test.md)） |
 | 合入序 | **不排換殼序**（WEEK：A0 送來就審）；toby #61 等著接 |
 | 解鎖句 | **不發** |
-| 後續 PR | `dev/aaaaa1004-hitTestPortAt`：`hitTestPortAt` 熱區圓心＝埠視覺邊心 |
+| 後續 PR | [#65](https://github.com/dernoson/endfield-playground/pull/65)（`dev/aaaaa1004-hitTestPortAt`） |
 
 ---
 
@@ -61,7 +61,7 @@
 - [x] §1 驗收表通過（② 範圍）
 - [x] PR 已開
 - [x] 下游一句話寫進 PR body
-- [~] ③ 後續 PR 分支已備（開 PR 時勾）
+- [x] ③ 後續 PR [#65](https://github.com/dernoson/endfield-playground/pull/65) 已開
 
 ---
 
