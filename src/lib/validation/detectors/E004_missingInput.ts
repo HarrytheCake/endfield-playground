@@ -21,7 +21,9 @@ export const E004_missingInput: Detector = {
 
         for (const device of ctx.devices) {
             const machineType = device.data?.machineType ?? device.data?.label ?? device.id;
-            const machineDef = ctx.getDef ? ctx.getDef(machineType) ?? getMachine(machineType) : getMachine(machineType);
+            const machineDef = ctx.getDef
+                ? (ctx.getDef(machineType) ?? getMachine(machineType))
+                : getMachine(machineType);
 
             // 若查無設備定義，或是地區資源輸出點（源機），不套用 E004
             if (!machineDef || machineDef.is_source) {
