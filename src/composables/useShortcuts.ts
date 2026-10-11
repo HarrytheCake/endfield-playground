@@ -16,8 +16,8 @@
  *   - **P**：切換管線工具（`connect`），再按一次回到 `select`
  *   - **Ctrl+R / Cmd+R（暫時性）**：呼叫 `triggerResetCanvas()` 重置畫布。正式入口應為 L3
  *     交付的按鈕 + `UModal` 確認框（見 `MILESTONE_0726.md`），本鍵位待該按鈕上線後應移除
- *   - **Escape**：非拿起預覽狀態時開啟快捷鍵設定介面（拿起預覽中的取消行為固定綁在 Escape，
- *     不受本鍵位配置影響，邏輯在 `FactoryCanvas.vue`）
+ *   - **Escape**：非拿起預覽狀態時開啟快捷鍵設定介面；拿起預覽中則取消拿起（固定綁在 Escape，
+ *     不受本鍵位配置影響）
  *
  * WASD 畫面平移因需要 Vue Flow viewport context，實作於 `FactoryCanvas.vue`，非本檔案範圍。
  *
@@ -31,6 +31,7 @@
  */
 
 import { watch } from 'vue';
+import { useEventListener } from '@vueuse/core';
 import { useEditorStore } from '@/store/editorStore';
 import { useSelectionStore } from '@/store/selectionStore';
 import { useHistoryStore } from '@/store/historyStore';
@@ -100,6 +101,20 @@ export function useShortcuts() {
     onComboTriggered('openSettings', () => {
         if (editorStore.placementArmed || keybindingStore.isSettingsPanelOpen) return;
         keybindingStore.openSettingsPanel();
+    });
+
+    /**
+     * Escape：拿起預覽中按下時取消本次拿起，固定綁原生 Escape、不受鍵位配置影響。  \
+     * 原本只有 `FactoryCanvas.vue` 負責解除，但正式頁改掛 `LayoutView` 後 FactoryCanvas
+     * 不再掛載，舊五顆按鈕武裝的 `placementArmed` 便無人解除，上方 `openSettings` 會被永久擋下。  \
+     * **必須註冊在 `openSettings` 之後**：同一次 keydown 依註冊順序執行，先讓 `openSettings`
+     * 看到仍在拿起中而略過，再由這裡解除，避免一次 Esc 同時取消拿起又開啟面板。  \
+     * FactoryCanvas 仍掛載時（dev 參考頁）其監聽較晚註冊，讀到已解除的狀態即為 no-op。
+     */
+    useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && editorStore.placementArmed) {
+            editorStore.disarmPlacement();
+        }
     });
 
     /** 暫時切 pan 前的工具，放開後還原（避免把 connect 等工具打回 select） */
