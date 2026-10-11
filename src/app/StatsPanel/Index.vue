@@ -9,10 +9,10 @@ import { useEventListener } from '@vueuse/core';
 import HeaderLabel from './HeaderLabel.vue';
 import ResultPanel from './ResultPanel.vue';
 import AttentionPanel from './AttentionPanel.vue';
-import type { TestStatsPanelProps } from './types.ts';
+import type { StatsPanelProps } from './types.ts';
 
 /** 統計面板傳入屬性 */
-const props = defineProps<TestStatsPanelProps>();
+const props = defineProps<StatsPanelProps>();
 
 /** 面板根容器 DOM 參照，用於計算拖曳分割線時的相對高度 */
 const containerRef = ref<HTMLElement | null>(null);

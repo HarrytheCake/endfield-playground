@@ -33,7 +33,7 @@ export interface SingleTip {
 }
 
 /** 產線總覽統計面板（StatsPanel）的 Props 定義 */
-export interface TestStatsPanelProps {
+export interface StatsPanelProps {
     /** 電力消耗與供電統計數據 */
     power?: PowerData;
     /** 產能估算產品明細列表 */
