@@ -3,7 +3,7 @@
 **週次：** 2026-09-21 → 2026-09-27（M2 門檻週）
 **負責人：** aaaaa
 **分支：** `dev/aaaaa0921`
-**狀態：** **PR [#54](https://github.com/dernoson/endfield-playground/pull/54) 交審中**（單支分節；合入前公開 V2 未達）
+**狀態：** **[#54](https://github.com/dernoson/endfield-playground/pull/54)／[#55](https://github.com/dernoson/endfield-playground/pull/55) 已合 master**（2026-09-27；文件收斂見 V15-B1）
 **撰寫：** 2026-09-27
 **收斂：** [V14_closeout](./V14_closeout.md)
 
