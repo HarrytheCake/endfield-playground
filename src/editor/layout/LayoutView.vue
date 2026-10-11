@@ -9,9 +9,7 @@ import { usePlacementIntent } from '@/editor/toolbar/usePlacementIntent';
 import { useLayoutStore } from '@/store/layoutStore';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useEditorStore } from '@/store/editorStore';
-import { isWithinBaseRegion } from '@/utils/geometryUtils';
-import { getDeviceOccupiedCells } from '@/utils/layout/deviceOccupancy';
-import { deviceSizeFromMachine, toDeviceFootprint } from '@/utils/layout/toFootprint';
+import { devicesOutsideBase } from '@/utils/layout/devicesOutsideBase';
 import type { Position } from '@/types/euclideanSpace';
 import { canPlaceDevice } from '@/utils/layout/placementCheck';
 
@@ -22,23 +20,12 @@ const canvasStore = useCanvasStore();
 /** 消費頂欄與既有空白鍵快捷鍵共用的工具狀態 */
 const editorStore = useEditorStore();
 /**
- * 暫沿用共用佔格與基地判定，待 A0 的 devicesOutsideBase 合入後替換此接點。
- * 不把視覺出界清單混入 canPlaceDevice 的重疊／無效資料拒絕規則。
+ * 出界設備清單，交由 L1 的 devicesOutsideBase 判定，L2 不另算出界幾何。
+ * 僅供視覺 Error；不混入 canPlaceDevice 的重疊／無效資料拒絕規則。
  */
-const outsideDeviceIds = computed(() => {
-    const region = canvasStore.baseRegion;
-    if (region === null) return [];
-    return layoutStore.devices
-        .filter((device) => {
-            const machine = getMachineById(device.machineType);
-            if (!machine) return false;
-            const cells = getDeviceOccupiedCells(
-                toDeviceFootprint(device, deviceSizeFromMachine(machine)),
-            );
-            return cells.some((cell) => !isWithinBaseRegion(cell.x, cell.y, region));
-        })
-        .map((device) => device.id);
-});
+const outsideDeviceIds = computed(() =>
+    devicesOutsideBase(layoutStore.devices, canvasStore.baseRegion),
+);
 
 /** 畫布容器與其實際像素尺寸，隨主畫面布局重新量測 */
 const container = ref<HTMLElement | null>(null);
