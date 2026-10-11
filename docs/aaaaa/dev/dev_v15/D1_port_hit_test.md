@@ -48,9 +48,10 @@ hitTestPortAt(
   point: { x: number; y: number },
   devices: readonly PlacedDevice[],
   getMachine?: GetMachineFn,
-  options?: { hitRadiusCells?: number }
+  options?: { hitRadiusCells?: number; prefer?: PortDirection }
 ) → PortHitResult | null
 // PortHitResult = PortRef & { side, media }
+// prefer：等距／同點時消歧；拖線 output、放開 input
 ```
 
 ---
@@ -76,7 +77,8 @@ hitTestPortAt(
 | 5 | 熱區外 → null | `[x]` |
 | 6 | 四種 rotation：視覺點命中該埠、不命中鄰埠 | `[x]` |
 | 7 | 多埠取最近；等距取掃描序 | `[x]` |
-| 8 | 無 store import（讀檔斷言） | `[x]` |
+| 8 | 緊貼埠對埠：`prefer` 不受設備順序影響 | `[x]` |
+| 9 | 無 store import（讀檔斷言） | `[x]` |
 
 回歸：`connectRules`／`devicesOutsideBase` 同跑綠。
 
@@ -97,9 +99,10 @@ hitTestPortAt(
 ### 6.1 給 C1 L2（PR／USAGE）
 
 ```text
-hitTestPortAt(point, devices) → PortHitResult | null
+hitTestPortAt(point, devices, getMachine?, { prefer?, hitRadiusCells? }) → PortHitResult | null
 point＝連續格座標（原點＝格左上角；非整數可）；預設熱區 0.5 格。
 熱區圓心＝設備邊上埠邊心（非外側錨點格）。
+開始拖線傳 prefer: 'output'，放開時傳 prefer: 'input'（緊貼埠對埠同點時消歧，比照 findPortAt）。
 命中後用 deviceId/portType/portIndex 組 PortRef；side/media 已附帶。
 放開連線仍走 waypoints → canConnect（精確 findPortAt）；本函式只負責「點中哪一埠」。
 ```

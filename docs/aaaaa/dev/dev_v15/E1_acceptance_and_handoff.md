@@ -41,7 +41,7 @@
 | 產物 | 對象 | 一句話 |
 |------|------|--------|
 | `devicesOutsideBase(devices, baseRegion)` | toby T1 | 回傳 id 上 Error 樣；`null` 基地回 `[]`；不擋落子 |
-| `hitTestPortAt(point, devices)` | 10/11 C1 L2 | 連續格座標（原點＝格左上角）；圓心＝埠視覺邊心；熱區 0.5；回傳 PortRef＋side＋media |
+| `hitTestPortAt(point, devices, ?, { prefer })` | 10/11 C1 L2 | 連續格座標；圓心＝埠視覺邊心；熱區 0.5；拖線 `prefer:'output'`、放開 `prefer:'input'` |
 
 口頭節奏：[INTRO](../../collaborator_survey/dispatch_private/1004/INTRO_A0_devices_outside_and_port_hit.md)
 

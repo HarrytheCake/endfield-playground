@@ -27,6 +27,9 @@ export type PortHitResult = PortRef & {
     media: PortMedia;
 };
 
+/** 等距判定用的平方距離容差（浮點誤差） */
+const DIST_SQ_EPS = 1e-12;
+
 /** {@link hitTestPortAt} 可選參數 */
 export interface HitTestPortOptions {
     /**
@@ -34,6 +37,12 @@ export interface HitTestPortOptions {
      * 呼叫端若需更大熱區可覆寫；螢幕像素下限由 L2 換算進 `point` 後再呼叫。
      */
     hitRadiusCells?: number;
+    /**
+     * 同點／等距多埠時優先的方向（比照 {@link findPortAt}）。
+     * C1 L2：開始拖線傳 `'output'`，放開時傳 `'input'`。
+     * 未指定時等距取展開掃描序較前者。
+     */
+    prefer?: PortDirection;
 }
 
 /** 展開後的命中目標（視覺圓心＋回傳欄位） */
@@ -60,12 +69,13 @@ interface PortHitTarget {
  * - 輸入慣例：連續格座標，原點為格左上角（非整數合法；像素換算由 L2 完成）
  * - 熱區圓心＝旋轉後設備邊上的埠邊心（{@link portPointOnMachine}）；與外側錨點格無關
  * - 距離＝點到圓心的歐氏距離（格）
- * - 多埠同時在半徑內：**距離最近**者勝；距離相同則取展開掃描順序較前者
+ * - 多埠同時在半徑內：**距離最近**者勝
+ * - 距離相同（含浮點誤差內）：若有 `prefer` 則優先 `portType === prefer`；否則取展開掃描序較前者
  *
  * @param point 連續格座標（原點＝格左上角）
  * @param devices 已放置設備
  * @param getMachine 機器查表；預設與 resolveConnections 相同
- * @param options 熱區等
+ * @param options 熱區／`prefer` 等
  */
 export function hitTestPortAt(
     point: { x: number; y: number },
@@ -75,6 +85,7 @@ export function hitTestPortAt(
 ): PortHitResult | null {
     const radius = options?.hitRadiusCells ?? DEFAULT_HIT_RADIUS_CELLS;
     const radiusSq = radius * radius;
+    const prefer = options?.prefer;
     const targets = collectPortHitTargets(devices, getMachine);
 
     let best: PortHitTarget | null = null;
@@ -87,9 +98,18 @@ export function hitTestPortAt(
         if (distSq > radiusSq) {
             continue;
         }
-        // 嚴格 <：等距時保留掃描序較前者
-        if (distSq < bestDistSq) {
+        /** 明顯較近 → 直接勝出；等距時保留掃描序較前者（除非 `prefer` 指定另一方向） */
+        if (best === null || distSq < bestDistSq - DIST_SQ_EPS) {
             bestDistSq = distSq;
+            best = target;
+            continue;
+        }
+        if (
+            prefer &&
+            Math.abs(distSq - bestDistSq) <= DIST_SQ_EPS &&
+            target.portType === prefer &&
+            best.portType !== prefer
+        ) {
             best = target;
         }
     }

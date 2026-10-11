@@ -166,6 +166,39 @@ describe('hitTestPortAt', () => {
         });
     });
 
+    it('緊貼埠對埠：prefer 不受設備陣列順序影響', () => {
+        const a = makeSplitter('a', 0, 0, 0);
+        const b = makeSplitter('b', 1, 0, 0);
+        /** A 右出與 B 左入視覺點皆 (1, 0.5) */
+        const aRight = visualPortPoint(a, 'output', 1);
+        const bLeft = visualPortPoint(b, 'input', 0);
+        expect(aRight).toMatchObject({ x: 1, y: 0.5 });
+        expect(bLeft).toMatchObject({ x: 1, y: 0.5 });
+
+        for (const order of [
+            [a, b],
+            [b, a],
+        ] as const) {
+            const point = { x: 1, y: 0.5 };
+            expect(
+                hitTestPortAt(point, order, undefined, { prefer: 'output' }),
+                `order=${order.map((d) => d.id).join(',')} prefer=output`,
+            ).toMatchObject({
+                deviceId: 'a',
+                portType: 'output',
+                portIndex: 1,
+            });
+            expect(
+                hitTestPortAt(point, order, undefined, { prefer: 'input' }),
+                `order=${order.map((d) => d.id).join(',')} prefer=input`,
+            ).toMatchObject({
+                deviceId: 'b',
+                portType: 'input',
+                portIndex: 0,
+            });
+        }
+    });
+
     it('未知機型設備不產生命中', () => {
         const ghost: PlacedDevice = {
             id: 'ghost',
