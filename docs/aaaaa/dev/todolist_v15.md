@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261004](../../work_dispatch/WEEK_20261004.md) v1.2、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.16**、[AGENT_WEEK_1004](../claude/AGENT_WEEK_1004.md)
 **週次：** 2026-10-04 → 2026-10-11（連線月第一週；M2 延後結算＋換殼；**無技術門檻日**）
 **開發分支：** `dev/aaaaa1004`
-**狀態總覽：** **`[~]` PR 交審中**（2026-10-10；A–D `[x]`；E1 驗收通過、待合入）
+**狀態總覽：** **`[~]` PR #60 交審中（僅 ②）**（2026-10-11；A–C `[x]`；D1 審查退回→移出另開後續 PR；E1 待合入）
 **待確認問題：** [dispatch_private/1004/PENDING_DECISIONS_20261011.md](../collaborator_survey/dispatch_private/1004/PENDING_DECISIONS_20261011.md)
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -113,16 +113,17 @@ A 定案 → B V14 收斂（前置）
 
 ## V15-D｜埠命中判定（W1004-A0 ③・C1 前置）
 
-- [x] **V15-D1** `hitTestPortAt`＋測試；熱區 ≥ 半格；輸入格點
+- [~] **V15-D1** `hitTestPortAt`＋測試；熱區 ≥ 半格；輸入格點——**審查退回（#60），移出另開後續 PR**
     - 細項：[dev_v15/D1_port_hit_test.md](./dev_v15/D1_port_hit_test.md)
-    - 產物：`src/utils/layout/portHitTest.ts`、`src/__tests__/utils/layout/portHitTest.test.ts`
+    - 產物（後續 PR）：`src/utils/layout/portHitTest.ts`、`src/__tests__/utils/layout/portHitTest.test.ts`
     - 對照公開驗收：**V10**（另一半）；回傳＝PortRef＋side＋media
+    - 阻擋：熱區圓心落在錨點格左上角，不在埠視覺位置（見 D1 §8）
 
 ---
 
 ## V15-E｜驗收、PR、交接
 
-- [~] **V15-E1** 品質閘 `[x]`；DoD `[x]`；PR [#60](https://github.com/dernoson/endfield-playground/pull/60) 已開；合入後回寫 `[ ]`
+- [~] **V15-E1** 品質閘 `[x]`；PR [#60](https://github.com/dernoson/endfield-playground/pull/60) 拆分後僅含 ②；③ 後續 PR `[ ]`；合入後回寫 `[ ]`
     - 細項：[dev_v15/E1_acceptance_and_handoff.md](./dev_v15/E1_acceptance_and_handoff.md)
 
 ---
@@ -145,7 +146,7 @@ A 定案 → B V14 收斂（前置）
 
 - [x] 派工①已發（WEEK＋工單在 master）
 - [x] `devicesOutsideBase` 有測試；`addDevice`／`canPlaceDevice` 行為不變
-- [x] `hitTestPortAt` 有測試；熱區 ≥ 半格；無 store import；輸入格點
+- [ ] `hitTestPortAt` 有測試；熱區 ≥ 半格且圓心對齊埠視覺位置；無 store import；輸入格點（後續 PR）
 - [x] C5 store 歸屬已裁並回寫（R-1＝B；非本版實作）
 - [x] `pnpm type-check`／lint-check／format-check／test 綠（906 tests）
 - [x] PR 說明下游（toby／C1）與「不改 canPlaceDevice」
@@ -174,12 +175,18 @@ A 定案 → B V14 收斂（前置）
 |------|----------|----------|------|
 | ① | 派工已發 | `[x]` | 已在 master |
 | ② | `devicesOutsideBase`＋測試 | `[x]` | 2026-10-10 |
-| ③ | `hitTestPortAt`＋測試 | `[x]` | 2026-10-10 |
+| ③ | `hitTestPortAt`＋測試 | `[~]` | #60 審查退回；後續 PR 修座標慣例 |
 | C5 問答 | store 歸屬 | `[x]` | R-1＝B；實作非本版 |
 
 ---
 
 ## 開發日誌
+
+### 2026-10-11｜#60 審查：拆分
+
+- ② `devicesOutsideBase` 審查通過，留在 #60 先合（toby #61 等著接）
+- ③ `hitTestPortAt` 阻擋：錨點是整數格索引卻被當連續座標點，熱區圓心偏到格左上角；從 #60 移出，另開後續 PR
+- 移出前的原始實作保留在本地分支 `dev/aaaaa1004-porthit`
 
 ### 2026-10-10｜V15-E1 驗收＋開 PR
 

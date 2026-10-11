@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.5（2026-10-10；V15-D1 完成）** |
+| version | **v1.6（2026-10-11；#60 拆分，③ 退回）** |
 | 用途 | 供 Agent 執行本週派工／改工單時的**強制約束**；細節以公開 WEEK 與個人工單為準 |
 | 公開 | [WEEK_1004](../../work_dispatch/WEEK_20261004.md) v1.2、[W1004-A0](../../work_dispatch/aaaaa/1004/W1004-A0_dispatch_and_e003.md) |
 | 執行計畫 | [todolist_v15](../dev/todolist_v15.md)、[dev_v15/](../dev/dev_v15/) |
@@ -16,7 +16,7 @@
 ## 0. 三十秒結論
 
 **V15＝W1004-A0 兩支 L1 純函式。**  
-①／B1／②／③ 皆已完成；**E1 驗收通過、PR 交審中**。下一＝合入後回寫。  
+①／B1／② 已完成，② 在 #60 待合。**③ `hitTestPortAt` 審查退回**（熱區圓心偏移），移出另開後續 PR。  
 本週不派 C1 UI、不碰正式頁換殼檔；C5 action 排 10/11–10/18。  
 **仍待定：** C1 的 L2 owner（PENDING A-2）。
 
@@ -29,8 +29,8 @@
 | ~~0~~ | ~~派工已發（WEEK＋十張工單）~~ | **已完成**；W1004-A0 ① |
 | ~~1~~ | ~~V14 殘項收斂~~ | **已完成**；[V15-B1](../dev/dev_v15/B1_v14_residue_close.md) |
 | ~~2~~ | ~~② 出界 id 列表~~ | **已完成**；[V15-C1](../dev/dev_v15/C1_devices_outside_base.md) |
-| ~~3~~ | ~~③ `hitTestPortAt`~~ | **已完成**；[V15-D1](../dev/dev_v15/D1_port_hit_test.md) |
-| 4 | 驗收＋PR＋交接 | [V15-E1](../dev/dev_v15/E1_acceptance_and_handoff.md) |
+| 3 | ③ `hitTestPortAt` 修座標慣例（後續 PR） | [V15-D1 §8](../dev/dev_v15/D1_port_hit_test.md) |
+| 4 | #60 合入＋交接 | [V15-E1](../dev/dev_v15/E1_acceptance_and_handoff.md) |
 | — | **禁止**選取設備互動／旋轉／Delete（管線點選是別人的事） | WEEK §2 |
 | — | **禁止**改 `GridCanvas`／`MainLayout`／`ToolbarPanel` | 鎖表 §2.2 |
 | — | **禁止**本週實作 C5 action／引擎接 layoutStore | 排 10/11–10/18 |
@@ -65,7 +65,7 @@
 | ② 行為 | 純函式；**不寫 store**；**不改** `canPlaceDevice` |
 | ② 佔格 | 沿用 `getDeviceOccupiedCells`／既有基地範圍判定，不另寫 |
 | ③ 函式 | **`hitTestPortAt`**＠`src/utils/layout/portHitTest.ts`；舊 `findPortAt` 不動（A-1＝A） |
-| ③ 輸入 | **格點座標**（像素下限由 L2 換算） |
+| ③ 輸入 | **連續格座標**，原點＝格左上角（像素下限由 L2 換算）；熱區圓心＝埠視覺位置（設備邊上埠邊心），**不是**錨點格索引 |
 | ③ 回傳 | **已決**＝`PortRef`＋`side`＋`media` |
 | C5 store | **已裁 B**；本週不交 action |
 | 解鎖句 | **本版不發** |
@@ -100,6 +100,10 @@
 ---
 
 ## 6. 日誌
+
+### 2026-10-11（v1.6）
+
+- #60 審查：② 通過先合；③ 熱區圓心落在錨點格左上角，移出另開後續 PR
 
 ### 2026-10-10（v1.5）
 
