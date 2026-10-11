@@ -31,7 +31,7 @@
 
 **額外設計筆記（尚未實作）：** [DESIGN_clipboardAndEdgeSelectionState.md](DESIGN_clipboardAndEdgeSelectionState.md)——clipboard store 與管線選取狀態構想，寫於舊 Vue Flow 世界，若要用需先對照新 `layoutStore` 重新評估。
 
-## 3. 本週任務：W1004-H1 正式畫面換殼（**已完成、已 push，待開／待審 PR**）
+## 3. 本週任務：W1004-H1 正式畫面換殼（**已完成，[PR #63](https://github.com/dernoson/endfield-playground/pull/63) 待審**）
 
 工單：[W1004-H1_chrome_land.md](../work_dispatch/harry/1004/W1004-H1_chrome_land.md)｜計畫：[PLAN_chromeLand.md](PLAN_chromeLand.md)｜PR 描述草稿：[PR_DESCRIPTION_1011.md](PR_DESCRIPTION_1011.md)
 
@@ -43,7 +43,7 @@
 | `6163114` fix(shortcuts) | Esc 設定面板打不開的修正（見 §6） |
 | `dff3b49` docs(harry) | PLAN 與 PR 描述 |
 
-**截至本次更新，upstream 上查不到指向 `dff3b49` 的 PR**——開 PR 時直接貼 `PR_DESCRIPTION_1011.md`。
+**已開 [PR #63](https://github.com/dernoson/endfield-playground/pull/63)**（head `dff3b49`，即上表三個 commit）。之後 `dev/cake` 再 push 的 commit（例如 handoff 更新 `becd04c`）會自動進到 #63——不想夾帶文件時要留意。
 
 ### 3.2 定案的槽位結構（class 是給 G／S／C1 的契約，不要改名）
 
@@ -91,9 +91,9 @@
 
 ## 5. Git 狀態
 
-- 目前在 **`dev/cake`**，工作目錄乾淨，HEAD `dff3b49`，已與 `origin/dev/cake`、`upstream/dev/cake` 同步
+- 目前在 **`dev/cake`**；`dff3b49` 已 push（＝PR #63 head），其後的 handoff 更新 `becd04c` 尚未 push
 - `dev/cake` 已 merge 過 master（`0c335c7`），相對 master 多 4 個 commit：`0641c7b`（handoff 更新）＋ H1 三個
-- `origin` = `HarrytheCake/endfield-playground`（fork），`upstream` = `dernoson/endfield-playground`；本機沒有 `gh` CLI，PR 狀態只能用 `git ls-remote upstream 'refs/pull/*/head'` 間接查
+- `origin` = `HarrytheCake/endfield-playground`（fork），`upstream` = `dernoson/endfield-playground`；本機沒有 `gh` CLI，PR 狀態只能用 `git ls-remote upstream 'refs/pull/<編號>/head'` 間接查（例：`refs/pull/63/head` 對到哪個 commit）
 
 **保留的教訓（08-23 revert 事故）：** 當時 `git revert --abort` 把分支 reset 到比預期更早的 commit，一度讓多個檔案從工作目錄消失，靠 `git reflog` 找回。**在多次 revert／reapply 疊過的分支上，abort 前先用 `git reflog` 確認會落在哪個 commit。**
 

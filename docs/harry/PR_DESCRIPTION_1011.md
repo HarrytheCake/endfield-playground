@@ -22,11 +22,12 @@
 ├ header.area-navbar → Navbar
 └ .area-workspace
    ├ ProjectSidebar（原樣保留，去留待 paper 回覆）
-   ├ .area-stage（relative；畫布＋浮層的定位容器）
+   ├ .area-stage（relative＋isolation；畫布＋浮層的定位容器）
    │   ├ .area-canvas（absolute inset-0）→ LayoutView
    │   ├ aside.area-device-panel（absolute 左緣 280px，v-show）← 左槽
-   │   └ section.area-toolbar-dock（absolute 貼底）→ ToolbarPanel ← 工具列槽
-   └ aside.area-stats（320px）→ StatsPanel ← 右槽
+   │   ├ section.area-toolbar-dock（absolute 貼底）→ ToolbarPanel ← 工具列槽
+   │   └ .area-stats-toggle（右上角，收合／展開產線總覽）
+   └ aside#area-stats.area-stats（320px ↔ 0）→ StatsPanel ← 右槽
 ```
 
 ## 變更檔案
