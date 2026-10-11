@@ -1,4 +1,3 @@
-<!-- Generated from Figma JSON. Regenerate through the converter instead of moving generated nodes manually. -->
 <script lang="ts">
 export * from './types.ts';
 </script>

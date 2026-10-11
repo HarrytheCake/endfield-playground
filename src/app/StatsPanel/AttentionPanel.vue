@@ -1,4 +1,3 @@
-<!-- Generated from Figma JSON. Regenerate through the converter instead of moving generated nodes manually. -->
 <script setup lang="ts">
 import { computed } from 'vue';
 import iconErrorRaw from '@/assets/icon/icon error.svg?raw';

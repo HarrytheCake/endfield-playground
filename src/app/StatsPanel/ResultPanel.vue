@@ -1,4 +1,3 @@
-<!-- Generated from Figma JSON. Regenerate through the converter instead of moving generated nodes manually. -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import bottonIconUrl from '@/assets/icon/icon arrow.svg';
