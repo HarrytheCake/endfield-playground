@@ -4,15 +4,22 @@ import { ref, computed, watch } from 'vue';
 import bottonIconUrl from '@/assets/icon/icon arrow.svg';
 import type { PowerData, SingleProductDetail } from './types';
 
+/** 上半部統計與產能估算面板傳入屬性 */
 const props = defineProps<{
+    /** 電力消耗與供電統計數據 */
     power?: PowerData;
+    /** 產能估算產品明細列表 */
     products?: SingleProductDetail[];
+    /** 調度券每小時兌換效率（券/hr） */
     exchangeRate?: number;
+    /** 面板區塊高度（px 數值或 CSS 高度字串） */
     styleHeight?: number | string;
 }>();
 
+/** 本地產品明細清單副本，用於獨立控制各產品項目的展開與收合狀態 */
 const localProducts = ref(props.products ? [...props.products] : []);
 
+/** 監聽外部傳入的 products 變化並同步更新本地清單副本 */
 watch(
     () => props.products,
     (newVal) => {
@@ -21,6 +28,7 @@ watch(
     { deep: true },
 );
 
+/** 計算電力負載百分比（0 ~ 100），包含無資料與分母為零的保護 */
 const computedPercent = computed(() => {
     if (!props.power) return 0;
     if (props.power.percent !== undefined) return props.power.percent;
@@ -28,6 +36,7 @@ const computedPercent = computed(() => {
     return (props.power.used / props.power.total) * 100;
 });
 
+/** 切換指定索引產品項目的展開與收合狀態 */
 const toggleExpand = (index: number) => {
     if (localProducts.value[index]) {
         localProducts.value[index].isExpanded = !localProducts.value[index].isExpanded;

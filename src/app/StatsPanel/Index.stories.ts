@@ -2,13 +2,14 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import TestStatsPanel from './Index.vue';
 import type { SingleProductDetail, SingleTip } from './types.ts';
 
+/** 產線總覽統計面板（StatsPanel）Storybook Meta 設定 */
 const meta = {
-    title: 'L3/test_StatsPanel',
+    title: 'L3/StatsPanel',
     component: TestStatsPanel,
     decorators: [
         () => ({
             template: `
-                <div style="width: 320px; height: 1024px; position: relative; margin: 20px auto; padding-left: 40px;">
+                <div style="width: 320px; height: 1024px; position: relative; margin: 20px auto;">
                     <story />
                 </div>
             `,
@@ -17,8 +18,11 @@ const meta = {
 } satisfies Meta<typeof TestStatsPanel>;
 
 export default meta;
+
+/** StatsPanel Story 型別定義 */
 type Story = StoryObj<typeof meta>;
 
+/** 範例產能估算產品清單 */
 const sampleProductions: SingleProductDetail[] = [
     {
         id: '1',
@@ -38,6 +42,7 @@ const sampleProductions: SingleProductDetail[] = [
     },
 ];
 
+/** 範例提示與警報清單 */
 const sampleTips: SingleTip[] = [
     {
         type: 'error',
@@ -104,6 +109,7 @@ export const ZeroSupplyPower: Story = {
     },
 };
 
+/** 多筆產能測試資料（用於驗證滾動排版） */
 const overflowProductions: SingleProductDetail[] = [
     { id: 'p-1', name: '粗製紫晶', produce: 500, consume: 200, profit: 300, isExpanded: true },
     { id: 'p-2', name: '纖維原料', produce: 300, consume: 450, profit: -150, isExpanded: true },
@@ -131,6 +137,7 @@ export const ManyProductionsOverflow: Story = {
     },
 };
 
+/** 多筆提示與警報測試資料（用於驗證滾動排版） */
 const overflowTips: SingleTip[] = [
     { type: 'error', text: '碎紙機單元*1位置重疊' },
     { type: 'warning', text: '貓毛貓範圍總sb超載' },

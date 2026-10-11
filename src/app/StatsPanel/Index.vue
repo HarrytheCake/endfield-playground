@@ -4,83 +4,63 @@ export * from './types.ts';
 </script>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue';
+import { ref } from 'vue';
+import { useEventListener } from '@vueuse/core';
 import HeaderLabel from './HeaderLabel.vue';
 import ResultPanel from './ResultPanel.vue';
 import AttentionPanel from './AttentionPanel.vue';
-import CollapseButton from './CollapseButton.vue';
 import type { TestStatsPanelProps } from './types.ts';
 
+/** 統計面板傳入屬性 */
 const props = defineProps<TestStatsPanelProps>();
 
-const emit = defineEmits<{
-    (e: 'update:isCollapsed', value: boolean): void;
-    (e: 'toggle-collapse'): void;
-}>();
-
-// 1. 面板收合狀態
-const isCollapsed = ref(props.isCollapsed ?? false);
-
-watch(
-    () => props.isCollapsed,
-    (val) => {
-        if (val !== undefined) {
-            isCollapsed.value = val;
-        }
-    },
-);
-
-const toggleCollapse = () => {
-    isCollapsed.value = !isCollapsed.value;
-    emit('update:isCollapsed', isCollapsed.value);
-    emit('toggle-collapse');
-};
-
-// 2. 白線上下拖動分割狀態 (預設上半部高度 582px)
+/** 面板根容器 DOM 參照，用於計算拖曳分割線時的相對高度 */
 const containerRef = ref<HTMLElement | null>(null);
+
+/** 上半部統計區域高度（px），預設為 582px */
 const topHeight = ref(582);
+
+/** 是否正在拖曳中間分割白線 */
 const isDragging = ref(false);
 
+/** 開始拖曳分割線：鎖定文字選取與游標樣式 */
 const startDrag = () => {
     isDragging.value = true;
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'row-resize';
-
-    window.addEventListener('mousemove', onDragging);
-    window.addEventListener('touchmove', onDragging);
-    window.addEventListener('mouseup', stopDrag);
-    window.addEventListener('touchend', stopDrag);
 };
 
+/** 拖曳過程中動態計算並限制上半部統計區域的高度範圍（頂部最少保留 220px，底部最少保留 150px） */
 const onDragging = (e: MouseEvent | TouchEvent) => {
     if (!isDragging.value || !containerRef.value) return;
+    /** 面板根容器的邊界矩形資訊 */
     const rect = containerRef.value.getBoundingClientRect();
+    /** 指標或觸控點的垂直座標 */
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    /** 相對於面板頂部的垂直距離 */
     const relativeY = clientY - rect.top;
 
-    // 限制拖曳範圍：最小保留頂部 220px，底部保留 150px
+    /** 上半部區域最小保留高度（px） */
     const minHeight = 220;
+    /** 上半部區域最大可達高度（px），確保底部至少保留 150px */
     const maxHeight = rect.height - 150;
 
     topHeight.value = Math.max(minHeight, Math.min(maxHeight, relativeY));
 };
 
+/** 結束拖曳分割線：還原文字選取與游標樣式 */
 const stopDrag = () => {
+    if (!isDragging.value) return;
     isDragging.value = false;
     document.body.style.userSelect = '';
     document.body.style.cursor = '';
-    window.removeEventListener('mousemove', onDragging);
-    window.removeEventListener('touchmove', onDragging);
-    window.removeEventListener('mouseup', stopDrag);
-    window.removeEventListener('touchend', stopDrag);
 };
 
-// 3. 箭頭高度比例 (559 / 1080 ≈ 51.759%)
-const arrowTopPercent = ref((559 / 1080) * 100);
-
-onUnmounted(() => {
-    stopDrag();
-});
+/** 透過 VueUse 註冊全域拖曳與放開事件監聽，元件卸載時自動清理 */
+useEventListener(window, 'mousemove', onDragging);
+useEventListener(window, 'touchmove', onDragging);
+useEventListener(window, 'mouseup', stopDrag);
+useEventListener(window, 'touchend', stopDrag);
 </script>
 
 <template>
@@ -88,8 +68,7 @@ onUnmounted(() => {
         ref="containerRef"
         data-figma-id="2302:81"
         data-figma-name="Production Overview"
-        class="relative isolate m-0 box-border flex h-full min-h-screen [width:320px] shrink-0 flex-col overflow-visible border-0 border-solid transition-transform duration-300"
-        :class="{ 'translate-x-[320px]': isCollapsed }"
+        class="relative isolate m-0 box-border flex h-full [width:320px] shrink-0 flex-col overflow-hidden border-0 border-solid"
     >
         <!-- 固定頂部名稱與裝飾標籤 -->
         <HeaderLabel />
@@ -121,12 +100,5 @@ onUnmounted(() => {
             <!-- 下半部：Attention 與 Tips 警告清單 -->
             <AttentionPanel :tips="props.tips" />
         </div>
-
-        <!-- 彈窗箭頭/收合按鈕：依高度百分比等比置中與 RWD -->
-        <CollapseButton
-            :is-collapsed="isCollapsed"
-            :top-percent="arrowTopPercent"
-            @toggle="toggleCollapse"
-        />
     </div>
 </template>

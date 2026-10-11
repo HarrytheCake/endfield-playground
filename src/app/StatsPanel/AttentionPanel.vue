@@ -5,20 +5,20 @@ import iconErrorRaw from '@/assets/icon/icon error.svg?raw';
 import iconWarningRaw from '@/assets/icon/icon warning.svg?raw';
 import type { SingleTip } from './types';
 
+/** 將錯誤圖示 SVG 的填色替換為設計稿指定的紅色（#FF6E6E） */
 const iconErrorSvg = computed(() =>
     iconErrorRaw.replace(/fill="(?!none)[^"]*"/g, 'fill="#FF6E6E"'),
 );
+
+/** 將警告圖示 SVG 的填色替換為設計稿指定的黃色（#F7D945） */
 const iconWarningSvg = computed(() =>
     iconWarningRaw.replace(/fill="(?!none)[^"]*"/g, 'fill="#F7D945"'),
 );
 
+/** 下半部提示與警報面板傳入屬性 */
 defineProps<{
+    /** 提示與警報訊息列表 */
     tips?: SingleTip[];
-    styleHeight?: number | string;
-}>();
-
-const emit = defineEmits<{
-    (e: 'start-drag', event: MouseEvent | TouchEvent): void;
 }>();
 </script>
 
