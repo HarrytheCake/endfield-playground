@@ -91,7 +91,7 @@ hitTestPortAt(point, devices, getMachine?) →
 - [x] `WEEK_20261004` 與十張工單在本分支（Z1／M1 已按會議改派）
 - [x] W0921 週報已收並回寫個人檔／gitcommit_analyze（9／10；avery 主編裁再放一週）
 - [x] `devicesOutsideBase` 有測試；`addDevice` 行為不變（V15-C1｜分支 `dev/aaaaa1004`）
-- [ ] `hitTestPortAt` 有測試；熱區 ≥ 半格且圓心對齊埠視覺位置；輸入格點；無 store import（#60 審查退回，另開後續 PR）
+- [x] `hitTestPortAt` 有測試；熱區 ≥ 半格且圓心對齊埠視覺位置；輸入連續格座標；無 store import（後續 PR `dev/aaaaa1004-hitTestPortAt`）
 - [x] C5 的 store 歸屬已問到答案並回寫 roadmap —— **R-1＝B**
 
 ---
@@ -100,6 +100,7 @@ hitTestPortAt(point, devices, getMachine?) →
 
 ### 2026-10-11
 
+- ③ 後續 PR：熱區圓心改埠視覺邊心（`portPointOnMachine`）；分支 `dev/aaaaa1004-hitTestPortAt`
 - #60 審查拆分：② `devicesOutsideBase` 先合；③ 熱區圓心偏到錨點格左上角，移出另開後續 PR
 
 ### 2026-10-10
