@@ -1,11 +1,11 @@
 # Roadmap 大綱｜2026-08-23 → 2026-11-29
 
-**版本：** v1.13（2026-09-24；#48 本週必須收完、MBD 有產能不派新功能）
+**版本：** v1.16（2026-10-06；PR #59 主編裁 R-1＝B／R-2 同意）
 **建立日期：** 2026-08-22
 **規劃：** aaaaa
 **守門與合入：** dernoson（主編）
 **上游來源：** 主編提出並確認的 ROADMAP v0.2（決策層原始文件，未公開；其內容已完整拆進本檔與 `detail/`）
-**狀態總覽：** **M1 成立。** **W0914 結算：`layoutStore` #45、viewport #47、主畫面接入 #50、C2／D4 契約重訂 #51 全數合入 master——佈局視角換殼完成**，主畫面現為 `MainLayout` → `LayoutView` → `GridCanvas`，資料來自 `layoutStore`；舊 `FactoryCanvas` 保留未刪。**待審由 3 降為 1**（僅工具列 #48）。**未達：** 產線總覽 StatsPanel 遷移（未開 PR）、工具列合入。**2026-09-23 主編裁決：擺放解鎖，放行點擊落子；選取／旋轉／刪除不開。** **2026-09-24 追加：#48 本週必須修完合入**（不再無限期擱置；T1 仍直接在 master 接意圖）；**MBD 週報約 3–5h 有產能，本週仍不派新功能碼**（Storybook 未確認前）。**M2 維持硬綁 B1**。R-C2／R-D4 封鎖已於 9/19 解除，R-D1 遷移封鎖於 9/23 撤銷（見 §9）。本週派工見 [WEEK_20260921](../work_dispatch/WEEK_20260921.md) **v1.2**。
+**狀態總覽：** **M1 成立。M2 功能門檻成立（驗收因 9/27 連假延至 10/04）。** 自建畫布打底全在 master：L1 #40、store #45、殼 #46、viewport #47、主畫面 #50、契約 #51、落子預檢＋`canConnect`＋點擊落子 #54／#55、StatsPanel 搬家 #53、折線幾何 #56。**未合：** 工具列視覺 [#48](https://github.com/dernoson/endfield-playground/pull/48)（CONFLICTING）。**2026-10-04 會議：** 問卷未齊仍派工；harry 換正式殼（拆舊底欄／舊右側）；toby 無邊界畫布＋基地框＋出界 Error；G／S 收工具列與右側並合作設備樣；白紙未接管線警示＋點管線變藍／左面板。**選取鎖部分覆寫：** 管線（及左面板所需的）點選本週允許；旋轉與 Delete 仍不開。C2 L1 已提前交完；C1 UI 順延 10/11。**2026-10-06 重派（v1.15）：** 會議紀錄另點名 **azure9572**（E004／E005／W001 用現行 detector 模型接 dev 頁 → **R-D3 由 11/15 提前到 10 月**）與 **MBD**（頂欄存檔／設定／下載／上傳四顆進 Storybook → **R-D4 頂欄 UI 提前量**），兩人原暫停單作廢；**只有 avery 整週暫停**（主編裁再放一週、不除名）。**連假空白一週不延 M3**——改以把 C1 命中判定與出界列表兩支 L1 純函式提前到 10/04 週交付來補。本週派工見 [WEEK_20261004](../work_dispatch/WEEK_20261004.md) **v1.2**（主編已裁 R-1＝B／R-2 同意）。
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 
@@ -75,9 +75,10 @@ R-B 擺放（9/6→9/27）──── 使用者可見：真機器選單、擺�
       │                      │     主責：aaaaa（L1／store #40／#45）；殼＋容器＝toby #46／#50
       │                      ▼
       │                 09/20：殼已接上主畫面（只讀）＋viewport 合入 ✅
-      │                 擺放／選取：9/21 由主編當週裁（不硬綁 9/27）
+      │                 09/26–27：點擊落子＋預檢＋canConnect 合入 ✅（#54／#55）
+      │                 10/04：M2 延後驗收過功能門檻；視覺 #48 仍欠
       ▼
-R-C 連線（10/4→10/25）── 全部掛新畫布；C2 契約須先重訂
+R-C 連線（10/4→10/25）── 全部掛新畫布；C2 L1 已交；10/04 週改換殼，C1 UI→10/11
       ▼
 R-D 串通（11/1→11/29）── D4 格式跟新模型；D1–D3 相對獨立
       ▼
@@ -88,14 +89,14 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 **讀法：** 上面是使用者功能軸；右邊是技術前置軸。兩邊都要動，但**門檻必要項在殼落地前只能押在左邊不依賴畫布的塊**（本月＝B1）與右邊的 **L1 純函式／契約**。store 已交未合時，**不以「分支有 store」假裝 B2 已解**。
 
-**2026-09-21 更新：技術前置軸本月已走完。** 殼、store、容器接入全在 master，「分支有 store」的假裝風險消失。**但這不自動代表 B2 解封**——B2 要的是落子鏈（工具列意圖 → drop／click → `placeDevice`），目前主畫面上的互動仍是只讀。**解鎖是裁決，不是推論**，見 §9。
+**2026-10-04 更新：技術前置軸與點擊落子鏈都在 master。** 不再存在「分支有 store／落子」的假裝風險。**未齊的是正式 UI 殼**（#48、舊底欄／Inspector、12×8 畫布、設備樣）。**解鎖仍是裁決：** 10/04 放行管線點選＋左面板；旋轉／Delete 仍鎖。見 §9。
 
 ### 1.5 里程碑一覽
 
 | 里程碑 | 日期 | 使用者能做到 | 必要工項（預設） | 佈局自建下的調整 |
 |--------|------|--------------|------------------|------------------|
 | M1 對齊 | 2026-08-30 | 新 clone 能開；放一台佔格證據 | A1、A2 | **已過**；不改 |
-| M2 擺放 | 2026-09-27 | 拉多種真機器；點選看資訊；單刪；可轉 90° | B1、B2、B4 | **硬綁 B1**。**9/20 更新：殼與底層已接完，B2／B4 的技術前提消失，但本月只剩一週，兩項未開工**——維持不列必要，改列 M3 前置。9/14 擴大為誤會、9/15 撤回，本次不再變更 |
+| M2 擺放 | 2026-09-27（**驗收延至 2026-10-04**） | 拉多種真機器放到畫布 | B1、B2（點擊落子） | **硬綁 B1 功能句已過**（#43 列表＋#54／#55 落子）。B4 點選看資訊、單刪、旋轉**未列入該月必要**，延入 10 月；#48 視覺轉 W1004-G1 |
 | M3 連線 | 2026-10-25 | 兩 port 拉管線可彎折；拖移；源設素材 | C1、C2、C3、C5 | **整段依賴新畫布**；C2 須 9 月重訂 |
 | M4 串通 | 2026-11-29 | 右側產耗＋警訊；JSON 存讀 | D1、D2、D4、D5 | D4 跟新儲存形狀；D1–D3 可並行 |
 
@@ -110,12 +111,12 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | **不改什麼？** | **不是**捨棄 Vue.js；流程視角可續用 Vue Flow；右側 Stats／detector 純函式不因換殼重寫 |
 | **為何改？** | Vue Flow 節點盒限制 paper 稿 1:1 落地；佔格／port／管線與資料模型長期分叉；8/30 主編：不提前則設計 UI「沒地方擺」 |
 | **為何提前？** | **已定案提前開工**（8/30–31）。評估與閘門：[EARLY_START](../aaaaa/LAYOUT_REWRITE_EARLY_START_0831.md) |
-| **優先序** | ~~① store 合入 → ② 主畫面接入（只讀）→ ③ L3／加分~~ → 2026-09-20 三項全部達成；~~④ 擺放解鎖裁決~~ → **9/23 已裁。** 新優先序：**① B2 落子鏈實作（9/27 門檻）→ ② C2／D4 純函式 → ③ L3** |
-| **卡住誰？** | **已解：** store、容器接入、viewport、**B2 解鎖（9/23）**。**仍等裁決：** B4 選取、B3／B5（同日明確不開）。**仍等實作：** B2 落子鏈、C\*（C2 契約已定義、純函式未寫）。**不卡：** B1 切片、D1 殼 |
-| **關鍵路徑** | **9/20 起不在 aaaaa 身上；9/23 起是 toby 的落子鏈。** 換殼與解鎖裁決都已完成，9/27 門檻只剩 B2 實作一段 |
+| **優先序** | 落子鏈已合入。**2026-10-04 起：** ① 正式畫面換殼＋無邊界畫布 → ② C1 UI（10/11）→ ③ C3 視覺／C5 |
+| **卡住誰？** | **已解：** store、容器、viewport、點擊落子、C2 L1。**10/04 放行：** 管線點選＋左面板。**仍鎖：** 旋轉、Delete。**仍等實作：** #48、無邊界畫布、換殼、C1 UI、引擎接 layoutStore。**不卡：** B1 資料切片、D1 空狀態 |
+| **關鍵路徑** | **10/04 起在正式 UI 殼**（harry 換殼、G1 清 #48、toby 無邊界）。C1 不再被 B2 封鎖，但本週會議不派 C1 |
 | **誰做 L1？** | aaaaa；store＝[W0914-A0](../work_dispatch/aaaaa/0914/W0914-A0_layout_store_land.md)（**已合入 #45**）；契約＝[W0914-A1](../work_dispatch/aaaaa/0914/W0914-A1_connection_blueprint_contract.md)（**已合入 #51**） |
-| **L2 解鎖** | 只讀殼 #46、容器接入 #50 皆已合。**2026-09-23 主編裁：放行點擊落子**（owner toby）；**選取／旋轉／刪除仍鎖**。原則不變——底層就緒不等於自動解鎖，解鎖一律以當週裁示為準 |
-| **L2 檔案切分** | toby＝`LayoutView`／`GridCanvas`／`MainLayout`；harry＝`useGridViewport`。import 可、改對方檔退回。**W0914 有兩人越界改 `MainLayout.vue`，0921 起該檔的 import 變更一律走 toby 或主編** |
+| **L2 解鎖** | **2026-09-23：** 點擊落子。**2026-10-04 追加：** 管線點選變藍＋左設備面板。旋轉／Delete 仍鎖。原則不變——底層就緒不等於自動解鎖 |
+| **L2 檔案切分** | **W1004：** `MainLayout.vue`＝harry；`LayoutView`／`GridCanvas` 視窗＝toby；viewport composable＝harry 已交、本週由 toby 接入。G／S 只動設備佔格視覺區。import 可、改對方檔退回 |
 | **視角切換器** | 照稿；仍未派（非 Avery）。**已連續兩週順延** |
 | **誰不做？** | dernoson 不兼功能；inspector（B4）仍無人動；StatsPanel 歸 shirone |
 
@@ -143,7 +144,7 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | R-C5 | 源節點素材設定 | M3 | aaaaa（action）＋L2 | 接線 | **是** | [C5](./detail/C5_source_primary_output.md) |
 | R-D1 | 右側產耗表接 flowStore | M4 | aaaaa | 接線＋畫面 | **是** | [D1](./detail/D1_stats_item_summary.md) |
 | R-D2 | E001 重疊警訊上右側 | M4 | shirone（純函式）＋L2 | 純函式＋接線 | **是** | [D2](./detail/D2_e001_overlap_alert.md) |
-| R-D3 | 配方類警訊 E004／E005／W001 | M4 | shirone／azure 收斂 | 純函式 | 否 | [D3](./detail/D3_recipe_alerts.md) |
+| R-D3 | 配方類警訊 E004／E005／W001 | M4（**純函式段提前至 10 月**） | **azure9572**（10/04 會議點名）／備援 aaaaa | 純函式 | 否 | [D3](./detail/D3_recipe_alerts.md) |
 | R-D4 | 最小藍圖 JSON 匯出／匯入 | M4 | aaaaa | 純函式＋接線 | **是** | [D4](./detail/D4_blueprint_json_io.md) |
 | R-D5 | 11/29 驗收劇本與彩排 | M4 | aaaaa＋dernoson | 驗收 | **是** | [D5](./detail/D5_acceptance_rehearsal.md) |
 | R-E1 | 資料與 codegen 維運 | 跨月 | aaaaa | 資料 | 否 | [E1](./detail/E1_data_codegen_ops.md) |
@@ -164,8 +165,8 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
   - 細項：[detail/A1_announce_and_baseline.md](./detail/A1_announce_and_baseline.md)（W0823-D0，8/23 宣讀＋Discord 摘要）
 - [x] **R-A2** 佔格與 port 對資料：產出 port／佔格錯機清單（機器 id ＋ 錯在資料或渲染），修正「錯在資料」者，至少一台常用加工機佔格正確
   - 細項：[detail/A2_grid_and_port_alignment.md](./detail/A2_grid_and_port_alignment.md)（W0823-A1，PR #32 合入；錯機清單＋`rotatePort` pad-to-square＋`/dev/placement-demo`）
-- [~] **R-A3** 新人上手半頁：三塊畫面、props／emit、L3 禁 store、禁止根目錄上傳、禁止檔名當版本
-  - 細項：[detail/A3_onboarding_onepager.md](./detail/A3_onboarding_onepager.md)（Discord 置頂已生效；**repo 貼入 `docs/dernoson/` 尚未完成**）
+- [x] **R-A3** 新人上手半頁：三塊畫面、props／emit、L3 禁 store、禁止根目錄上傳、禁止檔名當版本
+  - 細項：[detail/A3_onboarding_onepager.md](./detail/A3_onboarding_onepager.md)（Discord 置頂已生效；**2026-10-04 收尾：repo 版改由根目錄 `README.md` 承接**）
 - [x] **R-A4** 週節奏與門檻驗收機制：週日會固定議程、30 秒驗收定義、連續兩週未演示的處理、延期改版規則
   - 細項：[detail/A4_weekly_cadence_gate.md](./detail/A4_weekly_cadence_gate.md)（8/23 會上宣讀；8/30 首次完成率與本檔週曆回寫）
 
@@ -175,16 +176,16 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 **門檻句：** 從下方選單拉多種真機器放到畫布；點選後看到該機資訊；能刪單台；能轉 90 度（若 8 月未做完，9 月必須完成）。對應主編步驟 2 ＋ 5。
 
-- [~] **R-B1** 工具列接真實機器資料：`ToolbarPanel` 清單改吃 `getAllMachines`／`getMachinesByTag`，分類 Tab 可先少類，卡片顯示真名與佔格
-  - 細項：[detail/B1_toolbar_real_machines.md](./detail/B1_toolbar_real_machines.md)（**9/6 切片已合入** PR #43：分類 Tab＋名稱＋佔格、不接 store／落子。整包仍待 9/27：真實機器尚未走落子鏈。**W0914：工具列視覺 PR #48 因病假懸置七天，不影響本項 9/6 切片**）
-- [~] **R-B2** 擺放鏈 L2 串接：工具列意圖 → drop／click → **只呼叫** `placeDevice`；預覽佔格讀真實 machine size
-  - 細項：[detail/B2_placement_chain.md](./detail/B2_placement_chain.md)（技術前置全數就緒：store #45、只讀殼 #46、容器接入 #50、viewport #47。**2026-09-23 主編裁：放行點擊落子**，owner ＝ toby（[W0921-T1](../work_dispatch/toby/0921/W0921-T1_placement_chain.md)），L1 側預檢 ＝ [W0921-A0](../work_dispatch/aaaaa/0921/W0921-A0_placement_precheck.md)。拖曳與綠紅框列加分；**不列 9/27 硬綁**）
-- [!] **R-B3** 旋轉 90 度：拿起中或已放置皆可 `rotateDevice`；port side／offset 走 `portUtils`
-  - 細項：[detail/B3_rotation_90.md](./detail/B3_rotation_90.md)（**A2 依賴已解除**；**佈局殼依賴亦已解除**（#50）；僅剩 B2 一項前置）
-- [~] **R-B4** 選取與設備資訊面板：選取 → L2 攤成 plain props → L3 顯示
-  - 細項：[detail/B4_selection_inspector.md](./detail/B4_selection_inspector.md)（PR #33；MachineCard #41。W0914 右側工單為產線總覽 StatsPanel（[S1](../work_dispatch/shirone/0914/W0914-S1_stats_panel_land.md)），**不是本項**。**注意：** MBD 於 9/20 在 `dev/MBD` 分支移除了 `InspectorSidebar`，該 diff **不得合入**——B4 的呈現端入口必須保留。選取接線仍等 B2；**不列 9/27 硬綁**）
-- [ ] **R-B5** 刪除單台：Delete／右鍵接 `removeDevices`，進歷史
-  - 細項：[detail/B5_delete_single_device.md](./detail/B5_delete_single_device.md)（等新選取／畫布入口）
+- [~] **R-B1** 工具列接真實機器資料：清單吃真實機器（#43）；點擊落子已接（#54／#55）。**視覺 [#48](https://github.com/dernoson/endfield-playground/pull/48) 仍未合入**（W1004-G1）
+  - 細項：[detail/B1_toolbar_real_machines.md](./detail/B1_toolbar_real_machines.md)
+- [x] **R-B2** 擺放鏈 L2 串接（**點擊落子切片**）：工具列意圖 → 點畫布 → `canPlaceDevice` → `addDevice`。已合 #54／#55。拖曳／綠紅框仍為加分、未做
+  - 細項：[detail/B2_placement_chain.md](./detail/B2_placement_chain.md)
+- [!] **R-B3** 旋轉 90 度：技術依賴已清；**10/04 會議仍不開旋轉**
+  - 細項：[detail/B3_rotation_90.md](./detail/B3_rotation_90.md)
+- [~] **R-B4** 選取與設備資訊面板：**2026-10-04 放行**管線點選＋左面板（P1 出稿、H1 留槽）。右側舊 Inspector 從正式頁卸載、檔案保留
+  - 細項：[detail/B4_selection_inspector.md](./detail/B4_selection_inspector.md)
+- [ ] **R-B5** 刪除單台：Delete 仍鎖（10/04 未放行）
+  - 細項：[detail/B5_delete_single_device.md](./detail/B5_delete_single_device.md)
 
 ---
 
@@ -192,15 +193,15 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 **門檻句：** 兩台設備 port 對 port 拉管線，皮帶與水管能分、能轉 90 度彎；單台／單線可刪、可拖移；源設備能設產出素材。對應主編步驟 3 ＋ 4 ＋ 6。
 
-- [!] **R-C1** Port 命中與 draft 連線：port 點可見、可點選、拖出暫時折線，放開命中另一 port 才成立
-  - 細項：[detail/C1_port_hit_and_draft.md](./detail/C1_port_hit_and_draft.md)（等 B2；harry W0823-H1 已交工具態快捷鍵，屬連線前置加分）
-- [ ] **R-C2** 連線契約與型別檢查（佈局模型版）：`canConnect(draft, layout)` 純函式回傳可／不可＋理由碼；`layoutStore.addPipeline` 內部作最終防線；L2 draft 期間呼叫決定 highlight
-  - 細項：[detail/C2_add_connection_contract.md](./detail/C2_add_connection_contract.md)（**2026-09-19 依新模型重訂完成**：六條原規則三改寫／一成立／兩作廢，新增「斷線管線合法」；不碰 `editorStore.addConnection`）
-- [ ] **R-C3** 管線折線與 90 度彎折渲染：`PipelineEdge` 畫正交折線，違規線段給紅色視覺
+- [ ] **R-C1** Port 命中與 draft 連線：port 點可見、可點選彎折點，命中才成立
+  - 細項：[detail/C1_port_hit_and_draft.md](./detail/C1_port_hit_and_draft.md)（**B2 依賴已清**；本週不派，切片改 10/11。正式頁尚無拉管線 UI）
+- [~] **R-C2** 連線契約與型別檢查：`canConnect` 純函式＋`addPipeline` 防線 **已合 #54**；L2 draft highlight 未做
+  - 細項：[detail/C2_add_connection_contract.md](./detail/C2_add_connection_contract.md)
+- [~] **R-C3** 管線折線：`buildPipelinePolyline` 幾何 **已合 #56**；`GridCanvas` 仍畫簡單折線、未套用該函式
   - 細項：[detail/C3_pipeline_polyline_render.md](./detail/C3_pipeline_polyline_render.md)
 - [ ] **R-C4** 拖移進歷史：拖曳結束呼叫 `commitDeviceMove(uids, before)`，Undo 可還原位置
   - 細項：[detail/C4_move_into_history.md](./detail/C4_move_into_history.md)
-- [ ] **R-C5** 源節點素材設定：源設備可指定 `primaryOutput` 與速率，寫入 `FactoryNode.data`
+- [ ] **R-C5** 源節點素材設定：源設備可指定 `primaryOutput` 與速率，寫入 **`layoutStore`／`PlacedDevice`**（**主編 2026-10-06 裁採 B**）；引擎讀取端隨 10/18 提前一部分 D1 鏈
   - 細項：[detail/C5_source_primary_output.md](./detail/C5_source_primary_output.md)
 
 ---
@@ -209,14 +210,16 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 **門檻句：** 一條「源 → 加工 → 匯出點」連起來後，右側看到產耗（含中間物）；重疊與缺 IO／配方不符在右側有字；頂欄 JSON 存檔再開得回來。對應主編步驟 7 ＋ 8 ＋ 9 ＋ 10。
 
-- [~] **R-D1** 右側產耗表接 flowStore：`ItemSummaryTable` 讀 `itemSummary`，空產線顯示空狀態，有連線會變
-  - 細項：[detail/D1_stats_item_summary.md](./detail/D1_stats_item_summary.md)（W0823-M1 空狀態切片已合入 PR #37；**尚未**接 `flowStore`。**W0914 遷移未交付**：分支上有那一刀但未開 PR，`src/app/StatsPanel/` 仍不在 master。**2026-09-23 主編裁：** master 上只有一套，不存在版本選擇問題；StatsPanel 單一 owner ＝ shirone（元件＋路徑＋樣式），遷移合入即可開工）
+- [~] **R-D1** 右側產耗表接 flowStore：空狀態切片 #37；路徑搬家 #53。**尚未**接 `flowStore`（引擎仍讀舊 `editorStore`）。樣式收尾＝W1004-S1
+  - 細項：[detail/D1_stats_item_summary.md](./detail/D1_stats_item_summary.md)
 - [~] **R-D2** E001 重疊警訊上右側：`E001_deviceOverlap` 真邏輯＋測試，集中 `registerDetector`，右側顯示一條可懂訊息
   - 細項：[detail/D2_e001_overlap_alert.md](./detail/D2_e001_overlap_alert.md)（W0823-S1＋layout 收斂已合入 PR #36；`/dev/validation-test` 可觀察；**右側 Tips 列表未做**；shirone 轉調後純函式 owner 待移交）
 - [~] **R-D3** 配方類警訊：缺輸入／缺輸出（E004／E005）與材料組合不符（W001）至少一類上右側，與 azure 草稿收斂成一套
-  - 細項：[detail/D3_recipe_alerts.md](./detail/D3_recipe_alerts.md)（**W001 已合入 master** PR #35；E004／E005 仍在舊分支 `dev/azure9572`；ID 表未凍結；右側未接）
+  - 細項：[detail/D3_recipe_alerts.md](./detail/D3_recipe_alerts.md)（**W001 已合入 master** PR #35；右側未接）
+  - **2026-10-06 提前：** 10/04 會議點名 azure9572 本人收斂 E004／E005／W001 並接 `/dev/validation-test`＝[W1004-Z1](../work_dispatch/azure9572/1004/W1004-Z1_recipe_alerts_new_model.md)。**純函式段由 11/08–11/15 提前到 10/04 週**；上右側仍排 11/08。ID 表本週由主編凍結為 **E004／E005／W001 三支**（W002／W003 不收）。**不接 `layoutStore` 新模型**——驗證改吃佈局模型屬十一月 D1 鏈
 - [ ] **R-D4** 最小藍圖 JSON 匯出／匯入：`{ version: 2, planId?, devices, pipelines }` ＋ Zod 驗證；頂欄 Save／Load
   - 細項：[detail/D4_blueprint_json_io.md](./detail/D4_blueprint_json_io.md)（**2026-09-19 依新模型重訂完成**：version 跳 2、**不讀舊檔**、匯入沿用 `layoutStore.loadSnapshot` 不新增 action）
+  - **2026-10-06：頂欄按鈕外觀提前。** 10/04 會議點名 MBD 做存檔／設定／下載／上傳四顆＝[W1004-M1](../work_dispatch/MBD/1004/W1004-M1_topbar_buttons_storybook.md)，交 `src/components/TopBarButton/` 元件＋stories。**只有外觀、不接行為**（存讀仍排 11/22）；10/11 由 harry 掛進 `MainLayout`
 - [ ] **R-D5** 驗收劇本與彩排：8 步劇本文件化，11/22 先彩排一次，11/29 正式演示
   - 細項：[detail/D5_acceptance_rehearsal.md](./detail/D5_acceptance_rehearsal.md)
 
@@ -251,16 +254,29 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | 09/06 | **L1 打底最優**＋B1 次優 | **已交。** L1 解鎖句＋`/dev/layout-l1-preview`＝PR #40（9/1）。B1 真機器列表＝PR #43（9/4）。L2 強綁未開（符合閘門）。加分：S1 PR #41 待合；G1 改錯檔不宜合；T1 等閘成功 |
 | **09/13** | **佈局自建；L2 薄片** | **部分達成。** T1 GridCanvas 只讀＝**#46 合入**；S1 MachineCard＝**#41 合入**；A0 layoutStore＝**#45 仍開**（解鎖句已發於分支）；H1 viewport＝#47 待合；G1＝#48 踩鎖；P1／V1 未交。見 [WEEK_20260907](../work_dispatch/WEEK_20260907.md) |
 | **09/20** | **主畫面只讀接入＋store 合入** | **達成。** #45 進 master（9/14）；#47 合入（9/14）；**T1 掛上 GridCanvas＝#50 合入（9/20）**；C2／D4 契約重訂＝#51 合入（9/20）。**未達：** S1 StatsPanel→`src/app/` 未開 PR；#48 病假懸置。切換器順延。見 [WEEK_20260914](../work_dispatch/WEEK_20260914.md) v1.1 |
-| 09/27 | **M2 門檻** | **硬綁 B1**。B2／B4 維持不列必要（前置雖已就緒但本月只剩一週、兩項未開工）。**9/23 已裁：放行點擊落子**，選取／旋轉／刪除不開；**9/24：#48 本週必須收完**；S1 擴為遷移＋樣式；MBD 有產能、不派新功能 |
-| 10/04 | C1、C2 | 兩個 port 能連一條直線，型別對才允許。**C2 定義已於 2026-09-19 重訂完成**；本週切片＝錨點判定提共用＋`connectRules.ts`＋測試 |
-| 10/11 | C3 | 彎折點 90 度；違規線段有紅色視覺 |
-| 10/18 | C4、C5 | 拖移進歷史（或明寫「本週只移不 Undo」並排進 10/25）；源素材可設 |
-| 10/25 | **C1＋C2＋C3＋C5（門檻）** | 步驟 3 ＋ 4 單物 ＋ 6 |
+| 09/27 | **M2 門檻（連假停工）** | **驗收延至 10/04。** 當週無演示。程式側 #54／#55／#53／#56 已於連假前／當日合入 |
+| **10/04** | **M2 延後結算＋正式換殼** | **功能門檻過**（點真機器落到 GridCanvas）。#48 未合。派工＝harry 換殼、toby 無邊界、G／S 工具列＋右側＋設備樣、白紙未接管線稿、**azure E004／E005／W001 接 dev 頁**、**MBD 頂欄四顆進 Storybook**、**aaaaa 兩支 L1 前置**（`devicesOutsideBase`＋`findPortAt`）。**C1 UI 不在本週。** 見 [WEEK_20261004](../work_dispatch/WEEK_20261004.md) v1.1 |
+| 10/11 | **C1 切片（必要）** | 兩個 port 能連；吃已存在的 `canConnect` 與 aaaaa 上週交的 `findPortAt`。**owner 本週日會定（toby 或 harry）**。前提＝換殼大致站穩；另：harry 把 MBD 的頂欄按鈕掛上 |
+| 10/18 | **C3 套用＋C5（必要）** | `GridCanvas` 改用 `buildPipelinePolyline`（#56 已在 master，視覺鏈同 G／S）；源素材寫 `layoutStore`（已裁 B），**引擎讀取路徑本週必做**。C4 拖移仍視選取是否放行 |
+
+| 10/25 | **C1＋C2＋C3＋C5（門檻）** | 步驟 3 ＋ 4 單物 ＋ 6。**日期不因連假順延** |
 | 11/01 | D1 | 右側產耗表接 `itemSummary`，空產線有空狀態。**空狀態切片已由 W0823-M1 提前交** |
 | 11/08 | D2 | 兩台重疊 → 右側一條訊息。**E001 純函式＋dev 頁已就位**；缺右側 Tips |
-| 11/15 | D3 | 缺輸入或輸出、材料組合不符，至少一類上右側。**W001 純函式已合入**；缺右側與 ID 表 |
+| 11/15 | D3 | 缺輸入或輸出、材料組合不符，至少一類上右側。**純函式段已於 10/04 週提前（W1004-Z1）**，本週只剩「上右側」 |
 | 11/22 | D4、D5 | JSON 匯出下載；匯入還原；**驗收劇本彩排一次**。**D4 格式已於 2026-09-19 重訂完成**（v2；舊檔不讀） |
 | 11/29 | **D1＋D2＋D4＋D5（門檻）** | 步驟 7～10 串在同一條演示產線上 |
+
+### 8.1 10 月緊湊化（2026-10-06）
+
+9/27 連假整週空白，**M3 日期不動**，等於三週要吃掉原本四週的量。三項調整：
+
+| 調整 | 內容 |
+|------|------|
+| **L1 前置提前一週** | `findPortAt`（C1 §4.2 指定 aaaaa 提供）與 `devicesOutsideBase` 都在 **10/04 週**交，使 10/11 的 C1 工單只剩互動與視覺，不必當週從零想埠座標 |
+| **加分項提前吃掉** | R-D3 純函式段（azure Z1）與 R-D4 頂欄按鈕外觀（MBD M1）都在 10/04 週落地。兩者**都不擋門檻、也不與門檻鏈共檔**，提前做等於把 11 月的量先搬走 |
+| **必要項不擴大** | 問卷產能上修（shirone 6–10h、goodmorning／paper 3–5h）只用來加深樣式與清 #48，**不回頭擴大任何人的必要範圍** |
+
+**一項已裁、一項仍待定：** C5 的 store 歸屬＝**B（layoutStore）**（主編 2026-10-06）；**C1 的 L2 owner** 仍待週日會定（見 §9）。
 
 ---
 
@@ -268,11 +284,14 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 | ID | 封鎖原因 | 等待對象 | 解除條件 | 狀態 |
 |----|----------|----------|----------|------|
-| ~~R-B2~~ | ~~等 store 合入＋主畫面接入站穩（技術前置 9/20 全數達成）→ 等主編裁示互動解鎖~~ | — | — | **已解除（2026-09-23 主編裁）：** 放行**點擊落子**，L2 owner ＝ toby（[W0921-T1](../work_dispatch/toby/0921/W0921-T1_placement_chain.md)）。狀態改 `[~]` 實作中。**選取／旋轉／刪除未放行**，B3／B4／B5 續鎖。不列 M2 硬綁（9/15 撤回擴大後未變） |
-| R-B3 | 旋轉牽涉 port side／offset 換算；依賴擺放鏈 | R-B2 | A2 已完成（`rotatePort` pad-to-square＋測試全綠）；**佈局殼依賴亦已解除**（#50）。**僅剩 B2 一項前置** | `[!]`（A2 與佈局殼兩項依賴皆已清） |
-| R-C1 | 依賴 R-B2 擺放鏈可用 | R-B2 | B2 於 9/27 門檻通過（或依 §11 改降級方案） | `[!]` |
+| ~~R-B2~~ | ~~等 store／殼／解鎖~~ | — | — | **已解除且已合入（2026-09-26／27）：** 點擊落子 #54／#55。狀態改 `[x]`（拖曳加分未做） |
+| R-B3 | 旋轉未放行 | 主編當週裁 | 10/04 會議仍不開旋轉 | `[!]`（技術依賴已清） |
+| ~~R-C5~~ | ~~寫入位置未裁~~ | — | — | **已解除（2026-10-06）：** 主編裁 **採 B**——寫 `layoutStore`／`PlacedDevice.primaryOutput`；引擎讀取端隨 10/18 提前一部分 D1 鏈（見 [C5 §4.1a](./detail/C5_source_primary_output.md)） |
+| **R-C1 owner** | **L2 主責未定（2026-10-06 新增）。** 10/04 會議把當週產能全給換殼，C1 只記「順延 10/11」未指人 | 主編＋週日會 | 10/11 工單發出前定 toby 或 harry | **`[!]` 待裁，期限 10/11**；命中判定純函式已派給 aaaaa（10/04 週） |
+| ~~R-C1~~ | ~~等 B2~~ | — | — | **已解除（B2 點擊落子在 master）。** 狀態改 `[ ]`；**W1004 不派**，切片 10/11 |
+| R-B4 | 9/23 曾鎖選取 | 主編 | **10/04 部分解除：** 管線點選＋左面板。完整設備 inspector 與 Delete 未放行 | `[~]` |
 | ~~R-D1 遷移~~ | ~~`StatsPanel` → `src/app/` 的遷移多出兩套未經裁決的平行面板（2026-09-21 新增）~~ | — | — | **已撤銷（2026-09-23 主編裁）：** 那兩套只在 `dev/shirone0918`、未開 PR、不在 master；master 只有一套，**不存在版本選擇問題**。原判讀把「未開 PR 的分支內容」當成交付物，屬誤判。D1 的唯一前置回到「遷移合入 master」，已排進 [W0921-S1](../work_dispatch/shirone/0921/W0921-S1_stats_panel_split_pr.md) |
-| ~~R-C2~~ | ~~佈局自建後連接改為衍生值、不儲存，`addConnection`／`removeConnection` 廢除，本工項原定義失去標的（2026-08-25）~~ | — | — | **已解除（2026-09-19）：** W0914-A1 依新模型重訂完成，契約寫入 [detail/C2](./detail/C2_add_connection_contract.md) §4 與 §5；狀態改 `[ ]` 待實作（純函式 10/04）。**順帶消除**原「改 `editorStore.addConnection` 須標 Breaking、10/11 前提跨 CR 協商」之依賴 |
+| ~~R-C2~~ | ~~佈局自建後連接改為衍生值、不儲存~~ | — | — | **L1 已合 #54**（`canConnect`＋`addPipeline` 防線）。狀態改 `[~]`；缺 L2 highlight |
 | ~~R-D4~~ | ~~§1.2 已定案的藍圖格式 `{ version, planId?, nodes, edges }` 不再是儲存形狀（改 `devices`／`pipelines`）（2026-08-25）~~ | — | — | **已解除（2026-09-19）：** 格式重訂為 `{ version: 2, planId?, devices, pipelines }`，舊檔不讀；狀態改 `[ ]` 待實作（純函式 11/08）。**順帶消除**原「CR-01 同意新增 `loadBlueprint`」之依賴（沿用 `layoutStore.loadSnapshot`） |
 | ~~R-D3~~ | ~~shirone 與 azure9572 同域不同 ID~~ | — | — | **部分解除（8/30）：** W001 已合入 master（PR #35）。E004／E005 仍在 `dev/azure9572`；ID 表未凍結；右側未接。改標 `[~]`，不再列本表 |
 | ~~R-D2~~ | ~~detector 註冊入口需集中~~ | — | — | **已解除（8/30）：** 使用端顯式 `registerDetector`；E001 於 `/dev/validation-test` 掛上。整項改 `[~]`（缺右側 Tips）。shirone 轉調 → 後續 owner 待移交 aaaaa |
@@ -305,6 +324,19 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | 2 | **簽核前提互等。** #48 的合入前提是「paper 過」，但 #48 七天無動靜 → paper 無稿可審 → 兩邊互等 | 任何「A 的交付需 B 簽核」須同時寫逾時處置；低時數成員的簽核一律改事後補審 |
 | 3 | **CI 供應鏈不在任何工項範圍內。** 主編 9/15 修補 `discord-notify` workflow 的指令注入面，屬計畫外工作 | 併入 R-E2（已於 §7 回寫） |
 
+### 9.3 W0921／M2 延後結算（A4 §4.4；驗收日 2026-10-04）
+
+連假導致 9/27 當週停工，完成率改在延後驗收日計算。口徑：合入 master 才算。W0914 快照見 §9.1（不覆寫）。
+
+| 等級 | 分母 | 已合入 | 完成率 |
+|------|------|--------|--------|
+| **確定（門檻鏈）** | 2（A0 預檢、T1 落子） | #54、#55 | **100%** |
+| **確定（清積壓／搬家）** | 2（G1 #48、S1 搬家） | S1 搬家 #53；**#48 未合** | **50%** |
+| **確定（閘門）** | 1（D0） | 選取／刪／轉未被偷放行；#48 仍佔待審 | **部分** |
+| **加分** | H1 折線、P1、A1 | H1 #56、A1 隨 #54；P1 未見 repo 交付 | 不擋門檻 |
+
+**M2：** 硬綁功能句成立；視覺包裝不成立（#48）。欠帳不改寫 M2 必要項，轉 W1004。
+
 ---
 
 ## 10. 完成定義（Definition of Done）
@@ -323,7 +355,9 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 - [ ] **M1：** 週日會上完成 30 秒演示（錄影或現場皆可）——**以 V10 三證據（測試全綠＋錯機清單＋`/dev/placement-demo`）代替主畫布目視**；會上記錄待補
 - [x] **M1：** 未達成項目已在本檔改期並記錄延因，而非默默順延（本週無必要項延期；加分未達見 §9.1）
 - [x] **M1：** 加分工項未交者，已確認由既有產出頂替，門檻不受影響（G1→現有 Toolbar；V1→維持現況）
-- [ ] M2（9/27）／M3（10/25）／M4（11/29）：尚未到期
+- [x] **M2 功能門檻（原 9/27，驗收 10/04）：** 點真機器放到新畫布（B1 資料＋B2 點擊落子）
+- [ ] **M2 視覺包裝：** #48 未合入——**不擋已延後的功能驗收**，轉 W1004-G1
+- [ ] M3（10/25）／M4（11/29）：尚未到期
 
 ### 10.3 11/29 總驗收
 
@@ -352,6 +386,9 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 | 版 | 日期 | 說明 |
 |----|------|------|
+| **v1.16** | **2026-10-06** | **[PR #59](https://github.com/dernoson/endfield-playground/pull/59) 主編裁決回寫：** ①**R-1＝B**——C5 寫入 `layoutStore`／`PlacedDevice.primaryOutput`；引擎讀取端隨 10/18 提前一部分 D1 鏈；§9 R-C5 封鎖解除。②**R-2 同意**——D3 ID 表凍結為 E004／E005／W001（W002／W003 不收）。C1 的 L2 owner 仍待週日會定 |
+| **v1.15** | **2026-10-06** | **依 10/04 會議紀錄原句重新派工（v1.14 漏接兩人）：** ①**azure9572 復工**——會議點名「修 E004／E005／W001，用當前新模型接到 dev 畫面」，派 [W1004-Z1](../work_dispatch/azure9572/1004/W1004-Z1_recipe_alerts_new_model.md)；**R-D3 純函式段由 11/15 提前到 10/04 週**，ID 表凍結為 E004／E005／W001（W002／W003 不收），**不接 `layoutStore`**。②**MBD 恢復功能派工**——會議點名頂欄存檔／設定／下載／上傳四顆進 Storybook，派 [W1004-M1](../work_dispatch/MBD/1004/W1004-M1_topbar_buttons_storybook.md)；理由是**共檔風險消失**（新目錄），**R-D4 頂欄 UI 外觀提前**。③**avery 維持整週暫停**（主編裁再放一週、不除名）。**10 月緊湊化（§8.1）：** 連假空白一週**不延 M3**，改以把 `findPortAt`／`devicesOutsideBase` 提前到 10/04 週交付；新增 §9 兩項待裁封鎖（**C5 的 store 歸屬**、**C1 的 L2 owner**），期限皆 10/11。派工見 [WEEK_20261004](../work_dispatch/WEEK_20261004.md) v1.1 |
+| **v1.14** | **2026-10-04** | **連假停工一週 → M2 驗收延至 10/04。** 畫布打底與點擊落子已在 master，**可以派 10 月工。** 問卷未齊不擋。會議改本週為換殼＋無邊界畫布，C1 切片改 10/11；C2 L1／C3 幾何已提前合入。管線點選部分覆寫 9/23 選取鎖。派工見 [WEEK_20261004](../work_dispatch/WEEK_20261004.md) v1.0 |
 | **v1.13** | **2026-09-24** | **追加裁示（[PR #52](https://github.com/dernoson/endfield-playground/pull/52)）：** ①**#48 本週必須修完合入**（覆寫 v1.12「維持現狀」）——硬條件仍為 rebase＋換回 `listToolbarMachines`；不擋 T1，與 toby 同檔分區鎖。②**MBD**：週報約 3–5h **有產能**，**本週仍不派新功能碼**（Storybook／工作流未確認）；可選上手指引。派工見 [WEEK_20260921](../work_dispatch/WEEK_20260921.md) v1.2 |
 | **v1.12** | **2026-09-23** | **主編裁決回寫（[PR #52](https://github.com/dernoson/endfield-playground/pull/52)）：** ①**R-B2 封鎖解除**——放行點擊落子，owner ＝ toby；選取／旋轉／刪除不開，B3／B4／B5 續鎖。②**R-D1 遷移封鎖撤銷**——未開 PR 的分支內容不算交付物，master 上只有一套 StatsPanel，不存在版本選擇問題；原判讀為誤判，§9.1 用詞一併更正。③**StatsPanel 單一 owner ＝ shirone**（元件＋路徑＋樣式），原屬 MBD 的樣式工作轉出，其 `dev/MBD` 分支不合入。④**#48 維持現狀不合不關**（已被 v1.13 覆寫），落子鏈改在 master 版 `ToolbarPanel.vue` 上接；#48 合入硬條件記入 [detail/B1](./detail/B1_toolbar_real_machines.md)。⑤「待審停滯 3 天點名」**不採納**，R-E2 不新增該條 |
 | **v1.11** | **2026-09-21** | **W0914 結算：** 確定項五項（A0／A1／T1／H1／D0）全數合入，**佈局視角換殼完成**——`MainLayout` → `LayoutView` → `GridCanvas`，資料來自 `layoutStore`，舊 `FactoryCanvas` 保留；待審 3→1。§9 的 R-B2 由「等前置」改為**「等裁決」**，R-B3 解除佈局殼依賴；**新增封鎖 R-D1 遷移**（StatsPanel 交了三套未收斂）。§7 的 R-E2 **納入 CI 供應鏈**。新增 **§9.2 三項流程缺口**（鎖表對暫停者失效、簽核前提互等、CI 不在任何工項內），§11 對應補三條 |

@@ -8,8 +8,8 @@
 | 建議主責／備援 | aaaaa（規則純函式）＋**toby**（L2 呼叫端；2026-09-20 主編裁）／— |
 | 性質 | 純函式 ＋ 接線 |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)（已完成）、`layoutStore`（PR #45 已合入） |
-| 狀態 | `[ ]` **已定義、待實作**（2026-09-19 依新模型重訂完成） |
-| 最後更新 | 2026-09-19 |
+| 狀態 | `[~]` L1 已合 #54（`canConnect`＋`addPipeline`）；缺 L2 highlight |
+| 最後更新 | 2026-10-04 |
 
 > **2026-09-19 重訂：** 本檔原本建立在 `FactoryNode`／`FactoryEdge` 上，自 2026-08-25 佈局自建裁決後標 `[!]` 失效。本次依已合入 master 的 `PlacedDevice`／`Pipeline` 模型重寫 §1、§3、§4、§5、§6、§8、§10。重訂過程與逐條判定理由見 [V13-C1](../../aaaaa/dev/dev_v13/C1_c2_connect_contract.md)。
 

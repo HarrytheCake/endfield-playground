@@ -217,8 +217,19 @@ const portMarkers = computed(() => {
     return markers;
 });
 
-function connectionStatus(conn: { from: unknown; to: unknown }): 'ok' | 'broken' {
-    return conn.from && conn.to ? 'ok' : 'broken';
+function connectionStatus(conn: {
+    from: { portType: string } | null;
+    to: { portType: string } | null;
+}): 'ok' | 'broken' | 'direction' {
+    if (!conn.from || !conn.to) return 'broken';
+    if (conn.from.portType === 'output' && conn.to.portType === 'input') return 'ok';
+    return 'direction';
+}
+
+function connectionStatusLabel(status: 'ok' | 'broken' | 'direction'): string {
+    if (status === 'ok') return '已連接';
+    if (status === 'direction') return '方向不符';
+    return '斷線';
 }
 
 function pipelinePath(waypoints: readonly { readonly x: number; readonly y: number }[]): string {
@@ -446,9 +457,8 @@ function samePort(a: PortPick, b: PortPick): boolean {
 /**
  * 埠模式：湊成一對就拉線。
  *
- * `resolveConnections` 起點偏好 output、終點偏好 input，  \
- * 反向畫出的 belt 兩端仍非 null（會誤顯示「已連接」），  \
- * 所以這裡固定把 output 當起點，先點 input 只是順序不同而非反向。
+ * `connectionStatus` 只認 output→input 為「已連接」；  \
+ * 這裡固定把 output 當起點，先點 input 只是順序不同而非反向。
  */
 function onPortClick(port: PortPick, evt: MouseEvent): void {
     evt.stopPropagation();
@@ -1025,7 +1035,9 @@ const snapshotSummary = computed(() => {
                         :stroke="
                             connectionStatus(layoutStore.connections[idx]!) === 'ok'
                                 ? '#16a34a'
-                                : '#ea580c'
+                                : connectionStatus(layoutStore.connections[idx]!) === 'direction'
+                                  ? '#e11d48'
+                                  : '#ea580c'
                         "
                     />
                     <circle
@@ -1037,7 +1049,9 @@ const snapshotSummary = computed(() => {
                         :fill="
                             connectionStatus(layoutStore.connections[idx]!) === 'ok'
                                 ? '#86efac'
-                                : '#fdba74'
+                                : connectionStatus(layoutStore.connections[idx]!) === 'direction'
+                                  ? '#fda4af'
+                                  : '#fdba74'
                         "
                     />
                 </g>
@@ -1158,12 +1172,14 @@ const snapshotSummary = computed(() => {
                     :class="
                         connectionStatus(conn) === 'ok'
                             ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950'
-                            : 'border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950'
+                            : connectionStatus(conn) === 'direction'
+                              ? 'border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-950'
+                              : 'border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950'
                     "
                 >
                     <div class="font-sans text-sm font-semibold">
                         {{ conn.pipelineId }} —
-                        {{ connectionStatus(conn) === 'ok' ? '已連接' : '斷線' }}
+                        {{ connectionStatusLabel(connectionStatus(conn)) }}
                     </div>
                     <div>from: {{ portRefLabel(conn.from) }}</div>
                     <div>to: {{ portRefLabel(conn.to) }}</div>

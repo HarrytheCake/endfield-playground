@@ -9,10 +9,12 @@
 **上游：** [WEEK_20260914](../../work_dispatch/WEEK_20260914.md) v1.1、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.10**（R-C2／R-D4 封鎖已於 9/19 解除）
 **門檻週：** 2026-09-14 → 2026-09-20（**9/27 門檻倒數第二週**）
 **開發分支：** `dev/aaaaa0914`
-**狀態總覽：** **`[x]` 全版交付完成**（2026-09-19）。A–E 五項全交；兩份 detail 脫離 `[!]`，ROADMAP_OUTLINE 升 v1.10
-**對應 PR：** [#51](https://github.com/dernoson/endfield-playground/pull/51)（2026-09-19 送出；15 檔全在 `docs/`，零 `src/`）
+**狀態總覽：** **`[x]` 全版結案**（2026-09-19 交付；PR [#51](https://github.com/dernoson/endfield-playground/pull/51) 於 2026-09-20T17:48:47Z 合入，merge `9a8da88`）
+**收斂於：** [V14-B1](./dev_v14/B1_v13_residue_close.md)（2026-09-27）
+**後續版本：** [todolist_v14](./todolist_v14.md)（W0921-A0 落子前預檢＋W0921-A1 連線規則提前量）
+**對應 PR：** [#51](https://github.com/dernoson/endfield-playground/pull/51)（2026-09-19 送出；合入時十六檔全在 `docs/`，零 `src/`）
 **驗收指南：** [dev_v13/V13_acceptance_guide.md](./dev_v13/V13_acceptance_guide.md)
-**待確認問題：** [dispatch_private/0914/PENDING_DECISIONS_20260920.md](../collaborator_survey/dispatch_private/0914/PENDING_DECISIONS_20260920.md)（10 項，**全部不阻擋本版**）
+**待確認問題：** [dispatch_private/0914/PENDING_DECISIONS_20260920.md](../collaborator_survey/dispatch_private/0914/PENDING_DECISIONS_20260920.md)（多數已落入 WEEK_0921；續掛見 [PENDING_20260927](../collaborator_survey/dispatch_private/0921/PENDING_DECISIONS_20260927.md)）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 >
@@ -207,6 +209,13 @@ A 定案 → B V12 收斂（前置）
 ---
 
 ## 開發日誌
+
+### 2026-09-27｜V14-B1 收斂
+
+- [V14-B1](./dev_v14/B1_v13_residue_close.md) 交叉比對：#51 MERGED、detail/C2／D4 非 `[!]`、§9 兩列已解除、零 `src/` 殘刀、W0921-A0 指向 V13-D1 §3
+- **文件殘項：** `dev_v13/` 五份細項 meta 仍 `[ ]`（與本檔 `[x]` 矛盾）→ 已改 `[x]` 並勾 DoD
+- 本檔補「收斂於／後續版本」；CLAUDE／AGENT_ROADMAP／README 依前例不動（已知過期）
+- **無程式殘刀帶入 V14**；簽章單一來源＝D1 §3
 
 ### 2026-09-20｜主編 review 回應
 

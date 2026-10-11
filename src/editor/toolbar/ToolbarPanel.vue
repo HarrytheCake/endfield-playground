@@ -2,12 +2,13 @@
 /**
  * 下方工具列：既有五顆 EquipmentType 按鈕（落子）＋真實機器分類列表（V11-H1）
  *
- * 真實機器點選＝本地 highlight／console；**不**呼叫 armPlacement／dataTransfer。
+ * 真實機器點選只更新落子意圖；不呼叫舊藍圖的 armPlacement／dataTransfer。
  */
 import { computed, ref } from 'vue';
 import type { EquipmentType } from '@/types/editor';
 import type { MachineCategory } from '@/types/machine';
 import { useEditorStore } from '@/store/editorStore';
+import { usePlacementIntent } from '@/editor/toolbar/usePlacementIntent';
 import {
     DEFAULT_TOOLBAR_MACHINE_TAG,
     listToolbarMachines,
@@ -17,6 +18,9 @@ import {
 
 /** 藍圖 store：武裝放置模式與記錄目前選取設備類型（僅舊五顆） */
 const editorStore = useEditorStore();
+
+/** 真機器的暫態落子意圖；與新畫布共用，不寫入藍圖 store */
+const { armedMachineId, arm, disarm } = usePlacementIntent();
 
 /** 工具列可選擇的設備清單，供點擊武裝放置與拖拉放置共用 */
 const equipments: Array<{ id: EquipmentType; label: string }> = [
@@ -43,6 +47,7 @@ const realMachines = computed(() => listToolbarMachines(activeTag.value));
  */
 function handleEquipClick(equipment: EquipmentType) {
     selectedRealMachineId.value = null;
+    disarm();
     editorStore.armPlacement(equipment);
 }
 
@@ -54,6 +59,7 @@ function handleEquipClick(equipment: EquipmentType) {
  */
 function handleEquipDragStart(event: DragEvent, equipment: EquipmentType) {
     selectedRealMachineId.value = null;
+    disarm();
     editorStore.setSelectedEquipment(equipment);
 
     if (!event.dataTransfer) {
@@ -71,20 +77,16 @@ function handleEquipDragStart(event: DragEvent, equipment: EquipmentType) {
 function handleTagClick(tag: MachineCategory) {
     activeTag.value = tag;
     selectedRealMachineId.value = null;
+    disarm();
 }
 
 /**
- * 選取真實機器：僅本地態＋console（下一步＝B2 解封後接落子）
+ * 切換真機器落子意圖，並同步本地高亮；同機再點會取消。
  * @param row 攤平列
  */
 function handleRealMachineClick(row: ToolbarMachineRow) {
-    selectedRealMachineId.value = row.id;
-    console.info('[toolbar] real machine selected (no store / no place)', {
-        id: row.id,
-        name: row.name,
-        sizeText: row.sizeText,
-        tag: activeTag.value,
-    });
+    arm(row.id);
+    selectedRealMachineId.value = armedMachineId.value;
 }
 </script>
 

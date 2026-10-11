@@ -8,8 +8,8 @@
 | 建議主責／備援 | toby（確定，≤2h／假日）／harry（**可派**，中風險，動力驅動）／aaaaa 記錄轉單 |
 | 性質 | 接線（L2） |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)、[B1](./B1_toolbar_real_machines.md) |
-| 狀態 | `[!]` 封鎖中（佈局純函式 4／6；缺 resolveConnections／toTopology／store 模型） |
-| 最後更新 | 2026-08-30 |
+| 狀態 | `[x]` 點擊落子已合入 master（#54／#55；2026-09-27） |
+| 最後更新 | 2026-10-04 |
 
 ---
 

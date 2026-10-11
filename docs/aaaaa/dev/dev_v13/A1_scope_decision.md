@@ -1,7 +1,7 @@
 # V13-A1 — 範圍與定案
 
 **對應工項：** V13-A1
-**狀態：** `[ ]` 未開始
+**狀態：** `[x]` 完成（2026-09-19；V14-B1 於 2026-09-27 收斂 meta）
 **日期：** 2026-09-19
 **開發分支：** `dev/aaaaa0914`
 **正式依據：** [W0914-A1](../../../work_dispatch/aaaaa/0914/W0914-A1_connection_blueprint_contract.md)、[WEEK_20260914](../../../work_dispatch/WEEK_20260914.md) v1.1、[todolist_v13](../todolist_v13.md)
@@ -107,10 +107,10 @@ V12 在 `PlacementResult` 上已經走了另一條路：`ok` 當 discriminant，
 
 ## 5. DoD（本細項）
 
-- [ ] 7 項決策表已寫入 todolist 與本檔
-- [ ] C1／C2／D1 可依本檔開工，無待裁決的契約形狀
-- [ ] 不動 `src/`、不解鎖擺放已明示
-- [ ] §2.1 的「不用型別草案額度」已寫明，避免下週有人以為 `src/types/layout.ts` 上有 `ConnectResult`
+- [x] 7 項決策表已寫入 todolist 與本檔
+- [x] C1／C2／D1 可依本檔開工，無待裁決的契約形狀
+- [x] 不動 `src/`、不解鎖擺放已明示
+- [x] §2.1 的「不用型別草案額度」已寫明，避免下週有人以為 `src/types/layout.ts` 上有 `ConnectResult`
 
 ---
 

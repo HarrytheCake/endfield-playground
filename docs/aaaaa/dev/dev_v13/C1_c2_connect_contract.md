@@ -1,7 +1,7 @@
 # V13-C1 — R-C2 連線契約重訂（新模型）
 
 **對應工項：** V13-C1
-**狀態：** `[ ]` 未開始
+**狀態：** `[x]` 完成（2026-09-19；V14-B1 於 2026-09-27 收斂 meta）
 **日期：** 2026-09-19
 **依賴：** [A1](./A1_scope_decision.md)（定案 #2：discriminated union）
 **產物：** 改寫 [roadmap/detail/C2](../../../roadmap/detail/C2_add_connection_contract.md) §3／§4／§5／§6／§10／§11，狀態 `[!]` → `[ ]`

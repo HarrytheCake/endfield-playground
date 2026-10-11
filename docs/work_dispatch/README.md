@@ -2,10 +2,10 @@
 
 | meta | value |
 |------|-------|
-| version | **v3.8（2026-09-24；G1 恢復＋MBD 產能裁示）** |
-| 本週區間 | **2026-09-21 → 2026-09-27**（[WEEK_20260921](./WEEK_20260921.md) **v1.2**）｜**M2 門檻日 9/27** |
-| 上週區間 | 2026-09-14 → 2026-09-20（[WEEK_20260914](./WEEK_20260914.md) v1.1） |
-| 上游 | [ROADMAP_OUTLINE](../roadmap/ROADMAP_OUTLINE.md) **v1.13** |
+| version | **v3.11（2026-10-06；主編裁 R-1＝B／R-2 同意）** |
+| 本週區間 | **2026-10-04 → 2026-10-11**（[WEEK_20261004](./WEEK_20261004.md) **v1.2**） |
+| 上週區間 | 2026-09-21 → 2026-09-27（[WEEK_20260921](./WEEK_20260921.md) v1.2；**驗收因連假延至 10/04**） |
+| 上游 | [ROADMAP_OUTLINE](../roadmap/ROADMAP_OUTLINE.md) **v1.16** |
 
 ---
 
@@ -13,49 +13,44 @@
 
 | 你想知道 | 打開 |
 |----------|------|
-| **我這週要交什麼** | 下表 **0921** |
-| 這週全隊／驗收 | [WEEK_20260921.md](./WEEK_20260921.md) |
-| **檔案鎖（暫停中也適用）** | [WEEK_20260921.md](./WEEK_20260921.md) §3 |
+| **我這週要交什麼** | 下表 **1004** |
+| 這週全隊／驗收 | [WEEK_20261004.md](./WEEK_20261004.md) |
+| **檔案鎖（暫停中也適用）** | [WEEK_20261004.md](./WEEK_20261004.md) §2.2 |
 
-### 本週（9/21–9/27）
+### 本週（10/04–10/11）
 
 | code | 工單 | 一句話 |
 |------|------|--------|
-| [aaaaa](./aaaaa/0921/) | [**A0（最優）**](./aaaaa/0921/W0921-A0_placement_precheck.md) | `canPlaceDevice` 落子前預檢，**9/24 交** |
-| | [A1](./aaaaa/0921/W0921-A1_connect_rules.md) | C2 `connectRules.ts`（10/04 提前量） |
-| [toby](./toby/0921/) | [**T1（主戲・擋門檻）**](./toby/0921/W0921-T1_placement_chain.md) | 落子鏈：點真機器 → 點畫布 → 出現 |
-| [dernoson](./dernoson/0921/) | [D0](./dernoson/0921/W0921-D0_gate_and_three_rulings.md) | 守閘；合入序；待審 ≤3（裁決已於 9/23 給出） |
-| [goodmorning](./goodmorning/0921/) | [G1](./goodmorning/0921/W0921-G1_toolbar_pr48_land.md) | **#48 本週必須收完**（9/26 前可審；換回真實資料） |
-| [shirone](./shirone/0921/) | [S1](./shirone/0921/W0921-S1_stats_panel_split_pr.md) | A＝搬家拆一支 PR（本週交）；B＝面板樣式（無死線） |
-| [harry](./harry/0921/) | [H1](./harry/0921/W0921-H1_pipeline_polyline.md) | C3 折線幾何＋dev 頁（不綁時間） |
-| [MBD](./MBD/0921/) | [M0](./MBD/0921/W0921-M0_pause.md) | **有 3–5h，不派新功能**；可選 [Storybook 上手](./MBD/0921/GUIDE_storybook_first_look.md) |
-| [paper](./paper/0921/) | [P1](./paper/0921/W0921-P1_figma_comment_gap.md) | Figma comment 對照 `src/` 落差清單 |
-| [avery](./avery/0921/) | [V0](./avery/0921/W0921-V0_pause.md) | 暫停（亞運）；**暫停期也請回週報** |
-| [azure9572](./azure9572/0921/) | [Z0](./azure9572/0921/W0921-Z0_pause.md) | 暫停（備賽至 11 月） |
+| [aaaaa](./aaaaa/1004/) | [A0](./aaaaa/1004/W1004-A0_dispatch_and_e003.md) | 派工已發；出界列表＋埠命中判定（10/11 前置） |
+| [dernoson](./dernoson/1004/) | [D0](./dernoson/1004/W1004-D0_gate_and_chrome.md) | 守閘；#48 清積壓；管線選取可過、刪／轉仍退 |
+| [toby](./toby/1004/) | [**T1**](./toby/1004/W1004-T1_unbounded_canvas.md) | 畫布無邊界；基地框＋出界 Error、不擋落子 |
+| [harry](./harry/1004/) | [**H1（主戲）**](./harry/1004/W1004-H1_chrome_land.md) | 工具列／左右接正式頁；拆舊底欄與舊右側 |
+| [goodmorning](./goodmorning/1004/) | [G1](./goodmorning/1004/W1004-G1_toolbar_and_device_style.md) | **#48 必須合**；再與 S 做畫布設備樣 |
+| [shirone](./shirone/1004/) | [S1](./shirone/1004/W1004-S1_stats_and_device_style.md) | 右側面板樣式；與 G 做畫布設備樣 |
+| [paper](./paper/1004/) | [P1](./paper/1004/W1004-P1_pipeline_warn_and_select.md) | 未接管線警示；點管線藍＋左面板 |
+| [MBD](./MBD/1004/) | [**M1**](./MBD/1004/W1004-M1_topbar_buttons_storybook.md) | 頂欄四顆按鈕（存檔／設定／下載／上傳）進 Storybook |
+| [azure9572](./azure9572/1004/) | [**Z1**](./azure9572/1004/W1004-Z1_recipe_alerts_new_model.md) | E004／E005 進 master、W001 修正，接 dev 驗證頁 |
+| [avery](./avery/1004/) | [V0](./avery/1004/W1004-V0_pause.md) | 暫停（主編裁再放一週） |
 
 ---
 
 ## 1. 定案摘要（全員）
 
-1. **9/27 硬綁 B1**；門檻句＝從下方選單拉真機器放到畫布
-2. 本週**只放行落子**；選取／旋轉／刪除（B3／B4／B5）一律退回
-3. 落子意圖走新的 `usePlacementIntent.ts`；**不擴充 `EquipmentType`、不改 `editorStore`**
-4. 落子的 `label` 填 `machine.name`（中文名）
-5. L2 **不得自行重算佔格重疊**，一律呼叫 `canPlaceDevice`
-6. `ToolbarPanel.vue` 按區塊分鎖：意圖層 `<script>`＝toby；資料來源復原＋`<template>`／`<style>`／stories＝goodmorning（**同週並改，禁止互蓋**）
-7. `MainLayout.vue` owner＝toby 全檔；shirone 限改 StatsPanel import 一行
-8. `InspectorSidebar` **凍結，誰都不能刪**（R-B4 入口）
-9. 「paper 過」改**事後補審**，不再當任何 PR 的合入前提
-10. **StatsPanel 單一 owner ＝ shirone**（元件＋路徑＋樣式）；不得新開第三個目錄
-11. **#48 本週收尾合入**（換回真實機器資料；不擋 T1）
-12. **MBD 有產能、本週不派新功能碼**（可選 Storybook 上手）
-13. 合入序：S1 搬家 → A0 → T1 → G1 → H1 → A1 →（S1 樣式，無死線）
+1. 自建畫布打底**已在 master**，本週可以派工（不是再開 L1 殼）
+2. 9/27 連假停工 → **M2 驗收延一週**；功能門檻已過，#48 視覺未過
+3. 本週主線＝正式畫面換殼＋無邊界畫布，**不是** C1 拉管線
+4. 管線**可以點選變藍、左面板可出現**；旋轉與 Delete 仍不開
+5. `InspectorSidebar` **卸掛載、不刪檔**
+6. #48 本週必須 rebase 合入，否則新工具列掛不上去
+7. 合入序：#57 → #48 → T1 → S1 → H1 → 設備樣式（**A0／Z1／M1 不排在這條序上**）
+8. **azure 與 MBD 本週有正式工單**（10/04 會議點名）；**只有 avery 暫停**
+9. **M3＝10/25 不動。** 連假空白一週由「L1 前置提前到本週」補，見 [WEEK §4](./WEEK_20261004.md)
 
 ---
 
 ## 2. 目錄
 
-`0921/`＝本週；`0914/`＝上週；`0907/`／`0831/`／`0823/`＝封存。
+`1004/`＝本週；`0921/`／`0914/`／`0907/`／`0831/`／`0823/`＝封存。
 
 ---
 
@@ -63,5 +58,5 @@
 
 | 檔 | 狀態 |
 |----|------|
-| WEEK_20260921 | **v1.2**（9/24 追加：G1 恢復、MBD 產能裁示） |
-| ROADMAP_OUTLINE | **v1.13** |
+| WEEK_20261004 | **v1.2**（主編裁 R-1＝B／R-2 同意） |
+| ROADMAP_OUTLINE | **v1.16** |

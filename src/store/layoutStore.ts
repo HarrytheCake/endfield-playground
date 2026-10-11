@@ -6,6 +6,9 @@
  *
  * 變更類 action 經 {@link useHistoryStore} 推入 Command，供 L2 undo／redo。
  *
+ * 佔格檢查與落子前預檢共用 {@link collectLayoutIssues}／{@link assessInvolving}
+ *（`src/utils/layout/placementCheck.ts`，V14／W0921-A0）。
+ *
  * @example
  * const layout = useLayoutStore()
  * layout.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')))
@@ -22,17 +25,16 @@ import type {
     PlacedDevice,
     Pipeline,
 } from '@/types/layout';
-import type { DeviceFootprint, PipelineFootprint } from '@/types/footprint';
 import { HistoryRecordType } from '@/types/history';
 import { getMachineById } from '@/data/machines';
 import { resolveConnections } from '@/utils/layout/resolveConnections';
-import { detectOverlaps } from '@/utils/layout/overlapDetection';
-import { isAxisAlignedPath } from '@/utils/layout/pipelineGeometry';
 import {
-    deviceSizeFromMachine,
-    toDeviceFootprint,
-    toPipelineFootprint,
-} from '@/utils/layout/toFootprint';
+    assessInvolving,
+    collectLayoutIssues,
+    pipelineWaypointsValid,
+    positionFinite,
+} from '@/utils/layout/placementCheck';
+import { canConnect } from '@/utils/layout/connectRules';
 import { useHistoryStore } from '@/store/historyStore';
 
 /**
@@ -66,99 +68,6 @@ function clonePipeline(pipeline: Pipeline): Pipeline {
         ...pipeline,
         waypoints: pipeline.waypoints.map((w) => ({ ...w })),
     };
-}
-
-/**
- * 三軸皆為有限數
- *
- * z 一起檢查：`getDeviceOccupiedCells` 會沿 z 展開，非有限的 z 會讓佔格 key  \
- * 全部塌成同一格，於是同一台設備被回報成「自己跟自己重疊」。
- */
-function positionFinite(position: Position): boolean {
-    return (
-        Number.isFinite(position.x) && Number.isFinite(position.y) && Number.isFinite(position.z)
-    );
-}
-
-/**
- * 管線 waypoints 是否可展開佔格
- *
- * 至少兩點、座標皆有限，且每段沿單一軸——{@link getPipelineOccupiedCells} 的前置條件：  \
- * 斜向的一段會被拆成先 x 後 y，等於替呼叫端發明一個沒人指定過的轉角。
- */
-function pipelineWaypointsValid(pipeline: Pipeline): boolean {
-    if (pipeline.waypoints.length < 2) return false;
-    if (!pipeline.waypoints.every(positionFinite)) return false;
-    return isAxisAlignedPath(pipeline.waypoints);
-}
-
-/**
- * 全量檢查佈局，一次回報**所有**問題（invalid 與 overlap 並存時兩者都回）
- *
- * 設備與管線共用一個 id 命名空間：`detectOverlaps` 的配對混用兩者，  \
- * 同名就無法判斷紅框該畫在誰身上，故重複 id 一律列 invalid 並排除於佔格之外。
- */
-function collectLayoutIssues(deviceList: PlacedDevice[], pipelineList: Pipeline[]): LayoutIssues {
-    const idCounts = new Map<string, number>();
-    for (const item of [...deviceList, ...pipelineList]) {
-        idCounts.set(item.id, (idCounts.get(item.id) ?? 0) + 1);
-    }
-
-    /** id 空或重複者無法歸屬佔格，直接視為不合法 */
-    const idUsable = (id: string): boolean => Boolean(id) && (idCounts.get(id) ?? 0) === 1;
-
-    const invalidIds = new Set<string>();
-    const deviceFootprints: DeviceFootprint[] = [];
-    for (const device of deviceList) {
-        const machine = getMachineById(device.machineType);
-        if (!idUsable(device.id) || !positionFinite(device.position) || !machine) {
-            invalidIds.add(device.id);
-            continue;
-        }
-        deviceFootprints.push(toDeviceFootprint(device, deviceSizeFromMachine(machine)));
-    }
-
-    const pipelineFootprints: PipelineFootprint[] = [];
-    for (const pipeline of pipelineList) {
-        if (!idUsable(pipeline.id) || !pipelineWaypointsValid(pipeline)) {
-            invalidIds.add(pipeline.id);
-            continue;
-        }
-        pipelineFootprints.push(toPipelineFootprint(pipeline));
-    }
-
-    const conflicts = detectOverlaps(deviceFootprints, pipelineFootprints);
-
-    return {
-        ok: invalidIds.size === 0 && conflicts.length === 0,
-        invalidIds: [...invalidIds],
-        conflicts,
-    };
-}
-
-/**
- * 只檢查「本次操作涉及的 id」是否引入 invalid／overlap，  \
- * 不把快照裡既有的無關錯誤算到新操作頭上。
- *
- * @param involvedIds 本次新增／移動的設備或管線 id
- */
-function assessInvolving(
-    deviceList: PlacedDevice[],
-    pipelineList: Pipeline[],
-    involvedIds: ReadonlySet<string>,
-): PlacementResult {
-    const issues = collectLayoutIssues(deviceList, pipelineList);
-
-    const involvedInvalid = issues.invalidIds.filter((id) => involvedIds.has(id));
-    if (involvedInvalid.length > 0) {
-        return { ok: false, reason: 'invalid', invalidIds: involvedInvalid };
-    }
-
-    const conflicts = issues.conflicts.filter(([a, b]) => involvedIds.has(a) || involvedIds.has(b));
-    if (conflicts.length > 0) {
-        return { ok: false, reason: 'overlap', conflicts };
-    }
-    return { ok: true };
 }
 
 export const useLayoutStore = defineStore('layout', () => {
@@ -334,6 +243,7 @@ export const useLayoutStore = defineStore('layout', () => {
 
     /**
      * 新增管線；waypoints 須 ≥2 點、座標有限且逐段軸對齊；  \
+     * 連線語意依 {@link canConnect}（方向／媒質／單埠單線／自連）；  \
      * 僅當「本管線」引入 overlap 時失敗
      *
      * @param pipeline 待加入管線
@@ -347,6 +257,14 @@ export const useLayoutStore = defineStore('layout', () => {
             };
         }
         if (!pipelineWaypointsValid(pipeline)) {
+            return { ok: false, reason: 'invalid', invalidIds: [pipeline.id] };
+        }
+
+        const connectCheck = canConnect(
+            { media: pipeline.media, waypoints: pipeline.waypoints },
+            { devices: devices.value, pipelines: pipelines.value },
+        );
+        if (!connectCheck.ok) {
             return { ok: false, reason: 'invalid', invalidIds: [pipeline.id] };
         }
 

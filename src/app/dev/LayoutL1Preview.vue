@@ -65,8 +65,19 @@ const deviceCells = computed(() => {
     return result;
 });
 
-function connectionStatus(conn: { from: unknown; to: unknown }): 'ok' | 'broken' {
-    return conn.from && conn.to ? 'ok' : 'broken';
+function connectionStatus(conn: {
+    from: { portType: string } | null;
+    to: { portType: string } | null;
+}): 'ok' | 'broken' | 'direction' {
+    if (!conn.from || !conn.to) return 'broken';
+    if (conn.from.portType === 'output' && conn.to.portType === 'input') return 'ok';
+    return 'direction';
+}
+
+function connectionStatusLabel(status: 'ok' | 'broken' | 'direction'): string {
+    if (status === 'ok') return '已連接';
+    if (status === 'direction') return '方向不符';
+    return '斷線';
 }
 
 function pipelinePath(waypoints: { x: number; y: number }[]): string {
@@ -174,7 +185,11 @@ function pipelinePath(waypoints: { x: number; y: number }[]): string {
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         :stroke="
-                            connectionStatus(connections[idx]!) === 'ok' ? '#16a34a' : '#ea580c'
+                            connectionStatus(connections[idx]!) === 'ok'
+                                ? '#16a34a'
+                                : connectionStatus(connections[idx]!) === 'direction'
+                                  ? '#e11d48'
+                                  : '#ea580c'
                         "
                     />
                     <circle
@@ -183,12 +198,20 @@ function pipelinePath(waypoints: { x: number; y: number }[]): string {
                         :cx="(wp.x + 0.5) * CELL"
                         :cy="(wp.y + 0.5) * CELL"
                         r="3.5"
-                        :fill="connectionStatus(connections[idx]!) === 'ok' ? '#16a34a' : '#ea580c'"
+                        :fill="
+                            connectionStatus(connections[idx]!) === 'ok'
+                                ? '#16a34a'
+                                : connectionStatus(connections[idx]!) === 'direction'
+                                  ? '#e11d48'
+                                  : '#ea580c'
+                        "
                     />
                 </g>
             </svg>
             <p class="mt-2 text-xs text-gray-500">
-                綠＝兩端皆掛埠；橙＝斷線。格＝{{ CELL }}px；畫布 {{ GRID_W }}×{{ GRID_H }}。
+                綠＝output→input；紅＝方向不符；橙＝斷線。格＝{{ CELL }}px；畫布 {{ GRID_W }}×{{
+                    GRID_H
+                }}。
             </p>
         </div>
 
@@ -204,13 +227,15 @@ function pipelinePath(waypoints: { x: number; y: number }[]): string {
                     :class="
                         connectionStatus(conn) === 'ok'
                             ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950'
-                            : 'border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950'
+                            : connectionStatus(conn) === 'direction'
+                              ? 'border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-950'
+                              : 'border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950'
                     "
                 >
                     <div class="font-sans text-sm font-semibold">
                         {{ conn.pipelineId }}
                         —
-                        {{ connectionStatus(conn) === 'ok' ? '已連接' : '斷線' }}
+                        {{ connectionStatusLabel(connectionStatus(conn)) }}
                     </div>
                     <div>from: {{ conn.from ? JSON.stringify(conn.from) : 'null' }}</div>
                     <div>to: {{ conn.to ? JSON.stringify(conn.to) : 'null' }}</div>

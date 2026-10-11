@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, type DeepReadonly } from 'vue';
 import { getMachineById } from '@/data/machines';
+import type { Position } from '@/types/euclideanSpace';
 import type { PlacedDevice, Pipeline } from '@/types/layout';
 import { getDeviceOccupiedCells } from '@/utils/layout/deviceOccupancy';
 import { deviceSizeFromMachine, toDeviceFootprint } from '@/utils/layout/toFootprint';
@@ -37,6 +38,36 @@ const props = withDefaults(defineProps<Props>(), {
     gridWidth: 12,
     gridHeight: 8,
 });
+
+/** 畫布格點點擊事件；只傳座標，不決定是否放置設備 */
+const emit = defineEmits<{
+    'cell-click': [position: Position];
+}>();
+
+/**
+ * 以 SVG 本身的顯示矩形換算點擊格點，避免子元素成為 target 時座標漂移。
+ *
+ * @param event SVG 上的滑鼠點擊事件
+ */
+function handleCanvasClick(event: MouseEvent): void {
+    const svg = event.currentTarget as SVGSVGElement | null;
+    if (!svg) return;
+
+    const bounds = svg.getBoundingClientRect();
+    if (bounds.width <= 0 || bounds.height <= 0) return;
+    if (
+        event.clientX < bounds.left ||
+        event.clientX >= bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY >= bounds.bottom
+    ) {
+        return;
+    }
+
+    const x = Math.floor(((event.clientX - bounds.left) / bounds.width) * props.gridWidth);
+    const y = Math.floor(((event.clientY - bounds.top) / bounds.height) * props.gridHeight);
+    emit('cell-click', { x, y, z: 0 });
+}
 
 /**
  * 設備在 xy 平面上的佔格；同一設備不同 z 層的相同位置只保留一次。
@@ -95,9 +126,10 @@ function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
             :height="props.gridHeight * props.cellSize"
             class="block max-w-none"
             role="img"
-            aria-label="只讀格點佈局"
+            aria-label="格點佈局，選取機器後可點擊格點放置"
+            @click="handleCanvasClick"
         >
-            <title>只讀格點佈局</title>
+            <title>格點佈局</title>
 
             <!-- 格線 -->
             <g class="stroke-zinc-200 dark:stroke-zinc-700" stroke-width="1">

@@ -8,8 +8,8 @@
 | 建議主責／備援 | aaaaa（資料側）＋**shirone**（MachineCard）／goodmorning（工具列視覺，dev）／aaaaa 列表頂替 |
 | 性質 | 資料 → 畫面 |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)、[E1](./E1_data_codegen_ops.md) |
-| 狀態 | `[ ]` 未開始（09/06 切片已派工：[W0831-A1](../../work_dispatch/aaaaa/0831/W0831-A1_toolbar_real_machines.md)；L3＝[W0831-S1](../../work_dispatch/shirone/0831/W0831-S1_machine_card.md)） |
-| 最後更新 | 2026-08-30 晚 |
+| 狀態 | `[~]` 9/6 資料切片 #43 已合；點擊落子已合；視覺 #48 未合（W1004-G1） |
+| 最後更新 | 2026-10-04 |
 
 ---
 
