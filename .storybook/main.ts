@@ -3,7 +3,7 @@ import type { StorybookConfig } from '@storybook/vue3-vite';
 /**
  * Storybook 主設定
  *
- * 只收 `src/components/` 底下的 story：L1 是純函式與 store、L2 是容器層，
+ * 只收純展示元件的 story：L1 是純函式與 store、L2 是容器層，
  * 兩者都不是靠 props 渲染的展示元件，收進來只會產生掛不起來的 story。
  *
  * Vite 設定（`@nuxt/ui` 的 `ui()` plugin、`@` 別名、postcss）由 builder 讀取
@@ -13,7 +13,12 @@ import type { StorybookConfig } from '@storybook/vue3-vite';
  */
 const config: StorybookConfig = {
     /** story 檔與元件同資料夾，對齊 CLAUDE.md 第 2 節的元件資料夾慣例 */
-    stories: ['../src/components/**/*.stories.ts', '../src/app/**/*.stories.ts'],
+    stories: [
+        '../src/components/**/*.stories.ts',
+        '../src/app/**/*.stories.ts',
+        /** GridCanvas 為無 store 的展示元件，沿用既有目錄而只收錄此支 Story */
+        '../src/editor/layout/GridCanvas.stories.ts',
+    ],
 
     /** docs 依 defineProps 的 JSDoc 產生 props 表；a11y 檢查純展示層的可及性 */
     addons: ['@storybook/addon-docs', '@storybook/addon-a11y'],
