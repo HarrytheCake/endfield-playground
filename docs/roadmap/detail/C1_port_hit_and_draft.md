@@ -5,11 +5,11 @@
 | 對應大綱 | [ROADMAP_OUTLINE.md](../ROADMAP_OUTLINE.md) §5 |
 | 里程碑 | M3（2026-10-25）；首次可演示 10/4 |
 | 擋門檻 | **是**（主編步驟 3 的入口） |
-| 建議主責／備援 | **L2＝待裁**（10/11 會議未派；建議 toby，拖曳合入後接）／aaaaa 命中判定（**#65 已合**） |
+| 建議主責／備援 | **L2＝toby**（PR #66；T2 合入後、10/18 週接）／aaaaa 命中判定（**#65 已合**） |
 | 性質 | 接線（L2） |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)、[B2](./B2_placement_chain.md)、[B3](./B3_rotation_90.md) |
-| 狀態 | `[~]` L1 命中已合；**L2 UI 本週無人**（toby 改做設備拖曳 W1011-T2） |
-| 最後更新 | **2026-10-12**（10/11 會議：owner 轉待裁；#65 合入） |
+| 狀態 | `[~]` L1 命中已合；**L2＝toby**（本週 T2 拖曳；10/18 接 C1） |
+| 最後更新 | **2026-10-13**（PR #66：owner＝toby；#65 合入） |
 
 ---
 
@@ -93,7 +93,7 @@ hitTestPortAt(point, devices, getMachine?) →
 | 週日 | 切片 |
 |------|------|
 | 10/04 | ~~本週不派 C1 UI~~（改換殼）；L1 `hitTestPortAt` 提前交 → **#65 合入** |
-| ~~10/11~~ → **10/18** | **順延（會議未派）：** 埠可見＋draft＋放開呼叫 `canConnect`／`addPipeline`；命中 highlight＋非法紅提示。若 10/18 仍無 owner，砍到相鄰兩台直線 |
+| ~~10/11~~ → **10/18** | **toby（PR #66）：** 埠可見＋draft＋放開呼叫 `canConnect`／`addPipeline`；命中 highlight＋非法紅提示。趕不上 → 砍到相鄰兩台直線（B-2 備案已裁） |
 | 10/18 | 熱區／縮放調校；與 C3 折線套用協調 |
 | 10/25 | **門檻：** 兩台設備 port 對 port 穩定連得起來 |
 
@@ -134,12 +134,12 @@ hitTestPortAt(point, devices, getMachine?) →
 | 埠太小點不到，被誤判為功能沒做 | §4.3 熱區下限寫進 DoD |
 | L2 人力不足（同 B2） | 純函式（aaaaa）與互動（L2）拆成兩張工單，純函式先行不受阻塞 |
 
-**未交頂替：** 無。本項是 10/25 門檻的必要條件；若 10/11 仍未動工，須在該日會上把範圍砍到「只支援水平／垂直相鄰兩台的直線連線」，保住門檻的最小形態。
+**未交頂替：** 無。本項是 10/25 門檻的必要條件；owner＝toby。若 10/18 週仍趕不上，砍到「只支援水平／垂直相鄰兩台的直線連線」（PR #66 B-2）。
 
 ## 11. 開發日誌
 
 ### 2026-10-12
-- L2 owner 曾定 toby（v1.17）；**10/11 會議改派 toby 做設備拖曳（[W1011-T2](../../work_dispatch/toby/1011/W1011-T2_device_drag.md)），C1 轉待裁**、順延 10/18 週。`hitTestPortAt` **#65 已合**；檔案計畫仍掛 `LayoutView`／`GridCanvas`
+- L2 owner＝**toby**（PR #66；本週先做 [W1011-T2](../../work_dispatch/toby/1011/W1011-T2_device_drag.md) 拖曳，10/18 接 C1）。`hitTestPortAt` **#65 已合**；檔案計畫仍掛 `LayoutView`／`GridCanvas`
 
 ### 2026-10-10
 - 命中 API 更名 **`hitTestPortAt`**（與既有格點 `findPortAt` 分工）；回傳對齊 `PortRef`＋side＋media；輸入＝格點。W1004-A0／V15 同步
