@@ -2,19 +2,19 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.1（2026-10-12；依 10/11 會議重派）** |
+| version | **v1.2（2026-10-13；PR #66 裁決回寫）** |
 | 用途 | Agent 執行本週派工／改工單時的強制約束 |
-| 公開 | [WEEK_1011](../../work_dispatch/WEEK_20261011.md) v1.1、[W1011-A0](../../work_dispatch/aaaaa/1011/W1011-A0_c5_primary_output.md) |
+| 公開 | [WEEK_1011](../../work_dispatch/WEEK_20261011.md) v1.2、[W1011-A0](../../work_dispatch/aaaaa/1011/W1011-A0_c5_primary_output.md) |
 | 決策層 | [1011/REVIEW](../collaborator_survey/dispatch_private/1011/REVIEW_20261011.md)、[1011/E3](../collaborator_survey/dispatch_private/1011/E3_risk_backup_staffing.md) |
 | 撰寫 | aaaaa |
-| 最後更新 | 2026-10-12 |
+| 最後更新 | 2026-10-13 |
 
 ---
 
 ## 0. 三十秒結論
 
 **aaaaa 本週＝派工①＋C5 `setDevicePrimaryOutput`。**  
-toby 本週＝設備拖曳；**C1 會議未派、待裁**——不要自己開 draft／改 GridCanvas。  
+toby 本週＝設備拖曳（拿起＝淺藍）；**C1＝toby（10/18）**——本週不要自己開 draft／改 GridCanvas。  
 引擎讀取切片＝**下週**；本週 PR 只註明接法。
 
 ---
@@ -58,4 +58,4 @@ setDevicePrimaryOutput(uid, itemId | null, ratePerMin?)
 | 1 | C5 action 合入；roadmap C5 狀態 |
 | 2 | WEEK 驗收勾選（若結算） |
 | 3 | 10/18 引擎讀切片開工前確認 PR 註記 |
-| 4 | 追 C1 owner 裁示（PENDING A-2 重開）；裁定後回寫 roadmap §9 |
+| 4 | C1 owner 已裁＝toby（PR #66）；10/18 週開工前確認 T2 合入 |
