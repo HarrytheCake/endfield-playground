@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261004](../../work_dispatch/WEEK_20261004.md) v1.2、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.16**、[AGENT_WEEK_1004](../claude/AGENT_WEEK_1004.md)
 **週次：** 2026-10-04 → 2026-10-11（連線月第一週；M2 延後結算＋換殼；**無技術門檻日**）
 **開發分支：** `dev/aaaaa1004`
-**狀態總覽：** **`[~]` PR #60 交審中（僅 ②）**（2026-10-11；A–C `[x]`；D1 審查退回→移出另開後續 PR；E1 待合入）
+**狀態總覽：** **`[~]`**（2026-10-11；② [#60](https://github.com/dernoson/endfield-playground/pull/60)；③ [#65](https://github.com/dernoson/endfield-playground/pull/65)）
 **待確認問題：** [dispatch_private/1004/PENDING_DECISIONS_20261011.md](../collaborator_survey/dispatch_private/1004/PENDING_DECISIONS_20261011.md)
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -113,11 +113,10 @@ A 定案 → B V14 收斂（前置）
 
 ## V15-D｜埠命中判定（W1004-A0 ③・C1 前置）
 
-- [~] **V15-D1** `hitTestPortAt`＋測試；熱區 ≥ 半格；輸入格點——**審查退回（#60），移出另開後續 PR**
+- [~] **V15-D1** `hitTestPortAt`＋測試；熱區圓心＝埠視覺邊心——**[#65](https://github.com/dernoson/endfield-playground/pull/65) 交審中**
     - 細項：[dev_v15/D1_port_hit_test.md](./dev_v15/D1_port_hit_test.md)
-    - 產物（後續 PR）：`src/utils/layout/portHitTest.ts`、`src/__tests__/utils/layout/portHitTest.test.ts`
+    - 產物：`src/utils/layout/portHitTest.ts`、`src/__tests__/utils/layout/portHitTest.test.ts`（另匯出 `portPointOnMachine`）
     - 對照公開驗收：**V10**（另一半）；回傳＝PortRef＋side＋media
-    - 阻擋：熱區圓心落在錨點格左上角，不在埠視覺位置（見 D1 §8）
 
 ---
 
@@ -146,7 +145,7 @@ A 定案 → B V14 收斂（前置）
 
 - [x] 派工①已發（WEEK＋工單在 master）
 - [x] `devicesOutsideBase` 有測試；`addDevice`／`canPlaceDevice` 行為不變
-- [ ] `hitTestPortAt` 有測試；熱區 ≥ 半格且圓心對齊埠視覺位置；無 store import；輸入格點（後續 PR）
+- [x] `hitTestPortAt` 有測試；熱區 ≥ 半格且圓心對齊埠視覺位置；無 store import；輸入連續格座標（後續 PR）
 - [x] C5 store 歸屬已裁並回寫（R-1＝B；非本版實作）
 - [x] `pnpm type-check`／lint-check／format-check／test 綠（906 tests）
 - [x] PR 說明下游（toby／C1）與「不改 canPlaceDevice」
@@ -175,12 +174,17 @@ A 定案 → B V14 收斂（前置）
 |------|----------|----------|------|
 | ① | 派工已發 | `[x]` | 已在 master |
 | ② | `devicesOutsideBase`＋測試 | `[x]` | 2026-10-10 |
-| ③ | `hitTestPortAt`＋測試 | `[~]` | #60 審查退回；後續 PR 修座標慣例 |
+| ③ | `hitTestPortAt`＋測試 | `[~]` | [#65](https://github.com/dernoson/endfield-playground/pull/65) |
 | C5 問答 | store 歸屬 | `[x]` | R-1＝B；實作非本版 |
 
 ---
 
 ## 開發日誌
+
+### 2026-10-11｜③ 後續 PR：修熱區圓心
+
+- 圓心改 `portPointOnMachine` 埠邊心；四向視覺點測試＋審查反例
+- 分支 `dev/aaaaa1004-hitTestPortAt`（叠在 #60 tip 上）
 
 ### 2026-10-11｜#60 審查：拆分
 

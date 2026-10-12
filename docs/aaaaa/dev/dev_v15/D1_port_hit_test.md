@@ -1,7 +1,7 @@
 # V15-D1 — 埠命中判定（`hitTestPortAt`｜W1004-A0 ③）
 
 **對應工項：** V15-D1
-**狀態：** `[~]` #60 審查退回；移出另開後續 PR（2026-10-11，見 §8）
+**狀態：** `[~]` [#65](https://github.com/dernoson/endfield-playground/pull/65) 交審中（見 §8／§9）
 **日期：** 2026-10-10
 **依賴：** [A1](./A1_scope_decision.md) `[x]`、[B1](./B1_v14_residue_close.md) `[x]`
 **正式工單：** [W1004-A0 §2](../../../work_dispatch/aaaaa/1004/W1004-A0_dispatch_and_e003.md)、[C1 §4.2–4.3](../../../roadmap/detail/C1_port_hit_and_draft.md)
@@ -36,9 +36,9 @@ C1 要「按埠拖線」。命中判定必須吃 rotation／mode／格點，與 
 |------|------|------|
 | 函式名／檔 | **已決** | `hitTestPortAt`＠`src/utils/layout/portHitTest.ts` |
 | 熱區半徑 ≥ 半格 | **已凍結** | 預設 `DEFAULT_HIT_RADIUS_CELLS = 0.5` |
-| 輸入座標 | **已決＝格點** | 像素下限由 L2 換算 |
-| 錨點 | **共用** `collectPortAnchors` | 不另寫第三套 |
-| 回傳 | **PortRef＋side＋media** | `PortHitResult` |
+| 輸入座標 | **已決＝連續格座標** | 原點＝格左上角；像素換算由 L2 |
+| 熱區圓心 | **埠視覺邊心** | `portPointOnMachine`；**不是**外側錨點格 |
+| 回傳 | **PortRef＋side＋media** | `PortHitResult`；展開時帶出，不事後重算 |
 | 多埠 | 最近距離；並列→掃描序較前 | JSDoc 已釘 |
 
 ### 3.1 簽章（已決／已實作）
@@ -48,9 +48,10 @@ hitTestPortAt(
   point: { x: number; y: number },
   devices: readonly PlacedDevice[],
   getMachine?: GetMachineFn,
-  options?: { hitRadiusCells?: number }
+  options?: { hitRadiusCells?: number; prefer?: PortDirection }
 ) → PortHitResult | null
 // PortHitResult = PortRef & { side, media }
+// prefer：等距／同點時消歧；拖線 output、放開 input
 ```
 
 ---
@@ -69,12 +70,15 @@ hitTestPortAt(
 
 | # | 案例 | 狀態 |
 |---|------|------|
-| 1 | 點在埠錨點上 → 命中 | `[x]` |
-| 2 | 熱區邊緣（距離＝0.5）→ 命中 | `[x]` |
-| 3 | 熱區外 → null | `[x]` |
-| 4 | 四種 rotation | `[x]` |
-| 5 | 多埠取最近；等距取掃描序 | `[x]` |
-| 6 | 無 store import（讀檔斷言） | `[x]` |
+| 1 | 點在埠**視覺邊心** → 命中 | `[x]` |
+| 2 | 審查案例：(10,10.5) → input 0，不誤中鄰埠 | `[x]` |
+| 3 | 錨點格左上角 (9,10) → null（反例） | `[x]` |
+| 4 | 熱區邊緣（距離＝0.5）→ 命中 | `[x]` |
+| 5 | 熱區外 → null | `[x]` |
+| 6 | 四種 rotation：視覺點命中該埠、不命中鄰埠 | `[x]` |
+| 7 | 多埠取最近；等距取掃描序 | `[x]` |
+| 8 | 緊貼埠對埠：`prefer` 不受設備順序影響 | `[x]` |
+| 9 | 無 store import（讀檔斷言） | `[x]` |
 
 回歸：`connectRules`／`devicesOutsideBase` 同跑綠。
 
@@ -83,20 +87,22 @@ hitTestPortAt(
 ## 6. 驗證標準（DoD）
 
 - [x] B-1＝PortRef 擴充
-- [ ] 匯出 `hitTestPortAt`＋測試；熱區 ≥ 半格且**圓心對齊埠視覺位置**；輸入格點；回傳 PortRef＋side＋media
-- [ ] 四種 rotation 各至少一則「點擊埠視覺位置 → 命中該埠、不命中鄰埠」
-- [ ] JSDoc 寫明輸入慣例：連續格座標，原點＝格左上角
-- [ ] 共用既有埠幾何（`collectPortAnchors`／`portPointOnMachine` 同源）；side／media 於錨點展開時帶出，不事後重算
-- [ ] `PortHitResult` 成員逐一註解（含 `media`）
+- [x] 匯出 `hitTestPortAt`＋測試；熱區 ≥ 半格且**圓心對齊埠視覺位置**；輸入連續格座標；回傳 PortRef＋side＋media
+- [x] 四種 rotation 各至少一則「點擊埠視覺位置 → 命中該埠、不命中鄰埠」
+- [x] JSDoc 寫明輸入慣例：連續格座標，原點＝格左上角
+- [x] 共用 `portPointOnMachine`／`rotatePort`；side／media 於展開時帶出，不事後重算
+- [x] `PortHitResult` 成員逐一註解（含 `media`）
 - [x] 無 Pinia import；未實作 draft UI
-- [ ] 相關 vitest／eslint／prettier 綠
-- [ ] 給 C1 L2 一句（見下）
+- [x] 相關 vitest／eslint／prettier 綠（911 tests）
+- [x] 給 C1 L2 一句（見下）
 
 ### 6.1 給 C1 L2（PR／USAGE）
 
 ```text
-hitTestPortAt(gridPoint, devices) → PortHitResult | null
-gridPoint＝格點（非整數可）；預設熱區 0.5 格。
+hitTestPortAt(point, devices, getMachine?, { prefer?, hitRadiusCells? }) → PortHitResult | null
+point＝連續格座標（原點＝格左上角；非整數可）；預設熱區 0.5 格。
+熱區圓心＝設備邊上埠邊心（非外側錨點格）。
+開始拖線傳 prefer: 'output'，放開時傳 prefer: 'input'（緊貼埠對埠同點時消歧，比照 findPortAt）。
 命中後用 deviceId/portType/portIndex 組 PortRef；side/media 已附帶。
 放開連線仍走 waypoints → canConnect（精確 findPortAt）；本函式只負責「點中哪一埠」。
 ```
@@ -104,6 +110,11 @@ gridPoint＝格點（非整數可）；預設熱區 0.5 格。
 ---
 
 ## 7. 開發日誌
+
+### 2026-10-11｜後續 PR：修正熱區圓心
+
+- 匯出 `portPointOnMachine`；`hitTestPortAt` 以埠視覺邊心為圓心；side／media 展開時帶出
+- 補四向 rotation 視覺點測試＋審查反例；分支 `dev/aaaaa1004-hitTestPortAt`
 
 ### 2026-10-11｜#60 審查退回
 
@@ -146,3 +157,14 @@ L2 換算兩條路都錯：`px / cellSize` 會偏半格並誤中鄰埠；`Math.f
 3. 四種 rotation 下各至少一則「點擊埠視覺位置 → 命中該埠、不命中鄰埠」
 
 **順手：** `PortHitResult.media` 補成員註解；side／media 於錨點展開時帶出，移除 `enrichPortHit` 重算；「無 store 依賴」regex 測試可留。
+
+---
+
+## 9. 後續 PR 修正摘要
+
+| 項 | 作法 |
+|----|------|
+| 圓心 | `device.position`＋`portPointOnMachine(rotated.side, rotated.offset, displayW, displayH)` |
+| 展開 | 自建 `collectPortHitTargets`（掃描序同 `collectPortAnchors`）；帶 side／media，無 `enrichPortHit` |
+| 匯出 | `portUtils.portPointOnMachine` 改 export（與 `rotatePort` 同源） |
+| 測試 | 審查案例＋四向視覺點＋錨點左上角反例 |

@@ -32,8 +32,12 @@ export function rotatePortSide(side: PortSide, rotation: GridRotation): PortSide
     return SIDE_ORDER[(idx + rotation) % 4];
 }
 
-/** 埠在機器局部座標的邊心（原點＝未旋轉機器左上角；單位＝格） */
-function portPointOnMachine(
+/**
+ * 埠在機器局部座標的邊心（原點＝機器左上角；單位＝格）。
+ *
+ * 與畫布熱區命中（`hitTestPortAt`）共用：世界座標＝設備 origin＋本函式結果（旋轉後用 display 寬高與旋轉後 side／offset）。
+ */
+export function portPointOnMachine(
     side: PortSide,
     offset: number,
     width: number,

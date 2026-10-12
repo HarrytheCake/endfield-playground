@@ -1,8 +1,8 @@
 # V15-E1 — 驗收、PR、交接
 
 **對應工項：** V15-E1
-**狀態：** `[~]` #60 拆分後僅含 ②，待合入；③ 待後續 PR
-**日期：** 2026-10-10（2026-10-11 拆分）
+**狀態：** `[~]` #60＝②；後續 PR＝③（`dev/aaaaa1004-hitTestPortAt`）
+**日期：** 2026-10-10（2026-10-11 拆分／修正）
 **依賴：** [C1](./C1_devices_outside_base.md) `[x]`、[D1](./D1_port_hit_test.md) `[~]`
 **正式依據：** [W1004-A0 §5](../../../work_dispatch/aaaaa/1004/W1004-A0_dispatch_and_e003.md)、[WEEK §0.2 V10](../../../work_dispatch/WEEK_20261004.md)
 
@@ -32,7 +32,7 @@
 | 範圍 | 文件＋`devicesOutsideBase`；`hitTestPortAt` 已移出（審查阻擋，見 [D1 §8](./D1_port_hit_test.md)） |
 | 合入序 | **不排換殼序**（WEEK：A0 送來就審）；toby #61 等著接 |
 | 解鎖句 | **不發** |
-| 後續 PR | `hitTestPortAt` 修座標慣例後另開 |
+| 後續 PR | [#65](https://github.com/dernoson/endfield-playground/pull/65)（`dev/aaaaa1004-hitTestPortAt`） |
 
 ---
 
@@ -41,7 +41,7 @@
 | 產物 | 對象 | 一句話 |
 |------|------|--------|
 | `devicesOutsideBase(devices, baseRegion)` | toby T1 | 回傳 id 上 Error 樣；`null` 基地回 `[]`；不擋落子 |
-| `hitTestPortAt` | 10/11 C1 L2 | **尚未交付**；後續 PR 修正熱區圓心後再交 |
+| `hitTestPortAt(point, devices, ?, { prefer })` | 10/11 C1 L2 | 連續格座標；圓心＝埠視覺邊心；熱區 0.5；拖線 `prefer:'output'`、放開 `prefer:'input'` |
 
 口頭節奏：[INTRO](../../collaborator_survey/dispatch_private/1004/INTRO_A0_devices_outside_and_port_hit.md)
 
@@ -61,11 +61,15 @@
 - [x] §1 驗收表通過（② 範圍）
 - [x] PR 已開
 - [x] 下游一句話寫進 PR body
-- [ ] ③ 後續 PR 已開
+- [x] ③ 後續 PR [#65](https://github.com/dernoson/endfield-playground/pull/65) 已開
 
 ---
 
 ## 6. 開發日誌
+
+### 2026-10-11｜③ 後續修正
+
+- 熱區圓心改 `portPointOnMachine`；四向視覺點測試；待 push／開 PR
 
 ### 2026-10-11｜審查拆分
 

@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.6（2026-10-11；#60 拆分，③ 退回）** |
+| version | **v1.7（2026-10-11；③ 修熱區圓心，後續 PR）** |
 | 用途 | 供 Agent 執行本週派工／改工單時的**強制約束**；細節以公開 WEEK 與個人工單為準 |
 | 公開 | [WEEK_1004](../../work_dispatch/WEEK_20261004.md) v1.2、[W1004-A0](../../work_dispatch/aaaaa/1004/W1004-A0_dispatch_and_e003.md) |
 | 執行計畫 | [todolist_v15](../dev/todolist_v15.md)、[dev_v15/](../dev/dev_v15/) |
@@ -16,7 +16,7 @@
 ## 0. 三十秒結論
 
 **V15＝W1004-A0 兩支 L1 純函式。**  
-①／B1／② 已完成，② 在 #60 待合。**③ `hitTestPortAt` 審查退回**（熱區圓心偏移），移出另開後續 PR。  
+①／B1／② 已完成，② 在 [#60](https://github.com/dernoson/endfield-playground/pull/60)。**③** [#65](https://github.com/dernoson/endfield-playground/pull/65)（熱區圓心＝埠視覺邊心）。  
 本週不派 C1 UI、不碰正式頁換殼檔；C5 action 排 10/11–10/18。  
 **仍待定：** C1 的 L2 owner（PENDING A-2）。
 
@@ -100,6 +100,10 @@
 ---
 
 ## 6. 日誌
+
+### 2026-10-11（v1.7）
+
+- ③ 後續：`portPointOnMachine` 作熱區圓心；四向視覺點測試；分支 `dev/aaaaa1004-hitTestPortAt`
 
 ### 2026-10-11（v1.6）
 
