@@ -5,7 +5,7 @@
 | 週次 | 2026-10-11 → 2026-10-18 |
 | 等級 | **確定**（10/11 會議派工） |
 | 擋門檻 | 否 |
-| 上游 | [WEEK_20261011](../../WEEK_20261011.md) v1.1 |
+| 上游 | [WEEK_20261011](../../WEEK_20261011.md) v1.2（A-2 已裁：shapes 子元件） |
 | 畫面｜交哪個檔｜不要碰｜卡住找誰 | 下方工具列＋畫布設備｜#48 既有檔；新檔 `src/editor/layout/shapes/DeviceShape.vue`＋`.stories.ts`｜`GridCanvas.vue`、`LayoutView.vue`、MainLayout｜paper（設備稿）、toby（之後掛上）、dernoson（合入） |
 
 ---
@@ -36,10 +36,10 @@
 ```text
 src/editor/layout/shapes/DeviceShape.vue
   根元素 <g>；只吃 props，例如：
-  width / height（格數或 px，與 toby 對齊一種）、name、狀態（一般／出界／拖曳中）
+  width / height（格數或 px，與 toby 對齊一種）、name、狀態（一般／出界／**拖曳中＝淺藍色**）
 ```
 
-- 依 paper 稿做；稿上沒有的狀態先用暫代色，PR 寫明
+- 依 paper 稿做；**拖曳中狀態＝淺藍色**（白紙已有稿；主編點名此 UX）。其他狀態稿上沒有的先用暫代色，PR 寫明
 - 附 `DeviceShape.stories.ts`，至少三種狀態
 - **不 import store、不讀 `src/data`**
 - 掛進 GridCanvas 由 toby 在拖曳合入後做
