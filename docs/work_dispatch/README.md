@@ -2,10 +2,10 @@
 
 | meta | value |
 |------|-------|
-| version | **v3.11（2026-10-06；主編裁 R-1＝B／R-2 同意）** |
-| 本週區間 | **2026-10-04 → 2026-10-11**（[WEEK_20261004](./WEEK_20261004.md) **v1.2**） |
-| 上週區間 | 2026-09-21 → 2026-09-27（[WEEK_20260921](./WEEK_20260921.md) v1.2；**驗收因連假延至 10/04**） |
-| 上游 | [ROADMAP_OUTLINE](../roadmap/ROADMAP_OUTLINE.md) **v1.16** |
+| version | **v3.14（2026-10-13；PR #66 裁決回寫）** |
+| 本週區間 | **2026-10-11 → 2026-10-18**（[WEEK_20261011](./WEEK_20261011.md) **v1.2**） |
+| 上週區間 | 2026-10-04 → 2026-10-11（[WEEK_20261004](./WEEK_20261004.md) v1.2；**已結算**） |
+| 上游 | [ROADMAP_OUTLINE](../roadmap/ROADMAP_OUTLINE.md) **v1.17** |
 
 ---
 
@@ -13,44 +13,43 @@
 
 | 你想知道 | 打開 |
 |----------|------|
-| **我這週要交什麼** | 下表 **1004** |
-| 這週全隊／驗收 | [WEEK_20261004.md](./WEEK_20261004.md) |
-| **檔案鎖（暫停中也適用）** | [WEEK_20261004.md](./WEEK_20261004.md) §2.2 |
+| **我這週要交什麼** | 下表 **1011** |
+| 這週全隊／驗收 | [WEEK_20261011.md](./WEEK_20261011.md) |
+| **檔案鎖（暫停中也適用）** | [WEEK_20261011.md](./WEEK_20261011.md) §2.2 |
 
-### 本週（10/04–10/11）
+### 本週（10/11–10/18）
 
 | code | 工單 | 一句話 |
 |------|------|--------|
-| [aaaaa](./aaaaa/1004/) | [A0](./aaaaa/1004/W1004-A0_dispatch_and_e003.md) | 派工已發；出界列表＋埠命中判定（10/11 前置） |
-| [dernoson](./dernoson/1004/) | [D0](./dernoson/1004/W1004-D0_gate_and_chrome.md) | 守閘；#48 清積壓；管線選取可過、刪／轉仍退 |
-| [toby](./toby/1004/) | [**T1**](./toby/1004/W1004-T1_unbounded_canvas.md) | 畫布無邊界；基地框＋出界 Error、不擋落子 |
-| [harry](./harry/1004/) | [**H1（主戲）**](./harry/1004/W1004-H1_chrome_land.md) | 工具列／左右接正式頁；拆舊底欄與舊右側 |
-| [goodmorning](./goodmorning/1004/) | [G1](./goodmorning/1004/W1004-G1_toolbar_and_device_style.md) | **#48 必須合**；再與 S 做畫布設備樣 |
-| [shirone](./shirone/1004/) | [S1](./shirone/1004/W1004-S1_stats_and_device_style.md) | 右側面板樣式；與 G 做畫布設備樣 |
-| [paper](./paper/1004/) | [P1](./paper/1004/W1004-P1_pipeline_warn_and_select.md) | 未接管線警示；點管線藍＋左面板 |
-| [MBD](./MBD/1004/) | [**M1**](./MBD/1004/W1004-M1_topbar_buttons_storybook.md) | 頂欄四顆按鈕（存檔／設定／下載／上傳）進 Storybook |
-| [azure9572](./azure9572/1004/) | [**Z1**](./azure9572/1004/W1004-Z1_recipe_alerts_new_model.md) | E004／E005 進 master、W001 修正，接 dev 驗證頁 |
-| [avery](./avery/1004/) | [V0](./avery/1004/W1004-V0_pause.md) | 暫停（主編裁再放一週） |
+| [toby](./toby/1011/) | [T2](./toby/1011/W1011-T2_device_drag.md) | 設備拖曳接進正式畫面 |
+| [aaaaa](./aaaaa/1011/) | [A0](./aaaaa/1011/W1011-A0_c5_primary_output.md) | 派工已發；C5 `setDevicePrimaryOutput` |
+| [harry](./harry/1011/) | [H2](./harry/1011/W1011-H2_left_panel_swap.md) | 刪舊左側面板、接 `MachineCard`；右／下等合入 |
+| [dernoson](./dernoson/1011/) | [D0](./dernoson/1011/W1011-D0_gate_c1.md) | 守閘；清 #64／#62／#48；**裁 C1 owner** |
+| [goodmorning](./goodmorning/1011/) | [G2](./goodmorning/1011/W1011-G2_pr48_and_device_style.md) | #48 解 conflict 合入＋畫布設備樣式 |
+| [shirone](./shirone/1011/) | [S2](./shirone/1011/W1011-S2_pr62_and_pipeline_style.md) | #62 待 approve 合入＋傳送帶／水管樣式 |
+| [paper](./paper/1011/) | [P2](./paper/1011/W1011-P2_pipeline_select.md) | 管線點選效果稿；審 #62 |
+| [MBD](./MBD/1011/) | [M2](./MBD/1011/W1011-M2_warning_icon.md) | 管線未連通警示 icon |
+| [azure9572](./azure9572/1011/) | [Z2](./azure9572/1011/W1011-Z2_pr64_fix.md) | #64 審查修正＋W001 決議 |
+| [avery](./avery/1011/) | [V1](./avery/1011/W1011-V1_power_pole_style.md) | 供電樁畫布樣式 |
 
 ---
 
 ## 1. 定案摘要（全員）
 
-1. 自建畫布打底**已在 master**，本週可以派工（不是再開 L1 殼）
-2. 9/27 連假停工 → **M2 驗收延一週**；功能門檻已過，#48 視覺未過
-3. 本週主線＝正式畫面換殼＋無邊界畫布，**不是** C1 拉管線
-4. 管線**可以點選變藍、左面板可出現**；旋轉與 Delete 仍不開
-5. `InspectorSidebar` **卸掛載、不刪檔**
-6. #48 本週必須 rebase 合入，否則新工具列掛不上去
-7. 合入序：#57 → #48 → T1 → S1 → H1 → 設備樣式（**A0／Z1／M1 不排在這條序上**）
-8. **azure 與 MBD 本週有正式工單**（10/04 會議點名）；**只有 avery 暫停**
-9. **M3＝10/25 不動。** 連假空白一週由「L1 前置提前到本週」補，見 [WEEK §4](./WEEK_20261004.md)
+1. W1004 換殼／無邊界／出界／埠命中**已合**；**本週依 10/11 會議重派**：設備拖曳＋左面板換新＋畫布樣式
+2. **C1 owner＝toby**（T2 合入後、10/18 週）；命中函式已在 master（#65）
+3. C5 本週只交 **寫入 action**；引擎讀＝10/18
+4. 畫布樣式一律做 `shapes/` 子元件；拖曳拿起＝淺藍；選中＝local ref（多選 store 不在 POC）
+5. azure／avery 考試、**shirone 本月學 Python**：照會議派，但各單有「最小可交」
+6. 合入序：#64 → #62 → #48 → T2 → H2 → A0 → 樣式子元件
+7. **M3＝10/25 不動**；C1 趕不上備案＝相鄰兩台直線；Ctrl+Z 排 11 月
+8. A／B 組裁決見 [WEEK §2.3](./WEEK_20261011.md)（[PR #66](https://github.com/dernoson/endfield-playground/pull/66)）
 
 ---
 
 ## 2. 目錄
 
-`1004/`＝本週；`0921/`／`0914/`／`0907/`／`0831/`／`0823/`＝封存。
+`1011/`＝本週；`1004/`／`0921/`／`0914/`／…＝封存。
 
 ---
 
@@ -58,5 +57,5 @@
 
 | 檔 | 狀態 |
 |----|------|
-| WEEK_20261004 | **v1.2**（主編裁 R-1＝B／R-2 同意） |
-| ROADMAP_OUTLINE | **v1.16** |
+| WEEK_20261011 | **v1.2** |
+| ROADMAP_OUTLINE | **v1.17** |
