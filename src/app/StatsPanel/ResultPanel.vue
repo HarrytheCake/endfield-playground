@@ -111,7 +111,7 @@ const toggleExpand = (index: number) => {
             <div
                 data-figma-id="2430:348"
                 data-figma-name="information"
-                class="custom-scrollbar relative isolate m-0 mb-6 box-border flex [width:281px] flex-1 shrink-0 flex-col gap-3 overflow-x-hidden overflow-y-auto border-0 border-solid pr-1"
+                class="custom-scrollbar relative isolate m-0 mb-6 box-border flex [width:281px] flex-1 shrink-0 flex-col gap-3 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto border-0 border-solid pr-1"
             >
                 <div
                     v-for="(item, index) in localProducts"

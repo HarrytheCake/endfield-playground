@@ -29,7 +29,7 @@ const startDrag = () => {
     document.body.style.cursor = 'row-resize';
 };
 
-/** 拖曳過程中動態計算並限制上半部統計區域的高度範圍（頂部最少保留 220px，底部最少保留 150px） */
+/** 拖曳過程中動態計算並限制上半部統計區域的高度範圍（頂部無最小高度，底部最少保留 150px） */
 const onDragging = (e: MouseEvent | TouchEvent) => {
     if (!isDragging.value || !containerRef.value) return;
     /** 面板根容器的邊界矩形資訊 */
@@ -39,12 +39,10 @@ const onDragging = (e: MouseEvent | TouchEvent) => {
     /** 相對於面板頂部的垂直距離 */
     const relativeY = clientY - rect.top;
 
-    /** 上半部區域最小保留高度（px） */
-    const minHeight = 220;
     /** 上半部區域最大可達高度（px），確保底部至少保留 150px */
     const maxHeight = rect.height - 150;
 
-    topHeight.value = Math.max(minHeight, Math.min(maxHeight, relativeY));
+    topHeight.value = Math.max(0, Math.min(maxHeight, relativeY));
 };
 
 /** 結束拖曳分割線：還原文字選取與游標樣式 */
@@ -88,7 +86,7 @@ useEventListener(window, 'touchend', stopDrag);
 
             <!-- 分割白線（Handle） -->
             <div
-                class="relative z-30 -my-[3px] flex h-[6px] w-full cursor-row-resize items-center justify-center bg-transparent transition-colors select-none hover:bg-white/40 active:bg-white/70"
+                class="relative z-30 -my-[3px] flex h-[6px] w-full cursor-row-resize items-center justify-center bg-transparent select-none"
                 @mousedown="startDrag"
                 @touchstart.passive="startDrag"
                 title="上下拖動調整統計與Tips區域高度"

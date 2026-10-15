@@ -41,12 +41,12 @@ defineProps<{
         <div
             data-figma-id="2430:347"
             data-figma-name="tips"
-            class="custom-scrollbar m-0 box-border flex flex-1 shrink-0 flex-col gap-[9px] overflow-x-hidden overflow-y-auto border-0 border-solid pr-[12px] pb-4 pl-[21px]"
+            class="custom-scrollbar m-0 box-border flex flex-1 shrink-0 flex-col gap-[9px] [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto border-0 border-solid pr-[12px] pb-4 pl-[21px]"
         >
             <div
                 v-for="(item, index) in tips"
                 :key="index"
-                class="relative isolate m-0 box-border flex min-h-[31px] w-full shrink-0 items-center overflow-hidden rounded border-0 border-solid py-[5px] pr-2"
+                class="relative isolate m-0 box-border flex min-h-[31px] w-full shrink-0 items-center overflow-hidden border-0 border-solid py-[5px] pr-2"
                 :class="
                     item.type === 'error'
                         ? '[background-color:rgba(255,_110,_110,_0.1)]'
