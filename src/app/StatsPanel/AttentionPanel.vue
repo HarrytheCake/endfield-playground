@@ -41,7 +41,7 @@ defineProps<{
         <div
             data-figma-id="2430:347"
             data-figma-name="tips"
-            class="custom-scrollbar m-0 box-border flex flex-1 shrink-0 flex-col gap-[9px] [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto border-0 border-solid pr-[12px] pb-4 pl-[21px]"
+            class="custom-scrollbar m-0 box-border flex flex-1 shrink-0 flex-col gap-[9px] overflow-x-hidden overflow-y-auto border-0 border-solid pr-[12px] pb-4 pl-[21px] [scrollbar-gutter:stable]"
         >
             <div
                 v-for="(item, index) in tips"

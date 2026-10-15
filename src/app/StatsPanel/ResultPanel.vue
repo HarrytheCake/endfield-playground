@@ -111,7 +111,7 @@ const toggleExpand = (index: number) => {
             <div
                 data-figma-id="2430:348"
                 data-figma-name="information"
-                class="custom-scrollbar relative isolate m-0 mb-6 box-border flex [width:281px] flex-1 shrink-0 flex-col gap-3 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto border-0 border-solid pr-1"
+                class="custom-scrollbar relative isolate m-0 mb-6 box-border flex [width:281px] flex-1 shrink-0 flex-col gap-3 overflow-x-hidden overflow-y-auto border-0 border-solid pr-1 [scrollbar-gutter:stable]"
             >
                 <div
                     v-for="(item, index) in localProducts"
@@ -211,7 +211,7 @@ const toggleExpand = (index: number) => {
                 <div
                     data-figma-id="2302:109"
                     data-figma-name="Text"
-                    class="absolute [top:29px] [right:0px] m-0 box-border flex [height:21px] shrink-0 items-center justify-end border-0 border-solid whitespace-nowrap [font-family:'HarmonyOS_Sans_TC',sans-serif] [font-size:18px] [line-height:21.096px] [font-weight:300] [color:#cfcfcf]"
+                    class="absolute [top:29px] [right:0px] m-0 box-border flex [height:21px] shrink-0 items-center justify-end border-0 border-solid [font-family:'HarmonyOS_Sans_TC',sans-serif] [font-size:18px] [line-height:21.096px] [font-weight:300] whitespace-nowrap [color:#cfcfcf]"
                 >
                     <span v-if="exchangeRate != null" class="mr-1">≈</span>
                     <span>{{ exchangeRate != null ? exchangeRate.toLocaleString() : '-' }}</span>
