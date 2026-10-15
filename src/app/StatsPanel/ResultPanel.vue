@@ -209,18 +209,13 @@ const toggleExpand = (index: number) => {
                     調度券兌換效率
                 </div>
                 <div
-                    data-figma-id="2302:108"
-                    data-figma-name="Text"
-                    class="absolute [top:29px] [left:48px] m-0 box-border [height:21px] [width:10px] shrink-0 border-0 border-solid [text-align:left] [font-family:'HarmonyOS_Sans_TC',sans-serif] [font-size:18px] [line-height:21.096px] [font-weight:300] [color:#cfcfcf]"
-                >
-                    {{ exchangeRate != null ? '≈' : ' ' }}
-                </div>
-                <div
                     data-figma-id="2302:109"
                     data-figma-name="Text"
-                    class="absolute [top:29px] [left:63px] m-0 box-border [height:21px] [width:83px] shrink-0 border-0 border-solid [text-align:right] [font-family:'HarmonyOS_Sans_TC',sans-serif] [font-size:18px] [line-height:21.096px] [font-weight:300] [color:#cfcfcf]"
+                    class="absolute [top:29px] [right:0px] m-0 box-border flex [height:21px] shrink-0 items-center justify-end border-0 border-solid whitespace-nowrap [font-family:'HarmonyOS_Sans_TC',sans-serif] [font-size:18px] [line-height:21.096px] [font-weight:300] [color:#cfcfcf]"
                 >
-                    {{ exchangeRate != null ? `${exchangeRate.toLocaleString()}/hr` : '-' }}
+                    <span v-if="exchangeRate != null" class="mr-1">≈</span>
+                    <span>{{ exchangeRate != null ? exchangeRate.toLocaleString() : '-' }}</span>
+                    <span>/hr</span>
                 </div>
             </div>
         </div>
