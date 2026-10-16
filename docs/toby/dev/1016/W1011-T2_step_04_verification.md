@@ -50,20 +50,9 @@
 
 ### 正式頁互動
 
-可重跑腳本：[LayoutView.browser.mjs](../../../../src/__tests__/editor/LayoutView.browser.mjs)。以 Vite 正式首頁、Chromium 無頭模式執行 **29／29 案通過**，無 pageerror。
+本次曾以獨立瀏覽器腳本對 Vite 正式首頁進行 Chromium 無頭驗收，**29／29 案通過**，無 pageerror。驗證後依使用者要求移除 `src/__tests__/editor/LayoutView.browser.mjs`，不再保留執行說明或可重跑入口；以下結果與截圖保留為歷史驗收紀錄。
 
-腳本不新增套件依賴，沿用本機已快取的 playwright-core 與 Chromium。它不屬於 Vitest 自動掃描的單元測試，需另行啟動開發伺服器並執行。重跑方式：
-
-```powershell
-# 終端 1
-pnpm dev --host 127.0.0.1
-
-# 終端 2；指向環境既有 playwright 或 playwright-core 的 index.mjs
-$env:PLAYWRIGHT_MODULE = 'C:/Users/yangt/AppData/Local/npm-cache/_npx/361ceb562f3b3235/node_modules/playwright-core/index.mjs'
-node src/__tests__/editor/LayoutView.browser.mjs
-```
-
-可選 `T2_BASE_URL` 覆寫首頁網址；可選 `T2_SCREENSHOT_DIR` 輸出亮／暗模式截圖。上述套件路徑為本次機器的快取位置，其他環境應替換成本機實際入口；未設定時腳本嘗試標準 playwright 套件。
+原腳本沿用環境既有 Playwright／Chromium，未新增專案套件依賴，且不屬於 `pnpm test` 的 Vitest 測試。移除腳本不影響產品拖曳功能或既有 Vitest 測試。
 
 | 通過群組 | 實際證據 |
 | --- | --- |

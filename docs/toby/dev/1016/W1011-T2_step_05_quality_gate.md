@@ -52,7 +52,7 @@
 | pnpm lint-check | 全專案通過 |
 | pnpm build | 正式建置通過 |
 | pnpm build-storybook | 靜態建置通過 |
-| node src/__tests__/editor/LayoutView.browser.mjs | 獨立 Chromium 29／29 案通過，非 Vitest 計數的一部分 |
+| 獨立 Chromium 瀏覽器驗收 | 曾完成 29／29 案，非 Vitest 計數的一部分；腳本後續依使用者要求移除 |
 | Storybook 實際檢查 | 九個 Story、Controls JSON 更新與清空預覽、Accessibility 均通過 |
 | git diff --check／文件相對連結／禁止檔案比對 | 通過；最後交付前再核對 |
 
@@ -65,7 +65,7 @@ Storybook 開發伺服器曾提示無法寫入使用者目錄的全域 settings�
 | src/editor/layout/LayoutView.vue | 指標命中、手勢分流、local ref 預覽、單次移位提交、select-device、取消與 click 抑制、預覽出界映射 |
 | src/editor/layout/GridCanvas.vue | 唯讀預覽 prop、設備與標籤位置同步、淺藍拿起狀態與操作說明 |
 | src/editor/layout/GridCanvas.stories.ts | 三個新預覽／空值／未知 ID Story，保留原六個 Story |
-| src/__tests__/editor/LayoutView.browser.mjs | 可另行重跑的正式頁互動回歸；沿用外部 Playwright，不新增依賴 |
+| src/__tests__/editor/LayoutView.browser.mjs | 曾用於正式頁互動驗收，後續依使用者要求移除；結果保留為歷史紀錄 |
 | docs/toby/dev/1016/W1011-T2*.md／兩張 png | 本工單分析、五步紀錄及亮／暗預覽證據 |
 
 禁止檔案 layoutStore、placementCheck、editorStore、MainLayout、全域快捷鍵、Storybook preview 設定、package.json 與 lockfile 均未修改。未掛入 shapes，未增加 selection store、管線跟隨或邊界拒絕規則。
@@ -97,3 +97,9 @@ Storybook 開發伺服器曾提示無法寫入使用者目錄的全域 settings�
 使用者再次明確指定保留原本外框，已移除拖曳時新增的 2.5 加粗與 4 2 虛線。最終拖曳外框與未拖曳時同為 1.5 實線，沿用既有正常／出界配色，填色仍為 sky-300。瀏覽器回歸新增對原外框顏色的比較，並同步更新粗細與實線斷言。
 
 複驗通過：scoped format／lint、type-check、全專案 format-check／lint-check、912 案 Vitest 與 29 案 Chromium。瀏覽器測試補上等待預覽 DOM 出現，避免讀到前一個渲染狀態；亮暗截圖已更新。本輪未重跑建置或 Storybook axe 掃描。
+
+### 移除獨立瀏覽器腳本
+
+依使用者後續要求刪除 `src/__tests__/editor/LayoutView.browser.mjs`，同步移除文件中的有效連結與執行指令。先前的 29 案 Chromium 結果及截圖保留為歷史證據；產品程式、套件設定與既有 Vitest 測試不變。
+
+移除後 format-check、lint-check、type-check 全部通過，Vitest 仍為 49 份測試檔、912 案通過；未重新執行已刪除的瀏覽器腳本。

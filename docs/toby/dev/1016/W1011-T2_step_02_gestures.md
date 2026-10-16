@@ -33,4 +33,4 @@
 - `pnpm type-check` 通過；viewport、deviceOccupancy、toFootprint、layoutStore 四份既有測試共 70 案通過。
 - 以本機已快取 Playwright／Chromium 對 `pnpm dev --host 127.0.0.1` 首頁操作，確認設備從 (2,2,z=3) 預覽到 (5,4,z=3) 時 store 位置與 history 深度不變，放開清預覽，空白平移增加 (28,28) offset。
 - 同一瀏覽器以原生 mouse click 連續放置兩台 splitter 成功，確認 SVG capture 沒有吞掉原 cell-click；未新增測試套件依賴。
-- 本步沒有呼叫 moveDevice；預覽可見與提交在步驟 03 完成。探針位於忽略的 node_modules/.tmp，完整互動回歸會在步驟 04 保存可重跑腳本。
+- 本步沒有呼叫 moveDevice；預覽可見與提交在步驟 03 完成。探針位於忽略的 node_modules/.tmp，完整互動回歸於步驟 04 完成；獨立腳本後續依使用者要求移除，僅保留驗收紀錄。
