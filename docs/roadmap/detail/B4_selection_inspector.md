@@ -150,3 +150,21 @@ L2 負責把 store 物件轉成 plain props，L3 只認以下形狀：
 - **佈局拔 Vue Flow 提前開工** → 本週 **不加深**綁在現行 Vue Flow 選取上的 Inspector 功能。
 - W0831-T1 **改寫**：先澄清「抱著整包機器資料」≠ 資料驗證；可選輕量攤平（不要求點選演示）或 Discord 回「等佈局」結案。
 - 上週合入後點選可能沒反應——記為已知，**不**派修畫布。正式 B4 加深改掛新選取契約之後。
+
+### 2026-09-21（W0914 結算）
+
+**本項本週無派工，但出現一項必須擋下的風險。**
+
+W0914 的右側工單是**產線總覽 StatsPanel**（[S1](../../work_dispatch/shirone/0914/W0914-S1_stats_panel_land.md)），不是本項——9/15 的 PR #49 review 已更正過一次，此處再記一遍以免後續誤讀。
+
+**⚠ `InspectorSidebar` 不得被移除。** MBD 於 9/20 在 `dev/MBD` 分支改了 `src/app/layouts/MainLayout.vue`，移除了 `InspectorSidebar` 的 import、`inspectorOpen` ref 與整個標籤。該分支未開 PR，**這份 diff 不得合入**——`InspectorSidebar` 是本項呈現端的唯一入口，刪掉等於把 B4 已合入的成果（PR #33 的 `InspectorPanel.vue`）從主畫面斷開。已回寫大綱 §4 的 R-B4 條目。
+
+**前置狀態更新：** 主畫面已於 9/20 換成 `MainLayout` → `LayoutView` → `GridCanvas`（PR #50）。§4.1 攤平契約要接的「新選取契約」，其載體從此是 `LayoutView.vue` 與 `layoutStore`，**不再是 `FactoryCanvas` 的 Vue Flow 選取**。§5 檔案計畫在本項重啟時需依此重訂。
+
+本項仍等 [B2](./B2_placement_chain.md) 的落子鏈，且 B2 已由「等前置」改為「等裁決」。**本項不列 M2 硬綁**（9/15 撤回擴大後維持），改列 M3 前置。
+
+### 2026-09-23（主編裁決）
+
+**風險關閉：主編裁定 `dev/MBD` 不合入**（該分支 6 筆 commit 整批不進 master，MBD 原本的 StatsPanel 樣式工作轉由 shirone 承接）。移除 `InspectorSidebar` 的那份 diff 不會再有合入路徑，上一條目的 ⚠ 解除。
+
+**本項續鎖。** 同日 B2 解鎖的範圍只有**點擊落子**；**選取／旋轉／刪除未放行**，本項送審一律退回。前置不變：等 B2 落子鏈進 master。

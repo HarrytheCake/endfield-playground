@@ -2,7 +2,7 @@
 
 **日期：** 2026-09-12  
 **分支：** `dev/aaaaa0907`  
-**工單：** [W0907-A0](../../../work_dispatch/aaaaa/0907/W0907-A0_layout_store_model.md)
+**工單：** [W0907-A0](../../../../work_dispatch/aaaaa/0907/W0907-A0_layout_store_model.md)
 
 ---
 
@@ -86,4 +86,7 @@ interface LayoutIssues {
 
 | PR | 狀態 |
 |----|------|
-| [#45](https://github.com/dernoson/endfield-playground/pull/45) V12／W0907-A0 | **待審** |
+| [#45](https://github.com/dernoson/endfield-playground/pull/45) V12／W0907-A0 | **MERGED**（2026-09-14T17:12:28Z；merge commit `f95ed9f`） |
+
+合入後 §4 的讀取面簽章即為 master 現況，[W0914-A0](../../../../work_dispatch/aaaaa/0914/W0914-A0_layout_store_land.md) DoD
+「`git cat-file -e origin/master:src/store/layoutStore.ts` 成立」已達成。

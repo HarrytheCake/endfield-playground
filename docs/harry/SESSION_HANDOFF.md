@@ -1,75 +1,98 @@
 # Session Handoff —— 給下一個聊天用的接續筆記
 
+**最後更新：** 2026-10-11（master `9d91f98`）
 **用途：** 開新聊天時貼給 Claude 看，快速還原這個 session 建立的角色定位、工作流程與現況，不用重新從頭摸索。
-**身分：** L2 容器層 Owner，負責 CR-01（畫布）+ CR-02（管線）+ CR-11（工具列）。詳細角色定位見 [README.md](README.md)，五項 editorStore action 缺口清單見 [MILESTONE_0726.md](MILESTONE_0726.md)。
+**身分：** L2 接線層（harry），負責 CR-01（畫布）+ CR-02（管線）+ CR-11（工具列）的互動與接線。詳細角色定位見 [README.md](README.md)，早期 editorStore action 缺口清單見 [MILESTONE_0726.md](MILESTONE_0726.md)（屬舊 Vue Flow 世界，參考用）。
 
 ---
 
-## 1. 這個 session 建立的工作流程（下一輪請延用）
+## 1. 工作流程（下一輪請延用）
 
-1. **大改動前先寫 `PLAN_<功能>.md`**：範疇判定（哪些檔案屬於 L1/L2/L3）、既有介面盤點、設計、明確排除範圍、待確認問題。使用者確認決策後才動工
-2. **實作完成前一定跑四項驗證**：`pnpm type-check` / `pnpm lint-check` / `pnpm format-check` / `pnpm test`，全過才算完成
-3. **一批功能做完後寫 `PR_DESCRIPTION_<日期>.md`**：整理變更檔案、範圍外項目、已知風險，附驗證結果與對應 PLAN 文件連結表，方便直接貼進 GitHub PR
-4. **遇到不確定的產品/設計決策就用選項讓使用者選**，不擅自定案（例如：Esc 要不要開放自訂、鍵位衝突要擋下還是警告）
-5. **發現既有程式碼的問題（dead state、命名不一致等）先回報，不擅自順手修**，除非使用者明確要求
+1. **每週工單是唯一任務來源**：`docs/work_dispatch/harry/<MMDD>/W<MMDD>-H*.md`，週總表 `docs/work_dispatch/WEEK_<YYYYMMDD>.md`。**動任何檔之前先查週總表的「檔案歸屬」表**——同週兩人改同一檔會退回後到者
+2. **大改動前先寫 `PLAN_<功能>.md`**：範疇判定（哪些檔案屬於 L1/L2/L3）、既有介面盤點、設計、明確排除範圍、待確認問題。使用者確認決策後才動工
+3. **實作完成前一定跑四項驗證**：`pnpm type-check` / `pnpm lint-check` / `pnpm format-check` / `pnpm test`，全過才算完成
+4. **一批功能做完後寫 `PR_DESCRIPTION_<日期>.md`**：整理變更檔案、範圍外項目、已知風險，附驗證結果與對應 PLAN／工單連結表，方便直接貼進 GitHub PR（最新範例：[PR_DESCRIPTION_0927.md](PR_DESCRIPTION_0927.md)）
+5. **遇到不確定的產品/設計決策就用選項讓使用者選**，不擅自定案；對稿問題（白紙稿）請使用者去 Discord 問 paper，不要猜
+6. **發現既有程式碼的問題（dead state、命名不一致等）先回報，不擅自順手修**，除非使用者明確要求
 
-## 2. 目前已完成、已驗證通過的功能
+## 2. 已完成、已合入 master 的功能
 
-| 功能 | 對應文件 | 變更檔案重點 |
-|------|----------|---------------|
-| addConnection（畫管線） | [PLAN_addConnection.md](PLAN_addConnection.md) | `FlowNodeOverlay.vue` 動態多埠 Handle、`FactoryCanvas.vue` `@connect` |
-| removeConnection（刪管線） | [PLAN_removeConnection.md](PLAN_removeConnection.md) | `selectionStore.ts` 加 `selectedEdgeIds`、Delete 鍵、右鍵選單 |
-| resetCanvas（暫時性 Ctrl+R） | [PLAN_resetCanvas.md](PLAN_resetCanvas.md) | `useShortcuts.ts` 的 `triggerResetCanvas()` |
-| 快捷鍵可配置化 + WASD 平移 + Esc 設定介面 | [PLAN_wasdCameraPan.md](PLAN_wasdCameraPan.md) / [PLAN_configurableShortcuts.md](PLAN_configurableShortcuts.md) / [PLAN_shortcutSettingsPanel.md](PLAN_shortcutSettingsPanel.md) | 新增 `keybindingStore.ts`、`useKeybinding.ts`、`ShortcutRow.vue`、`ShortcutSettingsPanel.vue` |
-| paper_fig 設計稿 Vue 轉換（v1） | 見 [PR_DESCRIPTION_0823.md](PR_DESCRIPTION_0823.md) §4 | 新增 `src/app/dev/PaperFigMainField.vue`，dev-only 路由 `/dev/paper-fig-main-field`，不掛在左側 dev 選單 |
+| 功能 | 工單／文件 | 變更檔案重點 | 狀態 |
+|------|------------|---------------|------|
+| addConnection / removeConnection / resetCanvas（舊 Vue Flow 畫布） | [PLAN_addConnection.md](PLAN_addConnection.md) / [PLAN_removeConnection.md](PLAN_removeConnection.md) / [PLAN_resetCanvas.md](PLAN_resetCanvas.md) | `FactoryCanvas.vue`、`selectionStore.ts`、`useShortcuts.ts` | 已合入；屬舊畫布世界，`FactoryCanvas` 已不在正式頁 |
+| 快捷鍵可配置化 + WASD 平移 + Esc 設定介面 | [PLAN_configurableShortcuts.md](PLAN_configurableShortcuts.md) 等三份 | `src/store/keybindingStore.ts`、`useKeybinding.ts`、`ShortcutRow`、`ShortcutSettingsPanel.vue` | 已合入；09-14 補單元測試（`02e35b6`） |
+| paper_fig 設計稿 Vue 轉換（v1→v2 疊層工具列） | [PR_DESCRIPTION_0823.md](PR_DESCRIPTION_0823.md) §4 | `src/app/dev/PaperFigMainField.vue`、`PaperFigBottomBar.vue`，dev-only 路由 `/dev/paper-fig-main-field` | 已合入（PR #30）；**沒再延續**，正式工具列視覺改由 goodmorning 的 #48 負責。v2 從未目視比對過 |
+| W0823-H1：P 鍵／Navbar 切換管線工具 | [PLAN_connectTool.md](PLAN_connectTool.md) | `657f5c4` | 已合入 |
+| TableCfg 資料表抓取 script＋建築大圖示快取 | [PLAN_fetchFactoryMachineCraftTable.md](PLAN_fetchFactoryMachineCraftTable.md) | `2172542`、`054e696`、`016b205` | 已合入 |
+| W0907-H1／W0914-H1：格點視窗平移／縮放／座標換算 | [PLAN_gridViewport.md](PLAN_gridViewport.md) | `src/editor/layout/useGridViewport.ts`、`/dev/grid-viewport` | PR #47，09-15 合入；主畫面接入由 toby 做（#50） |
+| W0921-H1：管線折線逐段幾何 `buildPipelinePolyline` | [PLAN_pipelinePolyline.md](PLAN_pipelinePolyline.md) / [PR_DESCRIPTION_0927.md](PR_DESCRIPTION_0927.md) | `src/utils/layout/pipelinePolyline.ts`、`/dev/pipeline-polyline` | PR #56，10-04 合入（含 review 修正 `1ba53c7`：零長度段不參與轉角比對） |
 
-以上皆已 commit（見 `git log`：`1649872` 快捷鍵可配置化、`b46537d` paper_fig v1 轉換）。
+**額外設計筆記（尚未實作）：** [DESIGN_clipboardAndEdgeSelectionState.md](DESIGN_clipboardAndEdgeSelectionState.md)——clipboard store 與管線選取狀態構想，寫於舊 Vue Flow 世界，若要用需先對照新 `layoutStore` 重新評估。
 
-**額外設計筆記（尚未實作）：** [DESIGN_clipboardAndEdgeSelectionState.md](DESIGN_clipboardAndEdgeSelectionState.md)——clipboard store 與管線選取狀態的資料模型構想，對應 MILESTONE §5 問題 2、3。
+## 3. 本週任務：W1004-H1 正式畫面換殼（**尚未開工**）
 
-## 3. 現在進行中、尚未驗證完成的工作
+工單：[W1004-H1_chrome_land.md](../work_dispatch/harry/1004/W1004-H1_chrome_land.md)，週次 10/04 → 10/11，**本週主戲**。週總表：[WEEK_20261004.md](../work_dispatch/WEEK_20261004.md)。
 
-**`PaperFigMainField.vue` 正在依 `paperfigv2.css`（`src/app/dev/paperfigv2.css`）重做頂部工具列**，這是比 v1 更精確的 Figma 座標匯出（絕對定位疊層，非上下堆疊）。目前進度：
+**現況（2026-10-11 確認）：** master 上的 `src/app/layouts/MainLayout.vue` 仍是舊結構，還沒有任何 H1 的 commit 或分支：
 
-1. 已改成疊層結構：`FactoryCanvas` 鋪底，工具列/視角列 `absolute` 浮在上方（而非 v1 的上下堆疊 flex 區塊）
-2. 已依使用者指示拿掉 v1 的「底部設備選取列／分類 Tab／搜尋框」（v2 沒有這段設計）
-3. 工具列樣式第一次手刻 `<button>`/`<div>` 被指出跟設計稿不像，已改回用 `UButton`/`USlider` + `:ui` prop 覆寫（`variant="ghost"` 卸掉預設樣式，`:ui.base`/`:ui.leadingIcon` 蓋上設計稿的 55×55 扁平色塊 + `#4E4E4E`/`#EEFD1C` 配色）
-4. 按鈕實際順序已由使用者確認為：**快捷鍵設定 → 匯出 → 匯入 → 基地切換 → 復原 → 取消復原 → botton frame（語意不明，僅視覺）→ 縮放**
-5. **`pnpm type-check` 已於 2026-08-23 這輪重新跑過並通過**（`vue-tsc --build` 全綠）。`pnpm lint-check` 也過。**尚未做的**：目視比對 `http://localhost:5174/dev/paper-fig-main-field`（或重啟 dev server）是否真的貼近 `paperfigv2.css`——這輪沒啟動 dev server，沒有實際看過畫面
-6. **`pnpm format-check` 目前是紅的**，但失敗的 4 個檔案跟 PaperFigMainField 無關，是快捷鍵功能的檔案（見下方 §3.1）——`PaperFigMainField.vue` 本身格式沒問題
+```
+Navbar
+└ area-workspace
+   ├ ProjectSidebar（左）
+   ├ workspace-main
+   │   ├ area-canvas → LayoutView
+   │   ├ area-toolbar → ToolbarPanel   ← 舊底欄，要拿掉
+   │   └ area-stats → StatsPanel
+   └ InspectorSidebar（最右）          ← 舊殼，要從正式頁卸載
+```
 
-### 3.1 意外發現：快捷鍵功能（§2 列為「已完成、已驗證通過」）目前 format-check 不過
+**要做的（只動 `MainLayout.vue`，本週全檔歸 harry）：**
 
-2026-08-23 這輪重跑四項驗證時發現，以下 4 個檔案有 Prettier 格式問題（`--check` 印出 warn，非本次改動造成，是既有問題）：
-`src/app/App.vue`、`src/components/ShortcutRow/Index.vue`、`src/composables/useKeybinding.ts`、`src/editor/settings/ShortcutSettingsPanel.vue`。
-下一輪如果要動這些檔案，記得先跑 `prettier --write` 確認範圍後再處理，避免跟自己的改動混在一起看不清楚。
+1. 對白紙稿標出工具列／左／右／畫布四塊在 DOM 的位置（class 只留一套；G／S 會從槽位 import 元件，定了就不要再改 class）
+2. `ToolbarPanel` 從 `area-toolbar` 底欄移到稿上的位置——**不重做工具列**，新視覺在 #48
+3. 右側只留 `src/app/StatsPanel`
+4. 卸載 `InspectorSidebar`（連同 `inspectorOpen` ref 與 `v-model:open`）；左側若是「選取後才出現的設備資訊」，先做空槽＋`v-show`，沒有選取資料也要把槽位留對
+5. `useValidation()`／`useFlowEngine()` 兩個呼叫保留不動
 
-## 4. Dev Server 狀態
+**不要碰：** `GridCanvas.vue`／`LayoutView.vue`／`useGridViewport.ts` 內部（toby；可 import 不可改）、StatsPanel 子檔（shirone）、旋轉／Delete／管線 draft、把舊 Inspector 搬到左邊充數。**不准刪** `InspectorSidebar.vue`、`FactoryCanvas.vue` 檔案。
 
-Session 中途有啟動過 `pnpm dev`（背景執行），port 因為 config 變動重啟後跳到 **5174**（不是預設的 5173）。2026-08-23 這輪確認 dev server **目前沒有在跑**（`curl` 回傳 000）。新開聊天時請先確認 dev server 是否還活著（`curl -s -o /dev/null -w '%{http_code}' http://localhost:5174`），沒開就重新啟動一次。
+**DoD：** 無 `area-toolbar` 底欄布局；正式頁 DOM 找不到 `InspectorSidebar`；兩個舊檔仍存在；工具列仍能 `arm`（落子鏈沒斷）。
 
-## 7. 2026-08-23 這輪的重大事故記錄（下次遇到類似 git 狀態務必先看這段）
+**依賴與待確認：**
 
-這輪一開始 `git status` 顯示 **`Revert currently in progress`**（工作目錄乾淨、無衝突標記），是上一個 session 或其他協作者留下的未完成 revert 序列，跟本文件描述的 CR-01/02/11 工作完全無關。處理過程與教訓：
+- **#48（goodmorning 工具列視覺）截至 2026-10-11 仍未合入 master**（PR head `e9b6116` 不在 master；10/06 週總表記為 OPEN＋CONFLICTING）。H1 不用等它：先改槽位、用現有 `ToolbarPanel` 掛到稿上位置，#48 合入後自然換新樣子
+- **`ProjectSidebar` 去留未定**：若稿上左邊是設備面板、專案改走漢堡選單，以稿為準；不確定就請使用者 Discord 問 paper，**不要兩套都留**
+- 配對：harry＋toby（MainLayout 槽位 vs GridCanvas 視窗尺寸）
+- **下週（10/11 起）C1 拉管線互動的 L2 owner 還沒定（toby 或 harry）**；若換殼沒站穩，C1 無處可掛。開新聊天時先看有沒有 `docs/work_dispatch/harry/1011/`
 
-1. 序列是針對 PR #30（`dev/cake_feature`）合併後的一連串 revert/reapply：`57fe4a2` 合併 PR30 → `0fff4b5`「隨便」→ `25ce07a` revert PR30 → `a0d263b` reapply PR30 → `780ebcf` revert「隨便」，`780ebcf` 是 revert 序列跑到一半、還卡在要 revert `7216b16`（commit message 是「not using」）時停住的狀態。
-2. **`git revert --continue` 後發現 `7216b16`「not using」其實不是垃圾 commit**——它就是 §2 表格裡「快捷鍵可配置化 + WASD 平移 + Esc 設定介面」那批已完成功能的實際內容（`keybindingStore.ts`／`useKeybinding.ts`／`ShortcutRow.vue`／`ShortcutSettingsPanel.vue`／三份 PLAN 文件，980 行新增），繼續 revert 下去會把這批驗證過的功能刪掉。**已確認使用者要 abort，不要繼續 revert。**
-3. **`git revert --abort` 本身也捅了簍子**：它把 `dev/cake` reset 回 revert 序列開始前的 `6d33020`，比 `780ebcf` 早了 3 個 commit（`d6351aa`、`7216b16`、以及一個 merge），導致 `SESSION_HANDOFF.md`、`PR_DESCRIPTION_0823.md`、`DESIGN_clipboardAndEdgeSelectionState.md`、`PaperFigMainField.vue`、`PaperFigBottomBar.vue`、`paperfigv2.css` 這些在 PR30 reapply（`a0d263b`）才加回來的檔案全部從工作目錄消失。**靠 `git reflog` 找回 `780ebcf`，用 `git reset --hard 780ebcf` 復原**，檔案都還在，沒有真的遺失。
-4. **教訓：`git revert --abort` 的 ORIG_HEAD 不一定是「乾淨、你以為的那個起點」**，尤其在多重 revert/reapply 疊過的分支上，abort 前最好先用 `git reflog` 確認 abort 會落在哪個 commit，不要預設它等於「revert 開始前一秒」。
-5. **`dev/cake` 目前跟 `origin/dev/cake` 分叉（本地領先 3 個、origin 領先 56 個 commit，尚未深入比對這 56 個是什麼）**，沒有 push，沒有動 origin。下一輪如果要處理分叉，先看清楚 origin 那 56 個 commit 是什麼再決定要 merge/rebase 還是別的做法，不要用本文件的假設帶入。
+## 4. 驗證與環境狀態（2026-10-11 於 master `9d91f98` 實測）
 
-## 5. 這個 repo 已發現但本次沒有一併修的既有問題（下次遇到記得先查這份清單，避免重複調查）
+- `pnpm type-check` / `lint-check` / `format-check` / `test` **四項全綠**（47 個測試檔、888 個測試）
+- 08-23 那輪記錄的「快捷鍵 4 個檔案 format-check 不過」**已不存在**，`prettier --check` 全過
+- **Dev server 沒有在跑**（5173、5174 皆無回應）。要看畫面請先 `pnpm dev`，留意 port 可能不是預設 5173
 
-- **`canvasStore.offset` / `canvasStore.zoom` 是 dead state**：完全沒接到 Vue Flow 真實的 viewport（`FactoryCanvas.vue` 只用 `canvasStore.gridSize`）。任何要做「縮放/平移控制項」的功能都要注意這點，畫面平移／縮放實際上要透過 `useVueFlow().setViewport()` 才會動
-- **`FactoryCanvas.vue` 工具列的 `equipmentLabelMap` 用的是 `smelter`/`crusher`/`assembler`/`conveyor-node`/`power-node` 佔位字串**，只有 `crusher` 對得上 `src/data/machines.ts` 真實的 `Machine.id`，其餘機型放置後查不到真實配方/埠資料
-- **`editorStore.resetCanvas()` 沒有走 Command Pattern**，呼叫後無法 `Ctrl+Z` 復原（`useShortcuts.ts` 的暫時性觸發因此加了 `window.confirm()` 防呆）
-- **`src/paper_fig.css`（v1，已刪除）之前的副檔名誤標**會讓 `prettier --check` 直接 SyntaxError；`paperfigv2.css` 目前副檔名也不是真正的 CSS（沒有選擇器/大括號的扁平屬性清單），轉完 `.vue` 後記得一併確認要不要刪除或搬到 `docs/` 下，避免重蹈覆轍擋住 `format-check`
+## 5. Git 狀態
 
-## 6. 專案基本規則提醒（來自 `docs/dernoson/claude/CLAUDE.md`，長期有效）
+- 目前 checkout 在 **`master`**，工作目錄乾淨，與 `origin/master`、`upstream/master` 同步
+- **`dev/cake` 已無分叉**：它是 master 的祖先（落後 65、領先 0），`origin/dev/cake` 同步。08-23 那輪記錄的「本地領先 3／origin 領先 56」已經解決
+- 開工 H1 前：從最新 master 開新分支，或先把 `dev/cake` fast-forward 到 master 再做，不要在舊的 `dev/cake` 上直接改
 
-- 三層架構：L1（store/型別/引擎）不寫真實 UI；L2（`src/editor/`、composables）互動邏輯；L3（`src/components/`）純展示，**不得 import Pinia store**
+**保留的教訓（08-23 revert 事故）：** 當時 `git revert --abort` 把分支 reset 到比預期更早的 commit，一度讓多個檔案從工作目錄消失，靠 `git reflog` 找回。**在多次 revert／reapply 疊過的分支上，abort 前先用 `git reflog` 確認會落在哪個 commit。**
+
+## 6. 已知但未修的既有問題（遇到先查這份，避免重複調查）
+
+- **`src/store/canvasStore.ts` 的 `offset`／`zoom` 是 dead state**：只有舊 `FactoryCanvas.vue` 與 `PaperFigMainField.vue` 引用。新畫布的平移縮放走 `useGridViewport`，不要再往 `canvasStore` 接
+- **`FactoryCanvas.vue` 的 `equipmentLabelMap` 仍是 `smelter`/`crusher` 等佔位字串**（舊五顆 `EquipmentType` 按鈕）。只武裝舊 `editorStore`、新畫布不讀；#48 合入後由 G1 從正式工具列拿掉，**不是 H1 的事**
+- **`editorStore.resetCanvas()`（`src/store/editorStore.ts:276`）仍沒走 Command Pattern**，無法 `Ctrl+Z` 復原；`useShortcuts.ts` 的 `window.confirm()` 防呆還在
+- **`src/app/dev/paperfigv2.css` 不是真正的 CSS**（扁平屬性清單），目前沒擋 `format-check`，但哪天要清 dev 頁時記得決定刪除或搬到 `docs/`
+
+## 7. 專案基本規則提醒（來自 `docs/dernoson/claude/CLAUDE.md`，長期有效）
+
+- 三層架構：L1（store／型別／引擎）不寫真實 UI；L2（`src/editor/`、composables、`src/app/layouts/`）互動邏輯與接線；L3（`src/components/`）純展示，**不得 import Pinia store**
+- Store 目錄是 `src/store/`（不是 `src/stores/`）
 - 元件命名：PascalCase 資料夾 + `Index.vue`
 - 註解：繁中、JSDoc、禁 emoji、講「為什麼」不講「做了什麼」
-- Store 操作：L2 一律呼叫 L1 高階 action，不自組 Command、不直接 mutate `nodes`/`edges`
-- 不擅自 push / 建 PR / 合併 master；大改動先討論分步驟
-- Nuxt UI 元件優先，VueUse 工具函式優先，自訂顏色寫 `tokens.css`（但目前 `style.css` 還有不少既有的散落顏色值，非本次要處理）
+- Store 操作：L2 一律呼叫 L1 高階 action，不自組 Command、不呼叫 `historyStore.execute()`、不直接 mutate `nodes`/`edges`
+- Nuxt UI v3 元件優先、VueUse 工具函式優先（「自訂顏色寫 `tokens.css`」這條已於 `37333a2` 移除，該檔不存在）
+- 不擅自 push／建 PR／合併 master；push 前四項驗證必須全過
+- 本週退回清單重點：旋轉、Delete、改 `editorStore` 簽名、`GridCanvas` 內 import Pinia、刪 `InspectorSidebar.vue`／`FactoryCanvas.vue`、非 owner 改鎖區

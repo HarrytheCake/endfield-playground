@@ -69,7 +69,7 @@
 
 - **元件**：優先使用 Nuxt UI v3 元件，不自己重新發明（Button、Modal、Table、Tooltip、Tabs 等）
 - **工具函式**：優先使用 VueUse（`useMagicKeys`、`useLocalStorage`、`useDebounceFn`、`useElementSize` 等），不自己重新發明
-- **樣式**：優先使用 Tailwind CSS 內建 class；自訂顏色統一寫在 `src/assets/styles/tokens.css`，少寫散落的 inline CSS
+- **樣式**：優先使用 Tailwind CSS 內建 class，少寫散落的 inline CSS
 - **TypeScript**：避免 `any`；確實需要時加註解說明原因
 - **遵照 SOLID 原則**：尤其單一職責（一個函式 / 元件做一件事）與依賴反轉（依賴介面而非實作）
 - **不過度設計**：不寫使用者未要求的功能；不為「未來可能」預先抽象；三個相似的地方再考慮抽出共用

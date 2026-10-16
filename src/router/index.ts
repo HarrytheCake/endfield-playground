@@ -58,6 +58,11 @@ const router = createRouter({
                     name: 'dev-grid-viewport',
                     component: () => import('@/app/dev/GridViewportDemo.vue'),
                 },
+                {
+                    path: 'pipeline-polyline',
+                    name: 'dev-pipeline-polyline',
+                    component: () => import('@/app/dev/PipelinePolylineDemo.vue'),
+                },
             ],
         },
         // 獨立於 DevLayout 之外：不掛在左側 dev 工具導覽列，只能直接切換網址到達

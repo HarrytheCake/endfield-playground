@@ -8,8 +8,8 @@
 | 建議主責／備援 | toby（確定，≤2h／假日）／harry（**可派**，中風險，動力驅動）／aaaaa 記錄轉單 |
 | 性質 | 接線（L2） |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)、[B1](./B1_toolbar_real_machines.md) |
-| 狀態 | `[!]` 封鎖中（佈局純函式 4／6；缺 resolveConnections／toTopology／store 模型） |
-| 最後更新 | 2026-08-30 |
+| 狀態 | `[x]` 點擊落子已合入 master（#54／#55；2026-09-27） |
+| 最後更新 | 2026-10-04 |
 
 ---
 
@@ -139,3 +139,46 @@ L1 從 5–6 月就大量提交，`editorStore` 的八個高階 action 早已可
 ### 2026-08-30
 - **進度盤點：** `src/utils/layout/` 已有 `deviceOccupancy`／`pipelineGeometry`／`overlapDetection`／`portAnchor`（4／6）。**仍缺** `resolveConnections`、`toTopology`（及 `types/layout`）與 store 模型改寫 → **維持 `[!]`**
 - W0823-T1 已改指向 B4，本項本週無直接產出；9/6 起若純函式未補齊，依大綱 §11 不把門檻必要項押在本項
+
+### 2026-09-21（W0914 結算）
+
+**封鎖性質改變：由「等前置」改為「等裁決」。** 本項的技術前提在本週全部到齊：
+
+| 前提 | 狀態 |
+|------|------|
+| `types/layout`＋`resolveConnections`＋`toTopology` | **已合入** PR #40（9/1） |
+| 只讀殼 `GridCanvas` | **已合入** PR #46（9/13） |
+| `layoutStore`（含 `placeDevice`／`PlacementResult`） | **已合入** PR #45（09-14T17:12Z） |
+| 平移縮放 `useGridViewport` | **已合入** PR #47（09-14T17:34Z） |
+| 主畫面接入（`MainLayout` → `LayoutView` → `GridCanvas`，資料來自 store） | **已合入** PR #50（09-20T12:57Z） |
+
+**§8 的封鎖解除條件因此要改寫。** 原條件是「切分原則二選一已確定」與純函式補齊，兩者都已滿足；**現在唯一擋著的是主編對「互動解鎖」的當週裁示**——大綱 §11 已補明「底層就緒不等於自動解鎖」，不得由依賴已清推論而自行開工。
+
+**§5 檔案計畫需在解鎖時一併重訂。** 原計畫寫的是改 `FactoryCanvas.vue`；落子鏈現在應落在 `LayoutView.vue`（容器）與 `layoutStore.placeDevice`，**舊 `FactoryCanvas` 依大綱 §11 只維護不加深**。§10 的「同週只允許一人動 `FactoryCanvas.vue`」對應改為 `LayoutView.vue`，owner 為 toby。
+
+**§10 的未交頂替維持：** 9/27 仍可用現有放置流程＋A2 修正後的資料演示。**但本項未列 M2 硬綁**（9/15 撤回擴大後維持），且本月只剩一週、落子鏈未開工 → **改列 M3 前置**，最遲 10/04 開工，否則 C1 連帶延期。
+
+### 2026-09-23（主編裁決：解鎖，狀態改 `[~]`）
+
+**放行點擊落子；選取／旋轉／刪除不開。** 大綱 §9 的封鎖列已解除。
+
+| 項 | 裁示內容 |
+|----|----------|
+| 範圍 | **點擊落子**（arm → 點格 → `addDevice`）。拖曳落子與綠框／紅框即時預覽列**加分**，不進 9/27 驗收 |
+| L2 owner | **toby**（[W0921-T1](../../work_dispatch/toby/0921/W0921-T1_placement_chain.md)） |
+| L1 側前置 | `canPlaceDevice`／`canMoveDevice`（[W0921-A0](../../work_dispatch/aaaaa/0921/W0921-A0_placement_precheck.md)，9/24 交） |
+| 仍鎖 | B3 旋轉、B4 選取、B5 刪除——**送審即退回** |
+
+**§5 檔案計畫據此定案（取代原 `FactoryCanvas.vue` 那版）：**
+
+| 動作 | 檔案 | 說明 |
+|------|------|------|
+| 新建 | `src/editor/toolbar/usePlacementIntent.ts` | 落子意圖，module-scope ref。**不擴充 `EquipmentType`、不進任何 store** |
+| 修改 | `src/editor/toolbar/ToolbarPanel.vue` | 僅 `<script>`：`handleRealMachineClick` 改寫入意圖。**直接在 master 版上改**——#48 於同日裁定維持現狀，本項不再等它 |
+| 修改 | `src/editor/layout/LayoutView.vue` | 接畫布點擊 → `canPlaceDevice` → `layoutStore.addDevice` |
+| 修改 | `src/editor/layout/GridCanvas.vue` | 視需要加預覽用 props；維持零 store import |
+| **不碰** | `editorStore` 簽名、`FactoryCanvas.vue`、`InspectorSidebar` | |
+
+**落子欄位定案：** `label` 填 `machine.name`（中文名）——`GridCanvas` 畫的是 `label ?? machineType`，不填則門檻演示顯示英數 id。`createPlacedDevice` 工廠本週不做，由落子端自組（預設值屬呈現決策，排 10 月）。
+
+**硬約束：** L2 不得自行 import `detectOverlaps`／`toDeviceFootprint`／`deviceSizeFromMachine` 重算佔格。三支皆為 public export，做得到但會形成兩套判定——症狀是「預覽說綠的、放下去卻失敗」，與 [C2 §4.4](./C2_add_connection_contract.md) 要避免的同型。

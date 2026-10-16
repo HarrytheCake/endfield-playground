@@ -1,26 +1,42 @@
 <script setup lang="ts">
+/**
+ * 下方工具列：視角分頁＋可收合的真機器選取列（#48 版面）
+ *
+ * 機器清單取自 `listToolbarMachines`；點選卡片只更新共用的落子意圖（`usePlacementIntent`），
+ * 由畫布讀取後落子，本元件不 import Pinia。
+ */
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import type { MachineCategory } from '@/types/machine';
+import { usePlacementIntent } from '@/editor/toolbar/usePlacementIntent';
+import {
+    TOOLBAR_MACHINE_TAGS,
+    listToolbarMachines,
+    type ToolbarMachineRow,
+} from '@/editor/toolbar/toolbarMachines';
 
 /** 定義由上層傳入的 Props */
 const props = defineProps<{
-    /** 目前選取的設備 ID */
-    selectedEquipment?: string | null;
     /** 目前選取的視角 ID（layout / process / parallel） */
     selectedView?: string | null;
 }>();
 
 /** 定義發送給上層的事件 */
 const emit = defineEmits<{
-    (e: 'equip-click', equipmentId: string): void;
-    (e: 'equip-dragstart', event: DragEvent, equipmentId: string): void;
+    /** 點擊視角分頁；實際切換由上層處理 */
     (e: 'view-click', viewId: string): void;
 }>();
+
+/** 真機器的暫態落子意圖；與畫布共用，不寫入藍圖 store */
+const { armedMachineId, arm, disarm } = usePlacementIntent();
+
+/** 分類 Tab 的值：「全部」或資料庫分類 */
+type CategoryTab = '全部' | MachineCategory;
 
 /** 控制底部設備選取列的開關狀態 */
 const bottomBarOpen = ref(true);
 
 /** 記錄目前選取的分類 Tab */
-const activeCategory = ref('全部');
+const activeCategory = ref<CategoryTab>('全部');
 
 /** 搜尋關鍵字狀態 */
 const searchQuery = ref('');
@@ -28,14 +44,20 @@ const searchQuery = ref('');
 /** 設備卡片列（可橫向捲動容器）的 DOM 參照 */
 const scrollerRef = ref<HTMLElement | null>(null);
 
-/** 物件欄是否還能向左 / 向右捲動（控制 scrolling hint 顯示） */
+/** 物件欄是否還能向左捲動（控制左側 scrolling hint 顯示） */
 const canScrollLeft = ref(false);
+/** 物件欄是否還能向右捲動（控制右側 scrolling hint 顯示） */
 const canScrollRight = ref(false);
 
+/** 切換底部設備選取列的展開／收合 */
 function toggleBottomBar() {
     bottomBarOpen.value = !bottomBarOpen.value;
 }
 
+/**
+ * 無修飾鍵的 `Z` 切換底部選取列；輸入框內與 Ctrl／Meta／Alt 組合鍵不處理。
+ * @param event 全域鍵盤事件
+ */
 function handleKeyDown(event: KeyboardEvent) {
     const target = event.target as HTMLElement;
     const isEditable =
@@ -55,18 +77,24 @@ function updateScrollHints() {
         canScrollRight.value = false;
         return;
     }
-    // 保留 1px 容差，避免小數點捲動位置造成誤判
+    /** 保留 1px 容差，避免小數點捲動位置造成誤判 */
     canScrollLeft.value = el.scrollLeft > 1;
     canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
 }
 
+/**
+ * 將垂直滾輪轉為卡片列的水平捲動。
+ * @param event 卡片列上的滾輪事件
+ */
 function handleWheelScroll(event: WheelEvent) {
     const target = event.currentTarget as HTMLElement;
     target.scrollLeft += event.deltaY;
 }
 
+/** 監看卡片列尺寸變化以更新捲動提示；元件卸載時中止 */
 let resizeObserver: ResizeObserver | null = null;
 
+/** 掛載時註冊 `Z` 鍵監聽並開始監看卡片列尺寸 */
 onMounted(() => {
     window.addEventListener('keydown', handleKeyDown);
     updateScrollHints();
@@ -76,6 +104,7 @@ onMounted(() => {
     }
 });
 
+/** 卸載時移除鍵盤監聽並停止尺寸監看 */
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyDown);
     resizeObserver?.disconnect();
@@ -88,95 +117,34 @@ const viewTabs: Array<{ id: string; label: string }> = [
     { id: 'parallel', label: '並列視角' },
 ];
 
-/** 分類 Tab */
-const categoryTabs = ['全部', '物流', '倉儲', '生產', '合成', '電力', '功能'];
+/** 分類 Tab：「全部」＋資料庫分類（順序同 `TOOLBAR_MACHINE_TAGS`） */
+const categoryTabs: readonly CategoryTab[] = ['全部', ...TOOLBAR_MACHINE_TAGS];
 
-/**
- * 擴充後的所有設備清單
- */
-const equipments: Array<{ id: string; category: string; label: string }> = [
-    // 物流
-    { id: 'conveyor', category: '物流', label: '傳送帶' },
-    { id: 'logistics-bridge', category: '物流', label: '物流橋' },
-    { id: 'splitter', category: '物流', label: '分流器' },
-    { id: 'merger', category: '物流', label: '匯流器' },
-    { id: 'item-inlet', category: '物流', label: '物品准入口' },
-    { id: 'pipe', category: '物流', label: '管道' },
-    { id: 'pipe-bridge', category: '物流', label: '管道橋' },
-    { id: 'pipe-splitter', category: '物流', label: '管道分流器' },
-    { id: 'pipe-merger', category: '物流', label: '管道匯流器' },
-    { id: 'pipe-inlet', category: '物流', label: '管道准入口' },
-
-    // 倉儲
-    { id: 'protocol-box', category: '倉儲', label: '協議儲存箱' },
-    { id: 'warehouse-in', category: '倉儲', label: '倉庫存貨口' },
-    { id: 'warehouse-out', category: '倉儲', label: '倉庫取貨口' },
-    { id: 'liquid-tank', category: '倉儲', label: '儲液罐' },
-    { id: 'gas-tank', category: '倉儲', label: '儲氣罐' },
-    { id: 'access-line-base', category: '倉儲', label: '倉庫存取線基段' },
-    { id: 'access-line-source', category: '倉儲', label: '倉庫存取線源樁' },
-    { id: 'hidden-pipe-in', category: '倉儲', label: '暗管入口' },
-    { id: 'hidden-pipe-out', category: '倉儲', label: '暗管出口' },
-    { id: 'multi-hidden-in', category: '倉儲', label: '多口暗管入口' },
-    { id: 'multi-hidden-out', category: '倉儲', label: '多口暗管出口' },
-
-    // 生產
-    { id: 'smelter', category: '生產', label: '精煉爐' },
-    { id: 'crusher', category: '生產', label: '粉碎機' },
-    { id: 'parts-maker', category: '生產', label: '配件機' },
-    { id: 'shaper', category: '生產', label: '塑形機' },
-    { id: 'seed-harvester', category: '生產', label: '採種機' },
-    { id: 'planter', category: '生產', label: '種植機' },
-    { id: 'wastewater-processor', category: '生產', label: '廢水處理機' },
-
-    // 合成
-    { id: 'equip-parts-maker', category: '合成', label: '裝備原件機' },
-    { id: 'filler', category: '合成', label: '灌裝機' },
-    { id: 'packager', category: '合成', label: '封裝機' },
-    { id: 'grinder', category: '合成', label: '研磨機' },
-    { id: 'reaction-pool', category: '合成', label: '反應池' },
-    { id: 'expanded-reaction-pool', category: '合成', label: '擴容反應池' },
-    { id: 'heaven-furnace', category: '合成', label: '天有洪爐' },
-    { id: 'purifier', category: '合成', label: '提純機' },
-    { id: 'dismantler', category: '合成', label: '拆解機' },
-    { id: 'liquid-gas-converter', category: '合成', label: '液氣轉化機' },
-    { id: 'solid-gas-converter', category: '合成', label: '固氣轉化機' },
-    { id: 'gas-disperser', category: '合成', label: '氣體散布機' },
-    { id: 'gas-reactor', category: '合成', label: '氣體反應爐' },
-
-    // 電力
-    { id: 'power-pole', category: '電力', label: '供電樁' },
-    { id: 'xirang-power-pole', category: '電力', label: '息壤供電樁' },
-    { id: 'repeater', category: '電力', label: '中繼器' },
-    { id: 'xirang-repeater', category: '電力', label: '息壤中繼器' },
-    { id: 'thermal-pool', category: '電力', label: '熱能池' },
-
-    // 功能
-    { id: 'zipline', category: '功能', label: '滑索架' },
-    { id: 'long-zipline', category: '功能', label: '長距滑索架' },
-    { id: 'sprinkler', category: '功能', label: '灑水機' },
-];
-
-/**
- * 根據分類與關鍵字進行過濾
- */
-const filteredEquipments = computed(() => {
-    let result = equipments;
+/** 依目前分類取出的真機器列；「全部」為各分類合併，同一機型只列一次 */
+const categoryMachines = computed<ToolbarMachineRow[]>(() => {
     if (activeCategory.value !== '全部') {
-        result = result.filter((eq) => eq.category === activeCategory.value);
+        return listToolbarMachines(activeCategory.value);
     }
+    const seen = new Set<string>();
+    return TOOLBAR_MACHINE_TAGS.flatMap(listToolbarMachines).filter((row) => {
+        if (seen.has(row.id)) return false;
+        seen.add(row.id);
+        return true;
+    });
+});
+
+/** 再依搜尋關鍵字過濾（比對中文名稱與機型 id） */
+const filteredMachines = computed(() => {
     const query = searchQuery.value.trim().toLowerCase();
-    if (query) {
-        result = result.filter(
-            (eq) => eq.label.toLowerCase().includes(query) || eq.id.toLowerCase().includes(query),
-        );
-    }
-    return result;
+    if (!query) return categoryMachines.value;
+    return categoryMachines.value.filter(
+        (row) => row.name.toLowerCase().includes(query) || row.id.toLowerCase().includes(query),
+    );
 });
 
 /** 過濾結果改變後，DOM 更新完再重新判斷是否還能捲動 */
 watch(
-    filteredEquipments,
+    filteredMachines,
     () => {
         nextTick(updateScrollHints);
     },
@@ -188,17 +156,21 @@ function handleViewClick(viewId: string) {
     emit('view-click', viewId);
 }
 
-/** 改為 Emit 事件給上層處理 */
-function handleEquipClick(equipmentId: string) {
-    emit('equip-click', equipmentId);
+/**
+ * 切換分類；清單換了，原本拿起的機型可能已不在畫面上，故一併解除落子意圖。
+ * @param tab 目標分類
+ */
+function handleCategoryClick(tab: CategoryTab) {
+    activeCategory.value = tab;
+    disarm();
 }
 
-function handleEquipDragStart(event: DragEvent, equipmentId: string) {
-    if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = 'copy';
-        event.dataTransfer.setData('application/x-endfield-equipment', equipmentId);
-    }
-    emit('equip-dragstart', event, equipmentId);
+/**
+ * 點選真機器卡片：武裝落子意圖，再點同一台則取消。
+ * @param row 被點選的機器列
+ */
+function handleMachineClick(row: ToolbarMachineRow) {
+    arm(row.id);
 }
 </script>
 
@@ -294,10 +266,11 @@ function handleEquipDragStart(event: DragEvent, equipmentId: string) {
                             v-for="tab in categoryTabs"
                             :key="tab"
                             type="button"
-                            @mousedown="activeCategory = tab"
+                            @click="handleCategoryClick(tab)"
                             class="h-[43px] w-[110px] cursor-pointer rounded-[15px] text-[20px] leading-none font-light tracking-[0.03em] text-white transition-colors duration-300 ease-out"
                             :class="activeCategory === tab ? 'bg-[#2b2b2b]' : 'bg-[#3c3c3c]'"
                             :aria-label="`切換至 ${tab} 分類`"
+                            :aria-pressed="activeCategory === tab"
                         >
                             {{ tab }}
                         </button>
@@ -315,7 +288,7 @@ function handleEquipDragStart(event: DragEvent, equipmentId: string) {
                         >
                             <!-- 無搜尋結果提示 -->
                             <div
-                                v-if="filteredEquipments.length === 0"
+                                v-if="filteredMachines.length === 0"
                                 class="flex h-[100px] w-full items-center justify-center text-[20px] font-light text-white/50"
                             >
                                 {{
@@ -327,19 +300,19 @@ function handleEquipDragStart(event: DragEvent, equipmentId: string) {
 
                             <!-- 物件卡片 -->
                             <button
-                                v-for="equipment in filteredEquipments"
-                                :key="equipment.id"
+                                v-for="machine in filteredMachines"
+                                :key="machine.id"
                                 type="button"
-                                draggable="true"
-                                @mousedown="handleEquipClick(equipment.id)"
-                                @dragstart="handleEquipDragStart($event, equipment.id)"
+                                :title="`${machine.name}（${machine.sizeText}）`"
+                                :aria-pressed="armedMachineId === machine.id"
+                                @click="handleMachineClick(machine)"
                                 class="relative h-[100px] w-[266px] shrink-0 cursor-pointer text-left focus:outline-none"
                             >
                                 <!-- 深色背景層 -->
                                 <div
                                     class="absolute top-[14px] left-0 h-[78px] w-full rounded-t-[8px] transition-colors duration-300 ease-out"
                                     :class="
-                                        props.selectedEquipment === equipment.id
+                                        armedMachineId === machine.id
                                             ? 'bg-[#1c1c1c]'
                                             : 'bg-[#2b2b2b] active:bg-[#1c1c1c]'
                                     "
@@ -349,7 +322,7 @@ function handleEquipDragStart(event: DragEvent, equipmentId: string) {
                                 <div
                                     class="absolute top-[92px] left-0 h-[4px] w-full rounded-b-[8px] bg-[#eefd1c] transition-shadow duration-100"
                                     :class="
-                                        props.selectedEquipment === equipment.id
+                                        armedMachineId === machine.id
                                             ? 'shadow-[0_2px_4px_rgba(238,253,28,0.5)]'
                                             : 'shadow-none'
                                     "
@@ -366,7 +339,7 @@ function handleEquipDragStart(event: DragEvent, equipmentId: string) {
                                 <span
                                     class="absolute top-[41px] left-[107px] text-[20px] leading-none font-light tracking-[0.03em] text-white"
                                 >
-                                    {{ equipment.label }}
+                                    {{ machine.name }}
                                 </span>
                             </button>
                         </div>

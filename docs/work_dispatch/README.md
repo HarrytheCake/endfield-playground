@@ -2,10 +2,10 @@
 
 | meta | value |
 |------|-------|
-| version | **v3.5（2026-09-15；PR #49 勘誤：S1＝產線總覽、M2 恢復硬綁 B1）** |
-| 本週區間 | **2026-09-14 → 2026-09-20**（[WEEK_20260914](./WEEK_20260914.md) **v1.1**） |
-| 上週區間 | 2026-09-07 → 2026-09-13（[WEEK_20260907](./WEEK_20260907.md)） |
-| 上游 | [ROADMAP_OUTLINE](../roadmap/ROADMAP_OUTLINE.md) **v1.9**、主編 PR #49 review |
+| version | **v3.14（2026-10-13；PR #66 裁決回寫）** |
+| 本週區間 | **2026-10-11 → 2026-10-18**（[WEEK_20261011](./WEEK_20261011.md) **v1.2**） |
+| 上週區間 | 2026-10-04 → 2026-10-11（[WEEK_20261004](./WEEK_20261004.md) v1.2；**已結算**） |
+| 上游 | [ROADMAP_OUTLINE](../roadmap/ROADMAP_OUTLINE.md) **v1.17** |
 
 ---
 
@@ -13,44 +13,43 @@
 
 | 你想知道 | 打開 |
 |----------|------|
-| **我這週要交什麼** | 下表 **0914** |
-| 這週全隊／驗收 | [WEEK_20260914.md](./WEEK_20260914.md) |
-| 檔案鎖 | [WEEK_20260914.md](./WEEK_20260914.md) §3 |
+| **我這週要交什麼** | 下表 **1011** |
+| 這週全隊／驗收 | [WEEK_20261011.md](./WEEK_20261011.md) |
+| **檔案鎖（暫停中也適用）** | [WEEK_20261011.md](./WEEK_20261011.md) §2.2 |
 
-### 本週（9/14–9/20）
+### 本週（10/11–10/18）
 
 | code | 工單 | 一句話 |
 |------|------|--------|
-| [aaaaa](./aaaaa/0914/) | [**A0（最優）**](./aaaaa/0914/W0914-A0_layout_store_land.md) | #45 收尾合入（T1 前置） |
-| | [A1](./aaaaa/0914/W0914-A1_connection_blueprint_contract.md) | C2／D4 草案（可超前） |
-| [dernoson](./dernoson/0914/) | [D0](./dernoson/0914/W0914-D0_gate_and_main_view.md) | 清積壓；守閘 |
-| [toby](./toby/0914/) | [**T1**](./toby/0914/W0914-T1_main_view_integration.md) | #45 合入後掛 GridCanvas（只讀） |
-| [harry](./harry/0914/) | [H1](./harry/0914/W0914-H1_viewport_into_canvas.md) | #47 收尾＋接面說明 |
-| [shirone](./shirone/0914/) | [S1](./shirone/0914/W0914-S1_stats_panel_land.md) | **產線總覽** StatsPanel → `src/app/` |
-| [goodmorning](./goodmorning/0914/) | [G1](./goodmorning/0914/W0914-G1_toolbar_land.md) | #48 收尾；ToolbarPanel 限視覺 |
-| [paper](./paper/0914/) | [P1](./paper/0914/W0914-P1_review_and_polish.md) | 審 #48／S1；命名已結案 |
-| [avery](./avery/0914/) | [V0](./avery/0914/W0914-V0_pause.md) | 暫停（亞運） |
-| [azure9572](./azure9572/0914/) | [Z0](./azure9572/0914/W0914-Z0_pause.md) | 暫停 |
-| [MBD](./MBD/0914/) | [M0](./MBD/0914/W0914-M0_pause.md) | 暫停；9/21 StatsPanel 文案 |
+| [toby](./toby/1011/) | [T2](./toby/1011/W1011-T2_device_drag.md) | 設備拖曳接進正式畫面 |
+| [aaaaa](./aaaaa/1011/) | [A0](./aaaaa/1011/W1011-A0_c5_primary_output.md) | 派工已發；C5 `setDevicePrimaryOutput` |
+| [harry](./harry/1011/) | [H2](./harry/1011/W1011-H2_left_panel_swap.md) | 刪舊左側面板、接 `MachineCard`；右／下等合入 |
+| [dernoson](./dernoson/1011/) | [D0](./dernoson/1011/W1011-D0_gate_c1.md) | 守閘；清 #64／#62／#48；**裁 C1 owner** |
+| [goodmorning](./goodmorning/1011/) | [G2](./goodmorning/1011/W1011-G2_pr48_and_device_style.md) | #48 解 conflict 合入＋畫布設備樣式 |
+| [shirone](./shirone/1011/) | [S2](./shirone/1011/W1011-S2_pr62_and_pipeline_style.md) | #62 待 approve 合入＋傳送帶／水管樣式 |
+| [paper](./paper/1011/) | [P2](./paper/1011/W1011-P2_pipeline_select.md) | 管線點選效果稿；審 #62 |
+| [MBD](./MBD/1011/) | [M2](./MBD/1011/W1011-M2_warning_icon.md) | 管線未連通警示 icon |
+| [azure9572](./azure9572/1011/) | [Z2](./azure9572/1011/W1011-Z2_pr64_fix.md) | #64 審查修正＋W001 決議 |
+| [avery](./avery/1011/) | [V1](./avery/1011/W1011-V1_power_pole_style.md) | 供電樁畫布樣式 |
 
 ---
 
 ## 1. 定案摘要（全員）
 
-1. 佈局視角改掛 `GridCanvas`；舊殼保留不刪  
-2. **只讀**；B2／B4 等底層接完（不硬綁進 9/27）  
-3. T1：**#45 合入後開工**  
-4. 視角切換器照稿；**下週另派人**（非 Avery）  
-5. 右側＝**產線總覽 StatsPanel** → `src/app/StatsPanel/`（不是設備資訊）  
-6. `ToolbarPanel` 對 goodmorning 限視覺解鎖  
-7. **9/27 硬綁 B1**  
-8. 合入序：#45 → #47 → #48 → T1 → S1  
+1. W1004 換殼／無邊界／出界／埠命中**已合**；**本週依 10/11 會議重派**：設備拖曳＋左面板換新＋畫布樣式
+2. **C1 owner＝toby**（T2 合入後、10/18 週）；命中函式已在 master（#65）
+3. C5 本週只交 **寫入 action**；引擎讀＝10/18
+4. 畫布樣式一律做 `shapes/` 子元件；拖曳拿起＝淺藍；選中＝local ref（多選 store 不在 POC）
+5. azure／avery 考試、**shirone 本月學 Python**：照會議派，但各單有「最小可交」
+6. 合入序：#64 → #62 → #48 → T2 → H2 → A0 → 樣式子元件
+7. **M3＝10/25 不動**；C1 趕不上備案＝相鄰兩台直線；Ctrl+Z 排 11 月
+8. A／B 組裁決見 [WEEK §2.3](./WEEK_20261011.md)（[PR #66](https://github.com/dernoson/endfield-playground/pull/66)）
 
 ---
 
 ## 2. 目錄
 
-`0914/`＝本週；`0907/`＝上週；`0831/`／`0823/`＝封存。
+`1011/`＝本週；`1004/`／`0921/`／`0914/`／…＝封存。
 
 ---
 
@@ -58,5 +57,5 @@
 
 | 檔 | 狀態 |
 |----|------|
-| WEEK_20260914 | **v1.1** |
-| ROADMAP_OUTLINE | **v1.9** |
+| WEEK_20261011 | **v1.2** |
+| ROADMAP_OUTLINE | **v1.17** |

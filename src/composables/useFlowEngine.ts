@@ -36,6 +36,7 @@ import { getRecipesForMachine, getItemForm } from '@/data/products';
 import { getMachine, getMachineMode } from '@/data/machines';
 import type { PortMedia } from '@/types/machine';
 import { parsePortHandleIndex } from '@/utils/portUtils';
+import { getMachinePortMedia } from '@/utils/layout/portMedia';
 import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import { useValidationStore } from '@/store/validationStore';
@@ -197,6 +198,8 @@ function machineHasRecipes(machineType: string, machineMode?: string): boolean {
 /**
  * 取得節點指定 handle 對應埠的媒質。
  * handle 缺省或無埠／索引越界時回傳 null（略過埠媒質，改由 form 等回退）。
+ *
+ * 埠媒質查表與 {@link getMachinePortMedia}／`canConnect` **共用**，不另寫一份。
  */
 function resolvePortMedia(
     machineType: string,
@@ -205,14 +208,10 @@ function resolvePortMedia(
     handle: string | null | undefined,
 ): PortMedia | null {
     if (handle == null) return null;
-    const machine = getMachine(machineType);
-    if (!machine) return null;
-    const mode = getMachineMode(machine, machineMode);
-    const ports = direction === 'in' ? mode.input_ports : mode.output_ports;
-    if (!ports.length) return null;
     /** 解析不出埠索引時退回埠 0：媒質檢查是容錯路徑，不該因 handle 缺省而擋下連線 */
     const idx = parsePortHandleIndex(handle, direction) ?? 0;
-    return ports[idx]?.media ?? null;
+    const portType = direction === 'in' ? 'input' : 'output';
+    return getMachinePortMedia(machineType, machineMode, portType, idx, getMachine);
 }
 
 /**

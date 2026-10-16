@@ -8,8 +8,8 @@
 | 建議主責／備援 | aaaaa（資料側）＋**shirone**（MachineCard）／goodmorning（工具列視覺，dev）／aaaaa 列表頂替 |
 | 性質 | 資料 → 畫面 |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)、[E1](./E1_data_codegen_ops.md) |
-| 狀態 | `[ ]` 未開始（09/06 切片已派工：[W0831-A1](../../work_dispatch/aaaaa/0831/W0831-A1_toolbar_real_machines.md)；L3＝[W0831-S1](../../work_dispatch/shirone/0831/W0831-S1_machine_card.md)） |
-| 最後更新 | 2026-08-30 晚 |
+| 狀態 | `[~]` 9/6 資料切片 #43 已合；點擊落子已合；視覺 #48 未合（W1004-G1） |
+| 最後更新 | 2026-10-04 |
 
 ---
 
@@ -135,6 +135,24 @@
 
 ### 2026-08-22
 - 建檔。tag 分頁作法確認可沿用 V9 `MachineCatalogPanel.vue`，不重新設計
+
+### 2026-09-24（追加：#48 本週必須收完）
+
+**主編改裁：** [#48](https://github.com/dernoson/endfield-playground/pull/48) 不得再無限期擱置——goodmorning **本週修完合入**（[W0921-G1](../../work_dispatch/goodmorning/0921/W0921-G1_toolbar_pr48_land.md) v1.2）。硬條件不變：rebase ＋ 寫死清單換回 `listToolbarMachines`。T1 仍不依賴 #48；兩邊同週改 `ToolbarPanel.vue`，意圖層歸 toby、視覺＋資料來源復原歸 goodmorning。
+
+### 2026-09-23（主編裁決：#48 的合入硬條件）
+
+**PR [#48](https://github.com/dernoson/endfield-playground/pull/48)（工具列視覺）現況會回退本項已交付的資料側。**
+
+該分支把 `ToolbarPanel.vue` 改寫為 props／emit 元件，過程中拿掉了 `listToolbarMachines` 的 import，改用寫死的陣列：
+
+| 現況（master，#43 已合） | #48 分支 |
+|--------------------------|----------|
+| `listToolbarMachines(activeTag)` 讀 `src/data/machines` | `const equipments: Array<{ id: string; category: string; label: string }> = [...]` 硬編碼 |
+| `MACHINE_TAGS` 產生分類 Tab | `const categoryTabs = ['全部', '物流', …]` 硬編碼 |
+| `useEditorStore()`＋`armPlacement`＋`dataTransfer` | 移除，改為 `defineEmits` |
+
+**9/23 原裁：** 維持現狀不合不關。**9/24 覆寫：** 本週必須收完（見上）。落子鏈（[B2](./B2_placement_chain.md)／W0921-T1）仍直接在 master 版接意圖——`<script>` 意圖層歸 toby。
 
 ### 2026-08-30（09/06 切片派工前檢修）
 

@@ -8,8 +8,8 @@
 | 建議主責／備援 | L3（MBD／goodmorning／avery 之一）＋L2 提供幾何／aaaaa |
 | 性質 | 畫面（L3） |
 | 依賴 | [C1](./C1_port_hit_and_draft.md)、[C2](./C2_add_connection_contract.md) |
-| 狀態 | `[ ]` 未開始 |
-| 最後更新 | 2026-08-22 |
+| 狀態 | `[~]` 幾何 `buildPipelinePolyline` 已合 #56；GridCanvas 未套用 |
+| 最後更新 | 2026-10-04 |
 
 ---
 

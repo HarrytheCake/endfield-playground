@@ -118,23 +118,28 @@
 
 ```text
 .
-├─ .github/            # GitHub 設定與 CI workflow
-│  └─ workflows/
-├─ docs/               # 專案文件（見上方「文件在哪裡」）
+├─ .github/            # CI workflow、CODEOWNERS 與 Discord 通知
+├─ .storybook/         # Storybook 設定
+├─ dev/                # 不經主程式路由、可直接開啟的獨立 HTML 預覽頁
+├─ docs/               # 專案文件（入口見上方第 4 節）
 │  ├─ roadmap/         # 到 11/29 的工項、里程碑、驗收標準
 │  ├─ work_dispatch/   # 每週派工：每人一份工單
-│  └─ <個人代號>/      # 個人筆記、設計稿
-├─ spec/               # 規格與設計文件（演算法 / UI 等）
+│  └─ <個人代號>/      # 個人筆記、開發紀錄、設計稿
+├─ public/             # 原樣對外提供的靜態資源（favicon、icon）
+├─ spec/               # 給工作人員看的功能規格（CR-01～CR-11）
 ├─ src/                # 前端主要程式碼
-│  ├─ app/             # App 殼層與 layout
-│  ├─ editor/          # 編輯器相關 UI 模組
+│  ├─ __tests__/       # Vitest 單元測試，路徑鏡射 src/
+│  ├─ app/             # App 殼層：主畫面 layout、右側 StatsPanel、/dev 測試頁
+│  ├─ assets/          # 圖片等靜態素材
+│  ├─ components/      # L3 可重用展示元件，只靠 props／emits
+│  ├─ composables/     # 可重用邏輯：流量引擎、驗證、快捷鍵
+│  ├─ data/            # 由 codegen 產生的機器、材料、配方靜態資料
+│  ├─ editor/          # L2 編輯器模組：畫布、工具列、Inspector、Navbar 等
+│  ├─ lib/             # L1 核心機制：操作歷史（Command）與驗證 detector
 │  ├─ router/          # 路由設定
 │  ├─ store/           # Pinia 狀態管理
-│  ├─ types/           # 型別定義
-│  ├─ components/      # 可重用元件
-│  └─ composables/     # 可重用邏輯
-├─ tutorial/           # 新手教學（github 操作、storybook 使用）
-│  ├─ github/
-│  └─ storybook/
+│  ├─ types/           # 跨模組共用型別
+│  └─ utils/           # 純函式工具：幾何、埠、佈局與連線規則
+├─ tutorial/           # 新手教學（GitHub 操作、Storybook 使用）
 └─ README.md
 ```
