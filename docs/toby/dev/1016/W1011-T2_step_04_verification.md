@@ -1,6 +1,6 @@
 # W1011-T2 步驟 04：操作與回歸驗收
 
-狀態：待執行，以下是驗收案例，並非通過紀錄。
+狀態：已完成自動瀏覽器操作驗收（2026-10-16）；案例與實際證據如下，實體裝置及完整無障礙人工流程未執行。
 
 ## 目標與檔案
 
@@ -45,3 +45,55 @@
 7. 每項記錄「通過／失敗／未執行」、觀察結果與證據位置。模擬取消、觸控或卸載不能冒稱實體裝置驗收。
 
 下一步：[步驟 05](./W1011-T2_step_05_quality_gate.md)。
+
+## 實際結果
+
+### 正式頁互動
+
+可重跑腳本：[LayoutView.browser.mjs](../../../../src/__tests__/editor/LayoutView.browser.mjs)。以 Vite 正式首頁、Chromium 無頭模式執行 **29／29 案通過**，無 pageerror。
+
+腳本不新增套件依賴，沿用本機已快取的 playwright-core 與 Chromium。它不屬於 Vitest 自動掃描的單元測試，需另行啟動開發伺服器並執行。重跑方式：
+
+```powershell
+# 終端 1
+pnpm dev --host 127.0.0.1
+
+# 終端 2；指向環境既有 playwright 或 playwright-core 的 index.mjs
+$env:PLAYWRIGHT_MODULE = 'C:/Users/yangt/AppData/Local/npm-cache/_npx/361ceb562f3b3235/node_modules/playwright-core/index.mjs'
+node src/__tests__/editor/LayoutView.browser.mjs
+```
+
+可選 `T2_BASE_URL` 覆寫首頁網址；可選 `T2_SCREENSHOT_DIR` 輸出亮／暗模式截圖。上述套件路徑為本次機器的快取位置，其他環境應替換成本機實際入口；未設定時腳本嘗試標準 playwright 套件。
+
+| 通過群組 | 實際證據 |
+| --- | --- |
+| 本地預覽／提交 | 同一設備 DOM 不重複、佔格與標籤同步；拖曳中原設備位置、moveDevice 次數及 history 均不變，正常放開恰一次提交 |
+| 拒絕與回原位 | 設備重疊、管線佔格衝突皆依 L1 拒絕，無新增 history，預覽清除 |
+| 點選與落子 | 設備 emit 實例 ID、空白 emit null；原生 click 連續落子兩次；武裝時搬設備不誤新增，下一次點空白可繼續落子 |
+| 平移 | 空白拖曳、中鍵、平移工具、Space 均維持平移；Space 先放開不改變手勢種類、不落子 |
+| 門檻／回原格 | 小於 4 px 抖動仍點選，恰 4 px 成為拖曳；拖回原格不提交也不當點選 |
+| 取消與重入 | pointercancel 注入、原生 releasePointerCapture 後 lostpointercapture、卸載均不提交，capture／預覽清理；取消後原生落子可恢復 |
+| 多指標與按鍵 | 注入第二 pointer 不搶手勢、錯誤按鍵的 pointerup 不提交，右鍵不啟動 |
+| 幾何 | filling_machine 在 90／270 度時命中多格邊角，保留抓取偏移、z=3 與 rotation；不同層同 xy 取後繪製設備 |
+| 換算／釋放 | offset=(73,41)、zoom=1.5 仍落到正確世界格；注入沒有最後 pointermove 的 pointerup 時使用最終座標 |
+| 邊界資料 | 空設備、未知機型、拖曳中移除設備皆無例外；未知預覽 ID 與 null 另在 Story 驗證 |
+| 出界與管線 | 拖到 x=-1 允許提交並顯示既有 Error，預覽時 Error 已跟隨；管線座標保留原位 |
+| 視覺 | 依使用者最新要求恢復 sky-300，亮／暗模式相同，文字為深色；原外框保留，截圖隨測試更新 |
+
+正常拖曳／點擊採 Playwright 原生 mouse；取消事件、多指標及缺末次 move 的案例明確使用事件注入。選取事件由測試觀察 LayoutView listener，未修改 MainLayout；測試讀取 Vue 開發 instance，因此應使用 pnpm dev，而非 production preview。
+
+### Storybook
+
+- `pnpm storybook --ci --host 127.0.0.1 --no-open` 成功提供畫面。
+- 九個 Story 均實際開啟：Connected、Broken、Empty、Dragging、NoDragPreview、UnknownDragDevice、WithinBase、PartialOutside、MultipleOutside。
+- Dragging 顯示預覽位置；null／未知 ID 恢復原位置且沒有拿起標記，無元件錯誤。
+- Controls 以實際 JSON 編輯將預覽改成 (6,4,0)，圖形同步更新；再輸入 null，設備恢復原位。
+- 九個 Story 的 axe-core 元件範圍掃描無 violations（排除頁面 region 規則，因測試對象為元件）；實際開啟 Accessibility 分頁也顯示零 violations。
+- 實體滑鼠／觸控、螢幕閱讀器與完整鍵盤無障礙流程未執行；Space 快捷鍵已在瀏覽器回歸涵蓋。H2 面板接收端不在本次範圍。
+
+### 視覺證據
+
+- [亮色拿起預覽](./W1011-T2_drag_light.png)
+- [暗色拿起預覽](./W1011-T2_drag_dark.png)
+
+截圖使用瀏覽器測試建立的 splitter 快照，用來驗證拿起狀態，不代表新增產品內建 fixture。

@@ -44,6 +44,30 @@ export const Empty: Story = {
     args: { devices: [], pipelines: [] },
 };
 
+/** 拿起設備時位置與標籤一起移動，原始 args 不變 */
+export const Dragging: Story = {
+    name: '設備拿起／淺藍預覽',
+    args: {
+        ...Connected.args,
+        deviceDragPreview: { deviceId: 'src', position: { x: 2, y: 3, z: 0 } },
+    },
+};
+
+/** 未拖曳的明確空值應與省略 prop 時相同 */
+export const NoDragPreview: Story = {
+    name: '設備拿起／無預覽',
+    args: { ...Connected.args, deviceDragPreview: null },
+};
+
+/** 過期 ID 不應建立假設備或影響現有佔格 */
+export const UnknownDragDevice: Story = {
+    name: '設備拿起／未知設備',
+    args: {
+        ...Connected.args,
+        deviceDragPreview: { deviceId: 'missing', position: { x: 2, y: 3, z: 0 } },
+    },
+};
+
 /** 武陵基地原點附近的正常設備 */
 export const WithinBase: Story = {
     name: '基地內',

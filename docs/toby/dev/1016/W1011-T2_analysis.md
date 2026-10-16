@@ -1,6 +1,6 @@
 # W1011-T2 分析摘要
 
-分析日期：2026-10-16。狀態：分析完成，尚未實作或執行驗證。
+分析日期：2026-10-16。狀態：步驟 01–05 已依序完成本地實作與驗證，使用者已指示將最終變更提交本機 Git；未 push／開 PR。各步驟保留執行當時的階段證據，最終結果見步驟 04／05。
 
 ## 1. 來源與基準
 
@@ -11,7 +11,7 @@
 - 實際基準：本機 `dev/toby`、commit `4cfa624`；分析開始時工作樹乾淨。尚未更新遠端，不宣稱與最新 master 一致。
 - AGENTS 架構導覽與 L2 舊文件部分仍描述 Vue Flow／editorStore；本單依最新派工與實際首頁的 LayoutView／layoutStore 路徑分析。
 
-本次依使用者要求將分析與詳細步驟存入本目錄；文件不代表已授權實作、push 或建立 PR。
+本次依使用者要求將分析與詳細步驟存入本目錄；使用者後續已要求依序執行並在完成步驟後驗證，現已依序完成。push 或建立 PR 仍需明確指示。
 
 ## 2. 目標與範圍
 
@@ -26,7 +26,7 @@
 
 禁止修改 `layoutStore.ts`、`placementCheck.ts`、`editorStore`、MainLayout；不處理 Ctrl+Z 接鍵、旋轉、Delete、多選、工具列拖曳落子、整套 shapes 替換、管線跟隨。保留既有點擊落子、初始化 fixture、基地 Error、視窗換算與中鍵／平移工具操作。
 
-## 3. 現況與資料流
+## 3. 實作前現況與目標資料流
 
 ```text
 MainLayout → LayoutView → GridCanvas
@@ -77,10 +77,20 @@ pointerup   → 有效移位 → moveDevice → 成功寫入／失敗清預覽
 - pointercancel、lostpointercapture、卸載不提交、不選取、不落子；清理需可重複執行，避免 releasePointerCapture 引發第二次處理。
 - 多指標期間僅接受起始 pointerId；右鍵不啟動本單手勢。
 
-以上是實作建議，尚未變更程式行為。若後續文件或使用者指定不同優先序，先更新對應步驟。
+上述契約已於 [步驟 01](./W1011-T2_step_01_scope.md) 定稿，並在步驟 02／03 實作：一般左鍵拖曳門檻為螢幕歐氏距離 ≥4 CSS px，預覽 prop 採唯讀 deviceDragPreview、預設 null。一般左鍵捕捉 SVG，保留原 click 落子路徑。若後續文件或使用者指定不同優先序，先更新對應步驟。
 
 ## 6. 驗證與交付
 
 按 [分步索引](./W1011-T2_steps.md) 逐步執行。驗收涵蓋成功／拒絕、點選／平移／落子互斥、座標與旋轉、取消／卸載、多指標、預覽與 history。完整品質指令為 type-check、lint-check、format-check、test；修改 Story 時另驗證 Storybook。未執行的項目須明列，不以既有測試內容宣稱本次通過。
 
 PR 是工單最終交付項，但 AGENTS 明定未經使用者明確指示不可自行 push／開 PR。實作與驗證完成後先提供可審查 diff 及交付摘要。
+
+## 7. 最終結果（2026-10-16）
+
+使用者曾指定參考圖色 #4D7991，之後要求恢復先前顏色，並明確要求保留原本外框。最終拖曳填色為 sky-300（亮暗模式相同），移除該次新增的自訂色票與全域 import；外框沿用未拖曳時的顏色與 1.5 實線，不再加粗或改虛線。
+
+- LayoutView／GridCanvas 已支援本地預覽、淺藍拿起、單次提交、選取 emit 及取消清理；沒有修改禁止檔案。
+- 完整品質檢查通過，Vitest 49 份測試共 912 案通過；另有可重跑 Chromium 正式頁腳本 29 案通過。
+- 九個 Story、Controls JSON 更新／null 恢復、Accessibility 檢查及亮／暗預覽截圖檢視通過；正式與 Storybook 建置皆通過。
+- 實體裝置、完整鍵盤／螢幕閱讀器流程未執行；H2 面板接線仍是上游交接，出界維持既有非阻擋 Error 契約。
+- 詳細操作、指令、證據與限制見 [步驟 04](./W1011-T2_step_04_verification.md) 與 [步驟 05](./W1011-T2_step_05_quality_gate.md)。

@@ -13,6 +13,13 @@ interface Props {
     devices: readonly DeepReadonly<PlacedDevice>[];
     /** 要顯示的管線 */
     pipelines: readonly DeepReadonly<Pipeline>[];
+    /** 容器持有的拿起位置；只影響顯示，不改寫已放設備 */
+    deviceDragPreview?: {
+        /** 被拿起設備的實例識別；查無 ID 時不影響其他設備 */
+        readonly deviceId: string;
+        /** 尚未提交的格位置 */
+        readonly position: Readonly<Position>;
+    } | null;
     /** 每一格的像素尺寸 */
     cellSize?: number;
     /** 容器可用寬度，單位為像素 */
@@ -52,6 +59,7 @@ const props = withDefaults(defineProps<Props>(), {
     zoom: 1,
     baseSize: null,
     outsideDeviceIds: () => [],
+    deviceDragPreview: null,
 });
 
 /** 畫布格點點擊事件；只傳座標，不決定是否放置設備 */
@@ -93,6 +101,14 @@ const worldTransform = computed(
 );
 /** 以設備識別查詢出界狀態，不改寫任何設備資料 */
 const outsideDevices = computed(() => new Set(props.baseSize ? props.outsideDeviceIds : []));
+/** 拿起時替換同一台的顯示位置，原位不保留另一份實體或標籤 */
+const renderedDevices = computed(() =>
+    props.devices.map((device) =>
+        device.id === props.deviceDragPreview?.deviceId
+            ? { ...device, position: props.deviceDragPreview.position }
+            : device,
+    ),
+);
 
 /**
  * 以 SVG 本身的顯示矩形換算點擊格點，避免子元素成為 target 時座標漂移。
@@ -133,7 +149,7 @@ function handleCanvasClick(event: MouseEvent): void {
 const deviceCells = computed(() => {
     const result = new Map<string, RenderedDeviceCell[]>();
 
-    for (const device of props.devices) {
+    for (const device of renderedDevices.value) {
         const machine = getMachineById(device.machineType);
         if (!machine) continue;
 
@@ -186,10 +202,10 @@ function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
             preserveAspectRatio="none"
             class="block select-none"
             role="img"
-            aria-label="格點佈局，選取機器後可點擊格點放置"
+            aria-label="格點佈局，可拖曳設備移位、拖曳空白平移，選取機器後可點擊格點放置"
             @click="handleCanvasClick"
         >
-            <title>格點佈局；按住滑鼠中鍵拖曳可平移</title>
+            <title>格點佈局；拖曳設備移位，拖曳空白或按住滑鼠中鍵可平移</title>
 
             <g :transform="worldTransform">
                 <!-- 格線 -->
@@ -214,13 +230,17 @@ function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
 
                 <!-- 設備佔格與標籤 -->
                 <g
-                    v-for="device in props.devices"
+                    v-for="device in renderedDevices"
                     :key="device.id"
                     :data-device-id="device.id"
+                    :data-device-dragging="
+                        device.id === props.deviceDragPreview?.deviceId || undefined
+                    "
                     :class="{ 'out-of-base': outsideDevices.has(device.id) }"
                 >
                     <title>
                         {{ device.label ?? device.machineType
+                        }}{{ device.id === props.deviceDragPreview?.deviceId ? '：拖曳中' : ''
                         }}{{ outsideDevices.has(device.id) ? '：Error，設備超出基地範圍' : '' }}
                     </title>
                     <rect
@@ -231,19 +251,26 @@ function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
                         :width="props.cellSize - 2"
                         :height="props.cellSize - 2"
                         rx="3"
-                        class="fill-sky-200 dark:fill-sky-900"
-                        :class="
+                        :class="[
+                            device.id === props.deviceDragPreview?.deviceId
+                                ? 'fill-sky-300 dark:fill-sky-300'
+                                : 'fill-sky-200 dark:fill-sky-900',
                             outsideDevices.has(device.id)
                                 ? 'stroke-red-600 dark:stroke-red-400'
-                                : 'stroke-sky-600 dark:stroke-sky-400'
-                        "
+                                : 'stroke-sky-600 dark:stroke-sky-400',
+                        ]"
                         stroke-width="1.5"
                     />
                     <text
                         :x="(device.position.x + 0.5) * props.cellSize"
                         :y="(device.position.y + 0.55) * props.cellSize"
                         text-anchor="middle"
-                        class="fill-sky-950 text-[10px] font-semibold dark:fill-sky-100"
+                        class="text-[10px] font-semibold"
+                        :class="
+                            device.id === props.deviceDragPreview?.deviceId
+                                ? 'fill-sky-950 dark:fill-sky-950'
+                                : 'fill-sky-950 dark:fill-sky-100'
+                        "
                     >
                         {{ device.label ?? device.machineType }}
                     </text>

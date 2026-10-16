@@ -1,6 +1,6 @@
 # W1011-T2 步驟 03：預覽渲染、提交與選取
 
-狀態：待執行。
+狀態：已完成並驗證（2026-10-16）；完整邊界回歸續於步驟 04。
 
 ## 目標與修改檔案
 
@@ -27,3 +27,12 @@
 - 基地出界以既有契約處理；文件所稱禁區拒絕列為差異，不擅自實作。
 
 下一步：[步驟 04](./W1011-T2_step_04_verification.md)。
+
+## 執行證據
+
+- LayoutView 已接正常放開單次 moveDevice、未拖動 select-device、取消清理及起始按鍵比對；其他按鍵的 pointerup 不會提早提交。
+- GridCanvas 新增唯讀 deviceDragPreview prop，位置、佔格與標籤同步；亮／暗模式都使用淺藍填色與深色文字。初次實作的加粗虛線後續依使用者要求移除，最終維持原本 1.5 實線外框。
+- 出界 ID 仍由 LayoutView 呼叫既有 devicesOutsideBase，但判定輸入採預覽投影，避免原位 Error 誤貼在拖曳位置；不新增邊界拒絕規則。
+- 新增 Dragging、NoDragPreview、UnknownDragDevice 三個 Story，保留六個既有 Story。
+- pnpm type-check 通過；Chromium 首頁確認可見預覽移動到 (5,4,z=3)、拖曳中無歷史、放開後正確落格且只增加一筆歷史、清預覽，以及空白平移與兩次原生點擊落子回歸。
+- 最終 lint、Storybook 與整體品質結果記於步驟 04／05，不將本步探針當成所有驗收通過。

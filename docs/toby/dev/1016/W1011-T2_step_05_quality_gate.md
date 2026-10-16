@@ -1,6 +1,6 @@
 # W1011-T2 步驟 05：品質門檻與交付證據
 
-狀態：待執行。
+狀態：本地品質檢查及交付紀錄已完成（2026-10-16），使用者已指示將最終變更提交本機 Git；未 push 或建立 PR。以下保留各階段的驗證與調整紀錄。
 
 ## 目標與檔案
 
@@ -35,3 +35,65 @@
 - 交付摘要足以讓未讀對話的審查者了解行為、限制與驗證結果。
 
 若尚有本單必要功能或驗證未完成，維持進行中，不因文件已建立而宣稱完成。
+
+## 執行證據
+
+### 品質結果
+
+已讀取並使用專案 [validate-changes](../../../dernoson/claude/skills/validate-changes/SKILL.md) 流程：格式修正 → lint 修正 → 型別 → 測試。為符合本工單避免全域自動修正的限制，前兩項只對本次四份程式檔執行，最後額外以全專案只讀檢查確認。
+
+| 指令 | 結果 |
+| --- | --- |
+| pnpm exec prettier --write（本次四份程式檔） | 通過 |
+| pnpm exec eslint --fix（本次四份程式檔） | 通過 |
+| pnpm type-check | 通過 |
+| pnpm test | 49 份測試檔、912 案全部通過 |
+| pnpm format-check | 全專案通過 |
+| pnpm lint-check | 全專案通過 |
+| pnpm build | 正式建置通過 |
+| pnpm build-storybook | 靜態建置通過 |
+| node src/__tests__/editor/LayoutView.browser.mjs | 獨立 Chromium 29／29 案通過，非 Vitest 計數的一部分 |
+| Storybook 實際檢查 | 九個 Story、Controls JSON 更新與清空預覽、Accessibility 均通過 |
+| git diff --check／文件相對連結／禁止檔案比對 | 通過；最後交付前再核對 |
+
+Storybook 開發伺服器曾提示無法寫入使用者目錄的全域 settings／runtime registry，但成功啟動並完成所有畫面驗收。建置保留既有 Index 元件命名衝突、Browserslist 資料過期、chunk size／plugin timing 提示，未擴大修改處理；兩項建置均 exit 0。
+
+### 最終變更
+
+| 檔案 | 結果 |
+| --- | --- |
+| src/editor/layout/LayoutView.vue | 指標命中、手勢分流、local ref 預覽、單次移位提交、select-device、取消與 click 抑制、預覽出界映射 |
+| src/editor/layout/GridCanvas.vue | 唯讀預覽 prop、設備與標籤位置同步、淺藍拿起狀態與操作說明 |
+| src/editor/layout/GridCanvas.stories.ts | 三個新預覽／空值／未知 ID Story，保留原六個 Story |
+| src/__tests__/editor/LayoutView.browser.mjs | 可另行重跑的正式頁互動回歸；沿用外部 Playwright，不新增依賴 |
+| docs/toby/dev/1016/W1011-T2*.md／兩張 png | 本工單分析、五步紀錄及亮／暗預覽證據 |
+
+禁止檔案 layoutStore、placementCheck、editorStore、MainLayout、全域快捷鍵、Storybook preview 設定、package.json 與 lockfile 均未修改。未掛入 shapes，未增加 selection store、管線跟隨或邊界拒絕規則。
+
+### 操作與交接
+
+正式頁一般左鍵按住設備，移動至少 4 CSS px 後顯示淺藍拿起預覽；使用者最新要求恢復 sky-300，外框維持原設定。到空位放開提交，重疊位置放開回原位。一般左鍵拖空白、中鍵、平移工具或既有 Space 都可平移；工具列武裝後的空白點擊仍可連續落子。
+
+- H2：LayoutView 提供 `select-device(id | null)`，僅一般未拖動左鍵點擊發出；id 為 PlacedDevice.id，MainLayout local ref 的接收與面板顯示仍由 H2 處理。
+- C1：可在明確平移之後、設備命中之前加入埠分支；hitTestPortAt 使用連續格座標，本次未預先接拉線。
+- 出界：既有 action 允許框外移位且 UI 顯示 Error；週派工文字差異已保留，若改為拒絕須由需求／L1 處理。
+- 實體裝置／完整無障礙人工驗收未執行，詳見步驟 04；本次不宣稱已完成 H2 整合或所有裝置驗收。
+- 本輪完成本地實作及驗證；Git commit、push 與 PR 均未執行，工單「開 PR」仍待後續明確指示。
+
+### 使用者參考色調整後複驗
+
+參考圖取主要像素色 #4D7991；只替換拿起填色，外框 class、2.5 粗細與 4 2 虛線均未變。補上集中色票與全域 import，既有瀏覽器測試改以實際 RGB(77,121,145) 驗證，亮暗截圖已更新並檢視。
+
+調色後重新執行 scoped format／lint 修正、type-check、912 案 Vitest、29 案 Chromium、全專案 format-check／lint-check、正式及 Storybook 建置，全部通過。assets 預設被 Prettier 忽略，新增 tokens.css 另以 `--ignore-path .gitignore` 明確格式化。此輪未重新執行九個 Story 的 axe 掃描；前述九個 Story／Controls／Accessibility 結果為調色前紀錄。
+
+### 恢復先前顏色
+
+使用者之後要求變回先前顏色，已恢復 sky-300，移除參考色 tokens.css 及其全域 import。外框、標籤與拖曳行為不變；既有瀏覽器色彩斷言與亮暗模式證據同步恢復。以上參考色複驗保留為歷史紀錄，不代表目前色值。
+
+恢復後 scoped format／lint、type-check、全專案 format-check／lint-check、912 案 Vitest 與 29 案 Chromium 全部通過；git diff --check 通過，src/style.css 已無相對基準變更。此次未重跑建置或 Storybook axe 掃描。
+
+### 保留原本外框
+
+使用者再次明確指定保留原本外框，已移除拖曳時新增的 2.5 加粗與 4 2 虛線。最終拖曳外框與未拖曳時同為 1.5 實線，沿用既有正常／出界配色，填色仍為 sky-300。瀏覽器回歸新增對原外框顏色的比較，並同步更新粗細與實線斷言。
+
+複驗通過：scoped format／lint、type-check、全專案 format-check／lint-check、912 案 Vitest 與 29 案 Chromium。瀏覽器測試補上等待預覽 DOM 出現，避免讀到前一個渲染狀態；亮暗截圖已更新。本輪未重跑建置或 Storybook axe 掃描。
