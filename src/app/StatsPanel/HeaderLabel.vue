@@ -2,7 +2,7 @@
     <div
         data-figma-id="2302:138"
         data-figma-name="Lable"
-        class="pointer-events-none absolute [top:28px] [left:-13px] isolate [z-index:20] m-0 box-border [height:53px] [width:333px] shrink-0 overflow-visible border-0 border-solid select-none"
+        class="pointer-events-none absolute [top:28px] [left:0px] isolate [z-index:20] m-0 box-border [height:53px] [width:333px] shrink-0 overflow-visible border-0 border-solid select-none"
     >
         <div
             data-figma-id="2302:139"

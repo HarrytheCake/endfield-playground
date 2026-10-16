@@ -65,7 +65,7 @@ useEventListener(window, 'touchend', stopDrag);
         ref="containerRef"
         data-figma-id="2302:81"
         data-figma-name="Production Overview"
-        class="relative isolate m-0 box-border flex h-full [width:320px] shrink-0 flex-col overflow-hidden border-0 border-solid"
+        class="relative isolate m-0 box-border flex h-full [width:333px] shrink-0 flex-col overflow-hidden border-0 border-solid"
     >
         <!-- 固定頂部名稱與裝飾標籤 -->
         <HeaderLabel />
@@ -74,7 +74,7 @@ useEventListener(window, 'touchend', stopDrag);
         <div
             data-figma-id="2302:82"
             data-figma-name="Detail"
-            class="relative isolate m-0 box-border flex [width:320px] flex-1 shrink-0 flex-col overflow-hidden border-0 border-solid [background-color:#4e4e4e]"
+            class="relative isolate m-0 [margin-left:13px] box-border flex [width:320px] flex-1 shrink-0 flex-col overflow-hidden border-0 border-solid [background-color:#4e4e4e]"
         >
             <!-- 上半部：整體統計與產能估算 -->
             <ResultPanel
