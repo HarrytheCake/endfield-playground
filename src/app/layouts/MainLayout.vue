@@ -133,9 +133,9 @@ useFlowEngine();
 }
 
 /*
- * 現行 ToolbarPanel 以 height: 100% 撐滿父層，故先給固定高度沿用舊底欄的 148px。
- * #48 合入後其根節點自帶 absolute 定位與收合，屆時改為不設高度＋pointer-events: none，
- * 否則收合後此區仍會擋住畫布下緣的點擊。
+ * ToolbarPanel 根節點自帶 absolute 貼底定位與收合，本區只提供定位基準，不設高度。
+ * pointer-events: none 讓工具列以外（含收合後）的區域把點擊交還畫布；
+ * 工具列自己的可點元件以 pointer-events-auto 接收事件。
  */
 .area-toolbar-dock {
     position: absolute;
@@ -143,8 +143,7 @@ useFlowEngine();
     bottom: 0;
     left: 0;
     z-index: 20;
-    height: 148px;
-    border-top: 1px solid #27272a;
+    pointer-events: none;
 }
 
 .area-stats-toggle {
