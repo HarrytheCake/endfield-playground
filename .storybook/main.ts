@@ -18,6 +18,7 @@ const config: StorybookConfig = {
         '../src/app/**/*.stories.ts',
         /** GridCanvas 為無 store 的展示元件，沿用既有目錄而只收錄此支 Story */
         '../src/editor/layout/GridCanvas.stories.ts',
+        '../src/editor/layout/shapes/*.stories.ts',
     ],
 
     /** docs 依 defineProps 的 JSDoc 產生 props 表；a11y 檢查純展示層的可及性 */
