@@ -1,8 +1,8 @@
 # V14-E1 — 驗收、PR、0928 交接
 
 **對應工項：** V14-E1
-**狀態：** `[~]` **PR 已確認開出（單 PR 分節）**；合入／上游回寫仍待
-**日期：** 2026-09-27
+**狀態：** `[x]` **已合 master**（#54／#55｜2026-09-27 MERGED；文件收斂 2026-10-10｜[V15-B1](../dev_v15/B1_v14_residue_close.md)）
+**日期：** 2026-09-27（合入查證 2026-10-10）
 **依賴：** [C1](./C1_placement_precheck.md) `[x]`；[D1](./D1_connect_rules.md) `[x]`
 **驗收集：** [V14_acceptance_guide.md](./V14_acceptance_guide.md)
 **證據：** [evidence/V14_dod.md](./evidence/V14_dod.md)
@@ -62,10 +62,11 @@ L2 highlight 仍排 10/18。
 | --- | ------------------------------------------------------------------ | ----------------------- | -------------------- |
 | 1   | [todolist_v14](../todolist_v14.md)                                 | 狀態／待處理回寫        | `[x]` 盤點時         |
 | 2   | [V14_closeout](./V14_closeout.md)                                  | 收斂盤點                | `[x]`                |
-| 3   | [ROADMAP detail/B2](../../../roadmap/detail/B2_placement_chain.md) | A0 **合入後**補開發日誌 | `[ ]` 待合入         |
-| 4   | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) §9.1        | 9/27 門檻結算           | 結算時               |
-| 5   | 公開 W0921-A0／A1 DoD                                              | 合入後勾選              | `[ ]`                |
-| 6   | 決策層 REVIEW／PENDING                                             | 補交付一行              | `[ ]` 見 closeout P5 |
+| 3   | [ROADMAP detail/B2](../../../roadmap/detail/B2_placement_chain.md) | A0 合入後補開發日誌     | `[~]` 可續掛（非擋） |
+| 4   | [ROADMAP_OUTLINE](../../../roadmap/ROADMAP_OUTLINE.md) §9.1        | 9/27 門檻結算           | `[~]` WEEK_1004 已結算 M2 |
+| 5   | 公開 W0921-A0／A1 DoD                                              | 合入後勾選              | `[~]` 可續掛         |
+| 6   | 決策層 REVIEW／PENDING                                             | 補交付一行              | `[~]` 見 closeout P5 |
+| 7   | todolist_v14 狀態總覽                                              | 改已合／結案            | `[x]` V15-B1         |
 
 ---
 
