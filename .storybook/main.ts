@@ -20,6 +20,8 @@ const config: StorybookConfig = {
         '../src/editor/layout/GridCanvas.stories.ts',
         /** ToolbarPanel 不 import Pinia（落子意圖走 usePlacementIntent），可獨立掛起 */
         '../src/editor/toolbar/ToolbarPanel.stories.ts',
+        /** shapes 為畫布用的純展示子元件（設備、管線樣式），只吃 props */
+        '../src/editor/layout/shapes/*.stories.ts',
     ],
 
     /** docs 依 defineProps 的 JSDoc 產生 props 表；a11y 檢查純展示層的可及性 */
