@@ -133,7 +133,7 @@ const cutText = (text: string) => {
             data-figma-name="Text"
             class="mt-[22px] ml-[18px] h-[23px] shrink-0 text-[20px] leading-[23.44px] font-normal text-white"
         >
-            產能估算(min)
+            <span>產能估算</span><span class="ml-[3px]">(min)</span>
         </div>
 
         <!--
