@@ -153,8 +153,9 @@ useFlowEngine();
     z-index: 30;
 }
 
+/* 寬度＝StatsPanel 設計寬 333px（主體 320＋標籤左凸 13）＋左邊框 1px */
 .area-stats {
-    width: 320px;
+    width: 334px;
     flex-shrink: 0;
     min-height: 0;
     overflow-x: hidden;
@@ -168,8 +169,12 @@ useFlowEngine();
     border-left-width: 0;
 }
 
-/* 內容寬度固定，收合動畫期間只裁切、不讓 StatsPanel 跟著重排 */
+/*
+ * 內容寬度固定，收合動畫期間只裁切、不讓 StatsPanel 跟著重排。
+ * 高度撐滿欄位：StatsPanel 根節點是 h-full，這層沒有高度時會退回內容高度。
+ */
 .area-stats__body {
-    width: 320px;
+    width: 333px;
+    height: 100%;
 }
 </style>

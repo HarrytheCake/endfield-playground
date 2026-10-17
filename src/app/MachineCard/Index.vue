@@ -58,40 +58,6 @@ function onClick(): void {
     </div>
 </template>
 
-<style>
-@font-face {
-    font-family: 'HarmonyOS Sans TC';
-    src: url('./fonts/HarmonyOS_Sans_TC_Light.ttf') format('truetype');
-    font-weight: 300;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'HarmonyOS Sans TC';
-    src: url('./fonts/HarmonyOS_Sans_TC_Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'HarmonyOS Sans TC';
-    src: url('./fonts/HarmonyOS_Sans_TC_Medium.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'HarmonyOS Sans TC';
-    src: url('./fonts/HarmonyOS_Sans_TC_Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-</style>
-
 <style scoped>
 .machine-card {
     font-family: 'HarmonyOS Sans TC', sans-serif;
