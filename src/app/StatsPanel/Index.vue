@@ -12,7 +12,7 @@ import HeaderLabel from './HeaderLabel.vue';
  * - ResultPanelV2：數值縮寫（超過 6 位用 K、超過 9 位用 M）；/min 移到標題「產能估算(min)」
  * - ResultPanelV3：V2＋figma-node3 版面（收益去掉「收益」字樣、靠右；生產／消耗數值靠右至 x=222）
  */
-import ResultPanel from './ResultPanelV3.vue';
+import ResultPanel from './ResultPanelV1.vue';
 import AttentionPanel from './AttentionPanel.vue';
 import type { StatsPanelProps } from './types.ts';
 
