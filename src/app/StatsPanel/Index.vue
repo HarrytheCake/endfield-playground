@@ -6,7 +6,13 @@ export * from './types.ts';
 import { ref } from 'vue';
 import { useEventListener } from '@vueuse/core';
 import HeaderLabel from './HeaderLabel.vue';
-import ResultPanel from './ResultPanel.vue';
+/**
+ * 上半部有三個版本可選，props 相同，改這行 import 即可切換：
+ * - ResultPanelV1：初版（收益「收益±數值」，超過 999999 顯示「收益-」；生產／消耗帶 /min）
+ * - ResultPanelV2：數值縮寫（超過 6 位用 K、超過 9 位用 M）；/min 移到標題「產能估算(min)」
+ * - ResultPanelV3：V2＋figma-node3 版面（收益去掉「收益」字樣、靠右；生產／消耗數值靠右至 x=222）
+ */
+import ResultPanel from './ResultPanelV3.vue';
 import AttentionPanel from './AttentionPanel.vue';
 import type { StatsPanelProps } from './types.ts';
 
