@@ -53,13 +53,13 @@ const exchangeRateText = computed(() => {
     return `${props.exchangeRate}`;
 });
 
-/** 數值縮寫：超過 6 位以 K 表示、超過 9 位以 M 表示（無條件捨去） */
+/** 數值縮寫：加千分位；超過 6 位以 K 表示、超過 9 位以 M 表示（無條件捨去） */
 const abbreviate = (value: number) => {
     const abs = Math.abs(value);
     const sign = value < 0 ? '-' : '';
-    if (abs >= 1e9) return `${sign}${Math.trunc(abs / 1e6)}M`;
-    if (abs >= 1e6) return `${sign}${Math.trunc(abs / 1e3)}K`;
-    return `${value}`;
+    if (abs >= 1e9) return `${sign}${Math.trunc(abs / 1e6).toLocaleString('en-US')}M`;
+    if (abs >= 1e6) return `${sign}${Math.trunc(abs / 1e3).toLocaleString('en-US')}K`;
+    return value.toLocaleString('en-US');
 };
 
 /** 收益顯示文字：「收益」＋正負號＋縮寫數值 */
