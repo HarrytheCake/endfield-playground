@@ -1,107 +1,67 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import iconErrorRaw from '@/assets/icon/icon error.svg?raw';
 import iconWarningRaw from '@/assets/icon/icon warning.svg?raw';
 import type { SingleTip } from './types';
-
-/** 將錯誤圖示 SVG 的填色替換為設計稿指定的紅色（#FF6E6E） */
-const iconErrorSvg = computed(() =>
-    iconErrorRaw.replace(/fill="(?!none)[^"]*"/g, 'fill="#FF6E6E"'),
-);
-
-/** 將警告圖示 SVG 的填色替換為設計稿指定的黃色（#F7D945） */
-const iconWarningSvg = computed(() =>
-    iconWarningRaw.replace(/fill="(?!none)[^"]*"/g, 'fill="#F7D945"'),
-);
 
 /** 下半部提示與警報面板傳入屬性 */
 defineProps<{
     /** 提示與警報訊息列表 */
     tips?: SingleTip[];
 }>();
+
+/** 將錯誤圖示 SVG 的填色替換為設計稿指定的紅色（#FF6E6E） */
+const iconErrorSvg = iconErrorRaw.replace(/fill="(?!none)[^"]*"/g, 'fill="#FF6E6E"');
+
+/** 將警告圖示 SVG 的填色替換為設計稿指定的黃色（#F7D945） */
+const iconWarningSvg = iconWarningRaw.replace(/fill="(?!none)[^"]*"/g, 'fill="#F7D945"');
 </script>
 
 <template>
+    <!-- 間距依設計稿 1080 高時的座標換算；tips 列表吃下所有剩餘高度 -->
     <div
         data-figma-id="2302:83"
         data-figma-name="Attention"
-        class="relative isolate m-0 box-border flex [width:320px] flex-1 shrink-0 flex-col overflow-hidden border-0 border-solid [background-color:#4e4e4e]"
+        class="flex min-h-0 w-[320px] flex-1 flex-col pt-[18px] pb-[22px]"
     >
-        <div class="flex shrink-0 items-center justify-between p-[18px] pb-2">
-            <div
-                data-figma-id="2302:94"
-                data-figma-name="Title"
-                class="m-0 box-border [height:23px] [width:38px] shrink-0 border-0 border-solid [text-align:left] [font-family:'HarmonyOS_Sans_TC',sans-serif] [font-size:20px] [line-height:23.44px] [font-weight:400] [color:#ffffff]"
-            >
-                Tips
-            </div>
+        <div
+            data-figma-id="2302:94"
+            data-figma-name="Title"
+            class="ml-[18px] h-[23px] shrink-0 text-[20px] leading-[23.44px] font-normal text-white"
+        >
+            Tips
         </div>
 
-        <!-- 提示與警報列表（純 CSS 捲軸） -->
+        <!-- 提示與警報列表：寬 256 + 13 間距 + 9 捲軸 = 278 -->
         <div
             data-figma-id="2430:347"
             data-figma-name="tips"
-            class="custom-scrollbar m-0 box-border flex flex-1 shrink-0 flex-col gap-[9px] overflow-x-hidden overflow-y-auto border-0 border-solid pr-[12px] pb-4 pl-[21px] [scrollbar-gutter:stable]"
+            class="stats-panel-scrollbar mt-[15px] ml-[21px] flex min-h-0 w-[278px] flex-1 flex-col gap-[9px] overflow-x-hidden overflow-y-auto pr-[13px] [scrollbar-gutter:stable]"
         >
+            <!-- 內距 5/6px；文字固定寬 207，過長換行 -->
             <div
                 v-for="(item, index) in tips"
                 :key="index"
-                class="relative isolate m-0 box-border flex min-h-[31px] w-full shrink-0 items-center overflow-hidden border-0 border-solid py-[5px] pr-2"
+                :data-figma-name="item.type === 'error' ? 'Error' : 'Warning'"
+                class="flex w-full shrink-0 items-center gap-[6px] px-[6px] py-[5px]"
                 :class="
                     item.type === 'error'
-                        ? '[background-color:rgba(255,_110,_110,_0.1)]'
-                        : '[background-color:rgba(247,_217,_69,_0.1)]'
+                        ? 'bg-[#ff6e6e]/10 text-[#ff6e6e]'
+                        : 'bg-[#f7d945]/10 text-[#f7d945]'
                 "
             >
-                <div
-                    class="m-0 ml-[7px] box-border flex h-[23px] w-[24px] shrink-0 items-center justify-center self-center border-0"
-                >
-                    <div
-                        class="h-full w-full [&>svg]:h-full [&>svg]:w-full"
-                        v-html="item.type === 'error' ? iconErrorSvg : iconWarningSvg"
-                    ></div>
-                </div>
-                <div
-                    class="m-0 ml-[11px] box-border min-w-0 flex-1 border-0 [font-family:'HarmonyOS_Sans_TC',sans-serif] [font-size:18px] [line-height:21px] [font-weight:400] break-words"
-                    :class="item.type === 'error' ? '[color:#ff6e6e]' : '[color:#f7d945]'"
+                <span
+                    data-figma-name="Icon"
+                    class="block h-[23px] shrink-0 [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
+                    :class="item.type === 'error' ? 'w-[23px]' : 'w-[26px]'"
+                    v-html="item.type === 'error' ? iconErrorSvg : iconWarningSvg"
+                />
+                <span
+                    data-figma-name="Text"
+                    class="w-[207px] shrink-0 text-[18px] leading-[21.096px] font-normal break-words"
                 >
                     {{ item.text }}
-                </div>
+                </span>
             </div>
         </div>
     </div>
 </template>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 9px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #3c3c3c;
-    border-radius: 25px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #ffffff;
-    border-radius: 25px;
-}
-/* 向上箭頭按鈕：總高 11px，5px 箭頭置頂，下方自然留 6px (5~6px) 空隙 */
-.custom-scrollbar::-webkit-scrollbar-button:single-button:vertical:decrement {
-    height: 11px;
-    width: 9px;
-    background-color: transparent;
-    background-repeat: no-repeat;
-    background-position: center top;
-    background-size: 9px 5px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 5' width='9' height='5'%3E%3Cpath d='M9 5L0 5L4.5 0L9 5Z' fill='%23FFFFFF'/%3E%3C/svg%3E");
-}
-/* 向下箭頭按鈕：總高 11px，5px 箭頭置底，上方自然留 6px (5~6px) 空隙 */
-.custom-scrollbar::-webkit-scrollbar-button:single-button:vertical:increment {
-    height: 11px;
-    width: 9px;
-    background-color: transparent;
-    background-repeat: no-repeat;
-    background-position: center bottom;
-    background-size: 9px 5px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 5' width='9' height='5'%3E%3Cpath d='M0 0L9 0L4.5 5L0 0Z' fill='%23FFFFFF'/%3E%3C/svg%3E");
-}
-</style>
