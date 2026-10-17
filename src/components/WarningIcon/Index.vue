@@ -1,10 +1,13 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
-    size: number;
-    color?: 'yellow' | 'cyan';
-}>(), {
-    color: 'yellow',
-});
+const props = withDefaults(
+    defineProps<{
+        size: number;
+        color?: 'yellow' | 'cyan';
+    }>(),
+    {
+        color: 'yellow',
+    },
+);
 </script>
 
 <template>
