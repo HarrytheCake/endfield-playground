@@ -49,8 +49,9 @@ const NUMBER_DISPLAY_MAX = 999999;
 /** 調度券兌換效率顯示文字（不含 /hr），無資料時為「-」 */
 const exchangeRateText = computed(() => {
     if (props.exchangeRate == null) return '-';
-    if (props.exchangeRate > NUMBER_DISPLAY_MAX) return `${NUMBER_DISPLAY_MAX}+`;
-    return `${props.exchangeRate}`;
+    if (props.exchangeRate > NUMBER_DISPLAY_MAX)
+        return `${NUMBER_DISPLAY_MAX.toLocaleString('en-US')}+`;
+    return props.exchangeRate.toLocaleString('en-US');
 });
 
 /** 數值縮寫：加千分位；超過 6 位以 K 表示、超過 9 位以 M 表示（無條件捨去） */
