@@ -1,11 +1,19 @@
 <script setup lang="ts">
 const props = withDefaults(
     defineProps<{
+        /** 圖示尺寸，單位為 px。 */
         size: number;
+        /** 故障類型顏色；yellow 表示傳送帶故障，cyan 表示管線故障。 */
         color?: 'yellow' | 'cyan';
+        /** 圖示在畫布上的水平座標，單位為 px。 */
+        x?: number;
+        /** 圖示在畫布上的垂直座標，單位為 px。 */
+        y?: number;
     }>(),
     {
         color: 'yellow',
+        x: 0,
+        y: 0,
     },
 );
 </script>
@@ -15,6 +23,8 @@ const props = withDefaults(
         <svg
             :width="size"
             :height="size * (25 / 28)"
+            :x="props.x"
+            :y="props.y"
             viewBox="0 0 28 25"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
