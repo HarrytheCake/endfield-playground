@@ -1,9 +1,9 @@
 # V15-E1 — 驗收、PR、交接
 
 **對應工項：** V15-E1
-**狀態：** `[~]` #60＝②；後續 PR＝③（`dev/aaaaa1004-hitTestPortAt`）
-**日期：** 2026-10-10（2026-10-11 拆分／修正）
-**依賴：** [C1](./C1_devices_outside_base.md) `[x]`、[D1](./D1_port_hit_test.md) `[~]`
+**狀態：** `[x]` #60／#65 皆 MERGED（2026-10-18 收斂）
+**日期：** 2026-10-10（2026-10-11 拆分／修正；2026-10-18 合入回寫）
+**依賴：** [C1](./C1_devices_outside_base.md) `[x]`、[D1](./D1_port_hit_test.md) `[x]`
 **正式依據：** [W1004-A0 §5](../../../work_dispatch/aaaaa/1004/W1004-A0_dispatch_and_e003.md)、[WEEK §0.2 V10](../../../work_dispatch/WEEK_20261004.md)
 
 ---
@@ -18,7 +18,7 @@
 | 4 | `pnpm format-check` | 綠 | **通過** |
 | 5 | diff 不含鎖檔 | `GridCanvas`／`MainLayout`／`ToolbarPanel`／detectors／TopBarButton 零命中 | **通過**（`src/` 只新增 `devicesOutsideBase`＋測試） |
 | 6 | 未改 `canPlaceDevice` | `placementCheck.ts`／`layoutStore.ts` 無 diff | **通過** |
-| 7 | 公開 V10 | ②③ 皆有測試 | **一半**：② 審查通過；③ 退回待後續 PR |
+| 7 | 公開 V10 | ②③ 皆有測試 | **通過**（#60＋#65 皆 MERGED） |
 
 ---
 
@@ -49,23 +49,27 @@
 
 ## 4. 合入後回寫
 
-- [ ] todolist_v15 → ② 結案；③ 指向後續 PR
-- [ ] AGENT_WEEK_1004 §0／§4
-- [ ] 決策層 REVIEW／PENDING 日誌一行
-- [ ] WEEK V10 勾選（主編／結算時；③ 合入後才滿）
+- [x] todolist_v15 → ②③ 結案（2026-10-18）
+- [x] AGENT_WEEK_1004／決策層（結算時已併入 W1004 週報）
+- [x] ③ [#65](https://github.com/dernoson/endfield-playground/pull/65) MERGED 2026-10-12
+- [ ] WEEK V10 勾選（主編／結算時；公開層可於下週結算補）
 
 ---
 
 ## 5. DoD
 
-- [x] §1 驗收表通過（② 範圍）
-- [x] PR 已開
+- [x] §1 驗收表通過（②③）
+- [x] PR 已開並合入
 - [x] 下游一句話寫進 PR body
-- [x] ③ 後續 PR [#65](https://github.com/dernoson/endfield-playground/pull/65) 已開
+- [x] ③ [#65](https://github.com/dernoson/endfield-playground/pull/65) MERGED
 
 ---
 
 ## 6. 開發日誌
+
+### 2026-10-18｜結案收斂
+
+- #60／#65 皆 MERGED；狀態改 `[x]`；後續 C5 → V16
 
 ### 2026-10-11｜③ 後續修正
 
