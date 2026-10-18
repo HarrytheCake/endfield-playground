@@ -1,22 +1,42 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Navbar from '@/editor/navbar/Navbar.vue';
-import ProjectSidebar from '@/editor/sidebar/ProjectSidebar.vue';
 import ToolbarPanel from '@/editor/toolbar/ToolbarPanel.vue';
 import LayoutView from '@/editor/layout/LayoutView.vue';
 import StatsPanel from '@/app/StatsPanel/Index.vue';
+import MachineCard, { type MachineCardProps } from '@/app/MachineCard/Index.vue';
+import { useLayoutStore } from '@/store/layoutStore';
+import { getMachineById } from '@/data/machines';
 import { useFlowEngine } from '@/composables/useFlowEngine';
 import { useValidation } from '@/composables/useValidation';
 
-/** 左側專案選單目前是否展開，預設收合 */
-const sidebarOpen = ref(false);
+/** 讀取已放置設備，供左側面板由選中 id 反查設備實例 */
+const layoutStore = useLayoutStore();
 
 /**
- * 左側設備資訊面板是否顯示。  \
- * 稿上這塊是「選取後才滑出」，但選取資料要等 C1／P1 才有，本週先把槽位留在 DOM 裡、
- * 預設隱藏，讓後續接選取時只需改這個值的來源，不必再動版面。
+ * 目前選中的設備實例 id，`null` 表示未選取。  \
+ * 只有左側面板消費，依主編裁決 A-3 暫放本地；多重選取需要跨元件共用時再搬進 store。
  */
-const devicePanelVisible = ref(false);
+const selectedDeviceId = ref<string | null>(null);
+
+/**
+ * 選中設備轉成 MachineCard 的 props；找不到設備或機器定義時為 `null`，面板隨之隱藏。  \
+ * 每次從 store 反查而非保存快照：設備被復原移除後面板自動收起，不會顯示已不存在的設備。
+ * 尺寸取 0° 靜態值，因為旋轉尚未開放；配方清單本週不轉接，交給 MachineCard 的預設呈現。
+ */
+const selectedMachineCard = computed<MachineCardProps | null>(() => {
+    const device = layoutStore.devices.find((d) => d.id === selectedDeviceId.value);
+    if (!device) return null;
+    const machine = getMachineById(device.machineType);
+    if (!machine) return null;
+    return {
+        id: device.id,
+        name: machine.name,
+        sizeText: `${machine.width}×${machine.height}`,
+        /** 負值（含 -1 資料未定義）不是耗電量，留給卡片顯示佔位符號 */
+        power: machine.power >= 0 ? `${machine.power}kW` : undefined,
+    };
+});
 
 /**
  * 右側產線總覽是否展開，預設展開。  \
@@ -37,18 +57,18 @@ useFlowEngine();
 <template>
     <div class="editor-layout">
         <header class="area-navbar">
-            <Navbar :sidebar-open="sidebarOpen" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
+            <Navbar />
         </header>
 
         <div class="area-workspace">
-            <ProjectSidebar v-model:open="sidebarOpen" />
-
             <!-- 畫布與疊在其上的浮層共用同一個定位容器；工具列（#48）以 absolute 貼齊此容器底緣 -->
             <div class="area-stage">
                 <div class="area-canvas">
-                    <LayoutView />
+                    <LayoutView @select-device="selectedDeviceId = $event" />
                 </div>
-                <aside v-show="devicePanelVisible" class="area-device-panel" />
+                <aside v-if="selectedMachineCard" class="area-device-panel">
+                    <MachineCard v-bind="selectedMachineCard" />
+                </aside>
                 <section class="area-toolbar-dock">
                     <ToolbarPanel />
                 </section>
@@ -104,8 +124,8 @@ useFlowEngine();
 }
 
 /*
- * isolation 讓內部浮層的 z-index 只在 stage 內比較；否則工具列的 z-index
- * 會蓋過 ProjectSidebar 展開時疊在畫布上的面板。
+ * isolation 讓內部浮層的 z-index 只在 stage 內比較，
+ * 不與 stage 以外的頂欄、右側欄互相覆蓋。
  */
 .area-stage {
     position: relative;
@@ -121,15 +141,18 @@ useFlowEngine();
     inset: 0;
 }
 
+/*
+ * 寬度＝MachineCard 設計寬 451px；卡片自帶底板，本槽不另鋪底色。
+ * 高度隨卡片而不撐滿：卡片下方留給畫布接點擊。畫面比卡片矮時改由本槽捲動。
+ */
 .area-device-panel {
     position: absolute;
     top: 0;
-    bottom: 0;
     left: 0;
     z-index: 10;
-    width: 280px;
-    border-right: 1px solid #27272a;
-    background: #111113;
+    width: 451px;
+    max-height: 100%;
+    overflow-y: auto;
 }
 
 /*

@@ -6,16 +6,6 @@ import { useEditorStore } from '@/store/editorStore';
 import { useCanvasStore, type BaseRegion } from '@/store/canvasStore';
 import BaseRegionSelector from '@/components/BaseRegionSelector/Index.vue';
 
-defineProps<{
-    /** 左側專案選單目前是否展開，控制收合按鈕圖示與 aria-label */
-    sidebarOpen: boolean;
-}>();
-
-defineEmits<{
-    /** 使用者點擊收合按鈕，請求上層切換左側選單開關狀態 */
-    (event: 'toggle-sidebar'): void;
-}>();
-
 /** 藍圖 store：讀寫目前的工具模式，供右側工具切換按鈕使用 */
 const editorStore = useEditorStore();
 /** 畫布視圖 store：讀寫目前選定的基地區域，供基地選擇按鈕使用 */
@@ -40,14 +30,6 @@ function handleBaseRegionChange(value: BaseRegion): void {
 <template>
     <UHeader>
         <template #left>
-            <UButton
-                size="sm"
-                variant="ghost"
-                color="neutral"
-                icon="i-lucide-panel-left"
-                :aria-label="sidebarOpen ? '收合左側選單' : '展開左側選單'"
-                @click="$emit('toggle-sidebar')"
-            />
             <span class="text-toned text-sm font-semibold"> 終末地集成工業系統模擬器 </span>
         </template>
 

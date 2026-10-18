@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue';
-import { useElementSize } from '@vueuse/core';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { useElementSize, useRafFn } from '@vueuse/core';
 import { useGridViewport } from './useGridViewport';
+import { useComboHeld } from '@/composables/useKeybinding';
 import { getMachineById } from '@/data/machines';
 import GridCanvas from '@/editor/layout/GridCanvas.vue';
 import { usePlacementIntent } from '@/editor/toolbar/usePlacementIntent';
@@ -242,6 +243,45 @@ function handlePointerEnd(event: PointerEvent): void {
 /** 卸載時結束本地手勢；DOM 移除前主動釋放指標捕捉 */
 onBeforeUnmount(() => {
     clearGesture();
+});
+
+/** 鍵盤平移速度（CSS px／秒），四個方向共用；沿用舊畫布的手感 */
+const KEY_PAN_SPEED_PER_SECOND = 600;
+
+/** 畫面平移鍵（預設 WASD，可於快捷鍵設定改鍵）的按住狀態：上／下／左／右 */
+const panUpHeld = useComboHeld('panUp');
+const panDownHeld = useComboHeld('panDown');
+const panLeftHeld = useComboHeld('panLeft');
+const panRightHeld = useComboHeld('panRight');
+
+/** 是否有任一平移方向鍵按住中，控制下方 raf loop 的啟停 */
+const keyPanning = computed(
+    () => panUpHeld.value || panDownHeld.value || panLeftHeld.value || panRightHeld.value,
+);
+
+/**
+ * 按住平移鍵時每幀依 delta time 位移視窗，讓移動速度與幀率無關。  \
+ * 方向語意：上／左＝視角往該方向移動（看到更上／左方的內容），故內容往下／右，offset 增加。
+ */
+const { pause: pauseKeyPan, resume: resumeKeyPan } = useRafFn(
+    ({ delta }) => {
+        const distance = (KEY_PAN_SPEED_PER_SECOND * delta) / 1000;
+        let dx = 0;
+        let dy = 0;
+        if (panUpHeld.value) dy += distance;
+        if (panDownHeld.value) dy -= distance;
+        if (panLeftHeld.value) dx += distance;
+        if (panRightHeld.value) dx -= distance;
+        if (dx === 0 && dy === 0) return;
+        panBy(dx, dy);
+    },
+    { immediate: false },
+);
+
+/** 僅在至少一個方向鍵按住時啟動 raf loop，放開後暫停，避免長期空轉 */
+watch(keyPanning, (held) => {
+    if (held) resumeKeyPan();
+    else pauseKeyPan();
 });
 
 /** 工具列與畫布共享的真機器落子意圖 */
