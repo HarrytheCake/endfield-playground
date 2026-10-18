@@ -1575,6 +1575,21 @@ export function getMachineById(id: string): Machine | undefined {
 }
 
 /**
+ * 解析機器定義（V17／#73）。
+ *
+ * 新模型權威＝英文 id（{@link getMachineById}）。  \
+ * 過渡：查不到再試中文名（{@link getMachine}），供 editorStore／舊 dev 頁。
+ *
+ * **移除雙查時機：** 正式頁與驗證／引擎不再消費中文 `machineType` 之後  \
+ *（#57 S4-1／S5-2 完成且 dev 頁遷完）→ 只留 `getMachineById`。
+ *
+ * @param machineType 機器英文 id，或過渡期的中文名
+ */
+export function resolveMachineDef(machineType: string): Machine | undefined {
+    return getMachineById(machineType) ?? getMachine(machineType);
+}
+
+/**
  * 取得所有機器定義列表的副本。
  */
 export function getAllMachines(): Machine[] {
