@@ -229,6 +229,30 @@ describe('validateRecipeMatch()', () => {
     });
 });
 
+// ─── V17-E1：英文 id 查表煙測 ─────────────────────────────────────────────────
+
+describe('V17-E1：英文 id 查定義／配方', () => {
+    it('resolveMachineMode：crusher 與 粉碎機 回同一 mode', () => {
+        expect(resolveMachineMode('crusher')).toBe(resolveMachineMode('粉碎機'));
+        expect(resolveMachineMode('crusher')).toBe('default');
+    });
+
+    it('buildGraph：machineType=crusher 能解析定義（非 source／sink）', () => {
+        const graph = buildGraph([makeNode('a', 'crusher')], []);
+        const node = graph.nodes.get('a')!;
+        expect(node.machineType).toBe('crusher');
+        expect(node.machineMode).toBe('default');
+        expect(node.isSource).toBe(false);
+        expect(node.isSink).toBe(false);
+    });
+
+    it('validateRecipeMatch：英文 id 與中文名等價', () => {
+        const idx = recipeIndexOf('粉碎機', '源石粉末', 'default');
+        expect(validateRecipeMatch('crusher', idx, new Set(['源礦']), 'default')).toBe(true);
+        expect(validateRecipeMatch('粉碎機', idx, new Set(['源礦']), 'default')).toBe(true);
+    });
+});
+
 describe('validateChains — belt/pipe 媒質', () => {
     it('belt→pipe 錯接標記兩端非法', () => {
         const nodes = [

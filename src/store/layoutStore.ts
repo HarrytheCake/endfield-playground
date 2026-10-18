@@ -1,5 +1,5 @@
 /**
- * 佈局領域 store（V12／W0907-A0）
+ * 佈局領域 store（V12／W0907-A0；V16 補 setDevicePrimaryOutput）
  *
  * 平行於 `editorStore` 落地：持有 `devices`／`pipelines`，`connections` 為 getter  \
  *（每次呼叫 {@link resolveConnections}）。放置合法性回傳 {@link PlacementResult}，不 throw。
@@ -319,6 +319,60 @@ export const useLayoutStore = defineStore('layout', () => {
         return { ok: true };
     }
 
+    /**
+     * 設定源設備的主要產出物與速率（V16／W1011-A0／C5）。
+     *
+     * 寫入 {@link PlacedDevice.primaryOutput}／{@link PlacedDevice.sourceRatePerMin}；進歷史。  \
+     * 未知或同 id 多台時靜默 no-op，且**不**進歷史。
+     *
+     * @param uid 設備 uid
+     * @param itemId 基礎材料 id；傳 `null` 表示清除設定
+     * @param ratePerMin 每分鐘產出；省略時預設 30
+     */
+    function setDevicePrimaryOutput(uid: string, itemId: string | null, ratePerMin?: number): void {
+        /** 找不到或同 id 多台時語意不明，靜默離開且不進歷史 */
+        if (devices.value.filter((d) => d.id === uid).length !== 1) {
+            return;
+        }
+
+        const index = devices.value.findIndex((d) => d.id === uid);
+        if (index < 0) {
+            return;
+        }
+
+        const before = devices.value.map(cloneDevice);
+        const after = before.map((d, i) => {
+            if (i !== index) {
+                return d;
+            }
+            if (itemId === null) {
+                const cleared: PlacedDevice = { ...d, position: { ...d.position } };
+                delete cleared.primaryOutput;
+                delete cleared.sourceRatePerMin;
+                return cleared;
+            }
+            return {
+                ...d,
+                position: { ...d.position },
+                primaryOutput: itemId,
+                sourceRatePerMin: ratePerMin ?? 30,
+            };
+        });
+
+        const historyStore = useHistoryStore();
+        historyStore.execute({
+            id: crypto.randomUUID(),
+            type: HistoryRecordType.MachineRecipeChange,
+            label: itemId === null ? `清除源產出 ${uid}` : `設定源產出 ${uid} → ${itemId}`,
+            execute() {
+                devices.value = after.map(cloneDevice);
+            },
+            undo() {
+                devices.value = before.map(cloneDevice);
+            },
+        });
+    }
+
     return {
         /** 已放置設備（唯讀面） */
         devices: readonly(devices),
@@ -375,5 +429,16 @@ export const useLayoutStore = defineStore('layout', () => {
          * @param id 管線 uid
          */
         removePipeline,
+        /**
+         * 設定源設備的主要產出物與速率（V16／W1011-A0／C5）。
+         *
+         * 寫入 {@link PlacedDevice.primaryOutput}／{@link PlacedDevice.sourceRatePerMin}；進歷史。  \
+         * 未知或同 id 多台時靜默 no-op，且**不**進歷史。
+         *
+         * @param uid 設備 uid
+         * @param itemId 基礎材料 id；傳 `null` 表示清除設定
+         * @param ratePerMin 每分鐘產出；省略時預設 30
+         */
+        setDevicePrimaryOutput,
     };
 });

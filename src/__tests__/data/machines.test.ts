@@ -2,7 +2,7 @@
  * data/machines 查詢函式單元測試
  *
  * 測試對象：src/data/machines.ts
- * 重點：getMachine / getMachineById / getAllMachines / machineMap 的查詢正確性。
+ * 重點：getMachine / getMachineById / resolveMachineDef / getAllMachines / machineMap。
  *
  * 備註：machineList 內容極大（39 台機器），測試只挑代表性樣本驗證。
  */
@@ -13,6 +13,7 @@ import {
     machineMap,
     getMachine,
     getMachineById,
+    resolveMachineDef,
     getAllMachines,
     getMachinesByTag,
     MACHINE_TAGS,
@@ -122,6 +123,28 @@ describe('getMachineById()', () => {
 
     it('不存在的 id 回傳 undefined', () => {
         expect(getMachineById('nope_unknown_machine')).toBeUndefined();
+    });
+});
+
+// ─── resolveMachineDef()（V17-C1／#73）────────────────────────────────────────
+
+describe('resolveMachineDef()', () => {
+    it('英文 id 優先命中', () => {
+        const m = resolveMachineDef('crusher');
+        expect(m).toBeDefined();
+        expect(m?.id).toBe('crusher');
+        expect(m?.name).toBe('粉碎機');
+    });
+
+    it('中文名過渡退回 getMachine', () => {
+        const byName = resolveMachineDef('粉碎機');
+        const byId = resolveMachineDef('crusher');
+        expect(byName).toBeDefined();
+        expect(byName).toBe(byId);
+    });
+
+    it('皆不中回傳 undefined', () => {
+        expect(resolveMachineDef('nope')).toBeUndefined();
     });
 });
 
