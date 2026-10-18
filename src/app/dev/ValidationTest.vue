@@ -107,23 +107,47 @@
                         ➕ 新增不重疊的設備 C（精煉爐 @50,50）
                     </button>
                     <button
+                        @click="testPlaceUnconnectedMachine"
+                        class="w-full rounded-md bg-amber-600 px-3 py-2 text-sm text-white hover:bg-amber-700"
+                    >
+                        ➕ 新增沒接線的機器（精煉爐 @20,20，觸發 E004）
+                    </button>
+                    <button
+                        @click="testPlaceMismatchedConnection"
+                        class="w-full rounded-md bg-yellow-600 px-3 py-2 text-sm text-white hover:bg-yellow-700"
+                    >
+                        ⚡ 新增加工機連線（粉碎機 ➔ 精煉爐，觸發 E004+W001）
+                    </button>
+                    <button
+                        @click="testPlacePureW001Connection"
+                        class="w-full rounded-md bg-amber-500 px-3 py-2 text-sm text-white hover:bg-amber-600"
+                    >
+                        🎯 新增純粹 W001（源機 ➔ 精煉爐，僅 1 筆 W001，無 E004）
+                    </button>
+                    <button
+                        @click="testPlaceExtraMaterialConnection"
+                        class="w-full rounded-md bg-orange-600 px-3 py-2 text-sm text-white hover:bg-orange-700"
+                    >
+                        ⚡ 新增多餘材料的連線設備（Exact Set Match 觸發 W001）
+                    </button>
+                    <button
                         @click="testClearDevices"
-                        :disabled="editorStore.nodes.length === 0"
+                        :disabled="editorStore.nodes.length === 0 && editorStore.edges.length === 0"
                         class="w-full rounded-md bg-gray-600 px-3 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
                     >
-                        🗑️ 清空所有設備
+                        🗑️ 清空所有設備與管線
                     </button>
                 </div>
             </div>
 
-            <!-- 右側：設備清單 -->
+            <!-- 右側：設備與管線清單 -->
             <div
                 class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
             >
                 <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
                     Editor Nodes（{{ editorStore.nodes.length }}）
                 </h3>
-                <div class="max-h-64 space-y-1 overflow-y-auto">
+                <div class="max-h-40 space-y-1 overflow-y-auto">
                     <div
                         v-for="node in editorStore.nodes"
                         :key="node.id"
@@ -138,7 +162,26 @@
                         </span>
                     </div>
                 </div>
-                <p v-if="editorStore.nodes.length === 0" class="text-xs text-gray-400">(無節點)</p>
+                <p v-if="editorStore.nodes.length === 0" class="mb-4 text-xs text-gray-400">
+                    (無節點)
+                </p>
+
+                <h3 class="mt-4 mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+                    Editor Connections（{{ editorStore.edges.length }}）
+                </h3>
+                <div class="max-h-36 space-y-1 overflow-y-auto">
+                    <div
+                        v-for="edge in editorStore.edges"
+                        :key="edge.id"
+                        class="rounded bg-gray-50 p-2 text-xs dark:bg-gray-900"
+                    >
+                        <span class="font-mono text-gray-500">{{ edge.id.slice(0, 8) }}</span>
+                        <span class="ml-2 font-mono text-gray-700 dark:text-gray-300">
+                            {{ edge.source.slice(0, 8) }} → {{ edge.target.slice(0, 8) }}
+                        </span>
+                    </div>
+                </div>
+                <p v-if="editorStore.edges.length === 0" class="text-xs text-gray-400">(無管線)</p>
             </div>
         </div>
     </div>
@@ -149,6 +192,8 @@ import { useEditorStore } from '@/store/editorStore';
 import { useValidationStore } from '@/store/validationStore';
 import { useValidation } from '@/composables/useValidation';
 import { E001_deviceOverlap } from '@/lib/validation/detectors/E001_deviceOverlap';
+import { E004_missingInput } from '@/lib/validation/detectors/E004_missingInput';
+import { W001_unmatchedMaterial } from '@/lib/validation/detectors/W001_unmatchedMaterial';
 
 /** 藍圖 store：本頁所有測試設備皆透過此 store 擺放 / 清除 */
 const editorStore = useEditorStore();
@@ -157,6 +202,8 @@ const validationStore = useValidationStore();
 
 /** 註冊必須早於 useValidation()：後者的 watch 是 immediate，setup 當下就會跑一次 */
 validationStore.registerDetector(E001_deviceOverlap);
+validationStore.registerDetector(E004_missingInput);
+validationStore.registerDetector(W001_unmatchedMaterial);
 
 /** 啟動 editorStore → validationStore 的自動重跑監聽 */
 useValidation();
@@ -204,7 +251,151 @@ function testPlaceNonOverlappingDeviceC() {
 }
 
 /**
- * 刪除畫布上所有設備，用於驗證清空後 alerts 一併歸零。
+ * 在像素座標 (400,400)（即格子 (20,20)）擺放一台未接線的精煉爐，用於驗證觸發 E004。
+ * @example
+ * testPlaceUnconnectedMachine()
+ */
+function testPlaceUnconnectedMachine() {
+    editorStore.placeDevice({
+        id: crypto.randomUUID(),
+        type: 'default',
+        position: { x: 400, y: 400 },
+        data: { label: '未接線精煉爐', machineType: '精煉爐', recipeIndex: 0, rotation: 0 },
+    });
+}
+
+/**
+ * 測試 W001：上游輸出「藍鐵粉末」，下游「精煉爐」需要赤銅相關材料，兩者接線後觸發 W001。
+ * @example
+ * testPlaceMismatchedConnection()
+ */
+function testPlaceMismatchedConnection() {
+    const srcId = crypto.randomUUID();
+    const dstId = crypto.randomUUID();
+
+    // 1. 放置上游設備（粉碎機，產出藍鐵粉末）
+    editorStore.placeDevice({
+        id: srcId,
+        type: 'default',
+        position: { x: 100, y: 600 },
+        data: { label: '上游粉碎機（藍鐵）', machineType: '粉碎機', recipeIndex: 1, rotation: 0 },
+    });
+
+    // 2. 放置下游設備（精煉爐，需赤銅材料）
+    editorStore.placeDevice({
+        id: dstId,
+        type: 'default',
+        position: { x: 400, y: 600 },
+        data: { label: '下游精煉爐（需赤銅）', machineType: '精煉爐', recipeIndex: 2, rotation: 0 },
+    });
+
+    // 3. 連接管線
+    editorStore.addConnection({
+        id: crypto.randomUUID(),
+        source: srcId,
+        target: dstId,
+    });
+}
+
+/**
+ * 測試純粹 W001：上游為源類機器（物品輸出口，is_source: true），輸出「赤銅礦」；
+ * 下游精煉爐在預設基礎模式（base_mode）下無法單獨精煉赤銅礦（赤銅需在 liquid_mode 加清水）。
+ * 因上游是源機，E004 自動忽略；下游有入邊，不報 E004；
+ * 僅有精煉爐材料不符 ➔ 畫面上純粹只有 1 筆 W001 Warning（0 Errors）。
+ * @example
+ * testPlacePureW001Connection()
+ */
+function testPlacePureW001Connection() {
+    const srcId = crypto.randomUUID();
+    const dstId = crypto.randomUUID();
+
+    // 1. 放置上游源設備（物品輸出口，is_source: true，不套用 E004）
+    editorStore.placeDevice({
+        id: srcId,
+        type: 'default',
+        position: { x: 100, y: 400 },
+        data: {
+            label: '物品輸出口（赤銅礦）',
+            machineType: '物品輸出口',
+            primaryOutput: '赤銅礦',
+            rotation: 0,
+        },
+    });
+
+    // 2. 放置下游加工設備（精煉爐，base_mode 無法單獨精煉赤銅礦）
+    editorStore.placeDevice({
+        id: dstId,
+        type: 'default',
+        position: { x: 400, y: 400 },
+        data: {
+            label: '下游精煉爐（基礎模式）',
+            machineType: '精煉爐',
+            rotation: 0,
+        },
+    });
+
+    // 3. 連接管線
+    editorStore.addConnection({
+        id: crypto.randomUUID(),
+        source: srcId,
+        target: dstId,
+    });
+}
+
+/**
+ * 測試 W001（多餘材料）：送入材料 A ＋ 多餘材料 B 至下游設備，驗證 Exact Set Match 觸發 W001。
+ * @example
+ * testPlaceExtraMaterialConnection()
+ */
+function testPlaceExtraMaterialConnection() {
+    const srcId1 = crypto.randomUUID();
+    const srcId2 = crypto.randomUUID();
+    const dstId = crypto.randomUUID();
+
+    // 上游 1：產出赤銅粉末
+    editorStore.placeDevice({
+        id: srcId1,
+        type: 'default',
+        position: { x: 100, y: 800 },
+        data: { label: '上游粉碎機（赤銅）', machineType: '粉碎機', recipeIndex: 3, rotation: 0 },
+    });
+
+    // 上游 2：產出藍鐵粉末（多餘材料）
+    editorStore.placeDevice({
+        id: srcId2,
+        type: 'default',
+        position: { x: 100, y: 1000 },
+        data: {
+            label: '上游粉碎機（多餘材料）',
+            machineType: '粉碎機',
+            recipeIndex: 1,
+            rotation: 0,
+        },
+    });
+
+    // 下游設備：精煉爐
+    editorStore.placeDevice({
+        id: dstId,
+        type: 'default',
+        position: { x: 400, y: 900 },
+        data: { label: '下游精煉爐', machineType: '精煉爐', recipeIndex: 0, rotation: 0 },
+    });
+
+    // 連接兩條管線至下游
+    editorStore.addConnection({
+        id: crypto.randomUUID(),
+        source: srcId1,
+        target: dstId,
+    });
+    editorStore.addConnection({
+        id: crypto.randomUUID(),
+        source: srcId2,
+        target: dstId,
+    });
+}
+
+/**
+ * 刪除畫布上所有設備與管線，用於驗證清空後 alerts 一併歸零。
  * @example
  * testClearDevices()
  */
