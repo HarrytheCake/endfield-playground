@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261011](../../work_dispatch/WEEK_20261011.md) **v1.2**、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.19**、[C5](../../roadmap/detail/C5_source_primary_output.md)、[AGENT_WEEK_1011](../claude/AGENT_WEEK_1011.md)
 **週次：** 2026-10-11 → 2026-10-18（連線月第二週；設備拖曳＋畫布樣式；**無技術門檻日**；M3＝10/25）
 **開發分支：** `dev/aaaaa1011`
-**狀態總覽：** **`[~]`**（2026-10-18；C1 完成；E1 PR 交審中）
+**狀態總覽：** **`[x]` 已結案／已合 master**（[#72](https://github.com/dernoson/endfield-playground/pull/72) MERGED 2026-10-18；續見 [V17](./todolist_v17.md)）
 **待確認問題：** [dispatch_private/1011/PENDING_DECISIONS_20261018.md](../collaborator_survey/dispatch_private/1011/PENDING_DECISIONS_20261018.md)（A／B／D-1／D-2 已裁；C 組不擋本版）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -123,7 +123,7 @@ A 定案 → B V15 收斂（前置）
 
 ## V16-E｜驗收、PR、交接
 
-- [~] **V16-E1** 品質閘 `[x]`；PR [#72](https://github.com/dernoson/endfield-playground/pull/72) 交審中；合入後回寫 `[ ]`
+- [x] **V16-E1** 品質閘 `[x]`；PR [#72](https://github.com/dernoson/endfield-playground/pull/72) **MERGED**；合入回寫見 [V17-B1](./dev_v17/B1_v16_residue_close.md)
     - 細項：[dev_v16/E1_acceptance_and_handoff.md](./dev_v16/E1_acceptance_and_handoff.md)
 
 ---
@@ -180,6 +180,10 @@ A 定案 → B V15 收斂（前置）
 ---
 
 ## 開發日誌
+
+### 2026-10-18｜V16 結案
+
+- [#72](https://github.com/dernoson/endfield-playground/pull/72) MERGED；主編核准；續 #73／V17（機型 id 查表＋引擎讀最小切片）
 
 ### 2026-10-18｜V16-E1 開 PR
 

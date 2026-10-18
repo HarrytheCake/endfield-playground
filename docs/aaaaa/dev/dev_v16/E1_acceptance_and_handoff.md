@@ -1,7 +1,7 @@
 # V16-E1 — 驗收、PR、交接
 
 **對應工項：** V16-E1
-**狀態：** `[~]` [#72](https://github.com/dernoson/endfield-playground/pull/72) 交審中
+**狀態：** `[x]` [#72](https://github.com/dernoson/endfield-playground/pull/72) MERGED 2026-10-18
 **日期：** 2026-10-18
 **依賴：** [C1](./C1_set_device_primary_output.md) `[x]`、[D1](./D1_engine_read_path.md) `[x]`
 **正式依據：** [W1011-A0 §3](../../../work_dispatch/aaaaa/1011/W1011-A0_c5_primary_output.md)、[WEEK §0.2 V8](../../../work_dispatch/WEEK_20261011.md)
@@ -60,10 +60,9 @@
 
 ## 4. 合入後回寫
 
-- [ ] todolist_v16 → E1 結案
-- [ ] AGENT_WEEK_1011 §0／§4
-- [ ] 決策層 REVIEW／PENDING 日誌一行
-- [ ] ROADMAP C5 狀態句（寫入端完成）
+- [x] todolist_v16 → E1 結案（2026-10-18）
+- [x] AGENT_WEEK／決策層（併 V17 開版）
+- [ ] ROADMAP C5 狀態句（寫入端完成；可併 V17）
 - [ ] WEEK V8 勾選（主編／結算時）
 
 ---
@@ -71,13 +70,17 @@
 ## 5. DoD
 
 - [x] §1 驗收表通過
-- [x] PR 已開（[#72](https://github.com/dernoson/endfield-playground/pull/72)）
+- [x] PR 已開並合入（[#72](https://github.com/dernoson/endfield-playground/pull/72)）
 - [x] 下游一句話＋引擎接法寫進 PR body
 - [x] 未改鎖檔／`editorStore`
 
 ---
 
 ## 6. 開發日誌
+
+### 2026-10-18｜合入
+
+- 主編核准並 MERGED；續 [#73](https://github.com/dernoson/endfield-playground/issues/73)／V17
 
 ### 2026-10-18｜驗收＋開 PR
 
