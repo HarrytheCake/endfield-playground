@@ -22,7 +22,7 @@ C5 要讓「源設備選一種基礎材料 → 引擎算出每分鐘產多少」
 |----|------|------|
 | **寫入端（1011／V16）** | `layoutStore.setDevicePrimaryOutput`；欄位＝`primaryOutput`／`sourceRatePerMin` | [#72](https://github.com/dernoson/endfield-playground/pull/72) **已合 master** |
 | **讀取端＋查表（1018／V17）** | 機型一律能用英文 id 查；驗證／引擎對齊；經 `toTopology` 餵引擎可測出 **30/min** | [#74](https://github.com/dernoson/endfield-playground/pull/74) 交審中 |
-| **歷史隔離（#58）** | dev／正式頁 Undo 互不影響；正式頁**不**自動載示範快照 | [#58](https://github.com/dernoson/endfield-playground/issues/58) **仍 OPEN**；已納入 **V17-H**（[H1](../../../aaaaa/dev/dev_v17/H1_stop_auto_demo_snapshot.md)／[H2](../../../aaaaa/dev/dev_v17/H2_clear_history_on_context_switch.md)／[H3](../../../aaaaa/dev/dev_v17/H3_history_isolation_acceptance.md)；實作未開始） |
+| **歷史隔離（#58）** | dev／正式頁 Undo 互不影響；正式頁**不**自動載示範快照 | [#58](https://github.com/dernoson/endfield-playground/issues/58) **仍 OPEN**；**H1／H2 已交**；H3 驗收／PR 待做＠`dev/aaaaa1018-58` |
 
 | 問 | 答 |
 |----|-----|
@@ -104,8 +104,8 @@ C5 要讓「源設備選一種基礎材料 → 引擎算出每分鐘產多少」
 | 2 | 正式頁開頁**不**自動 `loadSnapshot(connected)` | 若仍需示範，改由 `/dev` 頁提供 |
 | 3 | 既有空白畫布仍可驗收 | 需與 toby／harry 對「空畫布怎麼演示放置」 |
 
-**本週狀態：** **未修程式**；已納入 [todolist_v17](../../../aaaaa/dev/todolist_v17.md) **V17-H** 並建細項。  
-W1004／toby 0921 曾暫緩以免與 T1 搶檔；現 #58 為 V17 第二主線，實作時 PR 知會 toby／harry（空畫布驗收改手動）。
+**本週狀態：** **H1／H2 已修**（停自動 fixture；SPA 跨正式／dev 清 history）。獨立 HTML preview 本就另 Pinia。  
+分支 `dev/aaaaa1018-58`。H3 開 PR 時知會 toby／harry。
 
 ---
 
@@ -244,24 +244,18 @@ pnpm test
 
 **準備：** `pnpm dev`
 
-#### A. 正式頁開頁示範進歷史 → Ctrl+Z 變空白
+#### A. 正式頁開頁示範進歷史 → Ctrl+Z 變空白（**H1 已修**）
 
 1. 開新分頁進正式頁 `/`（或硬重新整理，確保 `layoutStore` 空）
-2. 應看到 **connected 示範產線**（非空白）——來自 `LayoutView` `onMounted` → `loadSnapshot(...)`
-3. 連按 **Ctrl+Z**
-4. **現況：** 示範被撤銷 → 畫布空白  
-5. **期望（#58）：** 開頁根本不載示範；或該載入**不進** Undo 堆疊
+2. **修後期望／現況（H1）：** 畫布**空白**；不再自動出現 connected 產線  
+3. （修前現象，僅供對照）曾：`onMounted` → `loadSnapshot(connected)` 進歷史 → Ctrl+Z 變空白
 
-#### B. dev ↔ 正式頁歷史互相污染
+#### B. SPA 內 `/` ↔ `/dev/*` 歷史互相污染（**H2 已修**）
 
-1. 開 `/dev/layout-store-preview.html`（或會寫 history 的其它 `/dev/*`）
-2. 在 dev 頁做幾次放置／拉線／Undo 可見的操作
-3. 不關分頁，切回正式頁 `/`
-4. 按 **Ctrl+Z**
-5. **現況：** 可能撤銷到 **dev 頁留下的 Command**（或反之）  
-6. **期望：** 切換路由時歷史已清空（或分堆疊），兩頁互不影響
-
-> `historyStore` 已有 `clear()`；#58 初步方向是在 **dev ↔ 正式** 切換時呼叫，細節（誰 watch router、是否連 `layoutStore` 一併重置）仍待決。
+1. 正式頁 `/` 操作進 history → 進 `/dev/history-replay`（或其它 `/dev/*`）→ 回 `/`
+2. **修後：** 跨界時 `historyStore.clear()`；回正式頁後堆疊不含「僅在 dev 做的」Command  
+3. **同區** `/dev/a`→`/dev/b`：堆疊可保留  
+4. **獨立 HTML** `layout-store-preview.html`：另 document／Pinia，與 SPA 本就隔離（H2 驗證）
 
 ---
 

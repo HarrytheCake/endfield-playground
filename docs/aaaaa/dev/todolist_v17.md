@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261011](../../work_dispatch/WEEK_20261011.md) v1.2、[AGENT_WEEK_1018](../claude/AGENT_WEEK_1018.md)
 **週次：** 2026-10-18 → 2026-10-25（連線月第三週；M3＝10/25）
 **開發分支：** #73＝`dev/aaaaa1018`（[#74](https://github.com/dernoson/endfield-playground/pull/74)）；#58＝**`dev/aaaaa1018-58`**（本線）
-**狀態總覽：** **`[~]`**（2026-10-18；**#73 線已交**／#74 交審中；**#58 線文件已開、實作未開始**＠`dev/aaaaa1018-58`）
+**狀態總覽：** **`[~]`**（2026-10-18；#73／#74 交審中；#58＠`dev/aaaaa1018-58`：H1／H2 完成；**H3 品質閘綠、待開 PR**）
 **會議介紹：** [INTRO_meeting_c5_primary_output](../../work_dispatch/aaaaa/1011/INTRO_meeting_c5_primary_output.md)
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -169,11 +169,13 @@ H1 停自動 fixture → H2 情境切換 clear history → H3 驗收＋PR（Clos
 
 ## V17-H｜#58 歷史隔離＋停載示範
 
-- [ ] **V17-H1** 正式頁 `LayoutView` 停自動 `loadSnapshot(connected)`
+- [x] **V17-H1** 正式頁 `LayoutView` 停自動 `loadSnapshot(connected)`
     - 細項：[dev_v17/H1_stop_auto_demo_snapshot.md](./dev_v17/H1_stop_auto_demo_snapshot.md)
-- [ ] **V17-H2** 跨正式／dev 情境 `historyStore.clear()`
+    - 產物：`LayoutView.vue`；`layoutView.noAutoSnapshot.test.ts`
+- [x] **V17-H2** 跨正式／dev 情境 `historyStore.clear()`
     - 細項：[dev_v17/H2_clear_history_on_context_switch.md](./dev_v17/H2_clear_history_on_context_switch.md)
-- [ ] **V17-H3** 品質閘；開 PR；Closes #58
+    - 產物：`historyContext.ts`／`clearHistoryOnContextSwitch.ts`；router 註冊；單元測
+- [~] **V17-H3** 品質閘 `[x]`（965 tests）；開 PR `[ ]`（先 commit）；Closes #58 `[ ]`
     - 細項：[dev_v17/H3_history_isolation_acceptance.md](./dev_v17/H3_history_isolation_acceptance.md)
 
 ---
@@ -201,9 +203,9 @@ H1 停自動 fixture → H2 情境切換 clear history → H3 驗收＋PR（Clos
 
 ### 主線 #58
 
-- [ ] 正式頁開頁不自動載 connected
-- [ ] 跨正式／dev 操作歷史互不影響（clear 策略）
-- [ ] 測試或 H3 手動腳本
+- [x] 正式頁開頁不自動載 connected（H1）
+- [x] 跨正式／dev 操作歷史互不影響（clear 策略）（H2）
+- [x] H1／H2 單元測；H3 手動腳本待驗收
 - [ ] PR Closes #58
 
 ### 品質閘（兩線共用）
@@ -234,20 +236,33 @@ H1 停自動 fixture → H2 情境切換 clear history → H3 驗收＋PR（Clos
 | #73 引擎查表 | 英文 id | `[x]` | E1 |
 | #73 引擎切片 | toTopology 可測 | `[x]` | F1＝A |
 | #73 PR | Closes #73 | `[~]` | #74 |
-| #58 停自動 fixture | LayoutView | `[ ]` | H1 |
-| #58 歷史隔離 | clear on switch | `[ ]` | H2 |
-| #58 PR | Closes #58 | `[ ]` | H3 |
+| #58 停自動 fixture | LayoutView | `[x]` | H1 2026-10-18 |
+| #58 歷史隔離 | clear on switch | `[x]` | H2 2026-10-18 |
+| #58 品質閘 | type／lint／format／test | `[x]` | H3 2026-10-18 |
+| #58 PR | Closes #58 | `[ ]` | H3 待開 |
 | V16 | #72 收斂 | `[x]` | B1 |
 
 ---
 
 ## 開發日誌
 
+### 2026-10-18｜V17-H3 品質閘
+
+- 四項全綠（965 tests）；先逐項 commit；**不開 PR**
+
+### 2026-10-18｜V17-H2 完成
+
+- router afterEach 跨正式／dev → `history.clear()`；獨立 HTML 另 Pinia；**下一刀＝H3**
+
+### 2026-10-18｜V17-H1 完成
+
+- `LayoutView` 移除開頁 `loadSnapshot(connected)`；契約測綠；**下一刀＝H2**
+
 ### 2026-10-18｜V17 擴寫納入 #58
 
 - 範圍＝#73＋#58；建 H1／H2／H3；A1／AGENT／會議檔對齊
 - 分支：#73 保持 `dev/aaaaa1018`；#58 另開 **`dev/aaaaa1018-58`**
-- **#73 線實作已完成**（#74 交審）；**下一刀＝H1＠aaaaa1018-58**
+- **#73 線實作已完成**（#74 交審）；下一刀曾＝H1＠aaaaa1018-58
 
 ### 2026-10-18｜V17-G1 驗收＋開 PR（#73）
 
