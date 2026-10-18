@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.5（2026-10-18；V17-F1＝A 完成）** |
+| version | **v1.6（2026-10-18；V17-G1 開 PR）** |
 | 用途 | Agent 執行本週 aaaaa 工項時的強制約束 |
 | 公開／議題 | [#73](https://github.com/dernoson/endfield-playground/issues/73)、[C5](../../roadmap/detail/C5_source_primary_output.md) |
 | 執行計畫 | [todolist_v17](../dev/todolist_v17.md)、[dev_v17/](../dev/dev_v17/) |
@@ -75,6 +75,10 @@
 ---
 
 ## 5. 日誌
+
+### 2026-10-18（v1.6）
+
+- V17-G1：品質閘全綠（961 tests）；開 PR（Closes #73）；`/dev` 頁手動待 reviewer
 
 ### 2026-10-18（v1.5）
 

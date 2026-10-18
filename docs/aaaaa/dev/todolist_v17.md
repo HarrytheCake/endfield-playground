@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261011](../../work_dispatch/WEEK_20261011.md) v1.2（C5 引擎讀排本週）、[AGENT_WEEK_1018](../claude/AGENT_WEEK_1018.md)
 **週次：** 2026-10-18 → 2026-10-25（連線月第三週；M3＝10/25）
 **開發分支：** `dev/aaaaa1018`
-**狀態總覽：** **`[~]`**（2026-10-18；C1–F1 完成；下一＝G1）
+**狀態總覽：** **`[~]`**（2026-10-18；C1–F1 完成；G1 品質閘綠、PR 交審中）
 **待確認問題：** [dispatch_private/1018/PENDING_DECISIONS_20261025.md](../collaborator_survey/dispatch_private/1018/PENDING_DECISIONS_20261025.md)（C-1／F-1／D-1 **已決**）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -152,7 +152,7 @@ A 定案 → B V16 收斂
 
 ## V17-G｜驗收、PR、交接
 
-- [ ] **V17-G1** 品質閘；開 PR；合入後回寫 #73
+- [~] **V17-G1** 品質閘 `[x]`；開 PR `[~]`；合入後回寫 #73 `[ ]`
     - 細項：[dev_v17/G1_acceptance_and_handoff.md](./dev_v17/G1_acceptance_and_handoff.md)
 
 ---
@@ -172,17 +172,17 @@ A 定案 → B V16 收斂
 
 ### 主線（對照 [#73](https://github.com/dernoson/endfield-playground/issues/73)）
 
-- [ ] 以 layoutStore／英文 id 餵入時，E004（無輸入加工機）、W001（材料不符）能正確發警示（有測試）
-- [ ] 以 `toTopology` 拓樸餵引擎：源→粉碎機→物品輸入口，產耗各 30/min（有測試）
+- [x] 以 layoutStore／英文 id 餵入時，E004（無輸入加工機）、W001（材料不符）能正確發警示（有測試）
+- [x] 以 `toTopology` 拓樸餵引擎：源→粉碎機→物品輸入口，產耗各 30/min（有測試）
 - [ ] 既有 dev 頁（validation-test／flow-engine-test）仍可運作
-- [ ] `pnpm type-check`／lint-check／format-check／test 綠
+- [x] `pnpm type-check`／lint-check／format-check／test 綠（961 tests）
 - [ ] PR 關聯 #73；註明雙查移除時機
 
 ### 品質閘
 
-- [ ] 不重開 W001 A-5 語意；不改 `editorStore` 簽名
-- [ ] 不發解鎖句
-- [ ] 配方資料層未改鍵（仍中文名）
+- [x] 不重開 W001 A-5 語意；不改 `editorStore` 簽名
+- [x] 不發解鎖句
+- [x] 配方資料層未改鍵（仍中文名）
 
 ---
 
@@ -205,12 +205,16 @@ A 定案 → B V16 收斂
 | 驗證 | getDef＋E004／W001 | `[x]` | D1 2026-10-18 |
 | 引擎查表 | 英文 id | `[x]` | E1 2026-10-18 |
 | 引擎切片 | toTopology 餵入可測 | `[x]` | F1 2026-10-18（A；B 未做） |
-| 相容 | dev 頁不壞 | `[ ]` | G1 |
+| 相容 | dev 頁不壞 | `[~]` | G1：回歸測綠；手動待 reviewer |
 | V16 | #72 收斂 | `[x]` | B1 |
 
 ---
 
 ## 開發日誌
+
+### 2026-10-18｜V17-G1 驗收＋開 PR
+
+- 品質閘四項全綠（961 tests）；`/dev` 頁手動待 reviewer；開 PR（Closes #73）
 
 ### 2026-10-18｜V17-F1 完成（A）
 

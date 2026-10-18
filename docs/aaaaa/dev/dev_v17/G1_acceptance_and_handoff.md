@@ -1,7 +1,7 @@
 # V17-G1 — 驗收、PR、交接
 
 **對應工項：** V17-G1
-**狀態：** `[ ]` 未開始
+**狀態：** `[~]` 品質閘全綠；PR 交審中
 **日期：** 2026-10-18
 **依賴：** [D1](./D1_validation_id_lookup.md)、[E1](./E1_flow_engine_id_lookup.md)、[F1](./F1_engine_topology_slice.md)
 **正式依據：** [#73](https://github.com/dernoson/endfield-playground/issues/73) 驗收
@@ -12,12 +12,12 @@
 
 | # | 步驟 | 預期 | 結果 |
 |---|------|------|------|
-| 1 | `pnpm test` | 綠 | |
-| 2 | `pnpm type-check`／lint／format | 綠 | |
-| 3 | E004／W001 英文 id 測 | 有警示 | |
-| 4 | toTopology→引擎 30/min 測 | 過 | |
-| 5 | 手動／煙測 `/dev/validation-test`、`/dev/flow-engine-test` | 仍可運作 | |
-| 6 | 未改 editorStore 簽名；未重開 W001 A-5 | 成立 | |
+| 1 | `pnpm test` | 綠 | ✅ 53 files／961 tests |
+| 2 | `pnpm type-check`／lint／format | 綠 | ✅（format 補修 F1 測試檔後全綠） |
+| 3 | E004／W001 英文 id 測 | 有警示 | ✅ T10（E004）／T19（W001） |
+| 4 | toTopology→引擎 30/min 測 | 過 | ✅ `flowEngine.topology.layout.test.ts` |
+| 5 | 手動／煙測 `/dev/validation-test`、`/dev/flow-engine-test` | 仍可運作 | ⚠️ 未開瀏覽器手動；中文名 fixture 回歸測＋type-check 綠代驗，待 reviewer 實測 |
+| 6 | 未改 editorStore 簽名；未重開 W001 A-5 | 成立 | ✅ `editorStore` 零 diff；W001 只改查表 |
 
 ---
 
@@ -69,13 +69,19 @@
 
 ## 5. DoD
 
-- [ ] §1 通過
+- [x] §1 通過（#5 待 reviewer 手動）
 - [ ] PR 已開
 - [ ] #73 驗收項可勾
 
 ---
 
 ## 6. 開發日誌
+
+### 2026-10-18｜驗收
+
+- 品質閘四項全綠（961 tests）；F1 測試檔 prettier 補修
+- `/dev` 頁未手動驗；PR body 請 reviewer 實測
+- 本版 F1＝A（測試餵入）；B（`/dev` 掛載）未做
 
 ### 2026-10-18
 
