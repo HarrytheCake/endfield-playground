@@ -1,5 +1,4 @@
 import type { Alert, Detector, ValidationContext } from '@/types/validation';
-import { getMachine } from '@/data/machines';
 import { getRecipesForMachine } from '@/data/products';
 import { getMachineMode, type Machine } from '@/types/machine';
 
@@ -78,9 +77,8 @@ function traceEdgeItems(
     nextVisited.add(sourceId);
 
     const machineType = sourceNode.data?.machineType ?? sourceNode.data?.label ?? sourceNode.id;
-    const machineDef = ctx.getDef
-        ? (ctx.getDef(machineType) ?? getMachine(machineType))
-        : getMachine(machineType);
+    /** 查定義一律走 getDef（V17／#73；不直接呼叫 getMachine） */
+    const machineDef = ctx.getDef(machineType);
 
     // 判斷是否為導流設備 (無配方，只是導流，包含分流器、匯流器、物流橋等)
     if (isRoutingMachine(machineDef, machineType)) {
@@ -132,6 +130,12 @@ function getIncomingItems(targetId: string, ctx: ValidationContext): Set<string>
     return items;
 }
 
+/**
+ * W001_unmatchedMaterial
+ *
+ * 查定義一律走 {@link ValidationContext.getDef}（V17／#73；不直接呼叫 getMachine）。
+ * 配方鍵維持 `machineDef.name`（中文）。A-5／導流語意本版不動。
+ */
 export const W001_unmatchedMaterial: Detector = {
     code: 'W001',
     level: 'warning',
@@ -140,9 +144,7 @@ export const W001_unmatchedMaterial: Detector = {
 
         for (const device of ctx.devices) {
             const machineType = device.data?.machineType ?? device.data?.label ?? device.id;
-            const machineDef = ctx.getDef
-                ? (ctx.getDef(machineType) ?? getMachine(machineType))
-                : getMachine(machineType);
+            const machineDef = ctx.getDef(machineType);
 
             // 如果沒有設備定義，或是資源產出端 (沒有輸入口)，跳過
             if (
