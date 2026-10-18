@@ -75,6 +75,14 @@ describe('matchRecipeByInputs()', () => {
         expect(matchRecipeByInputs('粉碎機', new Set(['源礦', '砂葉']), 'default')).toBeNull();
         expect(matchRecipeByInputs('粉碎機', new Set(), 'default')).toBeNull();
     });
+
+    it('V17-E1：英文 id crusher 與中文名等價匹配', () => {
+        const byId = matchRecipeByInputs('crusher', new Set(['源礦']), 'default');
+        const byName = matchRecipeByInputs('粉碎機', new Set(['源礦']), 'default');
+        expect(byId).not.toBeNull();
+        expect(byId!.recipe.id).toBe(byName!.recipe.id);
+        expect(byId!.recipe.outputs[0]?.itemId).toBe('源石粉末');
+    });
 });
 
 describe('V9-E1 引擎整合：換料換產／缺料無產', () => {
