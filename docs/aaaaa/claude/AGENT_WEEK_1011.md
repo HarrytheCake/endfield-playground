@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.5（2026-10-18；V16-C1 完成）** |
+| version | **v1.6（2026-10-18；E1 開 PR #72）** |
 | 用途 | Agent 執行本週派工／改工單時的強制約束 |
 | 公開 | [WEEK_1011](../../work_dispatch/WEEK_20261011.md) v1.2、[W1011-A0](../../work_dispatch/aaaaa/1011/W1011-A0_c5_primary_output.md) |
 | 執行計畫 | [todolist_v16](../dev/todolist_v16.md)、[dev_v16/](../dev/dev_v16/) |
@@ -15,8 +15,8 @@
 
 ## 0. 三十秒結論
 
-**V16-C1 已完成：`layoutStore.setDevicePrimaryOutput`＋測試＋進歷史。**  
-下一刀＝E1 開 PR（body 註明引擎讀＝經 `toTopology`）。  
+**V16 交審中：[#72](https://github.com/dernoson/endfield-playground/pull/72)（`setDevicePrimaryOutput`）。**  
+PR body 已註明引擎讀＝經 `toTopology`。合入後做 E1 回寫。  
 toby＝設備拖曳；C1＝toby（10/18 週）——**禁止**改 GridCanvas／LayoutView。  
 引擎讀取實作＝**下週**；正式頁表單＝不在本版。
 
@@ -29,8 +29,8 @@ toby＝設備拖曳；C1＝toby（10/18 週）——**禁止**改 GridCanvas／L
 | ~~0~~ | ~~派工已發（WEEK＋十張工單）~~ | **已完成**；PR #66 |
 | ~~1~~ | ~~V15 殘項收斂~~ | **已完成**；[V16-B1](../dev/dev_v16/B1_v15_residue_close.md) |
 | ~~2~~ | ~~② `setDevicePrimaryOutput`＋測試＋進歷史~~ | **已完成**；[V16-C1](../dev/dev_v16/C1_set_device_primary_output.md) |
-| ~~3~~ | ~~引擎讀接法定案~~ | **已決＝toTopology**；[V16-D1](../dev/dev_v16/D1_engine_read_path.md)（PR body 待寫） |
-| 4 | 驗收＋開 PR | [V16-E1](../dev/dev_v16/E1_acceptance_and_handoff.md) |
+| ~~3~~ | ~~引擎讀接法定案~~ | **已決＝toTopology**；已寫入 #72 body |
+| ~~4~~ | ~~驗收＋開 PR~~ | **[#72](https://github.com/dernoson/endfield-playground/pull/72)**；[V16-E1](../dev/dev_v16/E1_acceptance_and_handoff.md) 合入後回寫 |
 | — | **禁止**改 GridCanvas／LayoutView／MainLayout／ToolbarPanel | 鎖表 WEEK §2.2 |
 | — | **禁止**本週做引擎整包改掛／右側產耗表／正式頁表單 | C5 週切片 |
 | — | **禁止**寫 `editorStore` 的 primaryOutput | 裁決 B |
@@ -77,11 +77,11 @@ toby＝設備拖曳；C1＝toby（10/18 週）——**禁止**改 GridCanvas／L
 
 | # | 動作 | 誰／何處 | 狀態 |
 |---|------|----------|------|
-| 1 | C5 action 合入；roadmap C5 狀態句 | aaaaa | `[ ]` |
-| 2 | 回寫 todolist_v16 狀態 | Agent／aaaaa | `[ ]` |
+| 1 | C5 action 合入；roadmap C5 狀態句 | aaaaa | `[ ]`（#72 交審） |
+| 2 | 回寫 todolist_v16 狀態 | Agent／aaaaa | `[~]`（開 PR 已記；合入後結案） |
 | 3 | REVIEW／E3／PENDING 日誌補一行 | 決策層 `1011/` | `[~]`（開版已補 INTRO） |
 | 4 | 10/18 驗收結果回寫 WEEK／ROADMAP（V8） | 主編／aaaaa | 結算時 |
-| 5 | 下週引擎讀切片開工前確認 PR 註記 | aaaaa | 合入後 |
+| 5 | 下週引擎讀切片開工前確認 PR 註記 | aaaaa | **#72 body 已寫** |
 | — | **不動** CLAUDE §4.6 索引、AGENT_ROADMAP 版本 | 已知過期，下次一併補 | 維持 |
 
 ---
@@ -101,6 +101,10 @@ toby＝設備拖曳；C1＝toby（10/18 週）——**禁止**改 GridCanvas／L
 ---
 
 ## 6. 日誌
+
+### 2026-10-18（v1.6）
+
+- E1 開 [#72](https://github.com/dernoson/endfield-playground/pull/72)；body 註明引擎讀＝經 `toTopology`
 
 ### 2026-10-18（v1.5）
 

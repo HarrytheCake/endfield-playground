@@ -123,7 +123,7 @@ A 定案 → B V15 收斂（前置）
 
 ## V16-E｜驗收、PR、交接
 
-- [~] **V16-E1** 品質閘 `[x]`；PR 交審中；合入後回寫 `[ ]`
+- [~] **V16-E1** 品質閘 `[x]`；PR [#72](https://github.com/dernoson/endfield-playground/pull/72) 交審中；合入後回寫 `[ ]`
     - 細項：[dev_v16/E1_acceptance_and_handoff.md](./dev_v16/E1_acceptance_and_handoff.md)
 
 ---
@@ -183,7 +183,7 @@ A 定案 → B V15 收斂（前置）
 
 ### 2026-10-18｜V16-E1 開 PR
 
-- 驗收表全過；開 PR（body 註明引擎讀＝經 `toTopology`）；合入後再結案回寫
+- 驗收表全過；開 [#72](https://github.com/dernoson/endfield-playground/pull/72)（body 註明引擎讀＝經 `toTopology`）；合入後再結案回寫
 
 ### 2026-10-18｜V16-C1 完成
 

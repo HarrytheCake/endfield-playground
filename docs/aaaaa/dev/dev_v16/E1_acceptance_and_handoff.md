@@ -1,7 +1,7 @@
 # V16-E1 — 驗收、PR、交接
 
 **對應工項：** V16-E1
-**狀態：** `[~]` PR 交審中（開 PR 後填連結）
+**狀態：** `[~]` [#72](https://github.com/dernoson/endfield-playground/pull/72) 交審中
 **日期：** 2026-10-18
 **依賴：** [C1](./C1_set_device_primary_output.md) `[x]`、[D1](./D1_engine_read_path.md) `[x]`
 **正式依據：** [W1011-A0 §3](../../../work_dispatch/aaaaa/1011/W1011-A0_c5_primary_output.md)、[WEEK §0.2 V8](../../../work_dispatch/WEEK_20261011.md)
@@ -32,7 +32,7 @@
 | 範圍 | 文件＋`layoutStore` action＋測試；V15 收斂文件 |
 | 合入序 | WEEK：A0 在 T2／H2 之後亦可；**不擋**樣式平行審 |
 | 解鎖句 | **不發** |
-| PR | （開 PR 後回填） |
+| PR | [#72](https://github.com/dernoson/endfield-playground/pull/72) |
 
 ### 2.1 PR body 必含
 
@@ -71,7 +71,7 @@
 ## 5. DoD
 
 - [x] §1 驗收表通過
-- [ ] PR 已開（本步驟）
+- [x] PR 已開（[#72](https://github.com/dernoson/endfield-playground/pull/72)）
 - [x] 下游一句話＋引擎接法寫進 PR body
 - [x] 未改鎖檔／`editorStore`
 
@@ -82,7 +82,7 @@
 ### 2026-10-18｜驗收＋開 PR
 
 - 品質閘四項全綠（929 tests）；鎖檔／editorStore 零 diff
-- 開 PR；body 註明引擎讀＝經 `toTopology`
+- 開 [#72](https://github.com/dernoson/endfield-playground/pull/72)；body 註明引擎讀＝經 `toTopology`
 
 ### 2026-10-18
 
