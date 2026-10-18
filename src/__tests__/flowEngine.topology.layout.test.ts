@@ -20,7 +20,10 @@ import {
 import { toTopology } from '@/utils/layout/toTopology';
 
 /** 對 nodes／edges 跑一輪引擎（純函式；不碰 store） */
-function runOnTopology(nodes: ReturnType<typeof toTopology>['nodes'], edges: ReturnType<typeof toTopology>['edges']) {
+function runOnTopology(
+    nodes: ReturnType<typeof toTopology>['nodes'],
+    edges: ReturnType<typeof toTopology>['edges'],
+) {
     const graph = buildGraph(nodes, edges);
     validateChains(graph);
     const sorted = topologicalSort(graph);
@@ -156,10 +159,7 @@ describe('V17-F1：toTopology → 引擎（英文 id 產線）', () => {
             },
         ];
 
-        const pipelines: Pipeline[] = [
-            beltPipeline('p1', 1, 3),
-            beltPipeline('p2', 7, 9),
-        ];
+        const pipelines: Pipeline[] = [beltPipeline('p1', 1, 3), beltPipeline('p2', 7, 9)];
         const connections: Connection[] = [
             {
                 id: 'p1',
