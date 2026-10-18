@@ -5,7 +5,13 @@ import type { FactoryNode, FactoryEdge } from '@/types/graph';
 import type { Machine } from '@/types/machine';
 
 vi.mock('@/data/products', () => ({
-    getRecipesForMachine: vi.fn((machineType: string) => {
+    getRecipesForMachine: vi.fn((machineType: string, modeId?: string) => {
+        if (machineType === 'test_machine_mode_switch') {
+            if (modeId === 'mode_b') {
+                return [{ inputs: [{ itemId: 'itemB', quantity: 1 }], outputs: [] }];
+            }
+            return [{ inputs: [{ itemId: 'itemA', quantity: 1 }], outputs: [] }];
+        }
         if (machineType === 'test_machine_A') {
             return [{ inputs: [{ itemId: 'itemA', quantity: 1 }], outputs: [] }];
         }
@@ -44,22 +50,65 @@ vi.mock('@/data/products', () => ({
     }),
 }));
 
+const ROUTING_NAMES = new Set(['分流器', '管道分流器', '匯流器', '管道匯流器', '物流橋', '管道橋']);
+
+const ROUTING_IDS: Record<string, string> = {
+    分流器: 'splitter',
+    管道分流器: 'pipe_splitter',
+    匯流器: 'merger',
+    管道匯流器: 'pipe_merger',
+    物流橋: 'logistics_bridge',
+    管道橋: 'pipe_bridge',
+};
+
 vi.mock('@/data/machines', () => ({
     getMachine: vi.fn((machineType: string): Machine | undefined => {
-        if (machineType === '分流器' || machineType === '管道分流器') {
+        if (ROUTING_NAMES.has(machineType)) {
             return {
-                id: machineType === '分流器' ? 'splitter' : 'pipe_splitter',
+                id: ROUTING_IDS[machineType] ?? machineType,
                 name: machineType,
                 width: 1,
                 height: 1,
                 power: 0,
-                tags: [],
+                tags: ['物流設備'],
                 is_source: false,
                 is_sink: false,
                 modes: [
                     {
                         id: 'default',
                         label: 'Default',
+                        input_ports: [{ side: 'top', offset: 0, media: 'belt' }],
+                        output_ports: [{ side: 'bottom', offset: 0, media: 'belt' }],
+                        loss: null,
+                    },
+                ],
+                onTick: null,
+                onInput: null,
+                onOutput: null,
+                calcEfficiency: null,
+            };
+        }
+        if (machineType === 'test_machine_mode_switch') {
+            return {
+                id: 'test_machine_mode_switch',
+                name: 'test_machine_mode_switch',
+                width: 1,
+                height: 1,
+                power: 10,
+                tags: [],
+                is_source: false,
+                is_sink: false,
+                modes: [
+                    {
+                        id: 'mode_a',
+                        label: 'Mode A',
+                        input_ports: [{ side: 'top', offset: 0, media: 'belt' }],
+                        output_ports: [{ side: 'bottom', offset: 0, media: 'belt' }],
+                        loss: null,
+                    },
+                    {
+                        id: 'mode_b',
+                        label: 'Mode B',
                         input_ports: [{ side: 'top', offset: 0, media: 'belt' }],
                         output_ports: [{ side: 'bottom', offset: 0, media: 'belt' }],
                         loss: null,
@@ -98,7 +147,12 @@ vi.mock('@/data/machines', () => ({
 }));
 
 describe('W001_unmatchedMaterial', () => {
-    function createDevice(id: string, machineType: string, recipeIndex = 0): FactoryNode {
+    function createDevice(
+        id: string,
+        machineType: string,
+        recipeIndex = 0,
+        machineMode?: string,
+    ): FactoryNode {
         return {
             id,
             type: 'factory-node',
@@ -107,6 +161,7 @@ describe('W001_unmatchedMaterial', () => {
                 label: machineType,
                 machineType,
                 recipeIndex,
+                ...(machineMode ? { machineMode } : {}),
             },
         };
     }
@@ -471,5 +526,119 @@ describe('W001_unmatchedMaterial', () => {
         expect(alerts).toHaveLength(1);
         expect(alerts[0].code).toBe('W001');
         expect(alerts[0].relatedDeviceUids).toContain('machA');
+    });
+
+    it('T15：穿透匯流器匹配（上游產 A -> 匯流器 -> 下游需 A），不觸發 W001', () => {
+        const prodA = createDevice('prodA', 'test_producer_A');
+        const merger = createDevice('merger1', '匯流器');
+        const machA = createDevice('machA', 'test_machine_A');
+        const edge1: FactoryEdge = {
+            id: 'e1',
+            source: 'prodA',
+            target: 'merger1',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+        const edge2: FactoryEdge = {
+            id: 'e2',
+            source: 'merger1',
+            target: 'machA',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+
+        const ctx = createContext([prodA, merger, machA], [edge1, edge2]);
+        const alerts = W001_unmatchedMaterial.run(ctx);
+        expect(alerts).toHaveLength(0);
+    });
+
+    it('T16：穿透物流橋匹配（上游產 A -> 物流橋 -> 下游需 A），不觸發 W001', () => {
+        const prodA = createDevice('prodA', 'test_producer_A');
+        const bridge = createDevice('bridge1', '物流橋');
+        const machA = createDevice('machA', 'test_machine_A');
+        const edge1: FactoryEdge = {
+            id: 'e1',
+            source: 'prodA',
+            target: 'bridge1',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+        const edge2: FactoryEdge = {
+            id: 'e2',
+            source: 'bridge1',
+            target: 'machA',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+
+        const ctx = createContext([prodA, bridge, machA], [edge1, edge2]);
+        const alerts = W001_unmatchedMaterial.run(ctx);
+        expect(alerts).toHaveLength(0);
+    });
+
+    it('T17：兩個源經匯流器合流（產 A ＋ 產 B -> 匯流器 -> 下游需 A+B），不觸發 W001', () => {
+        const prodA = createDevice('prodA', 'test_producer_A');
+        const prodB = createDevice('prodB', 'test_producer_B');
+        const merger = createDevice('merger1', '匯流器');
+        const machAB = createDevice('machAB', 'test_machine_AB'); // 需 itemA + itemB
+
+        const edgeA: FactoryEdge = {
+            id: 'eA',
+            source: 'prodA',
+            target: 'merger1',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+        const edgeB: FactoryEdge = {
+            id: 'eB',
+            source: 'prodB',
+            target: 'merger1',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+        const edgeOut: FactoryEdge = {
+            id: 'eOut',
+            source: 'merger1',
+            target: 'machAB',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+
+        const ctx = createContext([prodA, prodB, merger, machAB], [edgeA, edgeB, edgeOut]);
+        const alerts = W001_unmatchedMaterial.run(ctx);
+        expect(alerts).toHaveLength(0);
+    });
+
+    it('T18：模式切換測試（同一設備切換 mode 後，W001 判定結果隨之改變）', () => {
+        const prodA = createDevice('prodA', 'test_producer_A');
+        const edge: FactoryEdge = {
+            id: 'e1',
+            source: 'prodA',
+            target: 'machSwitch',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+
+        // 1. 預設模式（mode_a，需 itemA）：收到 itemA -> 吻合，不報 W001
+        const machModeA = createDevice('machSwitch', 'test_machine_mode_switch', 0, 'mode_a');
+        const ctxA = createContext([prodA, machModeA], [edge]);
+        const alertsA = W001_unmatchedMaterial.run(ctxA);
+        expect(alertsA).toHaveLength(0);
+
+        // 2. 切換至 mode_b（需 itemB）：收到 itemA -> 不吻合，觸發 W001
+        const machModeB = createDevice('machSwitch', 'test_machine_mode_switch', 0, 'mode_b');
+        const ctxB = createContext([prodA, machModeB], [edge]);
+        const alertsB = W001_unmatchedMaterial.run(ctxB);
+        expect(alertsB).toHaveLength(1);
+        expect(alertsB[0].code).toBe('W001');
+        expect(alertsB[0].relatedDeviceUids).toContain('machSwitch');
     });
 });

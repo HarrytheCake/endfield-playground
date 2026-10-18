@@ -402,7 +402,6 @@ function testPlaceExtraMaterialConnection() {
 function testClearDevices() {
     const allUids = editorStore.nodes.map((n) => n.id);
     editorStore.removeDevices(allUids);
-    editorStore.edges = [];
 }
 </script>
 

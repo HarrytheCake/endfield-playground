@@ -1,7 +1,7 @@
 import type { Alert, Detector, ValidationContext } from '@/types/validation';
 import { getMachine } from '@/data/machines';
 import { getRecipesForMachine } from '@/data/products';
-import { getMachineMode } from '@/types/machine';
+import { getMachineMode, type Machine } from '@/types/machine';
 
 /**
  * 兩字串集合是否完全相同（Exact Set Match）
@@ -14,6 +14,44 @@ function itemSetsEqual(a: Set<string>, b: Set<string>): boolean {
         if (!b.has(id)) return false;
     }
     return true;
+}
+
+/**
+ * 導流設備集合（無配方，僅負責搬運與轉送上游品項）
+ *
+ * 依審查要求與工單 W1011-Z2 指示：目前 Machine 定義無專屬 flag，暫時以清單比對（保留暫時性說明）。
+ * 包含：分流器、管道分流器、匯流器、管道匯流器、物流橋、管道橋。
+ */
+const ROUTING_MACHINE_NAMES = new Set([
+    '分流器',
+    '管道分流器',
+    '匯流器',
+    '管道匯流器',
+    '物流橋',
+    '管道橋',
+]);
+
+const ROUTING_MACHINE_IDS = new Set([
+    'splitter',
+    'pipe_splitter',
+    'merger',
+    'pipe_merger',
+    'logistics_bridge',
+    'pipe_bridge',
+]);
+
+function isRoutingMachine(machineDef?: Machine, machineType?: string): boolean {
+    if (machineDef) {
+        if (ROUTING_MACHINE_NAMES.has(machineDef.name) || ROUTING_MACHINE_IDS.has(machineDef.id)) {
+            return true;
+        }
+    }
+    if (machineType) {
+        if (ROUTING_MACHINE_NAMES.has(machineType) || ROUTING_MACHINE_IDS.has(machineType)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -44,13 +82,8 @@ function traceEdgeItems(
         ? (ctx.getDef(machineType) ?? getMachine(machineType))
         : getMachine(machineType);
 
-    // 判斷是否為分流器類設備 (無配方，只是導流)
-    // 依工單 W1004-Z1 §2.1 指示：目前 Machine 定義無專屬 flag，暫時沿用名稱比對（加註說明）
-    const isSplitter =
-        (machineDef && (machineDef.name === '分流器' || machineDef.name === '管道分流器')) ||
-        (machineDef && (machineDef.id === 'splitter' || machineDef.id === 'pipe_splitter'));
-
-    if (isSplitter) {
+    // 判斷是否為導流設備 (無配方，只是導流，包含分流器、匯流器、物流橋等)
+    if (isRoutingMachine(machineDef, machineType)) {
         const inEdges = ctx.connections.filter((c) => c.target === sourceId);
         for (const inEdge of inEdges) {
             const upstreamItems = traceEdgeItems(inEdge.source, ctx, nextVisited);
@@ -65,10 +98,11 @@ function traceEdgeItems(
         const mode = machineDef
             ? getMachineMode(machineDef, sourceNode.data?.machineMode)
             : undefined;
-        let recipes = getRecipesForMachine(machineType, mode?.id);
-        if (recipes.length === 0) {
-            recipes = getRecipesForMachine(machineType);
-        }
+        // W1011-Z2 / A-5 決議：設備依目前模式匹配配方，拿掉退回全部模式的 fallback
+        const recipes = machineDef
+            ? getRecipesForMachine(machineDef.name, mode?.id)
+            : getRecipesForMachine(machineType, mode?.id);
+
         // 取得這台設備目前正在使用的配方編號，如果未指定，預設使用第一個配方
         const recipeIndex = sourceNode.data?.recipeIndex ?? 0;
         const recipe = recipes[recipeIndex];
@@ -119,13 +153,11 @@ export const W001_unmatchedMaterial: Detector = {
                 continue;
             }
 
+            // W1011-Z2 / A-5 決議：根據目前模式匹配配方，未指定模式則 getMachineMode 預設為 modes[0]
             const mode = getMachineMode(machineDef, device.data?.machineMode);
-            let allRecipes = getRecipesForMachine(machineType, mode?.id);
-            if (allRecipes.length === 0) {
-                allRecipes = getRecipesForMachine(machineType);
-            }
+            const allRecipes = getRecipesForMachine(machineDef.name, mode.id);
 
-            // 如果這台機器本身沒有任何配方可選 (例如分流器)，跳過
+            // 若目前模式查不到任何配方（如導流設備、或該模式無配方），依 A-5 決議不報 W001，直接跳過
             if (allRecipes.length === 0) {
                 continue;
             }
