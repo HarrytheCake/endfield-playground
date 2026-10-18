@@ -1,7 +1,7 @@
 # V17-H1 — 正式頁停載示範快照（#58）
 
 **對應工項：** V17-H1
-**狀態：** `[ ]` 未開始
+**狀態：** `[x]` 完成
 **日期：** 2026-10-18
 **依賴：** [A1](./A1_scope_decision.md)（V17 範圍含 #58）
 **正式依據：** [#58](https://github.com/dernoson/endfield-playground/issues/58)、[#57](https://github.com/dernoson/endfield-playground/pull/57) S1-2
@@ -27,7 +27,7 @@ layoutStore.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')))
 
 | 決定 | 說明 |
 |------|------|
-| 正式頁 | **刪除**（或永久關閉）`LayoutView` 開頁自動 `loadSnapshot(connected)` |
+| 正式頁 | **刪除** `LayoutView` 開頁自動 `loadSnapshot(connected)` |
 | 示範資料 | 只留在 `/dev`（例：`layout-store-preview`、既有 fixture 頁） |
 | 空畫布驗收 | 靠手動放置／拖曳（toby T2 等）；不依賴進頁自動產線 |
 | 歷史 | 本細項只停載入；堆疊隔離見 [H2](./H2_clear_history_on_context_switch.md) |
@@ -44,31 +44,38 @@ layoutStore.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')))
 
 | 動作 | 檔案 |
 |------|------|
-| 修改 | `src/editor/layout/LayoutView.vue`（移除／關閉 onMounted 自動載入） |
-| 可選 | 相關註解／toby GUIDE 交叉引用一句（勿大改他人指南） |
-| 測試 | 若有掛 LayoutView 的測：斷言 mount 後不因空 store 自動出現 connected 設備；否則補精簡測或手動驗收列入 H3 |
+| 修改 | `src/editor/layout/LayoutView.vue`（移除 onMounted 自動載入與 mockLayout import） |
+| 測試 | `src/__tests__/editor/layoutView.noAutoSnapshot.test.ts`（源碼契約） |
+| 可選 | toby GUIDE 交叉引用（本項未改他人指南） |
 
 ---
 
 ## 4. 驗證標準
 
-| # | 案例 | 預期 |
-|---|------|------|
-| 1 | 硬重新整理進 `/`，且 store 空 | 畫布**空白**；無自動 connected 產線 |
-| 2 | 手動放置設備後再重新整理 | 行為依現有 persist／store 生命週期；**不**被 fixture 覆寫既有資料（目前程式本就 `length===0` 才載；刪掉後更單純） |
-| 3 | `/dev` 示範頁 | 仍可載 fixture／自行放置（不受本項刪正式頁邏輯影響） |
+| # | 案例 | 預期 | 結果 |
+|---|------|------|------|
+| 1 | 硬重新整理進 `/`，且 store 空 | 畫布**空白**；無自動 connected 產線 | ✅ 程式已刪；手動列 H3 |
+| 2 | 手動放置設備後再重新整理 | **不**被 fixture 覆寫 | ✅ 已無自動載入路徑 |
+| 3 | `/dev` 示範頁 | 仍可載 fixture | ✅ 未改 dev 頁 |
+| 4 | 契約測 | 無 mockLayout／onMounted 自動載 | ✅ |
 
 ---
 
 ## 5. DoD
 
-- [ ] `LayoutView` 不再自動 `loadSnapshot(connected)`
-- [ ] 正式頁空進＝空白畫布（可手動驗）
-- [ ] 未改 `editorStore`；未擴大改 GridCanvas 行為
+- [x] `LayoutView` 不再自動 `loadSnapshot(connected)`
+- [x] 正式頁空進＝空白畫布（契約測＋H3 手動）
+- [x] 未改 `editorStore`；未擴大改 GridCanvas 行為
 
 ---
 
 ## 6. 開發日誌
+
+### 2026-10-18｜完成
+
+- 移除 `LayoutView` `onMounted`＋`@/data/mockLayout` import
+- 契約測 `layoutView.noAutoSnapshot.test.ts` 綠
+- **下一刀＝H2**
 
 ### 2026-10-18
 
