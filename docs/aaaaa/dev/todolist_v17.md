@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261011](../../work_dispatch/WEEK_20261011.md) v1.2、[AGENT_WEEK_1018](../claude/AGENT_WEEK_1018.md)
 **週次：** 2026-10-18 → 2026-10-25（連線月第三週；M3＝10/25）
 **開發分支：** #73＝`dev/aaaaa1018`（[#74](https://github.com/dernoson/endfield-playground/pull/74)）；#58＝**`dev/aaaaa1018-58`**（本線）
-**狀態總覽：** **`[~]`**（2026-10-18；#73／#74 交審中；#58＠`dev/aaaaa1018-58`：H1／H2 完成；**H3 品質閘綠、待開 PR**）
+**狀態總覽：** **`[~]`**（2026-10-18；#73／[#74](https://github.com/dernoson/endfield-playground/pull/74)；#58／[#76](https://github.com/dernoson/endfield-playground/pull/76) 皆交審中）
 **會議介紹：** [INTRO_meeting_c5_primary_output](../../work_dispatch/aaaaa/1011/INTRO_meeting_c5_primary_output.md)
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -175,7 +175,7 @@ H1 停自動 fixture → H2 情境切換 clear history → H3 驗收＋PR（Clos
 - [x] **V17-H2** 跨正式／dev 情境 `historyStore.clear()`
     - 細項：[dev_v17/H2_clear_history_on_context_switch.md](./dev_v17/H2_clear_history_on_context_switch.md)
     - 產物：`historyContext.ts`／`clearHistoryOnContextSwitch.ts`；router 註冊；單元測
-- [~] **V17-H3** 品質閘 `[x]`（965 tests）；開 PR `[ ]`（先 commit）；Closes #58 `[ ]`
+- [~] **V17-H3** 品質閘 `[x]`；PR [#76](https://github.com/dernoson/endfield-playground/pull/76) 交審中；合入後關 #58 `[ ]`
     - 細項：[dev_v17/H3_history_isolation_acceptance.md](./dev_v17/H3_history_isolation_acceptance.md)
 
 ---
@@ -239,16 +239,20 @@ H1 停自動 fixture → H2 情境切換 clear history → H3 驗收＋PR（Clos
 | #58 停自動 fixture | LayoutView | `[x]` | H1 2026-10-18 |
 | #58 歷史隔離 | clear on switch | `[x]` | H2 2026-10-18 |
 | #58 品質閘 | type／lint／format／test | `[x]` | H3 2026-10-18 |
-| #58 PR | Closes #58 | `[ ]` | H3 待開 |
+| #58 PR | Closes #58 | `[~]` | [#76](https://github.com/dernoson/endfield-playground/pull/76) |
 | V16 | #72 收斂 | `[x]` | B1 |
 
 ---
 
 ## 開發日誌
 
+### 2026-10-18｜V17-H3 開 PR
+
+- 開 [#76](https://github.com/dernoson/endfield-playground/pull/76)（base＝`dev/aaaaa1018`；Closes #58）
+
 ### 2026-10-18｜V17-H3 品質閘
 
-- 四項全綠（965 tests）；先逐項 commit；**不開 PR**
+- 四項全綠（965 tests）；逐項 commit 後開 PR
 
 ### 2026-10-18｜V17-H2 完成
 

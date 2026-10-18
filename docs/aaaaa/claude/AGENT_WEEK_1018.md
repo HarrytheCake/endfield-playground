@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v2.0（2026-10-18；H3 品質閘綠；#58 待開 PR）** |
+| version | **v2.1（2026-10-18；#58 PR #76 交審中）** |
 | 用途 | Agent 執行本週 aaaaa 工項時的強制約束 |
 | 公開／議題 | [#73](https://github.com/dernoson/endfield-playground/issues/73)、[#58](https://github.com/dernoson/endfield-playground/issues/58)、[C5](../../roadmap/detail/C5_source_primary_output.md) |
 | 執行計畫 | [todolist_v17](../dev/todolist_v17.md)、[dev_v17/](../dev/dev_v17/) |
@@ -20,7 +20,7 @@
 | Issue | 內容 | 狀態 |
 |-------|------|------|
 | [#73](https://github.com/dernoson/endfield-playground/issues/73) | 機型查表英文 id＋驗證／引擎＋`toTopology` 30/min | **實作完**；[#74](https://github.com/dernoson/endfield-playground/pull/74) 交審 |
-| [#58](https://github.com/dernoson/endfield-playground/issues/58) | 正式頁停載示範；dev／正式 history 隔離 | **H1／H2 完成**；H3 品質閘綠；**待開 PR**＠`dev/aaaaa1018-58` |
+| [#58](https://github.com/dernoson/endfield-playground/issues/58) | 正式頁停載示範；dev／正式 history 隔離 | **[#76](https://github.com/dernoson/endfield-playground/pull/76)** 交審中（base＝`dev/aaaaa1018`／#74） |
 
 配方鍵仍用 `machineDef.name`。不重開 W001 A-5。不發解鎖句。#58 **不**預設重置 layoutStore。
 
@@ -34,7 +34,7 @@
 | ~~5~~ | ~~#73 開 PR~~ | **已開** [#74](https://github.com/dernoson/endfield-playground/pull/74)；合入跟審＝[G1](../dev/dev_v17/G1_acceptance_and_handoff.md) |
 | ~~6~~ | ~~#58 停自動 fixture~~ | **已完成**；[H1](../dev/dev_v17/H1_stop_auto_demo_snapshot.md) |
 | ~~7~~ | ~~#58 情境切換 clear history~~ | **已完成**；[H2](../dev/dev_v17/H2_clear_history_on_context_switch.md) |
-| ~~8~~ | ~~#58 品質閘~~ | **已綠**；開 PR 待指示；[H3](../dev/dev_v17/H3_history_isolation_acceptance.md) |
+| ~~8~~ | ~~#58 驗收＋PR~~ | **已開** [#76](https://github.com/dernoson/endfield-playground/pull/76)；[H3](../dev/dev_v17/H3_history_isolation_acceptance.md) |
 | — | **禁止**改配方資料鍵為英文 id | 非本版 |
 | — | **禁止**重開 W001 A-5 | 只改查表（#73） |
 | — | **禁止**整包右側產耗／源素材表單 UI | C5 非本版 |
@@ -74,7 +74,7 @@
 | # | 動作 | 狀態 |
 |---|------|------|
 | 1 | #73 合入／關閉 | `[ ]`（#74 交審） |
-| 2 | #58 合入／關閉 | `[ ]` |
+| 2 | #58 合入／關閉 | `[ ]`（[#76](https://github.com/dernoson/endfield-playground/pull/76)） |
 | 3 | todolist_v17 結案 | `[ ]`（兩線都合後） |
 | 4 | ROADMAP C5／S1-2 進度句 | 結算時 |
 
@@ -82,9 +82,13 @@
 
 ## 5. 日誌
 
+### 2026-10-18（v2.1）
+
+- 開 [#76](https://github.com/dernoson/endfield-playground/pull/76)（Closes #58；base＝`dev/aaaaa1018`）
+
 ### 2026-10-18（v2.0）
 
-- V17-H3：品質閘全綠（965 tests）；逐項 commit；**先不開 PR**
+- V17-H3：品質閘全綠（965 tests）；逐項 commit
 
 ### 2026-10-18（v1.9）
 

@@ -1,7 +1,7 @@
 # V17-H3 — #58 驗收、PR、交接
 
 **對應工項：** V17-H3
-**狀態：** `[~]` 品質閘全綠；**尚未開 PR**（依指示先 commit）
+**狀態：** `[~]` 品質閘全綠；[#76](https://github.com/dernoson/endfield-playground/pull/76) 交審中（base＝`dev/aaaaa1018`／#74）
 **日期：** 2026-10-18
 **依賴：** [H1](./H1_stop_auto_demo_snapshot.md)、[H2](./H2_clear_history_on_context_switch.md)
 **正式依據：** [#58](https://github.com/dernoson/endfield-playground/issues/58)
@@ -17,16 +17,17 @@
 | 1 | 硬重新整理進 `/` | 空白畫布；無自動 connected | ✅ H1 程式＋契約測；手動待 reviewer |
 | 2 | 正式頁放置一點 → `/dev/*` 操作 → 回 `/` → Ctrl+Z | 不誤撤 dev 操作；堆疊語意符合 H2 | ✅ H2 單元測（跨界 `undoDepth===0`）；手動待 reviewer |
 | 3 | `pnpm type-check`／lint／format／test | 綠 | ✅ 55 files／965 tests（format 補修契約測後） |
-| 4 | 知會 toby／harry：空畫布驗收改手動 | PR／會議一句 | ⏳ 開 PR 時寫入 body（本步先不開 PR） |
+| 4 | 知會 toby／harry：空畫布驗收改手動 | PR／會議一句 | ✅ 寫入 [#76](https://github.com/dernoson/endfield-playground/pull/76) body |
 
 ---
 
-## 2. PR（預定｜本步不做）
+## 2. PR
 
 | 項 | 內容 |
 |----|------|
+| PR | [#76](https://github.com/dernoson/endfield-playground/pull/76) |
 | 標題 | `fix(#58)：正式頁停載示範＋切換情境清空 history（V17-H）` |
-| 分支 | **`dev/aaaaa1018-58`** → `master`（基於 `dev/aaaaa1018`；**不**塞進 [#74](https://github.com/dernoson/endfield-playground/pull/74)） |
+| 分支 | **`dev/aaaaa1018-58`** → **`dev/aaaaa1018`**（疊在 [#74](https://github.com/dernoson/endfield-playground/pull/74) 上；#74 合入後 retarget `master`） |
 | 關聯 | Closes #58；Refs #57 S1-2；Refs #74／#73 |
 | 解鎖句 | **不發** |
 
@@ -70,18 +71,22 @@ Closes #58
 ## 5. DoD
 
 - [x] H1＋H2 DoD 滿足
-- [x] §1 品質閘通過（#1／#2 手動待 reviewer；#4 開 PR 時）
-- [ ] PR 已開且 Closes #58（**本步依指示先不做**）
+- [x] §1 品質閘通過（#1／#2 手動待 reviewer）
+- [x] PR 已開（[#76](https://github.com/dernoson/endfield-playground/pull/76)；Closes #58）
 
 ---
 
 ## 6. 開發日誌
 
+### 2026-10-18｜開 PR
+
+- 開 [#76](https://github.com/dernoson/endfield-playground/pull/76)；base＝`dev/aaaaa1018`（避開把 #73 再對 master 重複送審）
+
 ### 2026-10-18｜品質閘
 
 - type／lint／format／test 全綠（965 tests）
 - 契約測 prettier 補修
-- **先逐項 commit；不開 PR**
+- 先逐項 commit
 
 ### 2026-10-18
 
