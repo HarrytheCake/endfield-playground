@@ -18,7 +18,7 @@
 |---|----|--------------|
 | ① | 派工已發（`WEEK_20261004` 與十張 `1004/` 工單） | 會議交辦，已完成 |
 | ② | **出界 id 列表** `devicesOutsideBase` | **改為必做**——toby 本週要「框外 Error」，沒有它他得自己展佔格，日後會變第二套幾何 |
-| ③ | **埠命中判定** `findPortAt` | C1 細項 §4.2 已指定由你提供；10/11 的 L2 只該呼叫，不該自己算第三套埠座標 |
+| ③ | **埠命中判定** `hitTestPortAt` | C1 細項 §4.2 已指定由你提供；10/11 的 L2 只該呼叫，不該自己算第三套埠座標 |
 
 ---
 
@@ -48,13 +48,16 @@ devicesOutsideBase(devices, region) → string[]   // 出界的 PlacedDevice id
 
 ## 2. ③ 埠命中判定（C1 前置）
 
-C1 細項 §4.2 已凍結簽名方向，照它交：
+C1 細項 §4.2（**2026-10-10 更名回寫**）。勿與 `portAnchorIndex.findPortAt`（格點精確匹配給 `canConnect`）混淆：
 
 ```text
-findPortAt(point, devices, getDef) → { deviceUid, portId, side, media } | null
+hitTestPortAt(point, devices, getMachine?) →
+  { deviceId, portType, portIndex, side, media } | null
+  // PortRef ＋ side ＋ media；point＝格點座標
 ```
 
-- 吃 rotation／mode／格點座標，與 [A2](../../../roadmap/detail/A2_grid_and_port_alignment.md) 的 `rotatePort` 同源；可沿用 `src/app/dev/topologyPortUtils.ts` 的算法
+- 檔案：`src/utils/layout/portHitTest.ts`（新建）；**不改**既有 `findPortAt`
+- 吃 rotation／mode／格點座標，與 [A2](../../../roadmap/detail/A2_grid_and_port_alignment.md) 的 `rotatePort` 同源；可沿用 `collectPortAnchors`／`topologyPortUtils` 的算法
 - **熱區半徑 ≥ 半個格子**（C1 §4.3 已凍結，是可用性要求不是美觀）
 - 純函式＋測試。**draft 狀態不是你的**——那是 L2 容器的 local ref（C1 §4.1 採方案 C）
 - 這支交了，10/11 的 C1 工單就只剩互動與視覺
@@ -87,6 +90,19 @@ findPortAt(point, devices, getDef) → { deviceUid, portId, side, media } | null
 
 - [x] `WEEK_20261004` 與十張工單在本分支（Z1／M1 已按會議改派）
 - [x] W0921 週報已收並回寫個人檔／gitcommit_analyze（9／10；avery 主編裁再放一週）
-- [ ] `devicesOutsideBase` 有測試；`addDevice` 行為不變
-- [ ] `findPortAt` 有測試；熱區 ≥ 半格；無 store import
+- [x] `devicesOutsideBase` 有測試；`addDevice` 行為不變（V15-C1｜分支 `dev/aaaaa1004`）
+- [x] `hitTestPortAt` 有測試；熱區 ≥ 半格且圓心對齊埠視覺位置；輸入連續格座標；無 store import（後續 PR `dev/aaaaa1004-hitTestPortAt`）
 - [x] C5 的 store 歸屬已問到答案並回寫 roadmap —— **R-1＝B**
+
+---
+
+## 6. 日誌
+
+### 2026-10-11
+
+- ③ 後續 PR：熱區圓心改埠視覺邊心（`portPointOnMachine`）；分支 `dev/aaaaa1004-hitTestPortAt`
+- #60 審查拆分：② `devicesOutsideBase` 先合；③ 熱區圓心偏到錨點格左上角，移出另開後續 PR
+
+### 2026-10-10
+
+- ③ 更名 `hitTestPortAt`；回傳對齊 `PortRef`＋side＋media；與既有 `findPortAt` 分工（負責人裁）

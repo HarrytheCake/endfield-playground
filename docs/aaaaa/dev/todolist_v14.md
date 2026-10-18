@@ -9,10 +9,10 @@
 **上游：** [WEEK_20260921](../../work_dispatch/WEEK_20260921.md) v1.2、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.13**、[AGENT_WEEK_0921](../claude/AGENT_WEEK_0921.md)
 **門檻週：** 2026-09-21 → 2026-09-27（**9/27＝M2 硬綁 B1**）
 **開發分支：** `dev/aaaaa0921`
-**狀態總覽：** **`[~]` 單 PR 分節交審中**（2026-09-27；程式／驗收 `[x]`；合入後全版結案）
+**狀態總覽：** **`[x]` 已結案／已合 master**（2026-10-10｜[V15-B1](./dev_v15/B1_v14_residue_close.md) 查證；[#54](https://github.com/dernoson/endfield-playground/pull/54)／[#55](https://github.com/dernoson/endfield-playground/pull/55) 於 2026-09-27 MERGED）
 **驗收指南：** [dev_v14/V14_acceptance_guide.md](./dev_v14/V14_acceptance_guide.md)
 **收斂盤點：** [dev_v14/V14_closeout.md](./dev_v14/V14_closeout.md)
-**PR：** [#54](https://github.com/dernoson/endfield-playground/pull/54)
+**PR：** [#54](https://github.com/dernoson/endfield-playground/pull/54)（含 #55 T1）
 **證據／週報／用法：** [evidence/V14_dod.md](./dev_v14/evidence/V14_dod.md)、[V14_week_report.md](./dev_v14/V14_week_report.md)、[USAGE](./dev_v14/USAGE_l2_placement_and_connect.md)
 **待確認問題：** [dispatch_private/0921/PENDING_DECISIONS_20260927.md](../collaborator_survey/dispatch_private/0921/PENDING_DECISIONS_20260927.md)
 
@@ -128,9 +128,9 @@ layoutStore.test.ts 未改且全綠。不發解鎖句；選取／旋轉／刪除
 
 ## V14-E｜驗收、PR、交接
 
-- [~] **V14-E1** 驗收／說明／演示 `[x]`；**PR 單支分節交審**；合入／上游回寫 `[ ]`
+- [x] **V14-E1** 驗收／說明／演示 `[x]`；PR [#54](https://github.com/dernoson/endfield-playground/pull/54) **已合**（2026-09-27）；文件狀態收斂見 [V15-B1](./dev_v15/B1_v14_residue_close.md)
     - 細項：[dev_v14/E1_acceptance_and_handoff.md](./dev_v14/E1_acceptance_and_handoff.md)
-    - 收斂：[dev_v14/V14_closeout.md](./dev_v14/V14_closeout.md)（P1 已定案）
+    - 收斂：[dev_v14/V14_closeout.md](./dev_v14/V14_closeout.md)
     - 演示：`dev/placement-connect-check.html`
 
 ---
@@ -160,7 +160,7 @@ layoutStore.test.ts 未改且全綠。不發解鎖句；選取／旋轉／刪除
 - [x] `canPlaceDevice` JSDoc 含效能門檻句（約 200 台）
 - [x] 未 import `editorStore`、未改 `src/editor/*`
 - [x] `pnpm type-check`／本檔 lint／format／相關 `test` 綠
-- [ ] PR body 一行說明 `DRAFT_ID` 與 toby 如何從 conflicts 認出自己
+- [x] PR body 一行說明 `DRAFT_ID` 與 toby 如何從 conflicts 認出自己（#54 已合）
 
 ### 次優（對照 [W0921-A1 §4](../../work_dispatch/aaaaa/0921/W0921-A1_connect_rules.md)）
 
@@ -170,28 +170,28 @@ layoutStore.test.ts 未改且全綠。不發解鎖句；選取／旋轉／刪除
 - [x] 媒質判定與 `useFlowEngine` 共用同一函式（`getMachinePortMedia`）
 - [x] 與 A0 **分開 commit**（其後因防線提前再動 `layoutStore.addPipeline`——開 PR 時見 [closeout P1](./dev_v14/V14_closeout.md)）
 - [x] `addPipeline` 已呼叫 `canConnect`（提前量；新測 `layoutStore.canConnect.test.ts`）
-- [ ] PR 標題帶 `W0921-A1`（開 PR 時；可與 A0 同 PR 分節）
+- [x] PR 標題帶 `W0921-A1`（#54 單支分節已合）
 
 ### 品質閘
 
 - [x] diff 不含選取／旋轉／刪除接線、不含 `editorStore` 簽名變更（實查 `src/editor` 零命中）
-- [ ] 主線 PR 標題帶 `W0921-A0`；次優帶 `W0921-A1`（開 PR 時）
+- [x] 主線 PR 標題帶 `W0921-A0`；次優帶 `W0921-A1`（#54 已合）
 
 ---
 
-## 待處理（收斂後仍開）
+## 待處理（合入後殘項）
 
 詳 [V14_closeout §3](./dev_v14/V14_closeout.md)。摘要：
 
-| ID  | 問題                                | 擋程式？           |
-| --- | ----------------------------------- | ------------------ |
-| P1  | 開 PR（單 PR 分節）                 | **已定案／交審中** |
-| P2  | 工單寫不做 addPipeline、已提前做    | 否（PR 說明）      |
-| P3  | 方向比 C2 改寫句更嚴                | 否（PR 對齊）      |
-| P4  | T1／V1 未達                         | 非本版             |
-| P5  | 合入後上游回寫                      | 待合入             |
-| P6  | 勿誤標選取／解鎖完成                | 否                 |
-| P7  | move／addDevice 貼埠繞過 canConnect | **已知缺口・後續** |
+| ID  | 問題                                | 擋程式？           | 2026-10-10 |
+| --- | ----------------------------------- | ------------------ | ---------- |
+| P1  | 開 PR（單 PR 分節）                 | 否                 | **已合 #54** |
+| P2  | 工單寫不做 addPipeline、已提前做    | 否（PR 說明）      | 歷史註記 |
+| P3  | 方向比 C2 改寫句更嚴                | 否（PR 對齊）      | 歷史註記 |
+| P4  | T1／V1                              | 非本版             | **#55 已合**（WEEK M2 功能門檻過） |
+| P5  | 合入後上游回寫                      | 否                 | **todolist／meta 由 V15-B1 收斂**；公開工單 DoD 勾選可續掛 |
+| P6  | 勿誤標選取／解鎖完成                | 否                 | 維持 |
+| P7  | move／addDevice 貼埠繞過 canConnect | **已知缺口・後續** | **續掛**（非 V15 範圍） |
 
 ---
 
@@ -202,7 +202,7 @@ layoutStore.test.ts 未改且全綠。不發解鎖句；選取／旋轉／刪除
 | C1 A0       | T1 退為「放下去才知道」；**V1 門檻仍可能成立**，但體驗降級且有兩套判定風險 |
 | D1 A1       | 原排 10/04 零影響；**本版已交**（含提前防線）                              |
 | B1 V13 收斂 | **不可未交**；未收斂則簽章依據不明                                         |
-| E1 PR       | **擋公開 V2**；程式已齊                                                    |
+| E1 PR       | **已合 #54**；公開 V2 成立                                                 |
 
 ---
 
@@ -210,12 +210,18 @@ layoutStore.test.ts 未改且全綠。不發解鎖句；選取／旋轉／刪除
 
 | 工項 | 工單要求                      | V14 狀態                                                                      | 備註                     |
 | ---- | ----------------------------- | ----------------------------------------------------------------------------- | ------------------------ |
-| A0   | `canPlaceDevice` 提共用＋測試 | 程式 `[x]`／PR [#54](https://github.com/dernoson/endfield-playground/pull/54) | 公開 V2 待合入           |
+| A0   | `canPlaceDevice` 提共用＋測試 | `[x]`／[#54](https://github.com/dernoson/endfield-playground/pull/54) MERGED | 公開 V2 已合             |
 | A1   | `canConnect`＋錨點共用        | 同上（同 PR 第二節）                                                          | 含方向＋addPipeline 提前 |
 
 ---
 
 ## 開發日誌
+
+### 2026-10-10｜V15-B1 收斂（已合 master）
+
+- `gh`：#54／#55 **MERGED** 2026-09-27；`placementCheck.ts`／`connectRules.ts` 在 `origin/master`
+- 狀態總覽改 `[x]` 結案；E1／DoD PR 項勾選；P7 續掛不進 V15
+- 後續開發見 [todolist_v15](./todolist_v15.md)
 
 ### 2026-09-27｜開 PR（單支分節）
 

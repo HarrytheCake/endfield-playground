@@ -1,6 +1,42 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
+/**
+ * 全域字型 HarmonyOS Sans TC。
+ * 使用相對路徑讓 Vite 處理字型檔（加 hash、build 時檢查檔案存在），不放 public/。
+ */
+@font-face {
+    font-family: 'HarmonyOS Sans TC';
+    src: url('./assets/fonts/HarmonyOS_Sans_TC_Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'HarmonyOS Sans TC';
+    src: url('./assets/fonts/HarmonyOS_Sans_TC_Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'HarmonyOS Sans TC';
+    src: url('./assets/fonts/HarmonyOS_Sans_TC_Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'HarmonyOS Sans TC';
+    src: url('./assets/fonts/HarmonyOS_Sans_TC_Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     font-family: Inter, 'Segoe UI', system-ui, sans-serif;
     color: #e4e4e7;
