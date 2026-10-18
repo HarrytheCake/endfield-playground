@@ -6,6 +6,9 @@
 **依賴：** [D1](./D1_validation_id_lookup.md)、[E1](./E1_flow_engine_id_lookup.md)、[F1](./F1_engine_topology_slice.md)
 **正式依據：** [#73](https://github.com/dernoson/endfield-playground/issues/73) 驗收
 
+> **範圍註記（2026-10-18）：** G1／[#74](https://github.com/dernoson/endfield-playground/pull/74) **只關 #73**。  
+> [#58](https://github.com/dernoson/endfield-playground/issues/58) 另線見 [H1](./H1_stop_auto_demo_snapshot.md)／[H2](./H2_clear_history_on_context_switch.md)／[H3](./H3_history_isolation_acceptance.md)。
+
 ---
 
 ## 1. 驗收表（實作後填）
@@ -76,6 +79,10 @@
 ---
 
 ## 6. 開發日誌
+
+### 2026-10-18｜V17 擴寫
+
+- 文件層：V17＝#73＋#58；本檔仍只負責 #73／#74
 
 ### 2026-10-18｜驗收
 
