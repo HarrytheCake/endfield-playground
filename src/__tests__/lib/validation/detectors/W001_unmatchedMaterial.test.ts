@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { W001_unmatchedMaterial } from '@/lib/validation/detectors/W001_unmatchedMaterial';
+import { getMachine } from '@/data/machines';
 import type { ValidationContext } from '@/types/validation';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
 import type { Machine } from '@/types/machine';
@@ -170,7 +171,8 @@ describe('W001_unmatchedMaterial', () => {
         return {
             devices,
             connections,
-            getDef: () => undefined,
+            /** V17：偵測器只走 getDef；測試以 mock getMachine 充當查表 */
+            getDef: getMachine,
             baseRegion: null as any,
         };
     }
@@ -640,5 +642,24 @@ describe('W001_unmatchedMaterial', () => {
         expect(alertsB).toHaveLength(1);
         expect(alertsB[0].code).toBe('W001');
         expect(alertsB[0].relatedDeviceUids).toContain('machSwitch');
+    });
+
+    it('T19（V17／#73）：英文 id machineType＋材料不符 → W001（只經 getDef）', () => {
+        const prodB = createDevice('prodB', 'test_producer_B');
+        const machA = createDevice('machA', 'test_machine_A');
+        const edge: FactoryEdge = {
+            id: 'e1',
+            source: 'prodB',
+            target: 'machA',
+            sourceHandle: null,
+            targetHandle: null,
+            data: { portType: 'belt' },
+        };
+        const ctx = createContext([prodB, machA], [edge]);
+        const alerts = W001_unmatchedMaterial.run(ctx);
+
+        expect(alerts).toHaveLength(1);
+        expect(alerts[0].code).toBe('W001');
+        expect(alerts[0].relatedDeviceUids).toContain('machA');
     });
 });

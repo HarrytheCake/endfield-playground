@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { E004_missingInput } from '@/lib/validation/detectors/E004_missingInput';
+import { getMachine } from '@/data/machines';
 import type { ValidationContext } from '@/types/validation';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
 import type { Machine } from '@/types/machine';
@@ -26,7 +27,11 @@ vi.mock('@/data/products', () => ({
 
 vi.mock('@/data/machines', () => ({
     getMachine: vi.fn((machineType: string): Machine | undefined => {
-        if (machineType === '採礦機' || machineType === 'source_machine') {
+        if (
+            machineType === '採礦機' ||
+            machineType === 'source_machine' ||
+            machineType === 'miner'
+        ) {
             return {
                 id: 'miner',
                 name: '採礦機',
@@ -51,7 +56,7 @@ vi.mock('@/data/machines', () => ({
                 calcEfficiency: null,
             };
         }
-        if (machineType === '加工機A') {
+        if (machineType === '加工機A' || machineType === 'processor_a') {
             return {
                 id: 'processor_a',
                 name: '加工機A',
@@ -210,7 +215,8 @@ describe('E004_missingInput', () => {
         return {
             devices,
             connections,
-            getDef: () => undefined,
+            /** V17：偵測器只走 getDef；測試以 mock getMachine 充當查表 */
+            getDef: getMachine,
             baseRegion: null as any,
         };
     }
@@ -311,5 +317,15 @@ describe('E004_missingInput', () => {
         const idleMachine = createDevice('m2', '多模式機', { machineMode: 'idle_mode' });
         const alertsIdle = E004_missingInput.run(createContext([idleMachine], []));
         expect(alertsIdle).toHaveLength(0);
+    });
+
+    it('T10（V17／#73）：英文 id 加工機無入邊 → E004', () => {
+        const proc = createDevice('proc1', 'processor_a');
+        const alerts = E004_missingInput.run(createContext([proc], []));
+
+        expect(alerts).toHaveLength(1);
+        expect(alerts[0].code).toBe('E004');
+        expect(alerts[0].message).toContain('加工機A');
+        expect(alerts[0].relatedDeviceUids).toEqual(['proc1']);
     });
 });
