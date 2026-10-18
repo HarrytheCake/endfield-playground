@@ -33,7 +33,7 @@ import type {
 } from '@/types/flow';
 import { BELT_RATE_LIMIT, rateLimitForMedia, formToPortMedia } from '@/types/flow';
 import { getRecipesForMachine, getItemForm } from '@/data/products';
-import { getMachine, getMachineMode } from '@/data/machines';
+import { resolveMachineDef, getMachineMode } from '@/data/machines';
 import type { PortMedia } from '@/types/machine';
 import { parsePortHandleIndex } from '@/utils/portUtils';
 import { getMachinePortMedia } from '@/utils/layout/portMedia';
@@ -47,22 +47,34 @@ import { useDebounceFn } from '@vueuse/core';
 // ─── 內部工具 ─────────────────────────────────────────────────────────────────
 
 /**
+ * 以 machineType（英文 id，或過渡期中文名）取得配方列表。
+ *
+ * 查定義走 {@link resolveMachineDef}；配方鍵一律用 `machineDef.name`（V17／#73）。
+ * 查不到定義時回 `[]`。
+ */
+function recipesForMachineType(machineType: string, modeId?: string): RecipeDef[] {
+    const def = resolveMachineDef(machineType);
+    if (!def) return [];
+    return getRecipesForMachine(def.name, modeId);
+}
+
+/**
  * 解析節點的機器型態 id；缺省為該機器 modes[0].id。
  *
- * @param machineType 設備中文名
+ * @param machineType 設備英文 id（或過渡期中文名）
  * @param machineMode 節點上的 machineMode（可缺）
  */
 export function resolveMachineMode(machineType: string, machineMode?: string): string | undefined {
-    const machine = getMachine(machineType);
+    const machine = resolveMachineDef(machineType);
     if (!machine?.modes.length) return machineMode;
     return getMachineMode(machine, machineMode).id;
 }
 
 /**
  * 依設備類型、型態與配方索引取得 RecipeDef。
- * recipeIndex 是對 `getRecipesForMachine(machineType, machineMode)` 過濾後列表的索引。
+ * recipeIndex 是對 mode 過濾後配方列表的索引。
  *
- * @param machineType 設備類型名稱
+ * @param machineType 設備英文 id（或過渡期中文名）
  * @param recipeIndex 選用的配方索引（mode 過濾後）
  * @param machineMode 機器型態；缺省 modes[0]
  */
@@ -72,9 +84,8 @@ function getRecipeForNode(
     machineMode?: string,
 ): RecipeDef | undefined {
     const modeId = resolveMachineMode(machineType, machineMode);
-    return getRecipesForMachine(machineType, modeId)[recipeIndex];
+    return recipesForMachineType(machineType, modeId)[recipeIndex];
 }
-
 /** 兩字串集合是否完全相同 */
 function itemSetsEqual(a: Set<string>, b: Set<string>): boolean {
     if (a.size !== b.size) return false;
@@ -101,7 +112,7 @@ export function matchRecipeByInputs(
     environment: string = 'none',
 ): { recipe: RecipeDef; index: number } | null {
     const modeId = resolveMachineMode(machineType, machineMode);
-    const recipes = getRecipesForMachine(machineType, modeId);
+    const recipes = recipesForMachineType(machineType, modeId);
     const env = environment || 'none';
 
     for (let i = 0; i < recipes.length; i++) {
@@ -173,7 +184,7 @@ export function matchRecipeByEdgeCandidates(
     }
 
     const modeId = resolveMachineMode(machineType, machineMode);
-    const recipes = getRecipesForMachine(machineType, modeId);
+    const recipes = recipesForMachineType(machineType, modeId);
     const env = environment || 'none';
 
     for (let i = 0; i < recipes.length; i++) {
@@ -192,7 +203,7 @@ export function matchRecipeByEdgeCandidates(
  */
 function machineHasRecipes(machineType: string, machineMode?: string): boolean {
     const modeId = resolveMachineMode(machineType, machineMode);
-    return getRecipesForMachine(machineType, modeId).length > 0;
+    return recipesForMachineType(machineType, modeId).length > 0;
 }
 
 /**
@@ -211,7 +222,7 @@ function resolvePortMedia(
     /** 解析不出埠索引時退回埠 0：媒質檢查是容錯路徑，不該因 handle 缺省而擋下連線 */
     const idx = parsePortHandleIndex(handle, direction) ?? 0;
     const portType = direction === 'in' ? 'input' : 'output';
-    return getMachinePortMedia(machineType, machineMode, portType, idx, getMachine);
+    return getMachinePortMedia(machineType, machineMode, portType, idx, resolveMachineDef);
 }
 
 /**
@@ -356,7 +367,7 @@ function portOccupancyKey(
     if (handle != null && handle !== '') {
         return `${node.deviceUid}:${direction}:${handle}`;
     }
-    const machine = getMachine(node.machineType);
+    const machine = resolveMachineDef(node.machineType);
     if (!machine) return null;
     const mode = getMachineMode(machine, node.machineMode);
     const ports = direction === 'in' ? mode.input_ports : mode.output_ports;
@@ -685,7 +696,7 @@ export function buildGraph(
         if (hasBlockingError(node.id)) continue;
 
         const machineType = node.data?.machineType ?? node.data?.label ?? node.id;
-        const machineDef = getMachine(machineType);
+        const machineDef = resolveMachineDef(machineType);
         const recipeIndex = node.data?.recipeIndex ?? 0;
         const machineMode = resolveMachineMode(machineType, node.data?.machineMode);
         const environment = node.data?.environment ?? 'none';
@@ -863,7 +874,7 @@ export function propagateFlows(sortedNodes: string[], graph: FlowGraph): Map<str
             node.efficiency = 1;
         } else {
             // 檢查是否為分流／匯流（無配方物流節點）
-            const machineDef = getMachine(node.machineType);
+            const machineDef = resolveMachineDef(node.machineType);
             const isSplitter =
                 machineDef && (machineDef.name === '分流器' || machineDef.name === '管道分流器');
             const isMerger =
@@ -1340,7 +1351,7 @@ export async function runFlowEngine(): Promise<void> {
         let totalPowerDemand = 0;
         for (const [, node] of graph.nodes) {
             if (!node.isValid) continue;
-            const def = getMachine(node.machineType);
+            const def = resolveMachineDef(node.machineType);
             if (def && def.power > 0) totalPowerDemand += def.power;
         }
 

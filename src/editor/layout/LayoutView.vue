@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useElementSize, useRafFn } from '@vueuse/core';
 import { useGridViewport } from './useGridViewport';
 import { useComboHeld } from '@/composables/useKeybinding';
 import { getMachineById } from '@/data/machines';
-import { getMockLayoutScenario, toLayoutSnapshot } from '@/data/mockLayout';
 import GridCanvas from '@/editor/layout/GridCanvas.vue';
 import { usePlacementIntent } from '@/editor/toolbar/usePlacementIntent';
 import { useLayoutStore } from '@/store/layoutStore';
@@ -318,14 +317,10 @@ function handleCellClick(position: Position): void {
 }
 
 /**
- * 首次進入主畫面且尚無設備時載入示範快照，避免空白畫布無法驗收。
- * 既有資料會完整保留，不會因元件重新掛載而被 fixture 覆寫。
+ * V17-H1／#58：正式頁**不**在掛載時自動 `loadSnapshot(connected)`。
+ * 示範快照屬 dev 用途（如 layout-store-preview）；空畫布驗收改靠手動放置。
+ * 歷史情境隔離見 V17-H2。
  */
-onMounted(() => {
-    if (layoutStore.devices.length === 0) {
-        layoutStore.loadSnapshot(toLayoutSnapshot(getMockLayoutScenario('connected')));
-    }
-});
 </script>
 
 <template>

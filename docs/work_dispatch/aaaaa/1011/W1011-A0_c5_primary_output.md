@@ -7,6 +7,7 @@
 | 擋門檻 | 否（但擋 10/18 引擎讀切片） |
 | 上游 | [WEEK_20261011](../../WEEK_20261011.md)、[C5 §4.1a](../../../roadmap/detail/C5_source_primary_output.md)（已裁 B） |
 | 畫面｜交哪個檔｜不要碰｜卡住找誰 | 派工在 `docs/work_dispatch/`；action 在 `layoutStore`｜不要改 `GridCanvas`／`MainLayout`／正式頁表單 UI｜toby（C1）、harry（左面板日後接表單）、dernoson（合入） |
+| 會議介紹 | [INTRO_meeting_c5_primary_output.md](./INTRO_meeting_c5_primary_output.md)（含 #72／#73／#74、名詞、演示、下游串接） |
 
 ---
 

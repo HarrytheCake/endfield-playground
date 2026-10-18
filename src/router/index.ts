@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import MainLayout from '@/app/layouts/MainLayout.vue';
+import { installClearHistoryOnContextSwitch } from '@/utils/history/clearHistoryOnContextSwitch';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -80,5 +81,8 @@ const router = createRouter({
         },
     ],
 });
+
+/** V17-H2／#58：跨正式／dev 清空 Undo／Redo（同區導航保留） */
+installClearHistoryOnContextSwitch(router);
 
 export default router;

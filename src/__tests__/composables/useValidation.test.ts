@@ -187,8 +187,9 @@ describe('useValidation — ctx 內容', () => {
             expect(contexts).toHaveLength(1);
             expect(contexts[0].devices.map((d) => d.id)).toEqual(['n1']);
             expect(contexts[0].connections).toEqual([]);
-            // getDef 用真實設備名稱應能查到（粉碎機）
+            // getDef＝resolveMachineDef：中文名與英文 id 皆可查到
             expect(contexts[0].getDef('粉碎機')).toBeDefined();
+            expect(contexts[0].getDef('crusher')).toBeDefined();
             expect(contexts[0].getDef('不存在的機器')).toBeUndefined();
         });
     });

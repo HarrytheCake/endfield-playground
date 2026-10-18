@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.6（2026-10-18；E1 開 PR #72）** |
+| version | **v1.7（2026-10-18；#72 MERGED；續 V17／#73）** |
 | 用途 | Agent 執行本週派工／改工單時的強制約束 |
 | 公開 | [WEEK_1011](../../work_dispatch/WEEK_20261011.md) v1.2、[W1011-A0](../../work_dispatch/aaaaa/1011/W1011-A0_c5_primary_output.md) |
 | 執行計畫 | [todolist_v16](../dev/todolist_v16.md)、[dev_v16/](../dev/dev_v16/) |
@@ -15,11 +15,8 @@
 
 ## 0. 三十秒結論
 
-**V16 交審中：[#72](https://github.com/dernoson/endfield-playground/pull/72)（`setDevicePrimaryOutput`）。**  
-PR body 已註明引擎讀＝經 `toTopology`。合入後做 E1 回寫。  
-toby＝設備拖曳；C1＝toby（10/18 週）——**禁止**改 GridCanvas／LayoutView。  
-引擎讀取實作＝**下週**；正式頁表單＝不在本版。
-
+**V16 已合：[#72](https://github.com/dernoson/endfield-playground/pull/72) MERGED。**  
+續作見 [AGENT_WEEK_1018](./AGENT_WEEK_1018.md)／[todolist_v17](../dev/todolist_v17.md)（[#73](https://github.com/dernoson/endfield-playground/issues/73) 機型 id＋引擎讀切片）。
 ---
 
 ## 1. 優先序（必須遵守）
@@ -101,6 +98,10 @@ toby＝設備拖曳；C1＝toby（10/18 週）——**禁止**改 GridCanvas／L
 ---
 
 ## 6. 日誌
+
+### 2026-10-18（v1.7）
+
+- #72 MERGED（主編核准）；本週文件封存；執行權移交 AGENT_WEEK_1018／V17
 
 ### 2026-10-18（v1.6）
 

@@ -22,7 +22,7 @@ import { watch } from 'vue';
 import { useEditorStore } from '@/store/editorStore';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useValidationStore } from '@/store/validationStore';
-import { getMachine } from '@/data/machines';
+import { resolveMachineDef } from '@/data/machines';
 import type { ValidationContext } from '@/types/validation';
 
 /**
@@ -40,7 +40,7 @@ export function useValidation() {
      * 從目前的 editorStore 建立 ValidationContext。  \
      * 節點與彎折點的像素座標在此除以 `gridSize` 換算為格子座標，  \
      * detector 因此不需要、也拿不到 gridSize。  \
-     * getDef 直接代理至 `getMachine`，提供 detector 取得設備靜態定義。  \
+     * getDef 代理至 {@link resolveMachineDef}（V17／#73：英文 id 優先，過渡退回中文名）。  \
      * baseRegion 從 canvasStore 取得，用於 E003 等邊界檢查。
      * @returns 供各 detector 讀取的驗證上下文
      * @example
@@ -71,7 +71,7 @@ export function useValidation() {
                 if (!data?.bendPoints) return edge;
                 return { ...edge, data: { ...data, bendPoints: data.bendPoints.map(toGridCell) } };
             }),
-            getDef: getMachine,
+            getDef: resolveMachineDef,
             baseRegion: canvasStore.baseRegion,
         };
     }

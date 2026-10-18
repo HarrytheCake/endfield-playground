@@ -1,5 +1,4 @@
 import type { Alert, Detector, ValidationContext } from '@/types/validation';
-import { getMachine } from '@/data/machines';
 import { getRecipesForMachine } from '@/data/products';
 import { getMachineMode } from '@/types/machine';
 
@@ -12,6 +11,8 @@ import { getMachineMode } from '@/types/machine';
  * - `is_source: true` 的源類機器（基礎材料輸出點）
  * - 該型態下無輸入埠（input_ports 為空）之設備
  * - 該型態下無任何需要輸入的配方之設備（如分流器、或是無需材料即可運轉之機器）
+ *
+ * 查定義一律走 {@link ValidationContext.getDef}（V17／#73；不直接呼叫 getMachine）。
  */
 export const E004_missingInput: Detector = {
     code: 'E004',
@@ -21,9 +22,7 @@ export const E004_missingInput: Detector = {
 
         for (const device of ctx.devices) {
             const machineType = device.data?.machineType ?? device.data?.label ?? device.id;
-            const machineDef = ctx.getDef
-                ? (ctx.getDef(machineType) ?? getMachine(machineType))
-                : getMachine(machineType);
+            const machineDef = ctx.getDef(machineType);
 
             // 若查無設備定義，或是地區資源輸出點（源機），不套用 E004
             if (!machineDef || machineDef.is_source) {
@@ -36,7 +35,7 @@ export const E004_missingInput: Detector = {
                 continue;
             }
 
-            // 取得該設備在目前 mode 下的所有配方
+            // 取得該設備在目前 mode 下的所有配方（配方鍵＝中文名）
             const recipes = getRecipesForMachine(machineDef.name, mode.id);
             // 該型態下必須存在「需要輸入」的配方才需檢查入邊
             const hasRecipeRequiringInput = recipes.some((recipe) => recipe.inputs.length > 0);
