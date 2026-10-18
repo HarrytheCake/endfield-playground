@@ -78,7 +78,7 @@
 
 ### 2026-10-18（v1.6）
 
-- V17-G1：品質閘全綠（961 tests）；開 PR（Closes #73）；`/dev` 頁手動待 reviewer
+- V17-G1：品質閘全綠（961 tests）；開 [#74](https://github.com/dernoson/endfield-playground/pull/74)（Closes #73）；`/dev` 頁手動待 reviewer
 
 ### 2026-10-18（v1.5）
 

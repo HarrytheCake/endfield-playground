@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261011](../../work_dispatch/WEEK_20261011.md) v1.2（C5 引擎讀排本週）、[AGENT_WEEK_1018](../claude/AGENT_WEEK_1018.md)
 **週次：** 2026-10-18 → 2026-10-25（連線月第三週；M3＝10/25）
 **開發分支：** `dev/aaaaa1018`
-**狀態總覽：** **`[~]`**（2026-10-18；C1–F1 完成；G1 品質閘綠、PR 交審中）
+**狀態總覽：** **`[~]`**（2026-10-18；C1–F1 完成；G1 品質閘綠、[#74](https://github.com/dernoson/endfield-playground/pull/74) 交審中）
 **待確認問題：** [dispatch_private/1018/PENDING_DECISIONS_20261025.md](../collaborator_survey/dispatch_private/1018/PENDING_DECISIONS_20261025.md)（C-1／F-1／D-1 **已決**）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -152,7 +152,7 @@ A 定案 → B V16 收斂
 
 ## V17-G｜驗收、PR、交接
 
-- [~] **V17-G1** 品質閘 `[x]`；開 PR `[~]`；合入後回寫 #73 `[ ]`
+- [~] **V17-G1** 品質閘 `[x]`；PR [#74](https://github.com/dernoson/endfield-playground/pull/74) 交審中；合入後回寫 #73 `[ ]`
     - 細項：[dev_v17/G1_acceptance_and_handoff.md](./dev_v17/G1_acceptance_and_handoff.md)
 
 ---
@@ -214,7 +214,7 @@ A 定案 → B V16 收斂
 
 ### 2026-10-18｜V17-G1 驗收＋開 PR
 
-- 品質閘四項全綠（961 tests）；`/dev` 頁手動待 reviewer；開 PR（Closes #73）
+- 品質閘四項全綠（961 tests）；`/dev` 頁手動待 reviewer；開 [#74](https://github.com/dernoson/endfield-playground/pull/74)（Closes #73）
 
 ### 2026-10-18｜V17-F1 完成（A）
 

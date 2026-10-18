@@ -1,7 +1,7 @@
 # V17-G1 — 驗收、PR、交接
 
 **對應工項：** V17-G1
-**狀態：** `[~]` 品質閘全綠；PR 交審中
+**狀態：** `[~]` 品質閘全綠；[#74](https://github.com/dernoson/endfield-playground/pull/74) 交審中
 **日期：** 2026-10-18
 **依賴：** [D1](./D1_validation_id_lookup.md)、[E1](./E1_flow_engine_id_lookup.md)、[F1](./F1_engine_topology_slice.md)
 **正式依據：** [#73](https://github.com/dernoson/endfield-playground/issues/73) 驗收
@@ -70,8 +70,8 @@
 ## 5. DoD
 
 - [x] §1 通過（#5 待 reviewer 手動）
-- [ ] PR 已開
-- [ ] #73 驗收項可勾
+- [x] PR 已開（[#74](https://github.com/dernoson/endfield-playground/pull/74)）
+- [ ] #73 驗收項可勾（合入後）
 
 ---
 
@@ -81,6 +81,7 @@
 
 - 品質閘四項全綠（961 tests）；F1 測試檔 prettier 補修
 - `/dev` 頁未手動驗；PR body 請 reviewer 實測
+- 開 [#74](https://github.com/dernoson/endfield-playground/pull/74)（Closes #73；知會 azure）
 - 本版 F1＝A（測試餵入）；B（`/dev` 掛載）未做
 
 ### 2026-10-18
