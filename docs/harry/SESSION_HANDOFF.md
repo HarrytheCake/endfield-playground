@@ -1,6 +1,6 @@
 # Session Handoff —— 給下一個聊天用的接續筆記
 
-**最後更新：** 2026-10-11 晚（`dev/cake` `dff3b49`；master 仍為 `9d91f98`）
+**最後更新：** 2026-10-18（`dev/cake` `e1d35e4`＋docs commit；`upstream/master` `c5af7fc`）
 **用途：** 開新聊天時貼給 Claude 看，快速還原這個 session 建立的角色定位、工作流程與現況，不用重新從頭摸索。
 **身分：** L2 接線層（harry），負責 CR-01（畫布）+ CR-02（管線）+ CR-11（工具列）的互動與接線。詳細角色定位見 [README.md](README.md)，早期 editorStore action 缺口清單見 [MILESTONE_0726.md](MILESTONE_0726.md)（屬舊 Vue Flow 世界，參考用）。
 
@@ -12,7 +12,7 @@
 2. **大改動前先寫 `PLAN_<功能>.md`**：範疇判定（哪些檔案屬於 L1/L2/L3）、既有介面盤點、設計、明確排除範圍、待確認問題。使用者確認決策後才動工
 3. **實作完成前一定跑四項驗證**：`pnpm type-check` / `pnpm lint-check` / `pnpm format-check` / `pnpm test`，全過才算完成
 4. **改到畫面的工作要實際跑起來看**：`pnpm dev` 後用無頭瀏覽器操作、截圖、確認 console 無錯誤（做法見 §4）
-5. **一批功能做完後寫 `PR_DESCRIPTION_<日期>.md`**：整理變更檔案、範圍外項目、已知風險，附驗證結果與對應 PLAN／工單連結表，方便直接貼進 GitHub PR（最新範例：[PR_DESCRIPTION_1011.md](PR_DESCRIPTION_1011.md)）
+5. **一批功能做完後寫 `PR_DESCRIPTION_<日期>.md`**：整理變更檔案、範圍外項目、已知風險，附驗證結果與對應 PLAN／工單連結表，方便直接貼進 GitHub PR（最新範例：[PR_DESCRIPTION_1018.md](PR_DESCRIPTION_1018.md)）
 6. **遇到不確定的產品/設計決策就用選項讓使用者選**，不擅自定案；對稿問題（白紙稿）請使用者去 Discord 問 paper，不要猜
 7. **發現既有程式碼的問題（dead state、命名不一致等）先回報，不擅自順手修**，除非使用者明確要求
 8. **commit 依性質拆開**（feat／fix／docs 分開），方便 review
@@ -28,58 +28,61 @@
 | TableCfg 資料表抓取 script＋建築大圖示快取 | [PLAN_fetchFactoryMachineCraftTable.md](PLAN_fetchFactoryMachineCraftTable.md) | `2172542`、`054e696`、`016b205` | 已合入 |
 | W0907-H1／W0914-H1：格點視窗平移／縮放／座標換算 | [PLAN_gridViewport.md](PLAN_gridViewport.md) | `src/editor/layout/useGridViewport.ts`、`/dev/grid-viewport` | PR #47，09-15 合入；主畫面接入由 toby 做（#50） |
 | W0921-H1：管線折線逐段幾何 `buildPipelinePolyline` | [PLAN_pipelinePolyline.md](PLAN_pipelinePolyline.md) / [PR_DESCRIPTION_0927.md](PR_DESCRIPTION_0927.md) | `src/utils/layout/pipelinePolyline.ts`、`/dev/pipeline-polyline` | PR #56，10-04 合入（含 review 修正 `1ba53c7`：零長度段不參與轉角比對） |
+| W1004-H1：正式畫面換殼 | [PLAN_chromeLand.md](PLAN_chromeLand.md) / [PR_DESCRIPTION_1011.md](PR_DESCRIPTION_1011.md) | `MainLayout.vue` 槽位、卸載 `InspectorSidebar`、Esc 修正 `useShortcuts.ts` | PR #63 已合入 |
 
 **額外設計筆記（尚未實作）：** [DESIGN_clipboardAndEdgeSelectionState.md](DESIGN_clipboardAndEdgeSelectionState.md)——clipboard store 與管線選取狀態構想，寫於舊 Vue Flow 世界，若要用需先對照新 `layoutStore` 重新評估。
 
-## 3. 本週任務：W1004-H1 正式畫面換殼（**已完成，[PR #63](https://github.com/dernoson/endfield-playground/pull/63) 待審**）
+## 3. 本週任務：W1011-H2 刪舊左側面板、接上 `MachineCard`（**已 commit，未 push、未開 PR**）
 
-工單：[W1004-H1_chrome_land.md](../work_dispatch/harry/1004/W1004-H1_chrome_land.md)｜計畫：[PLAN_chromeLand.md](PLAN_chromeLand.md)｜PR 描述草稿：[PR_DESCRIPTION_1011.md](PR_DESCRIPTION_1011.md)
+工單：[W1011-H2_left_panel_swap.md](../work_dispatch/harry/1011/W1011-H2_left_panel_swap.md)｜週總表：[WEEK_20261011.md](../work_dispatch/WEEK_20261011.md) v1.2｜計畫：[PLAN_leftPanelSwap.md](PLAN_leftPanelSwap.md)｜PR 描述草稿：[PR_DESCRIPTION_1018.md](PR_DESCRIPTION_1018.md)
 
-### 3.1 已 commit（`dev/cake`，已 push 到 `origin` 與 `upstream` 的 `dev/cake`）
+### 3.1 已 commit（`dev/cake`，**尚未 push**）
 
 | commit | 內容 |
 |--------|------|
-| `4064f7c` feat(layout) | 拿掉舊底欄 `area-toolbar`／`workspace-main`；工具列移入畫布區貼底浮層；卸載 `InspectorSidebar`（檔案保留）；左側設備資訊空槽；右側產線總覽收合鈕；版面 CSS 從 `style.css` 搬進 `MainLayout` scoped style；`.area-stage` 加 `isolation` |
-| `6163114` fix(shortcuts) | Esc 設定面板打不開的修正（見 §6） |
-| `dff3b49` docs(harry) | PLAN 與 PR 描述 |
+| `a1da734` feat(layout) | 連檔刪除 `ProjectSidebar`；Navbar 拿掉 ☰ 與 `sidebarOpen` prop／`toggle-sidebar` emit；MainLayout local ref `selectedDeviceId` 接 `select-device`；computed 轉 `MachineCardProps`；左槽 451px 掛 `MachineCard` |
+| `e1d35e4` fix(layout) | **工單外**：`LayoutView` 補回 WASD 平移（見 §6）。`LayoutView` 本週鎖在 toby，已與使用者確認、PR 描述請 toby review |
+| （本 commit）docs(harry) | PLAN、PR 描述、本檔 |
 
-**已開 [PR #63](https://github.com/dernoson/endfield-playground/pull/63)**（head `dff3b49`，即上表三個 commit）。之後 `dev/cake` 再 push 的 commit（例如 handoff 更新 `becd04c`）會自動進到 #63——不想夾帶文件時要留意。
+### 3.2 使用者裁決（2026-10-18）
 
-### 3.2 定案的槽位結構（class 是給 G／S／C1 的契約，不要改名）
+- Navbar ☰：**一併移除**（不只是斷線）
+- 左槽尺寸：**加寬到 451px**（＝`MachineCard` 設計寬）；實作上不鋪底色、高度隨卡片（`max-height: 100%` 捲動），卡片以外不擋畫布點擊
+- `formulas`：**本週只給必填＋power**；`formulas`／`selectedRecipe`／`iconUrl` 不給
+- WASD：使用者要求修，並寫進 PR 描述
+
+### 3.3 目前槽位結構（class 契約不變）
 
 ```
 .editor-layout
-├ header.area-navbar → Navbar
+├ header.area-navbar → Navbar（無 ☰）
 └ .area-workspace
-   ├ ProjectSidebar（原樣保留）
    ├ .area-stage（relative＋isolation）
-   │   ├ .area-canvas（absolute inset-0）→ LayoutView
-   │   ├ aside.area-device-panel（左緣 280px，v-show="devicePanelVisible"，本週恆為 false）
-   │   ├ section.area-toolbar-dock（absolute 貼底，暫定 148px）→ ToolbarPanel
-   │   └ .area-stats-toggle（右上角，收合／展開產線總覽）
-   └ aside#area-stats.area-stats（320px ↔ 0）→ StatsPanel
+   │   ├ .area-canvas（absolute inset-0）→ LayoutView（@select-device）
+   │   ├ aside.area-device-panel（左上 451px，v-if="selectedMachineCard"）→ MachineCard
+   │   ├ section.area-toolbar-dock（absolute 貼底、不設高度、pointer-events: none）→ ToolbarPanel
+   │   └ .area-stats-toggle（右上角）
+   └ aside#area-stats.area-stats（334px ↔ 0）→ StatsPanel
 ```
 
-使用者裁決（2026-10-11）：工具列浮層**只蓋畫布**；`ProjectSidebar` **等 paper 回覆，本次不動**；版面 CSS **搬進 MainLayout**。
+### 3.4 待跟進
 
-### 3.3 待跟進
+1. **push＋開 PR**：使用者尚未指示。PR 描述已備好（[PR_DESCRIPTION_1018.md](PR_DESCRIPTION_1018.md)）
+2. **畫面較矮時工具列蓋住卡片下緣**（1280×800：stage 744px、卡片 686px，toolbar z 20 ＞ 左槽 z 10）——待 paper 決定誰在上
+3. **機器圖片是 `MachineCard` 預設占位圖**（未傳 `iconUrl`）
+4. **`formulas` 轉接**：需配方資料＋物品圖示查表，下週或另派
+5. **新建／匯入／匯出專案失去入口**：原本只在 `ProjectSidebar`（handler 皆 TODO），日後要另找入口（例如頂欄按鈕）
+6. **C1 拉管線＝toby**（10/18 週）；harry 下週工單請看 `docs/work_dispatch/harry/1018/`
 
-1. **#48 合入後（harry，一刀）：** `.area-toolbar-dock` 拿掉固定 `148px`、改 `pointer-events: none`。否則 #48 的工具列收合後 dock 仍擋住畫布下緣 148px 的點擊
-2. **兩則 GitHub 留言已寫好、由使用者貼出（不確定是否已貼）：**
-   - #48：說明槽位對接、收合只由 #48 負責、合入後 harry 會改 dock；並指出 #48（`e9b6116`）`handleKeyDown` **寫死 Z 鍵**收合、繞過 `keybindingStore`，建議註冊 `toggleToolbar` 動作，由 dernoson 裁要不要在 #48 一起做
-   - 左側 sidebar：維持 Navbar ☰ 開合＋保留元件，請 paper 確認是否改漢堡選單；若改，`Navbar.vue` 不在 H1 範圍需另派
-3. **左槽 `devicePanelVisible`** 的資料來源等 P1 稿＋C1 選取
-4. **MBD 的 `TopBarButton` 頂欄按鈕**：工單寫 10/11 下週由 harry 掛進 `MainLayout`
-5. **下週 C1 拉管線互動的 L2 owner 還沒定（toby 或 harry）**。開新聊天時先看有沒有 `docs/work_dispatch/harry/1011/`
+### 3.5 外部依賴現況（2026-10-18）
 
-### 3.4 外部依賴現況（2026-10-11）
-
-- **#48（goodmorning 工具列）仍未合入 master**
-- **T1（toby 無邊界畫布）在 `upstream/dev/TOBY`（`1cb0ce3`），未合入**。它的 `GridCanvas`／`LayoutView` 改成 `h-full w-full` 填滿容器——使用者回報的「畫布太小、只佔左上角」是現行 12×8 固定格造成，T1 合入後自然解決，MainLayout 不用改
+- **#48（工具列）、#62（StatsPanel）、#63（W1004-H1 換殼）、#61（無邊界）、#67（T2 設備拖曳，含 `select-device`）都已在 master**
+- 上週「#48 合入後改 dock」已由他人完成（dock 已是不設高度＋`pointer-events: none`）
+- shirone 的 git 作者名是 **`wVQ88Soi2Il9`**（不是 shirone）；其左側面板就是 `MachineCard`，各分支沒有其他未合入的側欄
 
 ## 4. 驗證與環境狀態
 
-**2026-10-11 於 `dev/cake` `dff3b49` 實測：** 四項全綠（47 個測試檔、888 個測試）。
+**2026-10-18 於 `dev/cake` `e1d35e4` 實測：** 四項全綠（52 個測試檔、950 個測試）。
 
 **畫面實測做法（本 session 建立，下次可沿用）：** repo 沒有跑 app 的 project skill，也沒裝 `chromium-cli`。做法是在 scratchpad 裝 `playwright-core@1.48.2`（不下載瀏覽器），用 `chromium.launch({ channel: 'msedge' })` 驅動系統內建 Edge，對 `pnpm dev --port 5173 --strictPort` 截圖與操作。踩過的坑：
 
@@ -87,13 +90,17 @@
 - 停 server 用 `Get-NetTCPConnection -LocalPort 5173` 找 PID 再 `taskkill /T /F`，背景任務會因此回報 failed，屬正常
 - **Nuxt UI 元件（`UButton` 等）收不到父層 scoped style**（data-v 屬性傳不進根節點），要定位就外包一層 `div`
 
-**Dev server 目前沒有在跑。**
+- 本 session 測試腳本範例：`check.mjs`（點工具列落子→點設備→量左槽）、`wasd.mjs`（按住鍵量設備標籤螢幕位移），皆在 scratchpad、不進版控
+
+**Dev server：** 使用者自己的 `pnpm dev` 正佔用 5173。
 
 ## 5. Git 狀態
 
-- 目前在 **`dev/cake`**；`dff3b49` 已 push（＝PR #63 head），其後的 handoff 更新 `becd04c` 尚未 push
-- `dev/cake` 已 merge 過 master（`0c335c7`），相對 master 多 4 個 commit：`0641c7b`（handoff 更新）＋ H1 三個
+- 目前在 **`dev/cake`**；`origin/dev/cake` ＝ `9ec394f`（merge master `c5af7fc`）。其後 H2 的三個 commit（feat／fix／docs）**尚未 push**
+- 本機 `master` 已過時，比較請用 `upstream/master`
 - `origin` = `HarrytheCake/endfield-playground`（fork），`upstream` = `dernoson/endfield-playground`；本機沒有 `gh` CLI，PR 狀態只能用 `git ls-remote upstream 'refs/pull/<編號>/head'` 間接查（例：`refs/pull/63/head` 對到哪個 commit）
+
+**保留的教訓（10-18 commit 事故）：** 已 `git rm` 過的檔案再 `git add <該路徑>` 會 pathspec 失敗，用 `&&` 串接時整個 commit 不會執行，但 staged 的刪除仍留在 index，被下一個 commit 帶走。拆 commit 前先 `git status --short` 確認 index；修正方式是未 push 時 `git reset --soft` 回上一個 commit 重來。
 
 **保留的教訓（08-23 revert 事故）：** 當時 `git revert --abort` 把分支 reset 到比預期更早的 commit，一度讓多個檔案從工作目錄消失，靠 `git reflog` 找回。**在多次 revert／reapply 疊過的分支上，abort 前先用 `git reflog` 確認會落在哪個 commit。**
 
@@ -101,12 +108,13 @@
 
 **本 session 已修：**
 
+- ~~正式頁 WASD 無法平移~~（`e1d35e4`）：WASD 原本只實作在舊 `FactoryCanvas.vue`，09-20 正式頁改掛 `LayoutView` 後未移植，`keybindingStore` 的 `panUp`／`panDown`／`panLeft`／`panRight` 無人讀取。現於 `LayoutView` 以 `useComboHeld`＋`useRafFn` 每幀 `panBy`（600 px／秒）。#67 未涉及鍵盤
 - ~~Esc 打不開快捷鍵設定~~（`6163114`）：舊五顆按鈕 `editorStore.armPlacement()` 設的 `placementArmed`，原本只有 `FactoryCanvas.vue` 會在 Esc 時解除；09-20 正式頁改掛 `LayoutView` 後沒人解除，`openSettings` 被永久擋下。現由 `useShortcuts.ts` 補固定 Escape 監聽解除，**必須註冊在 `openSettings` 之後**（同一次 keydown 依註冊順序執行，一次 Esc 只做一件事）。舊五顆在 #48／G1 後會消失，屆時這段可再檢討
 
 **仍未修：**
 
 - **真機器武裝（`usePlacementIntent`）時按 Esc 會開設定、不會取消落子**。spec 說拿起狀態 Esc＝取消，但這屬落子互動設計，留給 C1
-- **#48 寫死 Z 鍵收合工具列**，繞過 `keybindingStore`（見 §3.3）
+- **#48 寫死 Z 鍵收合工具列**，繞過 `keybindingStore`（已合入，未確認是否改過）
 - **`src/store/canvasStore.ts` 的 `offset`／`zoom` 是 dead state**：只有舊 `FactoryCanvas.vue` 與 `PaperFigMainField.vue` 引用。新畫布的平移縮放走 `useGridViewport`，不要再往 `canvasStore` 接
 - **`ToolbarPanel` 舊五顆 `EquipmentType` 按鈕**（`smelter`/`crusher` 等佔位）只武裝舊 `editorStore`、新畫布不讀；#48 合入後由 G1 拿掉，**不是 harry 的事**
 - **`.storybook/main.ts` 只收 `src/components/**` 與 `src/app/**` 的 story**：`src/editor/layout/GridCanvas.stories.ts` 存在但不會出現在 Storybook（#48 有改 `main.ts`，可能一併處理）。Storybook 教學在 `tutorial/storybook/developer.md`
