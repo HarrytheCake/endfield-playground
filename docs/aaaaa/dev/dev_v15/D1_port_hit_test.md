@@ -1,7 +1,7 @@
 # V15-D1 — 埠命中判定（`hitTestPortAt`｜W1004-A0 ③）
 
 **對應工項：** V15-D1
-**狀態：** `[~]` [#65](https://github.com/dernoson/endfield-playground/pull/65) 交審中（見 §8／§9）
+**狀態：** `[x]` [#65](https://github.com/dernoson/endfield-playground/pull/65) MERGED 2026-10-12
 **日期：** 2026-10-10
 **依賴：** [A1](./A1_scope_decision.md) `[x]`、[B1](./B1_v14_residue_close.md) `[x]`
 **正式工單：** [W1004-A0 §2](../../../work_dispatch/aaaaa/1004/W1004-A0_dispatch_and_e003.md)、[C1 §4.2–4.3](../../../roadmap/detail/C1_port_hit_and_draft.md)

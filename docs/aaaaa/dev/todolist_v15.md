@@ -8,8 +8,8 @@
 **上游：** [WEEK_20261004](../../work_dispatch/WEEK_20261004.md) v1.2、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.16**、[AGENT_WEEK_1004](../claude/AGENT_WEEK_1004.md)
 **週次：** 2026-10-04 → 2026-10-11（連線月第一週；M2 延後結算＋換殼；**無技術門檻日**）
 **開發分支：** `dev/aaaaa1004`
-**狀態總覽：** **`[~]`**（2026-10-11；② [#60](https://github.com/dernoson/endfield-playground/pull/60)；③ [#65](https://github.com/dernoson/endfield-playground/pull/65)）
-**待確認問題：** [dispatch_private/1004/PENDING_DECISIONS_20261011.md](../collaborator_survey/dispatch_private/1004/PENDING_DECISIONS_20261011.md)
+**狀態總覽：** **`[x]` 已結案／已合 master**（2026-10-18 收斂；② [#60](https://github.com/dernoson/endfield-playground/pull/60) MERGED；③ [#65](https://github.com/dernoson/endfield-playground/pull/65) MERGED）
+**待確認問題：** [dispatch_private/1004/PENDING_DECISIONS_20261011.md](../collaborator_survey/dispatch_private/1004/PENDING_DECISIONS_20261011.md)（A-2 已移交 1011／已裁＝toby；續見 [V16](./todolist_v16.md)）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 >
@@ -113,7 +113,7 @@ A 定案 → B V14 收斂（前置）
 
 ## V15-D｜埠命中判定（W1004-A0 ③・C1 前置）
 
-- [~] **V15-D1** `hitTestPortAt`＋測試；熱區圓心＝埠視覺邊心——**[#65](https://github.com/dernoson/endfield-playground/pull/65) 交審中**
+- [x] **V15-D1** `hitTestPortAt`＋測試；熱區圓心＝埠視覺邊心——**[#65](https://github.com/dernoson/endfield-playground/pull/65) MERGED 2026-10-12**
     - 細項：[dev_v15/D1_port_hit_test.md](./dev_v15/D1_port_hit_test.md)
     - 產物：`src/utils/layout/portHitTest.ts`、`src/__tests__/utils/layout/portHitTest.test.ts`（另匯出 `portPointOnMachine`）
     - 對照公開驗收：**V10**（另一半）；回傳＝PortRef＋side＋media
@@ -122,7 +122,7 @@ A 定案 → B V14 收斂（前置）
 
 ## V15-E｜驗收、PR、交接
 
-- [~] **V15-E1** 品質閘 `[x]`；PR [#60](https://github.com/dernoson/endfield-playground/pull/60) 拆分後僅含 ②；③ 後續 PR `[ ]`；合入後回寫 `[ ]`
+- [x] **V15-E1** 品質閘 `[x]`；② [#60](https://github.com/dernoson/endfield-playground/pull/60)／③ [#65](https://github.com/dernoson/endfield-playground/pull/65) 皆 MERGED；文件收斂見 [V16-B1](./dev_v16/B1_v15_residue_close.md)
     - 細項：[dev_v15/E1_acceptance_and_handoff.md](./dev_v15/E1_acceptance_and_handoff.md)
 
 ---
@@ -132,9 +132,9 @@ A 定案 → B V14 收斂（前置）
 | ID | 原因 | 等待對象 | 阻擋本版？ | 何時決 |
 |----|------|----------|------------|--------|
 | ~~PENDING A-1~~ | ~~撞名~~ | — | **已決＝hitTestPortAt** | 2026-10-10 |
-| PENDING A-2 | C1 L2 owner（T1／H1 皆未派） | 主編 | **否** | 10/11 會 |
+| ~~PENDING A-2~~ | ~~C1 L2 owner~~ | — | **已裁＝toby（10/18 週）** | PR #66 |
 | ~~PENDING B-1~~ | ~~回傳形狀~~ | — | **已決＝PortRef＋side＋media** | 2026-10-10 |
-| C5 action | 排 10/11–10/18 | — | **否**（非本版） | 下週 |
+| ~~C5 action~~ | ~~排 10/11–10/18~~ | — | **移交 V16／W1011-A0** | 本版結案 |
 | — | **不動** 換殼／畫布／toolbar／Stats／detectors 鎖檔 | — | — | 本版硬鎖 |
 
 ---
@@ -174,12 +174,16 @@ A 定案 → B V14 收斂（前置）
 |------|----------|----------|------|
 | ① | 派工已發 | `[x]` | 已在 master |
 | ② | `devicesOutsideBase`＋測試 | `[x]` | 2026-10-10 |
-| ③ | `hitTestPortAt`＋測試 | `[~]` | [#65](https://github.com/dernoson/endfield-playground/pull/65) |
-| C5 問答 | store 歸屬 | `[x]` | R-1＝B；實作非本版 |
+| ③ | `hitTestPortAt`＋測試 | `[x]` | [#65](https://github.com/dernoson/endfield-playground/pull/65) MERGED |
+| C5 問答 | store 歸屬 | `[x]` | R-1＝B；實作→V16 |
 
 ---
 
 ## 開發日誌
+
+### 2026-10-18｜V15 結案收斂
+
+- `gh`：#60／#65 皆 MERGED；狀態總覽改 `[x]`；C5 實作移交 [todolist_v16](./todolist_v16.md)
 
 ### 2026-10-11｜③ 後續 PR：修熱區圓心
 
