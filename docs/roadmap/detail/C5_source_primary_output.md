@@ -8,10 +8,10 @@
 | 建議主責／備援 | aaaaa（L1 action）＋L2（表單接線）／aaaaa 全包 |
 | 性質 | 接線 |
 | 依賴 | [B4](./B4_selection_inspector.md) |
-| 狀態 | `[~]` store＝B 已裁；**W1011-A0＝寫入 action**；引擎讀取仍排 10/18。見 §4.1a |
-| 最後更新 | **2026-10-12（W1011 派工）** |
+| 狀態 | `[~]` 寫入 **#72 合入**；引擎讀／機型 id **#74 合入**；正式頁源素材表單仍未做 |
+| 最後更新 | **2026-10-19（W1011 結算）** |
 
-> **W1011 切片：** 只交寫入 action＋測試（[W1011-A0](../../work_dispatch/aaaaa/1011/W1011-A0_c5_primary_output.md)）；引擎讀取最小切片與左面板表單仍依 §4.1a／週曆 10/18。
+> **W1011 已交：** 寫入 action＋測試＝[#72](https://github.com/dernoson/endfield-playground/pull/72)；引擎讀最小切片（經 `toTopology`）＋`resolveMachineDef`＝[#74](https://github.com/dernoson/endfield-playground/pull/74)。**W1018：** aaaaa ≤2h＝驗收證明／lab 合入；**不做**正式頁表單。
 
 ---
 

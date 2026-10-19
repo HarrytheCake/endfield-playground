@@ -5,11 +5,11 @@
 | 對應大綱 | [ROADMAP_OUTLINE.md](../ROADMAP_OUTLINE.md) §5 |
 | 里程碑 | M3（2026-10-25）；首次可演示 10/4 |
 | 擋門檻 | **是**（主編步驟 3 的入口） |
-| 建議主責／備援 | **L2＝toby**（PR #66；T2 合入後、10/18 週接）／aaaaa 命中判定（**#65 已合**） |
+| 建議主責／備援 | **L2＝toby**（[W1018-T1](../../work_dispatch/toby/1018/W1018-T1_c1_draft_connect.md)）／aaaaa 命中判定（**#65 已合**） |
 | 性質 | 接線（L2） |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)、[B2](./B2_placement_chain.md)、[B3](./B3_rotation_90.md) |
-| 狀態 | `[~]` L1 命中已合；**L2＝toby**（本週 T2 拖曳；10/18 接 C1） |
-| 最後更新 | **2026-10-13**（PR #66：owner＝toby；#65 合入） |
+| 狀態 | `[~]` L1 命中 #65、拖曳 #67 已合；**本週＝C1 draft UI（toby）** |
+| 最後更新 | **2026-10-19**（W1018 派工；T2 已合） |
 
 ---
 
@@ -92,9 +92,9 @@ hitTestPortAt(point, devices, getMachine?) →
 
 | 週日 | 切片 |
 |------|------|
-| 10/04 | ~~本週不派 C1 UI~~（改換殼）；L1 `hitTestPortAt` 提前交 → **#65 合入** |
-| ~~10/11~~ → **10/18** | **toby（PR #66）：** 埠可見＋draft＋放開呼叫 `canConnect`／`addPipeline`；命中 highlight＋非法紅提示。趕不上 → 砍到相鄰兩台直線（B-2 備案已裁） |
-| 10/18 | 熱區／縮放調校；與 C3 折線套用協調 |
+| 10/04 | L1 `hitTestPortAt` → **#65 合入** |
+| 10/11 | 拖曳 UI → **#67 合入**（按下判斷已為「可加命中埠分支」形狀） |
+| **10/18** | **toby W1018-T1：** 埠可見＋draft＋放開呼叫 `canConnect`／`addPipeline`；命中 highlight＋非法紅提示。趕不上 → 相鄰兩台直線（B-2） |
 | 10/25 | **門檻：** 兩台設備 port 對 port 穩定連得起來 |
 
 ## 7. 不做
