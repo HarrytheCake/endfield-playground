@@ -5,11 +5,11 @@
 | 對應大綱 | [ROADMAP_OUTLINE.md](../ROADMAP_OUTLINE.md) §5 |
 | 里程碑 | M3（2026-10-25）；首次可演示 10/11 |
 | 擋門檻 | **是** |
-| 建議主責／備援 | L3（MBD／goodmorning／avery 之一）＋L2 提供幾何／aaaaa |
-| 性質 | 畫面（L3） |
+| 建議主責／備援 | 幾何套用＝**toby（W1018 加分）**；視覺元件＝shirone `PipelineShape`（**#68 已合**）／DeviceShape＝MBD（W1018） |
+| 性質 | 畫面（L3）＋L2 掛載 |
 | 依賴 | [C1](./C1_port_hit_and_draft.md)、[C2](./C2_add_connection_contract.md) |
-| 狀態 | `[~]` 幾何 `buildPipelinePolyline` 已合 #56；GridCanvas 未套用 |
-| 最後更新 | 2026-10-04 |
+| 狀態 | `[~]` 幾何 #56、PipelineShape #68 已合；**GridCanvas 套用仍欠**（W1018 toby 加分；否則視覺降級） |
+| 最後更新 | **2026-10-19** |
 
 ---
 
