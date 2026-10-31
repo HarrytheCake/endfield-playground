@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v3.4（2026-10-25；公開三件＋埠／L2 FAQ；開 PR）** |
+| version | **v3.5（2026-11-01；#79 已合；V18 文件結案）** |
 | 用途 | Agent 執行本週派工／改工單時的強制約束 |
 | 公開 | [WEEK_1018](../../work_dispatch/WEEK_20261018.md) v1.0、[W1018-A0](../../work_dispatch/aaaaa/1018/W1018-A0_m3_engine_lab.md)、[INTRO](../../work_dispatch/aaaaa/1018/INTRO_meeting_m3_engine_lab.md)、[ACCEPTANCE](../../work_dispatch/aaaaa/1018/ACCEPTANCE_V2_c5_chain.md)、[LAB](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md) |
 | 執行計畫 | [todolist_v18](../dev/todolist_v18.md)、[dev_v18/](../dev/dev_v18/) |
@@ -94,6 +94,10 @@
 ---
 
 ## 6. 日誌
+
+### 2026-11-01（v3.5）
+
+- #79 MERGED；todolist_v18／D1／E1 標結案；執行權改掛 AGENT_WEEK_1026／V19
 
 ### 2026-10-25（v3.4）
 
