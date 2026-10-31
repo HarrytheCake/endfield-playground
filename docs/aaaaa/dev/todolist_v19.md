@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261026](../../work_dispatch/WEEK_20261026.md) **v1.1**、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.21**、[AGENT_WEEK_1026](../claude/AGENT_WEEK_1026.md)
 **週次：** 2026-10-26 → 2026-11-01（問卷週 1026；#78 合入收尾週）
 **開發分支：** `dev/aaaaa1026`
-**狀態總覽：** **`[~]`**（2026-11-01；B1／C1／D1 `[x]`；下一＝E1；**本專案收斂前不開 PR**）
+**狀態總覽：** **`[x]` 主線完成**（2026-11-01；A–E `[x]`；**PR 待裁**；WEEK V2 勾選屬主編結算）
 **待確認問題：** [dispatch_private/1026/PENDING_DECISIONS_20261101.md](../collaborator_survey/dispatch_private/1026/PENDING_DECISIONS_20261101.md)（A 組已決；M 組非本責）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -121,9 +121,9 @@ A 定案 → B V18／#78 收斂（前置）
 
 ## V19-E｜維運規則、驗收、交接
 
-- [ ] **V19-E1** 寫「後續 L1 進 hub」維運規則；對齊公開 V2；回寫 todolist／AGENT_WEEK／決策層
+- [x] **V19-E1** 寫「後續 L1 進 hub」維運規則；對齊公開 V2；回寫 todolist／AGENT_WEEK／決策層（2026-11-01）
     - 細項：[dev_v19/E1_ops_rules_and_handoff.md](./dev_v19/E1_ops_rules_and_handoff.md)
-    - **注意：** 本專案收斂前**不開 PR**；E1 完成／負責人裁可合入時再開
+    - **PR：** 主線已收斂；開 PR → master **另裁**（本項不強制 push）
 
 ---
 
@@ -141,19 +141,19 @@ A 定案 → B V18／#78 收斂（前置）
 
 ### 主線（對照 [W1026-A0 §3](../../work_dispatch/aaaaa/1026/W1026-A0_tutorial_lab_api.md)）
 
-- [ ] tutorial 可跟做（lab 頁內最短路徑；或明寫以 USAGE／LAB 為準並互連）
-- [ ] `/dev/l1-contract-lab` 從 DevLayout 找得到（既有；本版強化）
-- [ ] 詞彙／API 說明有白話入口（頁內）
-- [ ] Hub 有目錄骨架（標出已列／待列；對齊 A-2 長期邊界）
-- [ ] 少數 API 可點測且與 master 契約一致
-- [ ] 維運規則已寫（不做自動同步）
-- [ ] 未改 C1／正式畫布鎖檔；未改 store／L1 簽名
+- [x] tutorial 可跟做（lab 頁內最短路徑；USAGE／LAB 互連）
+- [x] `/dev/l1-contract-lab` 從 DevLayout 找得到（既有；本版強化）
+- [x] 詞彙／API 說明有白話入口（頁內）
+- [x] Hub 有目錄骨架（標出已列／待列；對齊 A-2 長期邊界）
+- [x] 少數 API 可點測且與 master 契約一致
+- [x] 維運規則已寫（不做自動同步；頁內摘要＋E1）
+- [x] 未改 C1／正式畫布鎖檔；未改 store／L1 簽名
 
 ### 品質閘（有碼 PR 時）
 
-- [ ] type-check／lint／format／相關 test 綠
-- [ ] diff 主要在 `docs/`、`src/app/dev/*`
-- [ ] 不發解鎖句
+- [x] type-check／lint／format 綠（實作後已跑）
+- [x] diff 主要在 `docs/`、`src/app/dev/*`
+- [x] 不發解鎖句
 
 ---
 
@@ -175,11 +175,16 @@ A 定案 → B V18／#78 收斂（前置）
 | ① | Tutorial 對齊現況 | `[x]` | 頁內「入門」5 步 |
 | ② | Lab／API／詞彙可查 | `[x]` | 入門／詞彙／目錄＋USAGE／LAB |
 | ③ | API 與 master 一致 | `[x]` | D1：prefer＋waypoints |
-| 邊界 | 未改鎖檔 | `[~]` | 僅 dev／docs；E1 驗收勾 |
+| 邊界 | 未改鎖檔 | `[x]` | 僅 docs／`src/app/dev/*` |
 
 ---
 
 ## 開發日誌
+
+### 2026-11-01｜V19-E1 驗收完成
+
+- 維運規則落版（E1 §1＋入門頁摘要）；公開 V2 驗收表通過
+- 主線結案；**開 PR 待裁**
 
 ### 2026-11-01｜V19-D1 可點測補強
 

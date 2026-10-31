@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.3（2026-11-01；V19-D1 可點測補強）** |
+| version | **v1.4（2026-11-01；V19 主線完成；PR 待裁）** |
 | 用途 | Agent 執行本週派工／改工單時的強制約束 |
 | 公開 | [WEEK_1026](../../work_dispatch/WEEK_20261026.md) v1.1、[W1026-A0](../../work_dispatch/aaaaa/1026/W1026-A0_tutorial_lab_api.md) |
 | 執行計畫 | [todolist_v19](../dev/todolist_v19.md)、[dev_v19/](../dev/dev_v19/) |
@@ -16,9 +16,9 @@
 
 ## 0. 三十秒結論
 
-**V18 已收斂：** [#79](https://github.com/dernoson/endfield-playground/pull/79) MERGED；todolist_v18 `[x]`（V19-B1）。**#78 已合**（2026-10-31）。  
-**本週 V19＝W1026-A0：** 強化 `/dev/l1-contract-lab` 為 **L1 Hub MVP**（目錄＋詞彙＋少數可點測）＋**頁內教學**；維運規則只寫文件、不做自動同步。全量 catalog 後續週。問卷 ≤2h，**接受超標**。不改 L1／store 簽名、不碰正式畫布業務。  
-**閘門：** 實作開工條件＝V18 收斂（**已滿足**）。**本專案收斂前不要開任何 PR**（只 commit 開版／進度文件即可）。
+**V19 主線完成。** `/dev/l1-contract-lab`＝L1 Hub MVP（入門／詞彙／目錄／V14–V17 定義＋可點測＋維運摘要）。  
+V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L1／store 簽名、不碰正式畫布。  
+**PR → master 另裁**（主線已收斂；開 PR 等負責人下令）。不發解鎖句。
 
 ---
 
@@ -28,10 +28,10 @@
 |----|------|------------|
 | ~~0~~ | ~~對齊 master；開分支~~ | **已完成**；`dev/aaaaa1026` |
 | ~~1~~ | ~~V18 收斂（實作閘門）~~ | **已完成**；[V19-B1](../dev/dev_v19/B1_v18_residue_close.md) |
-| ~~2~~ | ~~**Hub 骨架**（目錄＋詞彙＋頁內最短路徑）~~ | **已完成**；[V19-C1](../dev/dev_v19/C1_hub_skeleton.md) |
-| ~~3~~ | ~~**少數可點測 API**（`prefer`／waypoints）~~ | **已完成**；[V19-D1](../dev/dev_v19/D1_clickable_api_samples.md) |
-| 4 | 維運規則＋驗收／交接（公開 V2） | [V19-E1](../dev/dev_v19/E1_ops_rules_and_handoff.md) |
-| — | **禁止**本專案收斂前開 PR | 負責人裁 |
+| ~~2~~ | ~~Hub 骨架~~ | **已完成**；[V19-C1](../dev/dev_v19/C1_hub_skeleton.md) |
+| ~~3~~ | ~~少數可點測 API~~ | **已完成**；[V19-D1](../dev/dev_v19/D1_clickable_api_samples.md) |
+| ~~4~~ | ~~維運規則＋驗收~~ | **已完成**；[V19-E1](../dev/dev_v19/E1_ops_rules_and_handoff.md) |
+| 5 | 開 PR → master（另裁） | E1 §3 建議標題／body |
 | — | **禁止**改 LayoutView／GridCanvas 業務 | 工單＋鎖表精神 |
 | — | **禁止**改 layoutStore／editorStore／utils/layout **簽名** | W1026-A0 §2 |
 | — | **禁止**另開第二 hub 路由／全量一次列完／codegen 自動同步 | A-1／A-3／A-4 |
@@ -60,12 +60,12 @@
 | 本版交付 | Hub MVP：inventory＋詞彙＋頁內教學＋少數點測＋維運規則 |
 | 頁面 | **`/dev/l1-contract-lab`**（強化既有） |
 | 長期邊界 | layout utils ＋ layoutStore 公開 action ＋（可選）驗證／引擎 adapter |
-| 自動同步 | **本周不做**；規則見 E1 |
+| 自動同步 | **本周不做**；規則見 E1 §1 |
 | 教學 | **頁內優先**（給無經驗者） |
 | 時數 | ≤2h 問卷；**接受超標** |
 | 解鎖句 | **本版不發** |
 | 分支 | **`dev/aaaaa1026`** |
-| PR | **本專案收斂前不開**；開版／進度只 commit |
+| PR | **主線完成；開 PR 另裁** |
 
 ---
 
@@ -73,11 +73,11 @@
 
 | # | 動作 | 誰／何處 | 狀態 |
 |---|------|----------|------|
-| 1 | Hub MVP 可驗；公開 V2 | aaaaa | `[ ]` |
-| 2 | 回寫 todolist_v19 | Agent／aaaaa | `[~]`（開版＋B1） |
-| 3 | REVIEW／E3／PENDING 日誌 | 決策層 `1026/` | `[~]`（開版已建） |
+| 1 | Hub MVP 可驗；公開 V2 | aaaaa | `[x]`（分支；WEEK 勾選主編） |
+| 2 | 回寫 todolist_v19 | Agent／aaaaa | `[x]` |
+| 3 | REVIEW／E3／PENDING 日誌 | 決策層 `1026/` | `[x]` |
 | 4 | 11/01 驗收回寫 WEEK V2 | 主編／aaaaa | 結算時 |
-| 5 | 收斂後再開 PR → master | aaaaa | `[ ]`（**未到**） |
+| 5 | 開 PR → master | aaaaa | `[ ]`（**另裁**） |
 | — | **不動** CLAUDE §4.6 索引、AGENT_ROADMAP 版本 | 已知過期 | 維持 |
 
 ---
@@ -88,7 +88,7 @@
 
 | 項 | 對象 | 本週目標 |
 |----|------|----------|
-| **V2** | aaaaa A0 | 新 clone 跟得到；lab 入口清楚；詞彙／API 白話＋可點測少數 |
+| **V2** | aaaaa A0 | **分支達成**：新 clone 跟得到；lab 入口清楚；詞彙／API 白話＋可點測少數 |
 | V1 | toby #78 | **已合**；本版零檔案交集 |
 | V3–V6 | 其餘 | 閘門／DeviceShape／P2／C5 表單——**零檔案交集** |
 
@@ -97,6 +97,10 @@
 ---
 
 ## 6. 日誌
+
+### 2026-11-01（v1.4）
+
+- V19-E1：驗收通過；維運規則＋頁內摘要；主線結案；PR 另裁
 
 ### 2026-11-01（v1.3）
 
