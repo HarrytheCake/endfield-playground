@@ -262,34 +262,41 @@ export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
         status: 'listed',
         note: '佈局→引擎圖；V16／V17',
     },
-    // —— layout-utils：待列 ——
     {
         area: 'layout-utils',
         symbol: 'resolvePortAnchorCell',
         module: '@/utils/layout/portAnchors',
-        status: 'todo',
-        note: '外側錨點格',
+        status: 'listed',
+        note: '外側錨點格；V15／V20-C1 對照案例',
     },
     {
         area: 'layout-utils',
         symbol: 'collectPortAnchors／findPortAt',
         module: '@/utils/layout/portAnchorIndex',
-        status: 'todo',
-        note: '錨點展開／格點精確命中（≠熱區）',
+        status: 'listed',
+        note: '錨點展開／格點精確（≠熱區）；V15 可點測',
     },
     {
         area: 'layout-utils',
         symbol: 'resolveConnections',
         module: '@/utils/layout/resolveConnections',
-        status: 'todo',
-        note: '管線→Connection[]',
+        status: 'listed',
+        note: '管線→Connection[]；V15 可點測',
     },
+    // —— layout-utils：待列 ——
     {
         area: 'layout-utils',
         symbol: 'buildConnectionWaypoints',
         module: '@/utils/layout/connectionWaypoints',
         status: 'listed',
         note: '#78 連線折線；V15 分頁可點測',
+    },
+    {
+        area: 'layout-utils',
+        symbol: 'buildGapConnectionWaypoints',
+        module: '@/utils/layout/connectionWaypoints',
+        status: 'listed',
+        note: '間隙中央通道雙轉角；V15／V20-D1 可點測',
     },
     {
         area: 'layout-utils',
@@ -373,8 +380,8 @@ export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
         area: 'layout-store',
         symbol: 'addPipeline／removePipeline',
         module: '@/store/layoutStore',
-        status: 'todo',
-        note: '管線寫入（內含 canConnect）',
+        status: 'listed',
+        note: '管線寫入（內含 canConnect）；V16／V20-D1 可點測',
     },
     {
         area: 'layout-store',
@@ -470,7 +477,7 @@ export const CONTRACT_BLOCKS: ContractVersionBlock[] = [
         version: 'V15',
         title: '出界列表＋埠熱區命中',
         prs: '#60／#65',
-        oneLiner: '出界只供 Error 視覺（仍可落子）；埠命中用連續格座標熱區，勿與 findPortAt 混淆。',
+        oneLiner: '出界／熱區／錨點／waypoints（含 gap）可點測；規則錨點≠滑鼠熱區。',
         apis: [
             {
                 symbol: 'devicesOutsideBase',
@@ -488,20 +495,50 @@ export const CONTRACT_BLOCKS: ContractVersionBlock[] = [
                 dont: '拿 findPortAt（格點精確）當滑鼠熱區；忽略 prefer 導致緊貼埠對埠認錯端',
             },
             {
+                symbol: 'resolvePortAnchorCell',
+                module: '@/utils/layout/portAnchors',
+                purpose: '設備外側相鄰一格＝管線／規則錨點（非整數邊心）',
+                callers: 'collectPortAnchors、canConnect、waypoints',
+                dont: '與 SVG 邊心像素函式互換；當滑鼠熱區圓心',
+            },
+            {
+                symbol: 'collectPortAnchors／findPortAt',
+                module: '@/utils/layout/portAnchorIndex',
+                purpose:
+                    '展開外側錨點；整數格精確命中（可 prefer）；供 resolveConnections／canConnect 共用',
+                callers: '連線解析、規則錨點',
+                dont: '拿 findPortAt 當滑鼠熱區（連續座標請用 hitTestPortAt）',
+            },
+            {
+                symbol: 'resolveConnections',
+                module: '@/utils/layout/resolveConnections',
+                purpose: 'pipeline 首／末格對錨點 → Connection；錯位則 from／to null（管線不刪）',
+                callers: 'layoutStore.connections、引擎前衍生',
+                dont: '以為會做媒質檢查（那是 canConnect）；端點用熱區座標',
+            },
+            {
                 symbol: 'buildConnectionWaypoints',
                 module: '@/utils/layout/connectionWaypoints',
                 purpose: '兩外側錨點 → 直線或單轉角 waypoints（#78）；不驗媒質／碰撞',
                 callers: 'L2 拉線預覽路徑',
                 dont: '用此結果取代 canConnect；間隙繞障見 buildGapConnectionWaypoints',
             },
+            {
+                symbol: 'buildGapConnectionWaypoints',
+                module: '@/utils/layout/connectionWaypoints',
+                purpose:
+                    '兩端設備間固定中央通道 → 雙轉角路徑；無通道回 null；不搜尋其他繞障、不驗媒質',
+                callers: 'L2 緊貼／對側拉線候選（#78）',
+                dont: '當通用繞障搜尋；用結果直接略過 canConnect／碰撞預檢',
+            },
         ],
     },
     {
         version: 'V16',
-        title: '源素材寫入＋設備旋轉（layoutStore）',
-        prs: '#72／V18 rotateDevice',
+        title: '源素材寫入＋設備旋轉＋管線寫入（layoutStore）',
+        prs: '#72／V18 rotateDevice／V20-D1 pipeline',
         oneLiner:
-            'primaryOutput 只寫 layoutStore；旋轉用 rotateDevice；引擎讀經 toTopology。重疊不擋寫入。',
+            'primaryOutput／rotateDevice／addPipeline 只寫 layoutStore；addPipeline 內含 canConnect；重疊不擋設備寫入。',
         deeperDemo: {
             label: 'layoutStore 演示（獨立 HTML）',
             href: '/dev/layout-store-preview.html',
@@ -527,6 +564,14 @@ export const CONTRACT_BLOCKS: ContractVersionBlock[] = [
                 purpose: '寫入類；僅 invalid 失敗；overlap 仍寫入（E001→layoutIssues）',
                 callers: 'L2 落子／拖曳確認',
                 dont: '把 PlacementResult.overlap 當寫入擋板（預檢 can* 仍可回 overlap）',
+            },
+            {
+                symbol: 'addPipeline／removePipeline',
+                module: '@/store/layoutStore',
+                purpose:
+                    '寫入／刪除管線；add 先跑 canConnect（失敗→invalid）再進歷史；remove 找不到或 id 不唯一→invalid',
+                callers: 'L2 確認拉線／刪線',
+                dont: '略過 canConnect 自寫第二套連線防線；把 UI 錯誤字串塞進 L1',
             },
             {
                 symbol: 'toTopology（已映射欄位）',
