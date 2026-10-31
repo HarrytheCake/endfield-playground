@@ -41,6 +41,7 @@ import {
     CONTRACT_INVENTORY,
     HUB_GLOSSARY,
     HUB_GUIDE_STEPS,
+    HUB_OPS_RULES,
     INVENTORY_AREA_LABELS,
     type ContractInventoryArea,
     type ContractVersion,
@@ -60,6 +61,9 @@ const guideSteps = HUB_GUIDE_STEPS;
 
 /** 頁內詞彙 */
 const glossary = HUB_GLOSSARY;
+
+/** 頁內維運規則摘要 */
+const opsRules = HUB_OPS_RULES;
 
 /** inventory 全表 */
 const inventory = CONTRACT_INVENTORY;
@@ -694,6 +698,17 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                     class="rounded-lg px-3 py-1.5 font-medium text-blue-600 underline dark:text-blue-400"
                     >打開正式頁（另頁）</a
                 >
+            </div>
+            <div class="rounded-lg border border-dashed border-gray-300 p-4 dark:border-gray-600">
+                <h3 class="mb-2 text-sm font-semibold">後續維運（新 L1 怎麼進本頁）</h3>
+                <ul
+                    class="list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400"
+                >
+                    <li v-for="(rule, i) in opsRules" :key="i">{{ rule }}</li>
+                </ul>
+                <p class="mt-2 text-xs text-gray-500">
+                    完整規則：<code>docs/aaaaa/dev/dev_v19/E1_ops_rules_and_handoff.md</code>
+                </p>
             </div>
             <p class="text-xs text-gray-500">
                 長文：USAGE（repo
