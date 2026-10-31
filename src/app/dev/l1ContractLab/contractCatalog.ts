@@ -144,6 +144,17 @@ export const HUB_GUIDE_STEPS: ContractGuideStep[] = [
 ];
 
 /**
+ * 頁內維運規則摘要（完整見 docs/aaaaa/dev/dev_v19/E1_ops_rules_and_handoff.md）
+ */
+export const HUB_OPS_RULES: readonly string[] = [
+    '單一真相＝本頁／contractCatalog.ts；不要另開平行 swagger 頁。',
+    '新 L1 合入時：inventory 改 listed（或新增列）＋定義列 purpose／callers／dont。',
+    '建議附至少一則可點測案例；寫入 store 須用獨立 Pinia，勿污染正式頁。',
+    '易踩雷或破壞性變更：USAGE／LAB 補一句；新詞進 LAB 詞彙表。',
+    '禁止只改程式不改 catalog（視為 hub 欠帳）。本周不做自動 codegen。',
+];
+
+/**
  * 頁內精簡詞彙（摘自 LAB §2；完整表見 LAB 長文）
  */
 export const HUB_GLOSSARY: ContractGlossaryEntry[] = [
