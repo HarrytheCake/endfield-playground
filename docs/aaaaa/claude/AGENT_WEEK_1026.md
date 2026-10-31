@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.2（2026-11-01；V19-C1 Hub 骨架完成）** |
+| version | **v1.3（2026-11-01；V19-D1 可點測補強）** |
 | 用途 | Agent 執行本週派工／改工單時的強制約束 |
 | 公開 | [WEEK_1026](../../work_dispatch/WEEK_20261026.md) v1.1、[W1026-A0](../../work_dispatch/aaaaa/1026/W1026-A0_tutorial_lab_api.md) |
 | 執行計畫 | [todolist_v19](../dev/todolist_v19.md)、[dev_v19/](../dev/dev_v19/) |
@@ -29,7 +29,7 @@
 | ~~0~~ | ~~對齊 master；開分支~~ | **已完成**；`dev/aaaaa1026` |
 | ~~1~~ | ~~V18 收斂（實作閘門）~~ | **已完成**；[V19-B1](../dev/dev_v19/B1_v18_residue_close.md) |
 | ~~2~~ | ~~**Hub 骨架**（目錄＋詞彙＋頁內最短路徑）~~ | **已完成**；[V19-C1](../dev/dev_v19/C1_hub_skeleton.md) |
-| 3 | **少數可點測 API**（對齊 master；含 `prefer` 等） | [V19-D1](../dev/dev_v19/D1_clickable_api_samples.md) |
+| ~~3~~ | ~~**少數可點測 API**（`prefer`／waypoints）~~ | **已完成**；[V19-D1](../dev/dev_v19/D1_clickable_api_samples.md) |
 | 4 | 維運規則＋驗收／交接（公開 V2） | [V19-E1](../dev/dev_v19/E1_ops_rules_and_handoff.md) |
 | — | **禁止**本專案收斂前開 PR | 負責人裁 |
 | — | **禁止**改 LayoutView／GridCanvas 業務 | 工單＋鎖表精神 |
@@ -97,6 +97,10 @@
 ---
 
 ## 6. 日誌
+
+### 2026-11-01（v1.3）
+
+- V19-D1：prefer 緊貼埠對埠＋buildConnectionWaypoints 可點測；下一＝E1
 
 ### 2026-11-01（v1.2）
 

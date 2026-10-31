@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261026](../../work_dispatch/WEEK_20261026.md) **v1.1**、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.21**、[AGENT_WEEK_1026](../claude/AGENT_WEEK_1026.md)
 **週次：** 2026-10-26 → 2026-11-01（問卷週 1026；#78 合入收尾週）
 **開發分支：** `dev/aaaaa1026`
-**狀態總覽：** **`[~]`**（2026-11-01；B1／C1 `[x]`；下一＝D1 可點測；**本專案收斂前不開 PR**）
+**狀態總覽：** **`[~]`**（2026-11-01；B1／C1／D1 `[x]`；下一＝E1；**本專案收斂前不開 PR**）
 **待確認問題：** [dispatch_private/1026/PENDING_DECISIONS_20261101.md](../collaborator_survey/dispatch_private/1026/PENDING_DECISIONS_20261101.md)（A 組已決；M 組非本責）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -113,10 +113,9 @@ A 定案 → B V18／#78 收斂（前置）
 
 ## V19-D｜可點測少數 API（對齊 master）
 
-- [ ] **V19-D1** 補／修正少數可點測案例，至少覆蓋明顯缺口（例：`hitTestPortAt`＋`prefer`、`connectionWaypoints` 若已合）；過時註記改掉
+- [x] **V19-D1** 補／修正少數可點測案例（`hitTestPortAt`＋`prefer`、`buildConnectionWaypoints`）（2026-11-01）
     - 細項：[dev_v19/D1_clickable_api_samples.md](./dev_v19/D1_clickable_api_samples.md)
-    - 產物：lab 演示案例（真實呼叫＋JSON 輸出）
-    - **依賴：** B1 `[x]`（建議 C1 骨架後或並行）
+    - 產物：lab V15 分頁新增按鈕；catalog／inventory 對齊
 
 ---
 
@@ -175,12 +174,16 @@ A 定案 → B V18／#78 收斂（前置）
 |------|----------|----------|------|
 | ① | Tutorial 對齊現況 | `[x]` | 頁內「入門」5 步 |
 | ② | Lab／API／詞彙可查 | `[x]` | 入門／詞彙／目錄＋USAGE／LAB |
-| ③ | API 與 master 一致 | `[ ]` | D1 |
-| 邊界 | 未改鎖檔 | `[~]` | C1 僅 dev／docs；驗收時勾 |
+| ③ | API 與 master 一致 | `[x]` | D1：prefer＋waypoints |
+| 邊界 | 未改鎖檔 | `[~]` | 僅 dev／docs；E1 驗收勾 |
 
 ---
 
 ## 開發日誌
+
+### 2026-11-01｜V19-D1 可點測補強
+
+- `hitTestPortAt prefer（緊貼）`、`buildConnectionWaypoints`；下一＝**E1**
 
 ### 2026-11-01｜V19-C1 Hub 骨架完成
 
