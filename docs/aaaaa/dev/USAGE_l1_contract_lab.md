@@ -41,7 +41,7 @@ pnpm dev
 | **目錄** | layout utils／layoutStore／可選驗證・引擎：已列／待列 |
 | 總覽 | 四版一句話＋誤用對照 |
 | V14 | `canPlaceDevice`／`canMoveDevice`／`canConnect` |
-| V15 | `devicesOutsideBase`／`hitTestPortAt`（含 `prefer` 說明） |
+| V15 | `devicesOutsideBase`／`hitTestPortAt`（含 **prefer 緊貼**可點測）／`buildConnectionWaypoints` |
 | V16 | `toTopology` 映射 `primaryOutput`；可選 store 寫入（⚠） |
 | V17 | `resolveMachineDef`、配方鍵、引擎 30/min、history 情境 |
 
