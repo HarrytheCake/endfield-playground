@@ -2,10 +2,10 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.4（2026-11-01；V19 主線完成；PR 待裁）** |
+| version | **v1.7（2026-11-01；V19＋V20 主線皆完成；PR 待裁）** |
 | 用途 | Agent 執行本週派工／改工單時的強制約束 |
 | 公開 | [WEEK_1026](../../work_dispatch/WEEK_20261026.md) v1.1、[W1026-A0](../../work_dispatch/aaaaa/1026/W1026-A0_tutorial_lab_api.md) |
-| 執行計畫 | [todolist_v19](../dev/todolist_v19.md)、[dev_v19/](../dev/dev_v19/) |
+| 執行計畫 | [todolist_v19](../dev/todolist_v19.md)、[dev_v19/](../dev/dev_v19/)；下一批 **已開** [todolist_v20](../dev/todolist_v20.md)、[AGENT_WEEK_1102](./AGENT_WEEK_1102.md) |
 | 決策層 | [1026/REVIEW](../collaborator_survey/dispatch_private/1026/REVIEW_20261026.md)、[1026/E3](../collaborator_survey/dispatch_private/1026/E3_risk_backup_staffing.md)、[1026/PENDING](../collaborator_survey/dispatch_private/1026/PENDING_DECISIONS_20261101.md)、[1026/INTRO](../collaborator_survey/dispatch_private/1026/INTRO_A0_tutorial_lab_api.md) |
 | 操作總則 | [AGENT_ROADMAP](./AGENT_ROADMAP.md)（v1.6；檔案地圖仍指 0907，已知過期） |
 | 上週 | [AGENT_WEEK_1018](./AGENT_WEEK_1018.md)（V18／#79 已合） |
@@ -18,7 +18,8 @@
 
 **V19 主線完成。** `/dev/l1-contract-lab`＝L1 Hub MVP（入門／詞彙／目錄／V14–V17 定義＋可點測＋維運摘要）。  
 V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L1／store 簽名、不碰正式畫布。  
-**PR → master 另裁**（主線已收斂；開 PR 等負責人下令）。不發解鎖句。
+**PR → master 另裁**（主線已收斂；開 PR 等負責人下令）。不發解鎖句。  
+**下一批 V20 主線亦完成：** [AGENT_WEEK_1102](./AGENT_WEEK_1102.md)。本檔＋1102 同線 **`dev/aaaaa1026`**；**開 PR 另裁**（可 V19+V20 同 PR）。
 
 ---
 
@@ -31,6 +32,8 @@ V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L
 | ~~2~~ | ~~Hub 骨架~~ | **已完成**；[V19-C1](../dev/dev_v19/C1_hub_skeleton.md) |
 | ~~3~~ | ~~少數可點測 API~~ | **已完成**；[V19-D1](../dev/dev_v19/D1_clickable_api_samples.md) |
 | ~~4~~ | ~~維運規則＋驗收~~ | **已完成**；[V19-E1](../dev/dev_v19/E1_ops_rules_and_handoff.md) |
+| ~~4b~~ | ~~下一批清單落檔~~ | **已完成**；[V19-F0](../dev/dev_v19/F0_next_catalog_batch.md) |
+| ~~4c~~ | ~~V20 正式開版~~ | **已完成**；見 [AGENT_WEEK_1102](./AGENT_WEEK_1102.md) |
 | 5 | 開 PR → master（另裁） | E1 §3 建議標題／body |
 | — | **禁止**改 LayoutView／GridCanvas 業務 | 工單＋鎖表精神 |
 | — | **禁止**改 layoutStore／editorStore／utils/layout **簽名** | W1026-A0 §2 |
@@ -78,6 +81,7 @@ V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L
 | 3 | REVIEW／E3／PENDING 日誌 | 決策層 `1026/` | `[x]` |
 | 4 | 11/01 驗收回寫 WEEK V2 | 主編／aaaaa | 結算時 |
 | 5 | 開 PR → master | aaaaa | `[ ]`（**另裁**） |
+| 6 | 下一批正式開 V20 | aaaaa | `[x]`（A1；實作見 1102／C1） |
 | — | **不動** CLAUDE §4.6 索引、AGENT_ROADMAP 版本 | 已知過期 | 維持 |
 
 ---
@@ -97,6 +101,18 @@ V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L
 ---
 
 ## 6. 日誌
+
+### 2026-11-01（v1.7）
+
+- V20-E1 完成；與 V19 同線待開 PR
+
+### 2026-11-01（v1.6）
+
+- V20-A1 正式開版；執行約束改看 AGENT_WEEK_1102；本檔仍管 V19 PR
+
+### 2026-11-01（v1.5）
+
+- V19-F0：下一批清單；其後升級為 V20 正式開版
 
 ### 2026-11-01（v1.4）
 
