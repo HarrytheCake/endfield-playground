@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * V14–V17 L1 契約實驗室
+ * L1 契約實驗室（V19 Hub MVP）
  *
- * 給串接／呼叫端：定義表＋可點案例（呼叫真實 API，輸出 JSON）。
+ * 給串接／呼叫端（含無開發經驗）：頁內入門＋詞彙＋目錄＋定義表＋可點案例。
  * 不取代各版專頁；深鏈見 {@link CONTRACT_BLOCKS}.deeperDemo。
  */
 import { computed, ref } from 'vue';
@@ -35,16 +35,71 @@ import {
     historyContextFromPath,
     shouldClearHistoryOnNavigate,
 } from '@/utils/history/historyContext';
-import { CONTRACT_BLOCKS, type ContractVersion } from '@/app/dev/l1ContractLab/contractCatalog';
+import {
+    CONTRACT_BLOCKS,
+    CONTRACT_INVENTORY,
+    HUB_GLOSSARY,
+    HUB_GUIDE_STEPS,
+    INVENTORY_AREA_LABELS,
+    type ContractInventoryArea,
+    type ContractVersion,
+} from '@/app/dev/l1ContractLab/contractCatalog';
 
-/** 目前分頁：總覽或某契約版本 */
-const active = ref<ContractVersion | 'overview'>('overview');
+/** Hub 導覽分頁（入門／詞彙／目錄／總覽／版本） */
+type HubTab = ContractVersion | 'overview' | 'guide' | 'glossary' | 'inventory';
+
+/** 目前分頁：入門／詞彙／目錄／總覽或某契約版本 */
+const active = ref<HubTab>('guide');
 
 /** 契約塊列表（來自 catalog） */
 const blocks = CONTRACT_BLOCKS;
 
-/** 目前選中的契約塊；總覽時為 null */
-const activeBlock = computed(() => blocks.find((b) => b.version === active.value) ?? null);
+/** 頁內教學步驟 */
+const guideSteps = HUB_GUIDE_STEPS;
+
+/** 頁內詞彙 */
+const glossary = HUB_GLOSSARY;
+
+/** inventory 全表 */
+const inventory = CONTRACT_INVENTORY;
+
+/** inventory 區域鍵（顯示順序） */
+const inventoryAreas = Object.keys(INVENTORY_AREA_LABELS) as ContractInventoryArea[];
+
+/** 依區域分組的 inventory */
+const inventoryByArea = computed(() =>
+    inventoryAreas.map((area) => ({
+        area,
+        label: INVENTORY_AREA_LABELS[area],
+        rows: inventory.filter((row) => row.area === area),
+    })),
+);
+
+/** listed／todo 計數（目錄頁摘要） */
+const inventoryCounts = computed(() => ({
+    listed: inventory.filter((row) => row.status === 'listed').length,
+    todo: inventory.filter((row) => row.status === 'todo').length,
+}));
+
+/** 目前選中的契約塊；非版本分頁時為 null */
+const activeBlock = computed(() => {
+    if (
+        active.value === 'overview' ||
+        active.value === 'guide' ||
+        active.value === 'glossary' ||
+        active.value === 'inventory'
+    ) {
+        return null;
+    }
+    return blocks.find((b) => b.version === active.value) ?? null;
+});
+
+/** 導覽按鈕共用 class */
+function navClass(tab: HubTab): string {
+    return active.value === tab
+        ? 'bg-blue-600 text-white'
+        : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200';
+}
 
 /** 結果面板標題 */
 const outputTitle = ref('尚未執行');
@@ -461,29 +516,51 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
 <template>
     <div class="space-y-6 text-gray-900 dark:text-gray-100">
         <header class="space-y-2">
-            <h1 class="text-2xl font-bold">L1 契約實驗室（V14–V17）</h1>
+            <h1 class="text-2xl font-bold">L1 契約實驗室（Hub）</h1>
             <p class="max-w-3xl text-sm text-gray-600 dark:text-gray-400">
-                本頁彙整 aaaaa 近幾版<strong>底層純函式／store 契約</strong
-                >：給串接畫布、驗證、引擎的人對照「該呼叫誰、鍵是 id 還是中文名、回傳長怎樣」。
-                每個案例都跑<strong>真實 API</strong>，結果在下方 JSON。不發解鎖句；正式
-                UI／右側產耗不在此頁範圍。
+                本頁是
+                L1（底層規則／store）的<strong>查詢＋教學＋可點測</strong>入口：給串接畫布、驗證、引擎——以及
+                <strong>較少開發經驗</strong>的協作者——對照「該呼叫誰、鍵是 id
+                還是中文名、回傳長怎樣」。 案例跑<strong>真實 API</strong>，結果在下方
+                JSON。這<strong>不是</strong>遊戲正式畫面。
             </p>
             <p class="text-xs text-amber-800 dark:text-amber-200">
                 DEV ONLY ·
                 <code class="rounded bg-gray-100 px-1 dark:bg-gray-800">/dev/l1-contract-lab</code>
+                · 不懂名詞先開「詞彙」· 想知道還有哪些 API 開「目錄」
             </p>
         </header>
 
-        <!-- 版本切換 -->
+        <!-- Hub 導覽 -->
         <nav class="flex flex-wrap gap-2">
             <button
                 type="button"
                 class="rounded-lg px-3 py-1.5 text-sm font-medium"
-                :class="
-                    active === 'overview'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200'
-                "
+                :class="navClass('guide')"
+                @click="active = 'guide'"
+            >
+                入門
+            </button>
+            <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="navClass('glossary')"
+                @click="active = 'glossary'"
+            >
+                詞彙
+            </button>
+            <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="navClass('inventory')"
+                @click="active = 'inventory'"
+            >
+                目錄
+            </button>
+            <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="navClass('overview')"
                 @click="active = 'overview'"
             >
                 總覽
@@ -493,19 +570,161 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                 :key="b.version"
                 type="button"
                 class="rounded-lg px-3 py-1.5 text-sm font-medium"
-                :class="
-                    active === b.version
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200'
-                "
+                :class="navClass(b.version)"
                 @click="active = b.version"
             >
                 {{ b.version }}
             </button>
         </nav>
 
+        <!-- 入門：最短路徑 -->
+        <section v-if="active === 'guide'" class="space-y-4">
+            <div
+                class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-900 dark:bg-blue-950/40"
+            >
+                <h2 class="text-lg font-semibold">最短路徑（給第一次進來的人）</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    跟完這五步，就知道本頁能幹嘛、正式頁能幹嘛、卡關去哪讀。
+                </p>
+            </div>
+            <ol class="space-y-3">
+                <li
+                    v-for="s in guideSteps"
+                    :key="s.step"
+                    class="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                >
+                    <h3 class="font-semibold">
+                        <span
+                            class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white"
+                            >{{ s.step }}</span
+                        >
+                        {{ s.title }}
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ s.detail }}</p>
+                </li>
+            </ol>
+            <div class="flex flex-wrap gap-2 text-sm">
+                <button
+                    type="button"
+                    class="rounded-lg bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-700"
+                    @click="active = 'glossary'"
+                >
+                    下一步：看詞彙
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg bg-gray-100 px-3 py-1.5 font-medium text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
+                    @click="active = 'inventory'"
+                >
+                    或先看目錄
+                </button>
+                <a
+                    href="/"
+                    class="rounded-lg px-3 py-1.5 font-medium text-blue-600 underline dark:text-blue-400"
+                    >打開正式頁（另頁）</a
+                >
+            </div>
+            <p class="text-xs text-gray-500">
+                長文：USAGE（repo
+                <code>docs/aaaaa/dev/USAGE_l1_contract_lab.md</code>）· LAB 指南（
+                <code>docs/work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md</code>）
+            </p>
+        </section>
+
+        <!-- 詞彙 -->
+        <section v-else-if="active === 'glossary'" class="space-y-4">
+            <div>
+                <h2 class="text-lg font-semibold">專有名詞白話</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    左側是文件／程式裡常見的詞；右側用口語解釋。函式名保持英文方便搜尋。完整表見 LAB
+                    指南 §2。
+                </p>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                <table class="min-w-full text-left text-sm">
+                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
+                        <tr>
+                            <th class="px-3 py-2">詞</th>
+                            <th class="px-3 py-2">白話</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="g in glossary"
+                            :key="g.term"
+                            class="border-t border-gray-100 align-top dark:border-gray-800"
+                        >
+                            <td class="px-3 py-2 font-semibold whitespace-nowrap">{{ g.term }}</td>
+                            <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                                {{ g.meaning }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 目錄 inventory -->
+        <section v-else-if="active === 'inventory'" class="space-y-4">
+            <div>
+                <h2 class="text-lg font-semibold">L1 API 目錄（Hub inventory）</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    長期邊界：layout utils ＋ layoutStore 公開 action ＋（可選）驗證／引擎。
+                    <strong>已列</strong>＝本頁版本表已有說明／可點測；
+                    <strong>待列</strong>＝後續週補定義表（本周只掛名）。 目前已列
+                    {{ inventoryCounts.listed }}／待列 {{ inventoryCounts.todo }}。
+                </p>
+            </div>
+            <div v-for="group in inventoryByArea" :key="group.area" class="space-y-2">
+                <h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
+                    {{ group.label }}
+                </h3>
+                <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table class="min-w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
+                            <tr>
+                                <th class="px-3 py-2">狀態</th>
+                                <th class="px-3 py-2">符號</th>
+                                <th class="px-3 py-2">模組</th>
+                                <th class="px-3 py-2">白話</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="row in group.rows"
+                                :key="`${row.area}-${row.symbol}`"
+                                class="border-t border-gray-100 align-top dark:border-gray-800"
+                            >
+                                <td class="px-3 py-2">
+                                    <span
+                                        class="rounded px-1.5 py-0.5 text-xs font-medium"
+                                        :class="
+                                            row.status === 'listed'
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                                                : 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                                        "
+                                    >
+                                        {{ row.status === 'listed' ? '已列' : '待列' }}
+                                    </span>
+                                </td>
+                                <td
+                                    class="px-3 py-2 font-mono text-xs font-semibold text-blue-700 dark:text-blue-300"
+                                >
+                                    {{ row.symbol }}
+                                </td>
+                                <td class="px-3 py-2 font-mono text-xs">{{ row.module }}</td>
+                                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                                    {{ row.note }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- 總覽 -->
-        <section v-if="active === 'overview'" class="space-y-4">
+        <section v-else-if="active === 'overview'" class="space-y-4">
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                 <table class="min-w-full text-left text-sm">
                     <thead
