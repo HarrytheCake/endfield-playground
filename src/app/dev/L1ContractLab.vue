@@ -20,6 +20,7 @@ import {
 import { canConnect, describeConnectFailure } from '@/utils/layout/connectRules';
 import { devicesOutsideBase } from '@/utils/layout/devicesOutsideBase';
 import { hitTestPortAt } from '@/utils/layout/portHitTest';
+import { buildConnectionWaypoints } from '@/utils/layout/connectionWaypoints';
 import { toTopology } from '@/utils/layout/toTopology';
 import { resolveDisplayGrid, rotatePort } from '@/utils/portUtils';
 import { resolvePortAnchorCell } from '@/utils/layout/portAnchors';
@@ -249,7 +250,7 @@ function runV15OutsideNullRegion() {
     });
 }
 
-/** V15：埠熱區命中 */
+/** V15：埠熱區命中（單機視覺邊心） */
 function runV15HitTest() {
     const device: PlacedDevice = {
         id: 'c',
@@ -269,6 +270,74 @@ function runV15HitTest() {
         hit,
         inputPorts: mode.input_ports.length,
         note: '連續格座標；圓心＝埠邊心，不是外側錨點格',
+    });
+}
+
+/**
+ * V15：緊貼埠對埠時 prefer 消歧（審查案例）
+ *
+ * splitter A@(0,0) 右出與 B@(1,0) 左入視覺點皆 (1, 0.5)；
+ * 無 prefer 會隨設備陣列序變；有 prefer 則穩定。
+ */
+function runV15HitTestPrefer() {
+    const a = splitterAt('a', 0, 0);
+    const b = splitterAt('b', 1, 0);
+    const point = { x: 1, y: 0.5 };
+    const orders = [
+        { label: '[A, B]', devices: [a, b] as const },
+        { label: '[B, A]', devices: [b, a] as const },
+    ];
+    const rows = orders.flatMap(({ label, devices }) => {
+        const none = hitTestPortAt(point, devices);
+        const asOutput = hitTestPortAt(point, devices, undefined, { prefer: 'output' });
+        const asInput = hitTestPortAt(point, devices, undefined, { prefer: 'input' });
+        return [
+            {
+                order: label,
+                prefer: '(無)',
+                hit: none ? `${none.deviceId} ${none.portType}[${none.portIndex}]` : null,
+            },
+            {
+                order: label,
+                prefer: 'output（拖線起點）',
+                hit: asOutput
+                    ? `${asOutput.deviceId} ${asOutput.portType}[${asOutput.portIndex}]`
+                    : null,
+            },
+            {
+                order: label,
+                prefer: 'input（放開終點）',
+                hit: asInput
+                    ? `${asInput.deviceId} ${asInput.portType}[${asInput.portIndex}]`
+                    : null,
+            },
+        ];
+    });
+    showResult('hitTestPortAt prefer（緊貼埠對埠）', {
+        point,
+        scenario: 'A@(0,0) 右出 與 B@(1,0) 左入 視覺點同為 (1,0.5)',
+        expect: {
+            preferOutput: '一律 a output[1]',
+            preferInput: '一律 b input[0]',
+        },
+        rows,
+        note: 'L2：開始拖線 prefer:output；放開 prefer:input',
+    });
+}
+
+/**
+ * V15／#78：連線 waypoints 純函式演示（不寫 store）
+ */
+function runV15ConnectionWaypoints() {
+    const waypoints = buildConnectionWaypoints(
+        { position: { x: 1, y: 0, z: 0 }, side: 'right' },
+        { position: { x: 5, y: 3, z: 0 }, side: 'left' },
+    );
+    showResult('buildConnectionWaypoints（#78）', {
+        source: { position: { x: 1, y: 0, z: 0 }, side: 'right' },
+        target: { position: { x: 5, y: 3, z: 0 }, side: 'left' },
+        waypoints,
+        note: '同層整數錨點 → 直線或單轉角；不驗證媒質／碰撞（交 canConnect）',
     });
 }
 
@@ -498,7 +567,9 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
     V15: [
         { id: 'o1', label: 'devicesOutsideBase（有基地）', run: runV15Outside },
         { id: 'o2', label: 'devicesOutsideBase（null）', run: runV15OutsideNullRegion },
-        { id: 'h1', label: 'hitTestPortAt', run: runV15HitTest },
+        { id: 'h1', label: 'hitTestPortAt（單機）', run: runV15HitTest },
+        { id: 'h2', label: 'hitTestPortAt prefer（緊貼）', run: runV15HitTestPrefer },
+        { id: 'w1', label: 'buildConnectionWaypoints', run: runV15ConnectionWaypoints },
     ],
     V16: [
         { id: 's1', label: 'toTopology 映射（不寫 store）', run: runV16TopologyMapping },
@@ -770,7 +841,12 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                     </li>
                     <li>落子預覽＝真落子答案：只信 <code>canPlaceDevice</code> 回傳</li>
                     <li>
-                        埠滑鼠熱區＝<code>hitTestPortAt</code>；規則錨點＝<code>canConnect</code>／findPortAt
+                        埠滑鼠熱區＝<code>hitTestPortAt</code>（緊貼埠對埠要傳
+                        <code>prefer</code>）；規則錨點＝<code>canConnect</code>／findPortAt
+                    </li>
+                    <li>
+                        連線折線路徑＝<code>buildConnectionWaypoints</code>（#78）；仍須
+                        <code>canConnect</code> 驗媒質／佔用
                     </li>
                     <li>
                         源素材寫 <code>layoutStore.setDevicePrimaryOutput</code>；讀引擎經
