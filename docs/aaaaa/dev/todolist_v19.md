@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261026](../../work_dispatch/WEEK_20261026.md) **v1.1**、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.21**、[AGENT_WEEK_1026](../claude/AGENT_WEEK_1026.md)
 **週次：** 2026-10-26 → 2026-11-01（問卷週 1026；#78 合入收尾週）
 **開發分支：** `dev/aaaaa1026`
-**狀態總覽：** **`[~]`**（2026-11-01；開版文件已備；**V18 已收斂** → 實作可開工；**本專案收斂前不開 PR**）
+**狀態總覽：** **`[~]`**（2026-11-01；B1／C1 `[x]`；下一＝D1 可點測；**本專案收斂前不開 PR**）
 **待確認問題：** [dispatch_private/1026/PENDING_DECISIONS_20261101.md](../collaborator_survey/dispatch_private/1026/PENDING_DECISIONS_20261101.md)（A 組已決；M 組非本責）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -104,11 +104,10 @@ A 定案 → B V18／#78 收斂（前置）
 
 ## V19-C｜Hub 骨架（目錄＋詞彙＋頁內教學）
 
-- [ ] **V19-C1** 在 `/dev/l1-contract-lab` 加：長期邊界目錄（inventory）、詞彙入口強化、頁內「最短路徑／給無經驗者」教學區
+- [x] **V19-C1** 在 `/dev/l1-contract-lab` 加：長期邊界目錄（inventory）、詞彙入口強化、頁內「最短路徑／給無經驗者」教學區（2026-11-01）
     - 細項：[dev_v19/C1_hub_skeleton.md](./dev_v19/C1_hub_skeleton.md)
-    - 產物：`L1ContractLab.vue`／`contractCatalog.ts`（及必要 USAGE／LAB 互連）
+    - 產物：`L1ContractLab.vue`／`contractCatalog.ts`（及 USAGE／LAB 互連）
     - 對照公開驗收：**V2**
-    - **依賴：** B1 `[x]`
 
 ---
 
@@ -174,14 +173,19 @@ A 定案 → B V18／#78 收斂（前置）
 
 | 工項 | 工單要求 | V19 狀態 | 備註 |
 |------|----------|----------|------|
-| ① | Tutorial 對齊現況 | `[ ]` | 頁內最短路徑＝A-5 |
-| ② | Lab／API／詞彙可查 | `[ ]` | C1＋既有 USAGE／LAB |
+| ① | Tutorial 對齊現況 | `[x]` | 頁內「入門」5 步 |
+| ② | Lab／API／詞彙可查 | `[x]` | 入門／詞彙／目錄＋USAGE／LAB |
 | ③ | API 與 master 一致 | `[ ]` | D1 |
-| 邊界 | 未改鎖檔 | `[ ]` | 驗收時勾 |
+| 邊界 | 未改鎖檔 | `[~]` | C1 僅 dev／docs；驗收時勾 |
 
 ---
 
 ## 開發日誌
+
+### 2026-11-01｜V19-C1 Hub 骨架完成
+
+- `/dev/l1-contract-lab`：入門／詞彙／目錄分頁；catalog inventory 骨架
+- 下一刀＝**D1 可點測少數 API**
 
 ### 2026-11-01｜開版文件 commit；V18 收斂完成
 
