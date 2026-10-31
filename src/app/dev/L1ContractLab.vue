@@ -933,28 +933,24 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                     指南 §2。
                 </p>
             </div>
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                <table class="min-w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
-                        <tr>
-                            <th class="px-3 py-2">詞</th>
-                            <th class="px-3 py-2">白話</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="g in glossary"
-                            :key="g.term"
-                            class="border-t border-gray-100 align-top dark:border-gray-800"
-                        >
-                            <td class="px-3 py-2 font-semibold whitespace-nowrap">{{ g.term }}</td>
-                            <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
-                                {{ g.meaning }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <ul
+                class="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+            >
+                <li
+                    v-for="g in glossary"
+                    :key="g.term"
+                    class="grid gap-1 px-3 py-2.5 sm:grid-cols-[minmax(7rem,11rem)_minmax(0,1fr)] sm:gap-x-4 sm:gap-y-0"
+                >
+                    <div
+                        class="shrink-0 text-sm font-semibold whitespace-nowrap text-gray-900 dark:text-gray-100"
+                    >
+                        {{ g.term }}
+                    </div>
+                    <p class="min-w-0 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                        {{ g.meaning }}
+                    </p>
+                </li>
+            </ul>
         </section>
 
         <!-- 目錄 inventory -->
@@ -972,81 +968,74 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                 <h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
                     {{ group.label }}
                 </h3>
-                <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                    <table class="min-w-full text-left text-sm">
-                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
-                            <tr>
-                                <th class="px-3 py-2">狀態</th>
-                                <th class="px-3 py-2">符號</th>
-                                <th class="px-3 py-2">模組</th>
-                                <th class="px-3 py-2">白話</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="row in group.rows"
-                                :key="`${row.area}-${row.symbol}`"
-                                class="border-t border-gray-100 align-top dark:border-gray-800"
+                <ul
+                    class="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+                >
+                    <li
+                        v-for="row in group.rows"
+                        :key="`${row.area}-${row.symbol}`"
+                        class="flex flex-col gap-1.5 px-3 py-2.5"
+                    >
+                        <div class="flex min-w-0 flex-wrap items-center gap-2">
+                            <span
+                                class="inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap"
+                                :class="
+                                    row.status === 'listed'
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                                        : 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                                "
                             >
-                                <td class="px-3 py-2">
-                                    <span
-                                        class="rounded px-1.5 py-0.5 text-xs font-medium"
-                                        :class="
-                                            row.status === 'listed'
-                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
-                                                : 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
-                                        "
-                                    >
-                                        {{ row.status === 'listed' ? '已列' : '待列' }}
-                                    </span>
-                                </td>
-                                <td
-                                    class="px-3 py-2 font-mono text-xs font-semibold text-blue-700 dark:text-blue-300"
-                                >
-                                    {{ row.symbol }}
-                                </td>
-                                <td class="px-3 py-2 font-mono text-xs">{{ row.module }}</td>
-                                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
-                                    {{ row.note }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                {{ row.status === 'listed' ? '已列' : '待列' }}
+                            </span>
+                            <code
+                                class="min-w-0 font-mono text-xs font-semibold break-all text-blue-700 dark:text-blue-300"
+                            >
+                                {{ row.symbol }}
+                            </code>
+                        </div>
+                        <code
+                            class="block min-w-0 font-mono text-[11px] leading-snug break-all text-gray-500 dark:text-gray-400"
+                        >
+                            {{ row.module }}
+                        </code>
+                        <p class="min-w-0 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                            {{ row.note }}
+                        </p>
+                    </li>
+                </ul>
             </div>
         </section>
 
         <!-- 總覽 -->
         <section v-else-if="active === 'overview'" class="space-y-4">
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                <table class="min-w-full text-left text-sm">
-                    <thead
-                        class="bg-gray-50 text-xs tracking-wide text-gray-500 uppercase dark:bg-gray-800"
-                    >
-                        <tr>
-                            <th class="px-3 py-2">版</th>
-                            <th class="px-3 py-2">主題</th>
-                            <th class="px-3 py-2">PR</th>
-                            <th class="px-3 py-2">一句話</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="b in blocks"
-                            :key="b.version"
-                            class="cursor-pointer border-t border-gray-100 hover:bg-blue-50/50 dark:border-gray-800 dark:hover:bg-blue-950/30"
-                            @click="active = b.version"
+            <ul
+                class="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+            >
+                <li
+                    v-for="b in blocks"
+                    :key="b.version"
+                    class="cursor-pointer px-3 py-2.5 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
+                    @click="active = b.version"
+                >
+                    <div class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                        <span class="shrink-0 text-sm font-semibold whitespace-nowrap">{{
+                            b.version
+                        }}</span>
+                        <span class="min-w-0 text-sm text-gray-900 dark:text-gray-100">{{
+                            b.title
+                        }}</span>
+                        <code
+                            class="shrink-0 font-mono text-[11px] whitespace-nowrap text-gray-500"
+                            >{{ b.prs }}</code
                         >
-                            <td class="px-3 py-2 font-semibold">{{ b.version }}</td>
-                            <td class="px-3 py-2">{{ b.title }}</td>
-                            <td class="px-3 py-2 font-mono text-xs">{{ b.prs }}</td>
-                            <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
-                                {{ b.oneLiner }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    </div>
+                    <p
+                        class="mt-1 min-w-0 text-sm leading-relaxed text-gray-600 dark:text-gray-400"
+                    >
+                        {{ b.oneLiner }}
+                    </p>
+                </li>
+            </ul>
 
             <div
                 class="rounded-lg border border-dashed border-gray-300 p-4 text-sm dark:border-gray-600"
@@ -1100,40 +1089,50 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                 </a>
             </div>
 
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                <table class="min-w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
-                        <tr>
-                            <th class="px-3 py-2">符號</th>
-                            <th class="px-3 py-2">模組</th>
-                            <th class="px-3 py-2">用途</th>
-                            <th class="px-3 py-2">誰呼叫</th>
-                            <th class="px-3 py-2">不要</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="api in activeBlock.apis"
-                            :key="api.symbol"
-                            class="border-t border-gray-100 align-top dark:border-gray-800"
+            <ul
+                class="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+            >
+                <li
+                    v-for="api in activeBlock.apis"
+                    :key="api.symbol"
+                    class="flex flex-col gap-2 px-3 py-3"
+                >
+                    <div class="min-w-0 space-y-0.5">
+                        <code
+                            class="block font-mono text-xs font-semibold break-all text-blue-700 dark:text-blue-300"
                         >
-                            <td
-                                class="px-3 py-2 font-mono text-xs font-semibold text-blue-700 dark:text-blue-300"
+                            {{ api.symbol }}
+                        </code>
+                        <code
+                            class="block font-mono text-[11px] leading-snug break-all text-gray-500 dark:text-gray-400"
+                        >
+                            {{ api.module }}
+                        </code>
+                    </div>
+                    <dl class="grid gap-1.5 text-sm leading-relaxed">
+                        <div class="min-w-0">
+                            <dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                                用途
+                            </dt>
+                            <dd class="text-gray-800 dark:text-gray-200">{{ api.purpose }}</dd>
+                        </div>
+                        <div class="min-w-0">
+                            <dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                                誰呼叫
+                            </dt>
+                            <dd class="text-gray-600 dark:text-gray-400">{{ api.callers }}</dd>
+                        </div>
+                        <div class="min-w-0">
+                            <dt
+                                class="text-xs font-medium tracking-wide text-red-700/80 uppercase dark:text-red-300/80"
                             >
-                                {{ api.symbol }}
-                            </td>
-                            <td class="px-3 py-2 font-mono text-xs">{{ api.module }}</td>
-                            <td class="px-3 py-2">{{ api.purpose }}</td>
-                            <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
-                                {{ api.callers }}
-                            </td>
-                            <td class="px-3 py-2 text-red-700/90 dark:text-red-300/90">
-                                {{ api.dont }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                                不要
+                            </dt>
+                            <dd class="text-red-700/90 dark:text-red-300/90">{{ api.dont }}</dd>
+                        </div>
+                    </dl>
+                </li>
+            </ul>
 
             <div>
                 <h3 class="mb-2 text-sm font-semibold tracking-wide text-gray-500 uppercase">
