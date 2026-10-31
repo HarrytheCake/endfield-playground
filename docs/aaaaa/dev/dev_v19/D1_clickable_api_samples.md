@@ -36,6 +36,8 @@ Lab 已有部分「一鍵案例 → JSON」。本周只補**少數**對齊現行
 | Pinia 隔離 | 寫入類仍走 `withLabPinia` |
 | 範圍 | 少數補強；其餘 inventory 仍 todo |
 
+**下一批（非本項）：** 見 [F0](./F0_next_catalog_batch.md)——`findPortAt`、`resolveConnections`、`addPipeline`、`buildGapConnectionWaypoints`。
+
 ---
 
 ## 4. 檔案
@@ -58,6 +60,10 @@ Lab 已有部分「一鍵案例 → JSON」。本周只補**少數**對齊現行
 ---
 
 ## 6. 開發日誌
+
+### 2026-11-01｜下一批指向 F0
+
+- 本項範圍不變；待列補齊交 [F0](./F0_next_catalog_batch.md)／V20
 
 ### 2026-11-01｜完成
 

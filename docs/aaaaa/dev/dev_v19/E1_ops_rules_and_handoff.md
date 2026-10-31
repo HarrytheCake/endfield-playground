@@ -32,8 +32,20 @@
 
 ### 1.3 後續週（非本版）
 
-- 全量填滿 A-2 邊界（layout utils 全部＋layoutStore 公開 action＋可選驗證／引擎）
-- 再評估半自動（掃匯出清單 vs catalog diff）——**另開版本**
+- **下一批（已正式開 V20）：** [F0](./F0_next_catalog_batch.md) → [todolist_v20](../todolist_v20.md)（A1 `[x]`；[AGENT_WEEK_1102](../../claude/AGENT_WEEK_1102.md)）
+  - P0：`findPortAt`／`collectPortAnchors`、`resolveConnections`
+  - P1：`addPipeline`／`removePipeline`、`buildGapConnectionWaypoints`（inventory 新列）
+- 再下一刀才考慮：佔格／重疊／footprint／管線幾何／snapshot／detectors 等（見 F0 §2.3）
+- 全量填滿 A-2 邊界、半自動（掃匯出 vs catalog diff）——**另開版本**，勿塞進下一批
+
+---
+
+### 1.4 交接產物補充（F0）
+
+| 產物 | 對象 | 一句話 |
+|------|------|--------|
+| [F0](./F0_next_catalog_batch.md) | 後續週 aaaaa | 先補哪四項、哪批不做 |
+| [todolist_v20](../todolist_v20.md) | 開版用 | **已開版**（A1 `[x]`） |
 
 ---
 
@@ -59,7 +71,7 @@
 |------|------|--------|
 | `/dev/l1-contract-lab` MVP | 全體（尤其無經驗） | 查 L1＋跟教學＋點測 |
 | 維運規則 §1／頁內摘要 | 未來 L1 PR author | 改碼必改 catalog |
-| inventory `todo` | 後續週 aaaaa | 全量 catalog 待辦清單 |
+| inventory `todo` | 後續週 aaaaa | 全量待辦；**優先切片＝[F0](./F0_next_catalog_batch.md)** |
 
 口頭節奏：[INTRO](../../collaborator_survey/dispatch_private/1026/INTRO_A0_tutorial_lab_api.md)
 
@@ -97,6 +109,10 @@
 ---
 
 ## 6. 開發日誌
+
+### 2026-11-01｜F0 下一批交接
+
+- §1.3／§1.4 指向 F0＋todolist_v20；實作仍未開
 
 ### 2026-11-01｜完成
 

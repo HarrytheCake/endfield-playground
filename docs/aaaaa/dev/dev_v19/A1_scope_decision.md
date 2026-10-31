@@ -32,7 +32,7 @@ V18＝W1018-A0（M3 驗收步驟＋lab 合入），已合 #79。本週是新工�
 
 | # | 決策 | 落點 |
 |---|------|------|
-| A-1 | **C＝MVP hub 骨架**（目錄＋詞彙＋可點測少數 API）；全量 catalog 後續週 | [C1](./C1_hub_skeleton.md)、[D1](./D1_clickable_api_samples.md) |
+| A-1 | **C＝MVP hub 骨架**（目錄＋詞彙＋可點測少數 API）；全量 catalog 後續週 | [C1](./C1_hub_skeleton.md)、[D1](./D1_clickable_api_samples.md)；後續切片 [F0](./F0_next_catalog_batch.md)／[todolist_v20](../todolist_v20.md) |
 | A-2 | 長期邊界＝**layout utils ＋ layoutStore 公開 action ＋（可選）驗證／引擎 adapter** | C1 inventory；全量列後續 |
 | A-3 | 頁面＝**延續並強化** `/dev/l1-contract-lab`（單一真相） | C1／D1 |
 | A-4 | 自動顯示＝**本周不做**；只寫後續維運規則 | [E1](./E1_ops_rules_and_handoff.md) |

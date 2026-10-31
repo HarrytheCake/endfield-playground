@@ -9,6 +9,7 @@
 **週次：** 2026-10-26 → 2026-11-01（問卷週 1026；#78 合入收尾週）
 **開發分支：** `dev/aaaaa1026`
 **狀態總覽：** **`[x]` 主線完成**（2026-11-01；A–E `[x]`；**PR 待裁**；WEEK V2 勾選屬主編結算）
+**下一批：** [todolist_v20](./todolist_v20.md) **主線完成**；再下＝[todolist_v21](./todolist_v21.md)（**硬閘：本版＋V20 合 master 後**；見 [AGENT_WEEK_1102](../claude/AGENT_WEEK_1102.md)）
 **待確認問題：** [dispatch_private/1026/PENDING_DECISIONS_20261101.md](../collaborator_survey/dispatch_private/1026/PENDING_DECISIONS_20261101.md)（A 組已決；M 組非本責）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -127,6 +128,15 @@ A 定案 → B V18／#78 收斂（前置）
 
 ---
 
+## V19-F｜下一批交接（非本週必交程式）
+
+- [x] **V19-F0** 盤點 inventory `todo`；裁下一批 P0／P1 清單落檔（2026-11-01）
+    - 細項：[dev_v19/F0_next_catalog_batch.md](./dev_v19/F0_next_catalog_batch.md)
+    - 承接草案：[todolist_v20](./todolist_v20.md)
+    - **本項只交文件**；實作屬 V20（或下一週正式工單）
+
+---
+
 ## 封鎖／待決追蹤
 
 | ID | 原因 | 等待對象 | 阻擋本版？ | 何時決 |
@@ -180,6 +190,15 @@ A 定案 → B V18／#78 收斂（前置）
 ---
 
 ## 開發日誌
+
+### 2026-11-01｜V20 正式開版（交接）
+
+- V20-A1 `[x]`；實作走 C1（同分支 `dev/aaaaa1026`）
+- V19 本身仍：**開 PR 待裁**
+
+### 2026-11-01｜V19-F0 下一批清單
+
+- inventory 待列盤點；其後由 V20-A1 正式承接
 
 ### 2026-11-01｜V19-E1 驗收完成
 
