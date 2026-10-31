@@ -20,7 +20,12 @@ import {
 import { canConnect, describeConnectFailure } from '@/utils/layout/connectRules';
 import { devicesOutsideBase } from '@/utils/layout/devicesOutsideBase';
 import { hitTestPortAt } from '@/utils/layout/portHitTest';
-import { buildConnectionWaypoints } from '@/utils/layout/connectionWaypoints';
+import {
+    buildConnectionWaypoints,
+    buildGapConnectionWaypoints,
+} from '@/utils/layout/connectionWaypoints';
+import { collectPortAnchors, findPortAt } from '@/utils/layout/portAnchorIndex';
+import { resolveConnections } from '@/utils/layout/resolveConnections';
 import { toTopology } from '@/utils/layout/toTopology';
 import { resolveDisplayGrid, rotatePort } from '@/utils/portUtils';
 import { resolvePortAnchorCell } from '@/utils/layout/portAnchors';
@@ -345,6 +350,133 @@ function runV15ConnectionWaypoints() {
     });
 }
 
+/**
+ * V20-D1：間隙通道 waypoints vs 單轉角（真呼叫；不寫 store）
+ *
+ * 左右兩台 3×3 佔格、上下埠：gap 走中央通道；一般 build 只做單轉角。
+ */
+function runV15GapConnectionWaypoints() {
+    const source = { position: { x: 1, y: 3, z: 0 }, side: 'bottom' as const };
+    const target = { position: { x: 7, y: -1, z: 0 }, side: 'top' as const };
+    const leftBounds = { left: 0, right: 2, top: 0, bottom: 2 };
+    const rightBounds = { left: 6, right: 8, top: 0, bottom: 2 };
+    const simple = buildConnectionWaypoints(source, target);
+    const gap = buildGapConnectionWaypoints(source, target, leftBounds, rightBounds);
+    const noGap = buildGapConnectionWaypoints(source, target, leftBounds, {
+        left: 3,
+        right: 5,
+        top: 0,
+        bottom: 2,
+    });
+    showResult('buildGapConnectionWaypoints（對照單轉角）', {
+        source,
+        target,
+        leftBounds,
+        rightBounds,
+        buildConnectionWaypoints: simple,
+        buildGapConnectionWaypoints: gap,
+        whenNoLane: {
+            overlappingishBounds: { left: 3, right: 5, top: 0, bottom: 2 },
+            result: noGap,
+            expect: '無至少一格通道 → null',
+        },
+        note: 'gap＝固定中央通道雙轉角；仍須 canConnect／碰撞預檢；不搜尋其他繞障',
+    });
+}
+
+/**
+ * V20-C1：外側錨點格 vs 熱區（真呼叫 findPortAt／hitTestPortAt）
+ *
+ * crusher@(0,0) 頂邊 input[0] 外側錨＝(0,-1)；熱區圓心在設備邊上（連續座標）。
+ */
+function runV15FindPortAtContrast() {
+    const device: PlacedDevice = {
+        id: 'c',
+        machineType: 'crusher',
+        position: { x: 0, y: 0, z: 0 },
+        rotation: 0,
+    };
+    const anchors = collectPortAnchors([device]);
+    const input0 = anchors.find(
+        (a) => a.ref.deviceId === 'c' && a.ref.portType === 'input' && a.ref.portIndex === 0,
+    )!;
+    /** 與既有 hitTest 案例同一點（連續格；非整數錨點） */
+    const hotPoint = { x: 0.5, y: 0.1 };
+    const atAnchorCell = findPortAt(anchors, input0.x, input0.y, 'input');
+    const atHotPointExact = findPortAt(anchors, hotPoint.x, hotPoint.y);
+    const hitHot = hitTestPortAt(hotPoint, [device], getMachineById, { prefer: 'input' });
+    const hitAtAnchorCell = hitTestPortAt(
+        { x: input0.x + 0.5, y: input0.y + 0.5 },
+        [device],
+        getMachineById,
+        { prefer: 'input' },
+    );
+    const manualCell = resolvePortAnchorCell(0, 0, 3, 3, 'top', 0);
+    showResult('findPortAt vs hitTestPortAt（錨點≠熱區）', {
+        device: { id: 'c', machineType: 'crusher', position: device.position },
+        resolvePortAnchorCell_top0: manualCell,
+        collectPortAnchors_input0: input0,
+        findPortAt: {
+            atIntegerAnchor: atAnchorCell,
+            atHotPointExact: atHotPointExact,
+            expect: '整數錨點格命中；熱區連續點用 === 對格 → 通常 null',
+        },
+        hitTestPortAt: {
+            atHotPoint: hitHot,
+            nearAnchorCellCenter: hitAtAnchorCell,
+            expect: '滑鼠／拖線用熱區；圓心在設備邊，不是外側錨點',
+        },
+        note: '規則／resolveConnections 用 findPortAt；L2 滑鼠用 hitTestPortAt',
+    });
+}
+
+/**
+ * V20-C1：resolveConnections（管線端點＝外側錨點 → Connection；錯位則斷線）
+ */
+function runV15ResolveConnections() {
+    const src = splitterAt('src', 0, 0);
+    const dst = splitterAt('dst', 4, 0);
+    const anchors = collectPortAnchors([src, dst]);
+    /** splitter：output[1]＝右出；input[0]＝左入 */
+    const fromA = anchors.find(
+        (a) => a.ref.deviceId === 'src' && a.ref.portType === 'output' && a.ref.portIndex === 1,
+    )!;
+    const toA = anchors.find(
+        (a) => a.ref.deviceId === 'dst' && a.ref.portType === 'input' && a.ref.portIndex === 0,
+    )!;
+    const okPipeline: Pipeline = {
+        id: 'p-ok',
+        media: 'belt',
+        waypoints: [
+            { x: fromA.x, y: fromA.y, z: 0 },
+            { x: 2, y: fromA.y, z: 0 },
+            { x: toA.x, y: toA.y, z: 0 },
+        ],
+    };
+    const brokenPipeline: Pipeline = {
+        id: 'p-brk',
+        media: 'belt',
+        waypoints: [
+            { x: 2, y: 0, z: 0 },
+            { x: 3, y: 0, z: 0 },
+        ],
+    };
+    const connections = resolveConnections([src, dst], [okPipeline, brokenPipeline]);
+    const connectCheck = canConnect(
+        okPipeline,
+        { devices: [src, dst], pipelines: [] },
+        getMachineById,
+    );
+    showResult('resolveConnections（對齊／斷線）', {
+        fromAnchor: fromA,
+        toAnchor: toA,
+        pipelines: [okPipeline, brokenPipeline],
+        connections,
+        canConnectOnOk: connectCheck,
+        note: '端點格須＝外側錨點；from 偏好 output、to 偏好 input；媒質規則另走 canConnect',
+    });
+}
+
 /** V16 案例群 */
 
 /**
@@ -439,6 +571,73 @@ function runV16RotateDevice() {
         };
     });
     showResult('rotateDevice（獨立 Pinia）', payload);
+}
+
+/**
+ * V20-D1：獨立 Pinia 示範 addPipeline／removePipeline（內含 canConnect）
+ */
+function runV16AddRemovePipeline() {
+    const payload = withLabPinia(() => {
+        const layout = useLayoutStore();
+        const history = useHistoryStore();
+        const src = splitterAt('src', 0, 0);
+        const dst = splitterAt('dst', 4, 0);
+        layout.addDevice(src);
+        layout.addDevice(dst);
+        history.clear();
+        const anchors = collectPortAnchors(layout.devices);
+        const fromA = anchors.find(
+            (a) => a.ref.deviceId === 'src' && a.ref.portType === 'output' && a.ref.portIndex === 1,
+        )!;
+        const toA = anchors.find(
+            (a) => a.ref.deviceId === 'dst' && a.ref.portType === 'input' && a.ref.portIndex === 0,
+        )!;
+        const okPipeline: Pipeline = {
+            id: 'lab-p1',
+            media: 'belt',
+            waypoints: [
+                { x: fromA.x, y: fromA.y, z: 0 },
+                { x: 2, y: fromA.y, z: 0 },
+                { x: toA.x, y: toA.y, z: 0 },
+            ],
+        };
+        const preCheck = canConnect(
+            okPipeline,
+            { devices: [src, dst], pipelines: [] },
+            getMachineById,
+        );
+        const added = layout.addPipeline(okPipeline);
+        const afterAdd = {
+            ok: added,
+            pipelineCount: layout.pipelines.length,
+            connectionCount: layout.connections.length,
+            undoDepth: history.undoDepth,
+        };
+        const bad = layout.addPipeline({
+            id: 'lab-bad',
+            media: 'belt',
+            waypoints: [
+                { x: 2, y: 0, z: 0 },
+                { x: 3, y: 0, z: 0 },
+            ],
+        });
+        const removed = layout.removePipeline('lab-p1');
+        return {
+            isolation: 'createPinia 臨時實例；不寫正式頁',
+            anchors: { from: fromA, to: toA },
+            canConnectBeforeAdd: preCheck,
+            describeConnectFailure: describeConnectFailure(preCheck),
+            addPipelineOk: afterAdd,
+            addPipelineRejectedWhenEndpointsMiss: bad,
+            removePipeline: {
+                result: removed,
+                pipelineCount: layout.pipelines.length,
+                undoDepth: history.undoDepth,
+            },
+            note: 'addPipeline 內含 canConnect；失敗→invalid；成功／刪除皆進歷史',
+        };
+    });
+    showResult('addPipeline／removePipeline（獨立 Pinia）', payload);
 }
 
 /** V17：resolveMachineDef 與配方鍵 */
@@ -574,11 +773,19 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
         { id: 'h1', label: 'hitTestPortAt（單機）', run: runV15HitTest },
         { id: 'h2', label: 'hitTestPortAt prefer（緊貼）', run: runV15HitTestPrefer },
         { id: 'w1', label: 'buildConnectionWaypoints', run: runV15ConnectionWaypoints },
+        { id: 'w2', label: 'buildGapConnectionWaypoints', run: runV15GapConnectionWaypoints },
+        { id: 'f1', label: 'findPortAt vs hitTestPortAt', run: runV15FindPortAtContrast },
+        { id: 'rc1', label: 'resolveConnections（對齊／斷線）', run: runV15ResolveConnections },
     ],
     V16: [
         { id: 's1', label: 'toTopology 映射（不寫 store）', run: runV16TopologyMapping },
         { id: 's2', label: 'setDevicePrimaryOutput（獨立 Pinia）', run: runV16StoreAction },
         { id: 's3', label: 'rotateDevice（獨立 Pinia）', run: runV16RotateDevice },
+        {
+            id: 's4',
+            label: 'addPipeline／removePipeline（獨立 Pinia）',
+            run: runV16AddRemovePipeline,
+        },
     ],
     V17: [
         { id: 'r1', label: 'resolveMachineDef＋配方鍵', run: runV17Resolve },
@@ -860,8 +1067,9 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                         <code>prefer</code>）；規則錨點＝<code>canConnect</code>／findPortAt
                     </li>
                     <li>
-                        連線折線路徑＝<code>buildConnectionWaypoints</code>（#78）；仍須
-                        <code>canConnect</code> 驗媒質／佔用
+                        連線折線＝<code>buildConnectionWaypoints</code>；間隙通道＝
+                        <code>buildGapConnectionWaypoints</code>；寫入＝
+                        <code>addPipeline</code>（內含 <code>canConnect</code>）
                     </li>
                     <li>
                         源素材寫 <code>layoutStore.setDevicePrimaryOutput</code>；讀引擎經
