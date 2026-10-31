@@ -4,7 +4,7 @@
 |------|-------|
 | 頁面 | `http://localhost:5173/dev/l1-contract-lab` |
 | 對象 | 畫布 L2、驗證、引擎、週會聽眾、**較少開發經驗的協作者** |
-| 對應 | [todolist_v14](./todolist_v14.md)～[todolist_v19](./todolist_v19.md)（V19＝Hub MVP） |
+| 對應 | [todolist_v14](./todolist_v14.md)～[todolist_v21](./todolist_v21.md)（V19 Hub；V20 catalog；V21＝**輕量試玩草案**） |
 | 最後更新 | 2026-11-01 |
 | 公開長文（建議先讀） | [LAB_l1_contract_guide](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md)（詞彙表＋各函式用途／串接） |
 
@@ -20,6 +20,7 @@
 3. **目錄**（長期 API inventory：已列／待列）
 4. **定義表**（符號／模組／誰呼叫／不要做什麼）
 5. **一鍵案例**（呼叫真實 API，JSON 輸出）
+6. （規劃中／V21）**輕量可調參試玩**——少數 API 可改參數再執行；**不是**完整 Swagger（見 [V20-F1](./dev_v20/F1_tryout_not_swagger.md)、[A0 牌程](./dev_v21/A0_tryout_panel_plan.md)）
 
 方便其他串接者對照與自測，而不必只讀 diff。  
 完整長文仍見公開 [LAB 指南](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md)。**教學優先做在 lab 頁內**（不必先會翻 markdown）。
@@ -41,8 +42,8 @@ pnpm dev
 | **目錄** | layout utils／layoutStore／可選驗證・引擎：已列／待列 |
 | 總覽 | 四版一句話＋誤用對照 |
 | V14 | `canPlaceDevice`／`canMoveDevice`／`canConnect` |
-| V15 | `devicesOutsideBase`／`hitTestPortAt`（含 **prefer 緊貼**可點測）／`buildConnectionWaypoints` |
-| V16 | `toTopology` 映射 `primaryOutput`；可選 store 寫入（⚠） |
+| V15 | 出界／熱區／waypoints／**gap**／**findPortAt 對照**／**resolveConnections**（V20） |
+| V16 | `toTopology`；store 寫入（⚠）含 **addPipeline／removePipeline**（V20-D1） |
 | V17 | `resolveMachineDef`、配方鍵、引擎 30/min、history 情境 |
 
 深鏈專頁（更完整視覺卡）：
@@ -62,6 +63,9 @@ pnpm dev
 | 查配方 | `getRecipesForMachine(def.name, mode)` | `getRecipesForMachine('crusher')` |
 | 落子預覽 | `canPlaceDevice` 回傳 | 自算 `detectOverlaps` |
 | 埠熱區 | `hitTestPortAt`（連續格） | 用 `findPortAt` 當滑鼠熱區 |
+| 規則錨點／衍生連線 | `findPortAt`／`resolveConnections`（整數外側錨） | 用熱區座標當管線端點 |
+| 間隙路徑 | `buildGapConnectionWaypoints`（中央通道） | 當通用繞障搜尋或略過 `canConnect` |
+| 管線寫入 | `layoutStore.addPipeline`（內含 canConnect） | 自寫第二套連線防線 |
 | 源素材 | `layoutStore.setDevicePrimaryOutput` | 雙寫 `editorStore` |
 | 引擎讀 | `toTopology` → 建圖 | 以為引擎直接 watch layoutStore |
 | 正式頁開頁 | 空白（#58／H1） | 依賴自動 `connected` fixture |
@@ -75,3 +79,7 @@ pnpm dev
 `src/app/dev/l1ContractLab/contractCatalog.ts`
 
 改契約說明時優先改此檔，避免 Vue 模板散落。
+
+**V20 已交（可點測）：** `findPortAt`／`resolveConnections`；`buildGapConnectionWaypoints`；`addPipeline`／`removePipeline`。  
+**V21 規劃：** 輕量可調參（先 `hitTestPortAt`／`findPortAt`／`canConnect`）——[todolist_v21](./todolist_v21.md)；**開工前提＝V19＋V20 合 master**。  
+其餘 inventory `todo`（佔格／snapshot／detectors…）與試玩**脫鉤**另牌——見 [F0 §2.3](./dev_v19/F0_next_catalog_batch.md)。

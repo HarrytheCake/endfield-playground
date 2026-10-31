@@ -9,7 +9,7 @@
 | 程式目錄文案來源 | `src/app/dev/l1ContractLab/contractCatalog.ts` |
 | 對應會議／驗收 | [INTRO](./INTRO_meeting_m3_engine_lab.md)、[ACCEPTANCE V2](./ACCEPTANCE_V2_c5_chain.md) |
 | 撰寫 | aaaaa |
-| 最後更新 | 2026-11-01（互連 V19 Hub：頁內入門／詞彙／目錄） |
+| 最後更新 | 2026-11-01（V19＋V20；下一批規劃＝輕量可調參試玩／非 Swagger，見 V20-F1／V21-A0） |
 
 ---
 
@@ -205,6 +205,16 @@ pnpm dev
 
 為什麼要外一格？若管線端點落在設備自己的佔格裡，每條線都會跟來源／目標設備「同格」，碰撞判定會全面誤報。因此錨點刻意推到外側。
 
+### 5.3 `resolveConnections`／waypoints（V20 可點測）
+
+| 項目 | 說明 |
+|------|------|
+| **`resolveConnections`** | 管線 waypoints **首／末格**對外側錨點 → `Connection`；對不上則該側 `null`（斷線，管線不刪）。**不做**媒質檢查（那是 `canConnect`）。 |
+| **`buildConnectionWaypoints`** | 兩外側錨點 → 直線或**單轉角**；不驗媒質／碰撞。 |
+| **`buildGapConnectionWaypoints`** | 兩設備間**固定中央通道** → **雙轉角**；無通道回 `null`。不是通用繞障搜尋；結果仍須 `canConnect`。 |
+
+lab V15 分頁有一鍵對照。
+
 #### L2／L3 會不會「自動知道」是第幾個埠、哪一台機？
 
 | 層 | 會不會知道 |
@@ -258,7 +268,17 @@ pointerup
 | **重疊** | 與 `addDevice`／`moveDevice` 相同：**不擋寫入**；E001 由 `layoutIssues`／驗證標出。 |
 | **常見誤用** | 旋轉時改 `position` 或改寫管線 waypoints；或把預檢 `overlap` 當寫入擋板。 |
 
-### 6.3 `toTopology`
+### 6.3 `addPipeline`／`removePipeline`（V20 可點測）
+
+| 項目 | 說明 |
+|------|------|
+| **用途** | 寫入／刪除管線；`addPipeline` **內含** `canConnect`（失敗→`invalid`），成功進歷史。 |
+| **誰該呼叫** | L2 確認拉線／刪線；勿在 L2 自寫第二套連線防線。 |
+| **常見誤用** | 略過 `canConnect`；端點用熱區連續座標而非外側錨點整數格。 |
+
+lab V16 分頁有獨立 Pinia 一鍵案例。
+
+### 6.4 `toTopology`
 
 | 項目 | 說明 |
 |------|------|
@@ -321,8 +341,8 @@ pointerup
 ## 8. 串接硬規則（請貼在 PR／碼評）
 
 1. **預覽與真放同一規則** — 放置／移動／連線走 V14 契約，不私建第二套。  
-2. **滑鼠點埠用埠熱區** — `hitTestPortAt`，不是 `findPortAt`。  
-3. **拉線語意帶 PortRef** — 起拖存 `deviceId`＋`portIndex`；外錨同格也不改用「猜格」。  
+2. **滑鼠點埠用埠熱區** — `hitTestPortAt`，不是 `findPortAt`；規則／衍生連線用外側錨＋`resolveConnections`。  
+3. **拉線語意帶 PortRef** — 起拖存 `deviceId`＋`portIndex`；外錨同格也不改用「猜格」；間隙路徑用 `buildGapConnectionWaypoints`，仍須 `canConnect`／`addPipeline`。  
 4. **源素材只寫 layoutStore** — `setDevicePrimaryOutput`；禁止雙寫 `editorStore`。  
 5. **旋轉只寫 layoutStore.rotateDevice** — 原點／管線座標不動；勿在 L2 自寫第二套。  
 6. **重疊（E001）不擋寫入** — `addDevice`／`moveDevice`／`rotateDevice` 遇重疊仍寫入；預檢 `can*` 仍可回 overlap。  
