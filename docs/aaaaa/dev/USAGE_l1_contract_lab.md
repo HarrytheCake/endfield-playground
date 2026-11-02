@@ -5,8 +5,9 @@
 | 頁面 | `http://localhost:5173/dev/l1-contract-lab` |
 | 對象 | 畫布 L2、驗證、引擎、週會聽眾、**較少開發經驗的協作者** |
 | 對應 | [todolist_v14](./todolist_v14.md)～[todolist_v21](./todolist_v21.md)（V19 Hub；V20 catalog；V21＝**輕量試玩草案**） |
-| 最後更新 | 2026-11-01 |
-| 公開長文（建議先讀） | [LAB_l1_contract_guide](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md)（詞彙表＋各函式用途／串接） |
+| 最後更新 | 2026-11-03 |
+| 簡易教學（建議先跟做） | [tutorial/l1-contract-lab/usage.md](../../../tutorial/l1-contract-lab/usage.md) |
+| 公開長文 | [LAB_l1_contract_guide](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md)（詞彙表＋各函式用途／串接） |
 
 ---
 
@@ -23,11 +24,13 @@
 6. （規劃中／V21）**輕量可調參試玩**——少數 API 可改參數再執行；**不是**完整 Swagger（見 [V20-F1](./dev_v20/F1_tryout_not_swagger.md)、[A0 牌程](./dev_v21/A0_tryout_panel_plan.md)）
 
 方便其他串接者對照與自測，而不必只讀 diff。  
-完整長文仍見公開 [LAB 指南](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md)。**教學優先做在 lab 頁內**（不必先會翻 markdown）。
+**最短跟做**先看 [tutorial](../../../tutorial/l1-contract-lab/usage.md)；頁內「入門」分頁也有 5 步。完整長文見 [LAB 指南](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md)。
 
 ---
 
 ## 1. 怎麼開
+
+逐步截圖式說明見 **[tutorial／L1 契約實驗室](../../../tutorial/l1-contract-lab/usage.md)**。精簡版：
 
 ```bash
 pnpm dev

@@ -9,7 +9,8 @@
 | 程式目錄文案來源 | `src/app/dev/l1ContractLab/contractCatalog.ts` |
 | 對應會議／驗收 | [INTRO](./INTRO_meeting_m3_engine_lab.md)、[ACCEPTANCE V2](./ACCEPTANCE_V2_c5_chain.md) |
 | 撰寫 | aaaaa |
-| 最後更新 | 2026-11-01（V19＋V20；下一批規劃＝輕量可調參試玩／非 Swagger，見 V20-F1／V21-A0） |
+| 最後更新 | 2026-11-03（＋tutorial/l1-contract-lab 簡易教學互連） |
+| 簡易教學 | [tutorial/l1-contract-lab/usage.md](../../../tutorial/l1-contract-lab/usage.md) |
 
 ---
 
@@ -27,10 +28,10 @@
 
 ```text
 建議閱讀順序：
-  頁內「入門」分頁（最快）
+  tutorial/l1-contract-lab/usage.md（repo 簡易教學）或頁內「入門」
   → 頁內「詞彙」／本檔 §2
   → 頁內「目錄」（還有哪些 API）
-  → §1 怎麼打開
+  → USAGE（串接金句）／§1 怎麼打開
   → §3 總覽：四個版本各解決什麼人生問題
   → §4～§7 依版本看每個函式
   → §8 串接時請遵守的幾條硬規則
