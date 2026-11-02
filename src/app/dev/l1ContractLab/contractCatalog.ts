@@ -139,7 +139,7 @@ export const HUB_GUIDE_STEPS: ContractGuideStep[] = [
     {
         step: 5,
         title: '卡住讀哪？',
-        detail: '先看本頁詞彙與目錄；還不夠再讀 USAGE（docs/aaaaa/dev/USAGE_l1_contract_lab.md）與 LAB 長文（work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md）。',
+        detail: '先看本頁詞彙與目錄。Markdown 最短跟做：tutorial/l1-contract-lab/usage.md；再深讀 USAGE（docs/aaaaa/dev/USAGE_l1_contract_lab.md）與 LAB（work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md）。',
     },
 ];
 
@@ -212,7 +212,7 @@ export const HUB_GLOSSARY: ContractGlossaryEntry[] = [
  * Hub inventory（長期邊界骨架；本周不必填滿定義表）
  */
 export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
-    // —— layout-utils：已列（版本表有） ——
+    /** layout-utils：已列（版本表有／可點測） */
     {
         area: 'layout-utils',
         symbol: 'canPlaceDevice',
@@ -283,7 +283,6 @@ export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
         status: 'listed',
         note: '管線→Connection[]；V15 可點測',
     },
-    // —— layout-utils：待列 ——
     {
         area: 'layout-utils',
         symbol: 'buildConnectionWaypoints',
@@ -298,6 +297,7 @@ export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
         status: 'listed',
         note: '間隙中央通道雙轉角；V15／V20-D1 可點測',
     },
+    /** layout-utils：待列 */
     {
         area: 'layout-utils',
         symbol: 'getDeviceOccupiedCells',
@@ -347,7 +347,7 @@ export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
         status: 'todo',
         note: '軸對齊路徑／佔格',
     },
-    // —— layout-store ——
+    /** layout-store：已列 */
     {
         area: 'layout-store',
         symbol: 'addDevice／removeDevice',
@@ -383,6 +383,7 @@ export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
         status: 'listed',
         note: '管線寫入（內含 canConnect）；V16／V20-D1 可點測',
     },
+    /** layout-store：待列 */
     {
         area: 'layout-store',
         symbol: 'loadSnapshot／toSnapshot',
@@ -397,7 +398,7 @@ export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
         status: 'todo',
         note: '衍生狀態；只讀',
     },
-    // —— validation（可選） ——
+    /** validation（可選） */
     {
         area: 'validation',
         symbol: 'resolveMachineDef',
@@ -412,7 +413,7 @@ export const CONTRACT_INVENTORY: ContractInventoryRow[] = [
         status: 'todo',
         note: '後續週可選掛說明',
     },
-    // —— engine-adapter（可選） ——
+    /** engine-adapter（可選） */
     {
         area: 'engine-adapter',
         symbol: 'toTopology → buildGraph／propagateFlows',
