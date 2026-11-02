@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * V14–V17 L1 契約實驗室
+ * L1 契約實驗室（V19 Hub MVP）
  *
- * 給串接／呼叫端：定義表＋可點案例（呼叫真實 API，輸出 JSON）。
+ * 給串接／呼叫端（含無開發經驗）：頁內入門＋詞彙＋目錄＋定義表＋可點案例。
  * 不取代各版專頁；深鏈見 {@link CONTRACT_BLOCKS}.deeperDemo。
  */
 import { computed, ref } from 'vue';
@@ -20,6 +20,12 @@ import {
 import { canConnect, describeConnectFailure } from '@/utils/layout/connectRules';
 import { devicesOutsideBase } from '@/utils/layout/devicesOutsideBase';
 import { hitTestPortAt } from '@/utils/layout/portHitTest';
+import {
+    buildConnectionWaypoints,
+    buildGapConnectionWaypoints,
+} from '@/utils/layout/connectionWaypoints';
+import { collectPortAnchors, findPortAt } from '@/utils/layout/portAnchorIndex';
+import { resolveConnections } from '@/utils/layout/resolveConnections';
 import { toTopology } from '@/utils/layout/toTopology';
 import { resolveDisplayGrid, rotatePort } from '@/utils/portUtils';
 import { resolvePortAnchorCell } from '@/utils/layout/portAnchors';
@@ -35,16 +41,75 @@ import {
     historyContextFromPath,
     shouldClearHistoryOnNavigate,
 } from '@/utils/history/historyContext';
-import { CONTRACT_BLOCKS, type ContractVersion } from '@/app/dev/l1ContractLab/contractCatalog';
+import {
+    CONTRACT_BLOCKS,
+    CONTRACT_INVENTORY,
+    HUB_GLOSSARY,
+    HUB_GUIDE_STEPS,
+    HUB_OPS_RULES,
+    INVENTORY_AREA_LABELS,
+    type ContractInventoryArea,
+    type ContractVersion,
+} from '@/app/dev/l1ContractLab/contractCatalog';
 
-/** 目前分頁：總覽或某契約版本 */
-const active = ref<ContractVersion | 'overview'>('overview');
+/** Hub 導覽分頁（入門／詞彙／目錄／總覽／版本） */
+type HubTab = ContractVersion | 'overview' | 'guide' | 'glossary' | 'inventory';
+
+/** 目前分頁：入門／詞彙／目錄／總覽或某契約版本 */
+const active = ref<HubTab>('guide');
 
 /** 契約塊列表（來自 catalog） */
 const blocks = CONTRACT_BLOCKS;
 
-/** 目前選中的契約塊；總覽時為 null */
-const activeBlock = computed(() => blocks.find((b) => b.version === active.value) ?? null);
+/** 頁內教學步驟 */
+const guideSteps = HUB_GUIDE_STEPS;
+
+/** 頁內詞彙 */
+const glossary = HUB_GLOSSARY;
+
+/** 頁內維運規則摘要 */
+const opsRules = HUB_OPS_RULES;
+
+/** inventory 全表 */
+const inventory = CONTRACT_INVENTORY;
+
+/** inventory 區域鍵（顯示順序） */
+const inventoryAreas = Object.keys(INVENTORY_AREA_LABELS) as ContractInventoryArea[];
+
+/** 依區域分組的 inventory */
+const inventoryByArea = computed(() =>
+    inventoryAreas.map((area) => ({
+        area,
+        label: INVENTORY_AREA_LABELS[area],
+        rows: inventory.filter((row) => row.area === area),
+    })),
+);
+
+/** listed／todo 計數（目錄頁摘要） */
+const inventoryCounts = computed(() => ({
+    listed: inventory.filter((row) => row.status === 'listed').length,
+    todo: inventory.filter((row) => row.status === 'todo').length,
+}));
+
+/** 目前選中的契約塊；非版本分頁時為 null */
+const activeBlock = computed(() => {
+    if (
+        active.value === 'overview' ||
+        active.value === 'guide' ||
+        active.value === 'glossary' ||
+        active.value === 'inventory'
+    ) {
+        return null;
+    }
+    return blocks.find((b) => b.version === active.value) ?? null;
+});
+
+/** 導覽按鈕共用 class */
+function navClass(tab: HubTab): string {
+    return active.value === tab
+        ? 'bg-blue-600 text-white'
+        : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200';
+}
 
 /** 結果面板標題 */
 const outputTitle = ref('尚未執行');
@@ -194,7 +259,7 @@ function runV15OutsideNullRegion() {
     });
 }
 
-/** V15：埠熱區命中 */
+/** V15：埠熱區命中（單機視覺邊心） */
 function runV15HitTest() {
     const device: PlacedDevice = {
         id: 'c',
@@ -214,6 +279,201 @@ function runV15HitTest() {
         hit,
         inputPorts: mode.input_ports.length,
         note: '連續格座標；圓心＝埠邊心，不是外側錨點格',
+    });
+}
+
+/**
+ * V15：緊貼埠對埠時 prefer 消歧（審查案例）
+ *
+ * splitter A@(0,0) 右出與 B@(1,0) 左入視覺點皆 (1, 0.5)；
+ * 無 prefer 會隨設備陣列序變；有 prefer 則穩定。
+ */
+function runV15HitTestPrefer() {
+    const a = splitterAt('a', 0, 0);
+    const b = splitterAt('b', 1, 0);
+    const point = { x: 1, y: 0.5 };
+    const orders = [
+        { label: '[A, B]', devices: [a, b] as const },
+        { label: '[B, A]', devices: [b, a] as const },
+    ];
+    const rows = orders.flatMap(({ label, devices }) => {
+        const none = hitTestPortAt(point, devices);
+        const asOutput = hitTestPortAt(point, devices, undefined, { prefer: 'output' });
+        const asInput = hitTestPortAt(point, devices, undefined, { prefer: 'input' });
+        return [
+            {
+                order: label,
+                prefer: '(無)',
+                hit: none ? `${none.deviceId} ${none.portType}[${none.portIndex}]` : null,
+            },
+            {
+                order: label,
+                prefer: 'output（拖線起點）',
+                hit: asOutput
+                    ? `${asOutput.deviceId} ${asOutput.portType}[${asOutput.portIndex}]`
+                    : null,
+            },
+            {
+                order: label,
+                prefer: 'input（放開終點）',
+                hit: asInput
+                    ? `${asInput.deviceId} ${asInput.portType}[${asInput.portIndex}]`
+                    : null,
+            },
+        ];
+    });
+    showResult('hitTestPortAt prefer（緊貼埠對埠）', {
+        point,
+        scenario: 'A@(0,0) 右出 與 B@(1,0) 左入 視覺點同為 (1,0.5)',
+        expect: {
+            preferOutput: '一律 a output[1]',
+            preferInput: '一律 b input[0]',
+        },
+        rows,
+        note: 'L2：開始拖線 prefer:output；放開 prefer:input',
+    });
+}
+
+/**
+ * V15／#78：連線 waypoints 純函式演示（不寫 store）
+ */
+function runV15ConnectionWaypoints() {
+    const waypoints = buildConnectionWaypoints(
+        { position: { x: 1, y: 0, z: 0 }, side: 'right' },
+        { position: { x: 5, y: 3, z: 0 }, side: 'left' },
+    );
+    showResult('buildConnectionWaypoints（#78）', {
+        source: { position: { x: 1, y: 0, z: 0 }, side: 'right' },
+        target: { position: { x: 5, y: 3, z: 0 }, side: 'left' },
+        waypoints,
+        note: '同層整數錨點 → 直線或單轉角；不驗證媒質／碰撞（交 canConnect）',
+    });
+}
+
+/**
+ * V20-D1：間隙通道 waypoints vs 單轉角（真呼叫；不寫 store）
+ *
+ * 左右兩台 3×3 佔格、上下埠：gap 走中央通道；一般 build 只做單轉角。
+ */
+function runV15GapConnectionWaypoints() {
+    const source = { position: { x: 1, y: 3, z: 0 }, side: 'bottom' as const };
+    const target = { position: { x: 7, y: -1, z: 0 }, side: 'top' as const };
+    const leftBounds = { left: 0, right: 2, top: 0, bottom: 2 };
+    const rightBounds = { left: 6, right: 8, top: 0, bottom: 2 };
+    const simple = buildConnectionWaypoints(source, target);
+    const gap = buildGapConnectionWaypoints(source, target, leftBounds, rightBounds);
+    const noGap = buildGapConnectionWaypoints(source, target, leftBounds, {
+        left: 3,
+        right: 5,
+        top: 0,
+        bottom: 2,
+    });
+    showResult('buildGapConnectionWaypoints（對照單轉角）', {
+        source,
+        target,
+        leftBounds,
+        rightBounds,
+        buildConnectionWaypoints: simple,
+        buildGapConnectionWaypoints: gap,
+        whenNoLane: {
+            overlappingishBounds: { left: 3, right: 5, top: 0, bottom: 2 },
+            result: noGap,
+            expect: '無至少一格通道 → null',
+        },
+        note: 'gap＝固定中央通道雙轉角；仍須 canConnect／碰撞預檢；不搜尋其他繞障',
+    });
+}
+
+/**
+ * V20-C1：外側錨點格 vs 熱區（真呼叫 findPortAt／hitTestPortAt）
+ *
+ * crusher@(0,0) 頂邊 input[0] 外側錨＝(0,-1)；熱區圓心在設備邊上（連續座標）。
+ */
+function runV15FindPortAtContrast() {
+    const device: PlacedDevice = {
+        id: 'c',
+        machineType: 'crusher',
+        position: { x: 0, y: 0, z: 0 },
+        rotation: 0,
+    };
+    const anchors = collectPortAnchors([device]);
+    const input0 = anchors.find(
+        (a) => a.ref.deviceId === 'c' && a.ref.portType === 'input' && a.ref.portIndex === 0,
+    )!;
+    /** 與既有 hitTest 案例同一點（連續格；非整數錨點） */
+    const hotPoint = { x: 0.5, y: 0.1 };
+    const atAnchorCell = findPortAt(anchors, input0.x, input0.y, 'input');
+    const atHotPointExact = findPortAt(anchors, hotPoint.x, hotPoint.y);
+    const hitHot = hitTestPortAt(hotPoint, [device], getMachineById, { prefer: 'input' });
+    const hitAtAnchorCell = hitTestPortAt(
+        { x: input0.x + 0.5, y: input0.y + 0.5 },
+        [device],
+        getMachineById,
+        { prefer: 'input' },
+    );
+    const manualCell = resolvePortAnchorCell(0, 0, 3, 3, 'top', 0);
+    showResult('findPortAt vs hitTestPortAt（錨點≠熱區）', {
+        device: { id: 'c', machineType: 'crusher', position: device.position },
+        resolvePortAnchorCell_top0: manualCell,
+        collectPortAnchors_input0: input0,
+        findPortAt: {
+            atIntegerAnchor: atAnchorCell,
+            atHotPointExact: atHotPointExact,
+            expect: '整數錨點格命中；熱區連續點用 === 對格 → 通常 null',
+        },
+        hitTestPortAt: {
+            atHotPoint: hitHot,
+            nearAnchorCellCenter: hitAtAnchorCell,
+            expect: '滑鼠／拖線用熱區；圓心在設備邊，不是外側錨點',
+        },
+        note: '規則／resolveConnections 用 findPortAt；L2 滑鼠用 hitTestPortAt',
+    });
+}
+
+/**
+ * V20-C1：resolveConnections（管線端點＝外側錨點 → Connection；錯位則斷線）
+ */
+function runV15ResolveConnections() {
+    const src = splitterAt('src', 0, 0);
+    const dst = splitterAt('dst', 4, 0);
+    const anchors = collectPortAnchors([src, dst]);
+    /** splitter：output[1]＝右出；input[0]＝左入 */
+    const fromA = anchors.find(
+        (a) => a.ref.deviceId === 'src' && a.ref.portType === 'output' && a.ref.portIndex === 1,
+    )!;
+    const toA = anchors.find(
+        (a) => a.ref.deviceId === 'dst' && a.ref.portType === 'input' && a.ref.portIndex === 0,
+    )!;
+    const okPipeline: Pipeline = {
+        id: 'p-ok',
+        media: 'belt',
+        waypoints: [
+            { x: fromA.x, y: fromA.y, z: 0 },
+            { x: 2, y: fromA.y, z: 0 },
+            { x: toA.x, y: toA.y, z: 0 },
+        ],
+    };
+    const brokenPipeline: Pipeline = {
+        id: 'p-brk',
+        media: 'belt',
+        waypoints: [
+            { x: 2, y: 0, z: 0 },
+            { x: 3, y: 0, z: 0 },
+        ],
+    };
+    const connections = resolveConnections([src, dst], [okPipeline, brokenPipeline]);
+    const connectCheck = canConnect(
+        okPipeline,
+        { devices: [src, dst], pipelines: [] },
+        getMachineById,
+    );
+    showResult('resolveConnections（對齊／斷線）', {
+        fromAnchor: fromA,
+        toAnchor: toA,
+        pipelines: [okPipeline, brokenPipeline],
+        connections,
+        canConnectOnOk: connectCheck,
+        note: '端點格須＝外側錨點；from 偏好 output、to 偏好 input；媒質規則另走 canConnect',
     });
 }
 
@@ -311,6 +571,73 @@ function runV16RotateDevice() {
         };
     });
     showResult('rotateDevice（獨立 Pinia）', payload);
+}
+
+/**
+ * V20-D1：獨立 Pinia 示範 addPipeline／removePipeline（內含 canConnect）
+ */
+function runV16AddRemovePipeline() {
+    const payload = withLabPinia(() => {
+        const layout = useLayoutStore();
+        const history = useHistoryStore();
+        const src = splitterAt('src', 0, 0);
+        const dst = splitterAt('dst', 4, 0);
+        layout.addDevice(src);
+        layout.addDevice(dst);
+        history.clear();
+        const anchors = collectPortAnchors(layout.devices);
+        const fromA = anchors.find(
+            (a) => a.ref.deviceId === 'src' && a.ref.portType === 'output' && a.ref.portIndex === 1,
+        )!;
+        const toA = anchors.find(
+            (a) => a.ref.deviceId === 'dst' && a.ref.portType === 'input' && a.ref.portIndex === 0,
+        )!;
+        const okPipeline: Pipeline = {
+            id: 'lab-p1',
+            media: 'belt',
+            waypoints: [
+                { x: fromA.x, y: fromA.y, z: 0 },
+                { x: 2, y: fromA.y, z: 0 },
+                { x: toA.x, y: toA.y, z: 0 },
+            ],
+        };
+        const preCheck = canConnect(
+            okPipeline,
+            { devices: [src, dst], pipelines: [] },
+            getMachineById,
+        );
+        const added = layout.addPipeline(okPipeline);
+        const afterAdd = {
+            ok: added,
+            pipelineCount: layout.pipelines.length,
+            connectionCount: layout.connections.length,
+            undoDepth: history.undoDepth,
+        };
+        const bad = layout.addPipeline({
+            id: 'lab-bad',
+            media: 'belt',
+            waypoints: [
+                { x: 2, y: 0, z: 0 },
+                { x: 3, y: 0, z: 0 },
+            ],
+        });
+        const removed = layout.removePipeline('lab-p1');
+        return {
+            isolation: 'createPinia 臨時實例；不寫正式頁',
+            anchors: { from: fromA, to: toA },
+            canConnectBeforeAdd: preCheck,
+            describeConnectFailure: describeConnectFailure(preCheck),
+            addPipelineOk: afterAdd,
+            addPipelineRejectedWhenEndpointsMiss: bad,
+            removePipeline: {
+                result: removed,
+                pipelineCount: layout.pipelines.length,
+                undoDepth: history.undoDepth,
+            },
+            note: 'addPipeline 內含 canConnect；失敗→invalid；成功／刪除皆進歷史',
+        };
+    });
+    showResult('addPipeline／removePipeline（獨立 Pinia）', payload);
 }
 
 /** V17：resolveMachineDef 與配方鍵 */
@@ -443,12 +770,22 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
     V15: [
         { id: 'o1', label: 'devicesOutsideBase（有基地）', run: runV15Outside },
         { id: 'o2', label: 'devicesOutsideBase（null）', run: runV15OutsideNullRegion },
-        { id: 'h1', label: 'hitTestPortAt', run: runV15HitTest },
+        { id: 'h1', label: 'hitTestPortAt（單機）', run: runV15HitTest },
+        { id: 'h2', label: 'hitTestPortAt prefer（緊貼）', run: runV15HitTestPrefer },
+        { id: 'w1', label: 'buildConnectionWaypoints', run: runV15ConnectionWaypoints },
+        { id: 'w2', label: 'buildGapConnectionWaypoints', run: runV15GapConnectionWaypoints },
+        { id: 'f1', label: 'findPortAt vs hitTestPortAt', run: runV15FindPortAtContrast },
+        { id: 'rc1', label: 'resolveConnections（對齊／斷線）', run: runV15ResolveConnections },
     ],
     V16: [
         { id: 's1', label: 'toTopology 映射（不寫 store）', run: runV16TopologyMapping },
         { id: 's2', label: 'setDevicePrimaryOutput（獨立 Pinia）', run: runV16StoreAction },
         { id: 's3', label: 'rotateDevice（獨立 Pinia）', run: runV16RotateDevice },
+        {
+            id: 's4',
+            label: 'addPipeline／removePipeline（獨立 Pinia）',
+            run: runV16AddRemovePipeline,
+        },
     ],
     V17: [
         { id: 'r1', label: 'resolveMachineDef＋配方鍵', run: runV17Resolve },
@@ -461,29 +798,51 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
 <template>
     <div class="space-y-6 text-gray-900 dark:text-gray-100">
         <header class="space-y-2">
-            <h1 class="text-2xl font-bold">L1 契約實驗室（V14–V17）</h1>
+            <h1 class="text-2xl font-bold">L1 契約實驗室（Hub）</h1>
             <p class="max-w-3xl text-sm text-gray-600 dark:text-gray-400">
-                本頁彙整 aaaaa 近幾版<strong>底層純函式／store 契約</strong
-                >：給串接畫布、驗證、引擎的人對照「該呼叫誰、鍵是 id 還是中文名、回傳長怎樣」。
-                每個案例都跑<strong>真實 API</strong>，結果在下方 JSON。不發解鎖句；正式
-                UI／右側產耗不在此頁範圍。
+                本頁是
+                L1（底層規則／store）的<strong>查詢＋教學＋可點測</strong>入口：給串接畫布、驗證、引擎——以及
+                <strong>較少開發經驗</strong>的協作者——對照「該呼叫誰、鍵是 id
+                還是中文名、回傳長怎樣」。 案例跑<strong>真實 API</strong>，結果在下方
+                JSON。這<strong>不是</strong>遊戲正式畫面。
             </p>
             <p class="text-xs text-amber-800 dark:text-amber-200">
                 DEV ONLY ·
                 <code class="rounded bg-gray-100 px-1 dark:bg-gray-800">/dev/l1-contract-lab</code>
+                · 不懂名詞先開「詞彙」· 想知道還有哪些 API 開「目錄」
             </p>
         </header>
 
-        <!-- 版本切換 -->
+        <!-- Hub 導覽 -->
         <nav class="flex flex-wrap gap-2">
             <button
                 type="button"
                 class="rounded-lg px-3 py-1.5 text-sm font-medium"
-                :class="
-                    active === 'overview'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200'
-                "
+                :class="navClass('guide')"
+                @click="active = 'guide'"
+            >
+                入門
+            </button>
+            <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="navClass('glossary')"
+                @click="active = 'glossary'"
+            >
+                詞彙
+            </button>
+            <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="navClass('inventory')"
+                @click="active = 'inventory'"
+            >
+                目錄
+            </button>
+            <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="navClass('overview')"
                 @click="active = 'overview'"
             >
                 總覽
@@ -493,48 +852,190 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                 :key="b.version"
                 type="button"
                 class="rounded-lg px-3 py-1.5 text-sm font-medium"
-                :class="
-                    active === b.version
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200'
-                "
+                :class="navClass(b.version)"
                 @click="active = b.version"
             >
                 {{ b.version }}
             </button>
         </nav>
 
-        <!-- 總覽 -->
-        <section v-if="active === 'overview'" class="space-y-4">
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                <table class="min-w-full text-left text-sm">
-                    <thead
-                        class="bg-gray-50 text-xs tracking-wide text-gray-500 uppercase dark:bg-gray-800"
-                    >
-                        <tr>
-                            <th class="px-3 py-2">版</th>
-                            <th class="px-3 py-2">主題</th>
-                            <th class="px-3 py-2">PR</th>
-                            <th class="px-3 py-2">一句話</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="b in blocks"
-                            :key="b.version"
-                            class="cursor-pointer border-t border-gray-100 hover:bg-blue-50/50 dark:border-gray-800 dark:hover:bg-blue-950/30"
-                            @click="active = b.version"
-                        >
-                            <td class="px-3 py-2 font-semibold">{{ b.version }}</td>
-                            <td class="px-3 py-2">{{ b.title }}</td>
-                            <td class="px-3 py-2 font-mono text-xs">{{ b.prs }}</td>
-                            <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
-                                {{ b.oneLiner }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- 入門：最短路徑 -->
+        <section v-if="active === 'guide'" class="space-y-4">
+            <div
+                class="rounded-lg border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-900 dark:bg-blue-950/40"
+            >
+                <h2 class="text-lg font-semibold">最短路徑（給第一次進來的人）</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    跟完這五步，就知道本頁能幹嘛、正式頁能幹嘛、卡關去哪讀。
+                </p>
             </div>
+            <ol class="space-y-3">
+                <li
+                    v-for="s in guideSteps"
+                    :key="s.step"
+                    class="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                >
+                    <h3 class="font-semibold">
+                        <span
+                            class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white"
+                            >{{ s.step }}</span
+                        >
+                        {{ s.title }}
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ s.detail }}</p>
+                </li>
+            </ol>
+            <div class="flex flex-wrap gap-2 text-sm">
+                <button
+                    type="button"
+                    class="rounded-lg bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-700"
+                    @click="active = 'glossary'"
+                >
+                    下一步：看詞彙
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg bg-gray-100 px-3 py-1.5 font-medium text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
+                    @click="active = 'inventory'"
+                >
+                    或先看目錄
+                </button>
+                <a
+                    href="/"
+                    class="rounded-lg px-3 py-1.5 font-medium text-blue-600 underline dark:text-blue-400"
+                    >打開正式頁（另頁）</a
+                >
+            </div>
+            <div class="rounded-lg border border-dashed border-gray-300 p-4 dark:border-gray-600">
+                <h3 class="mb-2 text-sm font-semibold">後續維運（新 L1 怎麼進本頁）</h3>
+                <ul
+                    class="list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400"
+                >
+                    <li v-for="(rule, i) in opsRules" :key="i">{{ rule }}</li>
+                </ul>
+                <p class="mt-2 text-xs text-gray-500">
+                    完整規則：<code>docs/aaaaa/dev/dev_v19/E1_ops_rules_and_handoff.md</code>
+                </p>
+            </div>
+            <p class="text-xs text-gray-500">
+                長文：USAGE（repo
+                <code>docs/aaaaa/dev/USAGE_l1_contract_lab.md</code>）· LAB 指南（
+                <code>docs/work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md</code>）
+            </p>
+        </section>
+
+        <!-- 詞彙 -->
+        <section v-else-if="active === 'glossary'" class="space-y-4">
+            <div>
+                <h2 class="text-lg font-semibold">專有名詞白話</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    左側是文件／程式裡常見的詞；右側用口語解釋。函式名保持英文方便搜尋。完整表見 LAB
+                    指南 §2。
+                </p>
+            </div>
+            <ul
+                class="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+            >
+                <li
+                    v-for="g in glossary"
+                    :key="g.term"
+                    class="grid gap-1 px-3 py-2.5 sm:grid-cols-[minmax(7rem,11rem)_minmax(0,1fr)] sm:gap-x-4 sm:gap-y-0"
+                >
+                    <div
+                        class="shrink-0 text-sm font-semibold whitespace-nowrap text-gray-900 dark:text-gray-100"
+                    >
+                        {{ g.term }}
+                    </div>
+                    <p class="min-w-0 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                        {{ g.meaning }}
+                    </p>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 目錄 inventory -->
+        <section v-else-if="active === 'inventory'" class="space-y-4">
+            <div>
+                <h2 class="text-lg font-semibold">L1 API 目錄（Hub inventory）</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    長期邊界：layout utils ＋ layoutStore 公開 action ＋（可選）驗證／引擎。
+                    <strong>已列</strong>＝本頁版本表已有說明／可點測；
+                    <strong>待列</strong>＝後續週補定義表（本周只掛名）。 目前已列
+                    {{ inventoryCounts.listed }}／待列 {{ inventoryCounts.todo }}。
+                </p>
+            </div>
+            <div v-for="group in inventoryByArea" :key="group.area" class="space-y-2">
+                <h3 class="text-sm font-semibold tracking-wide text-gray-500 uppercase">
+                    {{ group.label }}
+                </h3>
+                <ul
+                    class="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+                >
+                    <li
+                        v-for="row in group.rows"
+                        :key="`${row.area}-${row.symbol}`"
+                        class="flex flex-col gap-1.5 px-3 py-2.5"
+                    >
+                        <div class="flex min-w-0 flex-wrap items-center gap-2">
+                            <span
+                                class="inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap"
+                                :class="
+                                    row.status === 'listed'
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                                        : 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                                "
+                            >
+                                {{ row.status === 'listed' ? '已列' : '待列' }}
+                            </span>
+                            <code
+                                class="min-w-0 font-mono text-xs font-semibold break-all text-blue-700 dark:text-blue-300"
+                            >
+                                {{ row.symbol }}
+                            </code>
+                        </div>
+                        <code
+                            class="block min-w-0 font-mono text-[11px] leading-snug break-all text-gray-500 dark:text-gray-400"
+                        >
+                            {{ row.module }}
+                        </code>
+                        <p class="min-w-0 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                            {{ row.note }}
+                        </p>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 總覽 -->
+        <section v-else-if="active === 'overview'" class="space-y-4">
+            <ul
+                class="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+            >
+                <li
+                    v-for="b in blocks"
+                    :key="b.version"
+                    class="cursor-pointer px-3 py-2.5 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
+                    @click="active = b.version"
+                >
+                    <div class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                        <span class="shrink-0 text-sm font-semibold whitespace-nowrap">{{
+                            b.version
+                        }}</span>
+                        <span class="min-w-0 text-sm text-gray-900 dark:text-gray-100">{{
+                            b.title
+                        }}</span>
+                        <code
+                            class="shrink-0 font-mono text-[11px] whitespace-nowrap text-gray-500"
+                            >{{ b.prs }}</code
+                        >
+                    </div>
+                    <p
+                        class="mt-1 min-w-0 text-sm leading-relaxed text-gray-600 dark:text-gray-400"
+                    >
+                        {{ b.oneLiner }}
+                    </p>
+                </li>
+            </ul>
 
             <div
                 class="rounded-lg border border-dashed border-gray-300 p-4 text-sm dark:border-gray-600"
@@ -551,7 +1052,13 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                     </li>
                     <li>落子預覽＝真落子答案：只信 <code>canPlaceDevice</code> 回傳</li>
                     <li>
-                        埠滑鼠熱區＝<code>hitTestPortAt</code>；規則錨點＝<code>canConnect</code>／findPortAt
+                        埠滑鼠熱區＝<code>hitTestPortAt</code>（緊貼埠對埠要傳
+                        <code>prefer</code>）；規則錨點＝<code>canConnect</code>／findPortAt
+                    </li>
+                    <li>
+                        連線折線＝<code>buildConnectionWaypoints</code>；間隙通道＝
+                        <code>buildGapConnectionWaypoints</code>；寫入＝
+                        <code>addPipeline</code>（內含 <code>canConnect</code>）
                     </li>
                     <li>
                         源素材寫 <code>layoutStore.setDevicePrimaryOutput</code>；讀引擎經
@@ -582,40 +1089,50 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                 </a>
             </div>
 
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                <table class="min-w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-xs text-gray-500 uppercase dark:bg-gray-800">
-                        <tr>
-                            <th class="px-3 py-2">符號</th>
-                            <th class="px-3 py-2">模組</th>
-                            <th class="px-3 py-2">用途</th>
-                            <th class="px-3 py-2">誰呼叫</th>
-                            <th class="px-3 py-2">不要</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="api in activeBlock.apis"
-                            :key="api.symbol"
-                            class="border-t border-gray-100 align-top dark:border-gray-800"
+            <ul
+                class="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+            >
+                <li
+                    v-for="api in activeBlock.apis"
+                    :key="api.symbol"
+                    class="flex flex-col gap-2 px-3 py-3"
+                >
+                    <div class="min-w-0 space-y-0.5">
+                        <code
+                            class="block font-mono text-xs font-semibold break-all text-blue-700 dark:text-blue-300"
                         >
-                            <td
-                                class="px-3 py-2 font-mono text-xs font-semibold text-blue-700 dark:text-blue-300"
+                            {{ api.symbol }}
+                        </code>
+                        <code
+                            class="block font-mono text-[11px] leading-snug break-all text-gray-500 dark:text-gray-400"
+                        >
+                            {{ api.module }}
+                        </code>
+                    </div>
+                    <dl class="grid gap-1.5 text-sm leading-relaxed">
+                        <div class="min-w-0">
+                            <dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                                用途
+                            </dt>
+                            <dd class="text-gray-800 dark:text-gray-200">{{ api.purpose }}</dd>
+                        </div>
+                        <div class="min-w-0">
+                            <dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                                誰呼叫
+                            </dt>
+                            <dd class="text-gray-600 dark:text-gray-400">{{ api.callers }}</dd>
+                        </div>
+                        <div class="min-w-0">
+                            <dt
+                                class="text-xs font-medium tracking-wide text-red-700/80 uppercase dark:text-red-300/80"
                             >
-                                {{ api.symbol }}
-                            </td>
-                            <td class="px-3 py-2 font-mono text-xs">{{ api.module }}</td>
-                            <td class="px-3 py-2">{{ api.purpose }}</td>
-                            <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
-                                {{ api.callers }}
-                            </td>
-                            <td class="px-3 py-2 text-red-700/90 dark:text-red-300/90">
-                                {{ api.dont }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                                不要
+                            </dt>
+                            <dd class="text-red-700/90 dark:text-red-300/90">{{ api.dont }}</dd>
+                        </div>
+                    </dl>
+                </li>
+            </ul>
 
             <div>
                 <h3 class="mb-2 text-sm font-semibold tracking-wide text-gray-500 uppercase">
