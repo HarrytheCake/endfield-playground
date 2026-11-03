@@ -1,11 +1,11 @@
 # Roadmap 大綱｜2026-08-23 → 2026-11-29
 
-**版本：** v1.24（2026-11-03；11/01 會議改派 W1102）
+**版本：** v1.25（2026-11-03；Device 分檔）
 **建立日期：** 2026-08-22
 **規劃：** aaaaa
 **守門與合入：** dernoson（主編）
 **上游來源：** 主編提出並確認的 ROADMAP v0.2（決策層原始文件，未公開；其內容已完整拆進本檔與 `detail/`）
-**狀態總覽：** **M1／M2 功能門檻成立。** **W1026 結算（11/03）：** [#78](https://github.com/dernoson/endfield-playground/pull/78)（C1 埠連線）與 [#81](https://github.com/dernoson/endfield-playground/pull/81)（C5 正式頁源素材）於 **10/31 合入**；[#82](https://github.com/dernoson/endfield-playground/pull/82)（L1 Hub／catalog）於 **11/02 合入**。**OPEN＝0。** **仍欠：** DeviceShape（MBD 有碼、**無 PR**）、P2 點選稿（paper 自報已交，**repo 0 提交、無 PR**）。旋轉／Delete **仍鎖**（#78 標題寫了旋轉，程式 diff 沒有 `rotateDevice`）。**W1102 已按 11/01 會議改派：** 右側產耗＝toby；供水邏輯＝harry；設備樣式＝goodmorning（請 paper 審）；源設備左欄稿＝paper；E005＝azure。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) v1.1。
+**狀態總覽：** **M1／M2 功能門檻成立。** **W1026 結算（11/03）：** [#78](https://github.com/dernoson/endfield-playground/pull/78)（C1 埠連線）與 [#81](https://github.com/dernoson/endfield-playground/pull/81)（C5 正式頁源素材）於 **10/31 合入**；[#82](https://github.com/dernoson/endfield-playground/pull/82)（L1 Hub／catalog）於 **11/02 合入**。**OPEN＝0。** **仍欠：** DeviceShape（MBD 有碼、**無 PR**）、P2 點選稿（paper 自報已交，**repo 0 提交、無 PR**）。旋轉／Delete **仍鎖**（#78 標題寫了旋轉，程式 diff 沒有 `rotateDevice`）。**W1102 v1.2：** 右側產耗＝toby；供水邏輯＝harry；設備樣式＝MBD（vue）與 goodmorning（故事）同一張 PR，paper 審；源設備左欄稿＝paper；E005＝azure。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md)。
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 
@@ -112,12 +112,12 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | **不改什麼？** | **不是**捨棄 Vue.js；流程視角可續用 Vue Flow；右側 Stats／detector 純函式不因換殼重寫 |
 | **為何改？** | Vue Flow 節點盒限制 paper 稿 1:1 落地；佔格／port／管線與資料模型長期分叉；8/30 主編：不提前則設計 UI「沒地方擺」 |
 | **為何提前？** | **已定案提前開工**（8/30–31）。評估與閘門：[EARLY_START](../aaaaa/LAYOUT_REWRITE_EARLY_START_0831.md) |
-| **優先序** | **2026-11-03 會議：** ① 右側產耗（toby，[W1102-T1](../work_dispatch/toby/1102/W1102-T1_stats_panel.md)）→ ② 供水邏輯（harry）與設備樣式（goodmorning，paper 審）→ ③ 源設備左欄稿、E005 |
+| **優先序** | **2026-11-03：** ① 右側產耗（toby，[W1102-T1](../work_dispatch/toby/1102/W1102-T1_stats_panel.md)）→ ② 供水邏輯（harry）與設備樣式（MBD 的 vue、goodmorning 的故事，paper 審）→ ③ 源設備左欄稿、E005 |
 | **卡住誰？** | **已解：** store、容器、viewport、點擊落子、C2 L1、換殼、無邊界、出界、`hitTestPortAt`、拖曳 #67、左面板 #75、C5 寫入 #72、引擎讀 #74、C5 驗收鏈 #79、PipelineShape #68、**C1 L2 UI #78**、**C5 正式頁表單 #81**、折線套用隨 #78 的 `connectionWaypoints`。**仍鎖：** 旋轉、Delete。**仍等：** DeviceShape、P2。**不卡：** B1、D1 空狀態 |
 | **關鍵路徑** | **#78 已離開關鍵路徑。** 本週右側產耗派給 toby。11/29 整項門檻仍在；本週未交不改派加時 |
 | **誰做 L1？** | aaaaa；store＝#45；契約＝#51；出界＝#60；埠命中＝#65；C5 寫入＝#72；引擎讀＝#74 |
 | **L2 解鎖** | **2026-09-23：** 點擊落子。**2026-10-04 追加：** 管線點選變藍＋左設備面板。旋轉／Delete 仍鎖。原則不變——底層就緒不等於自動解鎖 |
-| **L2 檔案切分** | 鎖表見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) §2.2。產耗三檔＝toby；供水寫入＝harry；`DeviceShape`＝goodmorning |
+| **L2 檔案切分** | 鎖表見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) §2.2。產耗三檔＝toby；供水寫入＝harry；`DeviceShape.vue`＝MBD；故事＝goodmorning |
 | **視角切換器** | 照稿；**工程仍未派**。casey 本週只弄清設計現況，不畫這顆 |
 | **誰不做？** | dernoson 不兼功能。本週右側產耗＝toby（W1102-T1），不是 shirone |
 
@@ -389,7 +389,8 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 | 版 | 日期 | 說明 |
 |----|------|------|
-| **v1.24** | **2026-11-03** | **11/01 會議改派 W1102：** 右側產耗＝toby；供水邏輯＝harry；設備樣式＝goodmorning（paper 審）；源設備左欄＝paper；E005＝azure；casey 只了解設計現況。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) v1.1 |
+| **v1.25** | **2026-11-03** | **Device 分檔：** 其餘 W1102 照 v1.1 核准。MBD 續寫 `DeviceShape.vue`，goodmorning 寫故事並開同一張 PR。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) v1.2 |
+| **v1.24** | **2026-11-03** | **11/01 會議改派 W1102：** 右側產耗＝toby；供水邏輯＝harry；設備樣式曾只寫 goodmorning；源設備左欄＝paper；E005＝azure；casey 只了解設計現況。 |
 | **v1.23** | **2026-11-03** | **W1102 送審稿（已被 v1.24 取代）：** 右側產耗曾寫 harry；DeviceShape 曾寫 MBD；折線核對曾寫 toby。 |
 | **v1.22** | **2026-11-03** | **W1026 結算：** #78、#81 合（10/31），#82 合（11/02），OPEN＝0。DeviceShape 有碼無 PR；P2 自報已交但 git 為 0。旋轉／Delete 仍鎖。**不含 W1102 派工。** |
 | **v1.21** | **2026-10-27** | **W1018 結算＋W1026 派工：** #79 合；**#78 OPEN（C1 L2 UI）**；DeviceShape／P2 部分未過。本週＝**toby 收斂 #78**＋aaaaa tutorial／Lab＋MBD DeviceShape＋paper P2＋harry **C5 源素材表單**。**avery 退出協作，不再派工。** 見 [WEEK_20261026](../work_dispatch/WEEK_20261026.md) |

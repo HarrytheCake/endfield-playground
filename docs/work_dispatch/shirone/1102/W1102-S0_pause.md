@@ -22,7 +22,7 @@
 ## 2. 本週別碰
 
 - `ProductionStats.vue`、`StatsPanel/*`（toby）
-- `shapes/DeviceShape*`（goodmorning）
+- `DeviceShape.vue`（MBD）、`DeviceShape.stories.ts`（goodmorning）
 - `setDevicePrimaryOutput`（harry）
 - `GridCanvas`／`LayoutView`／`MainLayout`
 - E005 的驗證檔（azure）
