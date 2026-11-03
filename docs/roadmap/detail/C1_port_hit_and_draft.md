@@ -5,11 +5,11 @@
 | 對應大綱 | [ROADMAP_OUTLINE.md](../ROADMAP_OUTLINE.md) §5 |
 | 里程碑 | M3（2026-10-25）；首次可演示 10/4 |
 | 擋門檻 | **是**（主編步驟 3 的入口） |
-| 建議主責／備援 | **L2＝toby**（[#78](https://github.com/dernoson/endfield-playground/pull/78) OPEN；[W1026-T0](../../work_dispatch/toby/1026/W1026-T0_pr78_update.md)）／aaaaa 命中判定（**#65 已合**） |
+| 建議主責／備援 | **L2＝toby**（[#78](https://github.com/dernoson/endfield-playground/pull/78) **已合 10/31**）／aaaaa 命中判定（**#65 已合**） |
 | 性質 | 接線（L2） |
 | 依賴 | [A2](./A2_grid_and_port_alignment.md)、[B2](./B2_placement_chain.md)、[B3](./B3_rotation_90.md) |
-| 狀態 | `[~]` L1 命中 #65、拖曳 #67 已合；**L2 C1 UI＝[#78](https://github.com/dernoson/endfield-playground/pull/78) OPEN** |
-| 最後更新 | **2026-10-27**（W1018 結算；W1026 收斂 #78） |
+| 狀態 | `[~]` L1 命中 #65、拖曳 #67 已合；**L2 C1 UI＝[#78](https://github.com/dernoson/endfield-playground/pull/78) 已合（10/31）**。§9 DoD 未逐條勾 |
+| 最後更新 | **2026-11-03**（W1026 結算） |
 
 ---
 
@@ -137,6 +137,11 @@ hitTestPortAt(point, devices, getMachine?) →
 **未交頂替：** 無。本項是 10/25 門檻的必要條件；owner＝toby。若 10/18 週仍趕不上，砍到「只支援水平／垂直相鄰兩台的直線連線」（PR #66 B-2）。
 
 ## 11. 開發日誌
+
+### 2026-11-03
+- [#78](https://github.com/dernoson/endfield-playground/pull/78) **MERGED 10/31**。程式檔：`LayoutView.vue`、`GridCanvas.vue`、`MainLayout.vue`、`connectionWaypoints.ts`＋測試。標題寫「設備旋轉」，diff 沒有 `rotateDevice`；R-B3 不因這張 PR 解鎖
+- 週報：toby 3–5h，自報已完成。與合入一致
+- §9 仍全是未勾。本結算只記合入，不代勾 DoD
 
 ### 2026-10-27
 - L2 UI 在 **PR #78 OPEN**（埠連線／斷線警示等）；本週工單 [W1026-T0](../../work_dispatch/toby/1026/W1026-T0_pr78_update.md)

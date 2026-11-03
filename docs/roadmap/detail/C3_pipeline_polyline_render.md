@@ -8,8 +8,8 @@
 | 建議主責／備援 | 幾何套用＝**toby（W1018 加分）**；視覺元件＝shirone `PipelineShape`（**#68 已合**）／DeviceShape＝MBD（W1018） |
 | 性質 | 畫面（L3）＋L2 掛載 |
 | 依賴 | [C1](./C1_port_hit_and_draft.md)、[C2](./C2_add_connection_contract.md) |
-| 狀態 | `[~]` 幾何 #56、PipelineShape #68 已合；**GridCanvas 套用仍欠**（W1018 toby 加分；否則視覺降級） |
-| 最後更新 | **2026-10-19** |
+| 狀態 | `[~]` 幾何 #56、PipelineShape #68 已合；**`connectionWaypoints` 隨 #78 合入（10/31）**。§9 DoD 未逐條核對 |
+| 最後更新 | **2026-11-03** |
 
 ---
 
@@ -129,6 +129,11 @@ buildPipelinePath(from: PortAnchor, to: PortAnchor) → Point[]
 **未交頂替：** 可用 Vue Flow 內建的 `step`／`smoothstep` 邊型頂替，門檻仍成立（有 90 度彎），但埠垂直出發的細節會不精確，記為技術債。
 
 ## 11. 開發日誌
+
+### 2026-11-03
+- #78 帶進 `src/utils/layout/connectionWaypoints.ts` 與 `connectionWaypoints.test.ts`，並改了 `GridCanvas`／`LayoutView`
+- 不把 §9 的直角、垂直出發、invalid 紅色勾成完成。只記程式已進 master
+- 11/01 會議把 toby 改去右側產耗。折線核對不在 W1102。旋轉／Delete 仍不放行
 
 ### 2026-08-22
 - 建檔。刻意拆為純函式＋純畫面，讓本項可派給非 L2 人力，緩解連線月的 L2 瓶頸
