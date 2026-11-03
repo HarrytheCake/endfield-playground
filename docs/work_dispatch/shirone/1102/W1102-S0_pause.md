@@ -7,7 +7,7 @@
 | 擋門檻 | 否；不計完成率 |
 | 狀態 | `[x]` 暫停成立 |
 | 時數 | 本週未填週報；預計 **11 月中～11 月底** 回歸 |
-| 上游 | [WEEK_20261102](../../WEEK_20261102.md)、上週 [W1026-S0](../1026/W1026-S0_pause.md) |
+| 上游 | [WEEK_20261102](../../WEEK_20261102.md) v1.1、上週 [W1026-S0](../1026/W1026-S0_pause.md) |
 
 ---
 
@@ -21,9 +21,9 @@
 
 ## 2. 本週別碰
 
-- `ProductionStats.vue`、`StatsPanel/Index.vue`、`ItemSummaryTable.vue`
-- `shapes/DeviceShape*`
-- `connectionWaypoints.ts`、`GridCanvas.vue`
-- `LayoutView`／`MainLayout`
-- `layoutStore`／`editorStore` 簽名
+- `ProductionStats.vue`、`StatsPanel/*`（toby）
+- `shapes/DeviceShape*`（goodmorning）
+- `setDevicePrimaryOutput`（harry）
+- `GridCanvas`／`LayoutView`／`MainLayout`
+- E005 的驗證檔（azure）
 - 試玩畫面

@@ -5,8 +5,8 @@
 | 週次 | 2026-11-02 → 2026-11-08 |
 | 等級 | **確定**（決策／合入，不兼功能） |
 | 擋門檻 | 否 |
-| 上游 | [WEEK_20261102](../../WEEK_20261102.md) |
-| 待審上限 | ≤3（現況 OPEN＝0） |
+| 上游 | [WEEK_20261102](../../WEEK_20261102.md) v1.1、[#83](https://github.com/dernoson/endfield-playground/pull/83#issuecomment-6593699951) |
+| 待審上限 | ≤3 |
 | 時數 | 自報 **≤2h** |
 
 ---
@@ -15,26 +15,26 @@
 
 | # | 裁示 | 閘門含義 |
 |---|------|----------|
-| 旋轉／Delete | **仍退** | 側支若夾帶，拆出。不默許放行 |
-| harry | 只合產耗切片 | `dev/cake_toolbar`、`dev/cake_machinecard` 不併進 H1 |
-| aaaaa | 只合開版文件 | 試玩畫面本週不收 |
-| toby | 沒有斜線就不必有 PR | 有 PR 時只准折線，不准旋轉／Delete |
+| 11/01 會議 | 負責人以上週總表 v1.1 為準 | v1.0 草稿（harry 做產耗、toby 核折線）不收 |
+| 旋轉／Delete | **仍退** | 側支若夾帶，拆出 |
+| goodmorning | 樣式 PR 請 paper 看過再合 | paper 這週沒留話就先不合，不改派別人 |
+| harry | 只合供水邏輯 | 不併 `cake_toolbar`／`cake_machinecard`／`cake_prodstats` |
+| azure | E005 不上右側 | 右側是 toby |
 | 「已開 PR」 | 以 `gh` 為準 | 分支上有 commit 不算交 |
-| avery | **退出協作** | 不再發工 |
 
 ---
 
 ## 2. 合入序
 
-**M3（DeviceShape，若開出）→ H1（產耗）→ A0（文件）→ 其餘。**
+**T1（產耗）→ H1（供水）→ G1（樣式，等 paper 一句）→ Z1／A0。**
 
-| PR／分支 | 看什麼 |
-|----------|--------|
-| M3 | `DeviceShape` 根 `<g>`；無 Pinia；未改 `GridCanvas` |
-| H1 | 只動產耗三個檔；`ItemSummaryTable` 無 store；未改畫布與 store 簽名 |
+| PR | 看什麼 |
+|----|--------|
+| T1 | 只動產耗三個檔；表格元件無 store；未改畫布 |
+| H1 | `setDevicePrimaryOutput` 參數沒變；清水→`fluid_pipe`；未改左欄版面 |
+| G1 | `DeviceShape` 根 `<g>`；未改 `GridCanvas`；PR 上有 paper |
+| Z1 | 只有 E005；未改右側、未改簽名 |
 | A0 | 只有 `docs/aaaaa/dev`；沒有試玩畫面 |
-| T0 | 只有折線。有旋轉或 Delete 就退 |
-| Z0 | 有開才看。未改 `ValidationContext` 簽名、未改右側面板 |
 
 ---
 
@@ -42,8 +42,8 @@
 
 | 人 | 為什麼 | 問什麼 |
 |----|--------|--------|
-| MBD | 上週有碼未開 PR | 這週能否開出 |
-| harry | 本週主切片 | 產耗 PR 是否只用產耗提交 |
+| goodmorning | 會議要本週交樣式 | PR 開了沒、paper 看了沒 |
+| toby | 本週右側數據 | 產耗 PR 是否只動那三個檔 |
 
 暫停者不空 ping。不寫功能碼。
 
@@ -53,5 +53,5 @@
 
 - [ ] OPEN ≤3
 - [ ] 旋轉／Delete 未被默許放行
-- [ ] 未合入 toolbar／machinecard 側支
+- [ ] 未把 v1.0 的舊負責人合進去
 - [ ] 未兼寫功能

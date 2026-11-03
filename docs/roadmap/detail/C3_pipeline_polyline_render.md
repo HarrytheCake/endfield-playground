@@ -133,7 +133,7 @@ buildPipelinePath(from: PortAnchor, to: PortAnchor) → Point[]
 ### 2026-11-03
 - #78 帶進 `src/utils/layout/connectionWaypoints.ts` 與 `connectionWaypoints.test.ts`，並改了 `GridCanvas`／`LayoutView`
 - 不把 §9 的直角、垂直出發、invalid 紅色勾成完成。只記程式已進 master
-- **W1102-T0** 只核對折線是否已是直角。不開新功能，不放行旋轉／Delete。見 [WEEK_20261102](../../work_dispatch/WEEK_20261102.md)
+- 11/01 會議把 toby 改去右側產耗。折線核對不在 W1102。旋轉／Delete 仍不放行
 
 ### 2026-08-22
 - 建檔。刻意拆為純函式＋純畫面，讓本項可派給非 L2 人力，緩解連線月的 L2 瓶頸

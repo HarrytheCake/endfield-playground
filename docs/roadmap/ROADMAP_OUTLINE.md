@@ -1,11 +1,11 @@
 # Roadmap 大綱｜2026-08-23 → 2026-11-29
 
-**版本：** v1.23（2026-11-03；W1102 派工）
+**版本：** v1.24（2026-11-03；11/01 會議改派 W1102）
 **建立日期：** 2026-08-22
 **規劃：** aaaaa
 **守門與合入：** dernoson（主編）
 **上游來源：** 主編提出並確認的 ROADMAP v0.2（決策層原始文件，未公開；其內容已完整拆進本檔與 `detail/`）
-**狀態總覽：** **M1／M2 功能門檻成立。** **W1026 結算（11/03）：** [#78](https://github.com/dernoson/endfield-playground/pull/78)（C1 埠連線）與 [#81](https://github.com/dernoson/endfield-playground/pull/81)（C5 正式頁源素材）於 **10/31 合入**；[#82](https://github.com/dernoson/endfield-playground/pull/82)（L1 Hub／catalog）於 **11/02 合入**。**OPEN＝0。** **仍欠：** DeviceShape（MBD 有碼、**無 PR**）、P2 點選稿（paper 自報已交，**repo 0 提交、無 PR**）。旋轉／Delete **仍鎖**（#78 標題寫了旋轉，程式 diff 沒有 `rotateDevice`）。**W1102 已派：** 右側產耗 11/01 切片＝harry；DeviceShape 開 PR＝MBD；P2＝paper；折線核對＝toby（加分）。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md)。
+**狀態總覽：** **M1／M2 功能門檻成立。** **W1026 結算（11/03）：** [#78](https://github.com/dernoson/endfield-playground/pull/78)（C1 埠連線）與 [#81](https://github.com/dernoson/endfield-playground/pull/81)（C5 正式頁源素材）於 **10/31 合入**；[#82](https://github.com/dernoson/endfield-playground/pull/82)（L1 Hub／catalog）於 **11/02 合入**。**OPEN＝0。** **仍欠：** DeviceShape（MBD 有碼、**無 PR**）、P2 點選稿（paper 自報已交，**repo 0 提交、無 PR**）。旋轉／Delete **仍鎖**（#78 標題寫了旋轉，程式 diff 沒有 `rotateDevice`）。**W1102 已按 11/01 會議改派：** 右側產耗＝toby；供水邏輯＝harry；設備樣式＝goodmorning（請 paper 審）；源設備左欄稿＝paper；E005＝azure。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) v1.1。
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
 
@@ -90,7 +90,7 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 **讀法：** 上面是使用者功能軸；右邊是技術前置軸。兩邊都要動，但**門檻必要項在殼落地前只能押在左邊不依賴畫布的塊**（本月＝B1）與右邊的 **L1 純函式／契約**。store 已交未合時，**不以「分支有 store」假裝 B2 已解**。
 
-**2026-11-03 更新：W1026 結算——#78、#81 合，#82 合，OPEN＝0。** **未齊：** DeviceShape（無 PR）、P2（無 git）。**解鎖仍是裁決：** 旋轉／Delete 仍鎖。**W1102 已派：** 11/01 的 D1 切片見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md)。
+**2026-11-03 更新：W1026 結算——#78、#81 合，#82 合，OPEN＝0。** **未齊：** DeviceShape（無 PR）、P2（無 git）。**解鎖仍是裁決：** 旋轉／Delete 仍鎖。**W1102 v1.1（11/01 會議）：** 右側產耗改派 toby。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md)。
 
 ### 1.5 里程碑一覽
 
@@ -112,14 +112,14 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | **不改什麼？** | **不是**捨棄 Vue.js；流程視角可續用 Vue Flow；右側 Stats／detector 純函式不因換殼重寫 |
 | **為何改？** | Vue Flow 節點盒限制 paper 稿 1:1 落地；佔格／port／管線與資料模型長期分叉；8/30 主編：不提前則設計 UI「沒地方擺」 |
 | **為何提前？** | **已定案提前開工**（8/30–31）。評估與閘門：[EARLY_START](../aaaaa/LAYOUT_REWRITE_EARLY_START_0831.md) |
-| **優先序** | **2026-11-03：** ① D1 的 11/01 切片（harry，[W1102-H1](../work_dispatch/harry/1102/W1102-H1_d1_item_summary.md)）→ ② DeviceShape 開 PR、P2 交可核對的稿 → ③ 折線核對（加分，不開新功能） |
+| **優先序** | **2026-11-03 會議：** ① 右側產耗（toby，[W1102-T1](../work_dispatch/toby/1102/W1102-T1_stats_panel.md)）→ ② 供水邏輯（harry）與設備樣式（goodmorning，paper 審）→ ③ 源設備左欄稿、E005 |
 | **卡住誰？** | **已解：** store、容器、viewport、點擊落子、C2 L1、換殼、無邊界、出界、`hitTestPortAt`、拖曳 #67、左面板 #75、C5 寫入 #72、引擎讀 #74、C5 驗收鏈 #79、PipelineShape #68、**C1 L2 UI #78**、**C5 正式頁表單 #81**、折線套用隨 #78 的 `connectionWaypoints`。**仍鎖：** 旋轉、Delete。**仍等：** DeviceShape、P2。**不卡：** B1、D1 空狀態 |
-| **關鍵路徑** | **#78 已離開關鍵路徑。** 本週是 D1 的 11/01 切片（右側產耗），派給 harry。11/29 整項門檻仍在；本週未交不改派加時 |
+| **關鍵路徑** | **#78 已離開關鍵路徑。** 本週右側產耗派給 toby。11/29 整項門檻仍在；本週未交不改派加時 |
 | **誰做 L1？** | aaaaa；store＝#45；契約＝#51；出界＝#60；埠命中＝#65；C5 寫入＝#72；引擎讀＝#74 |
 | **L2 解鎖** | **2026-09-23：** 點擊落子。**2026-10-04 追加：** 管線點選變藍＋左設備面板。旋轉／Delete 仍鎖。原則不變——底層就緒不等於自動解鎖 |
-| **L2 檔案切分** | 鎖表見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) §2.2。產耗三檔＝harry；`DeviceShape`＝MBD；折線檔＝toby |
-| **視角切換器** | [W1102-K0](../work_dispatch/casey/1102/W1102-K0_view_switch_sketch.md) 只交靜態兩顆按鈕稿（casey）。**工程仍未派** |
-| **誰不做？** | dernoson 不兼功能。本週右側產耗＝harry（W1102-H1），不是 shirone |
+| **L2 檔案切分** | 鎖表見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) §2.2。產耗三檔＝toby；供水寫入＝harry；`DeviceShape`＝goodmorning |
+| **視角切換器** | 照稿；**工程仍未派**。casey 本週只弄清設計現況，不畫這顆 |
+| **誰不做？** | dernoson 不兼功能。本週右側產耗＝toby（W1102-T1），不是 shirone |
 
 首次派工影響分析（8/25）：[LAYOUT_REWRITE_DISPATCH_IMPACT_0825](../aaaaa/LAYOUT_REWRITE_DISPATCH_IMPACT_0825.md)。
 
@@ -262,7 +262,7 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 | **10/18** | **C1 UI＋M3 彩排（必要）** | **已結算（10/27）：** C1＝**#78 OPEN**；C5 驗收 **#79 合**；DeviceShape／P2 未過。見 [WEEK_20261018](../work_dispatch/WEEK_20261018.md) |
 
 | **10/25** | **M3 結算＋#78 合入週** | **已結算（11/03）。** #78、#81 合；#82 合；DeviceShape 無 PR；P2 無 git。見 [WEEK_20261026](../work_dispatch/WEEK_20261026.md) |
-| 11/01 | D1 | 右側產耗表接 `itemSummary`，空產線有一句空狀態。**派工中：** [W1102-H1](../work_dispatch/harry/1102/W1102-H1_d1_item_summary.md)。四種空狀態仍是 11/08。`dev/cake_prodstats` 無 PR，不算已交 |
+| 11/01 | D1 | 右側產耗表接 `itemSummary`，空產線有一句空狀態。**派工中：** [W1102-T1](../work_dispatch/toby/1102/W1102-T1_stats_panel.md)（11/01 會議自 harry 改派）。四種空狀態仍是 11/08 |
 | 11/08 | D2 | 兩台重疊 → 右側一條訊息。**E001 純函式＋dev 頁已就位**；缺右側 Tips |
 | 11/15 | D3 | 缺輸入或輸出、材料組合不符，至少一類上右側。**純函式段已於 10/04 週提前（W1004-Z1）**，本週只剩「上右側」 |
 | 11/22 | D4、D5 | JSON 匯出下載；匯入還原；**驗收劇本彩排一次**。**D4 格式已於 2026-09-19 重訂完成**（v2；舊檔不讀） |
@@ -389,7 +389,8 @@ R-E 跨月支撐（貫穿；含人力／門檻縮小裁示）
 
 | 版 | 日期 | 說明 |
 |----|------|------|
-| **v1.23** | **2026-11-03** | **W1102 派工：** 右側產耗 11/01 切片＝harry；DeviceShape 開 PR＝MBD；P2＝paper；折線核對＝toby；試玩只開版＝aaaaa；視角切換靜態稿＝casey。旋轉／Delete 仍鎖。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) |
+| **v1.24** | **2026-11-03** | **11/01 會議改派 W1102：** 右側產耗＝toby；供水邏輯＝harry；設備樣式＝goodmorning（paper 審）；源設備左欄＝paper；E005＝azure；casey 只了解設計現況。見 [WEEK_20261102](../work_dispatch/WEEK_20261102.md) v1.1 |
+| **v1.23** | **2026-11-03** | **W1102 送審稿（已被 v1.24 取代）：** 右側產耗曾寫 harry；DeviceShape 曾寫 MBD；折線核對曾寫 toby。 |
 | **v1.22** | **2026-11-03** | **W1026 結算：** #78、#81 合（10/31），#82 合（11/02），OPEN＝0。DeviceShape 有碼無 PR；P2 自報已交但 git 為 0。旋轉／Delete 仍鎖。**不含 W1102 派工。** |
 | **v1.21** | **2026-10-27** | **W1018 結算＋W1026 派工：** #79 合；**#78 OPEN（C1 L2 UI）**；DeviceShape／P2 部分未過。本週＝**toby 收斂 #78**＋aaaaa tutorial／Lab＋MBD DeviceShape＋paper P2＋harry **C5 源素材表單**。**avery 退出協作，不再派工。** 見 [WEEK_20261026](../work_dispatch/WEEK_20261026.md) |
 | **v1.20** | **2026-10-19** | **W1011 結算＋W1018／M3 派工：** #67／#75／#48／#62／#64／#68／#70–72／#74／#76 合入；OPEN＝0。欠 DeviceShape／PowerPole／P2。本週＝**toby C1**＋aaaaa ≤2h 引擎讀驗收／lab＋MBD DeviceShape＋paper P2；三人 0h＋avery 空工單暫停。C5 引擎讀改記已合（#74）。見 [WEEK_20261018](../work_dispatch/WEEK_20261018.md) |
