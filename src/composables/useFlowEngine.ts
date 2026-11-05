@@ -19,7 +19,7 @@
  *   D9  runFlowEngine()                    — 主入口
  *
  * P1-E（Watch 觸發）:
- *   useFlowEngine() composable             — watch + useDebounceFn(runFlowEngine, 150)
+ *   useFlowEngine() composable             — watch + 可取消的 150ms 合併排程
  */
 
 import type {
@@ -41,8 +41,9 @@ import { useEditorStore } from '@/store/editorStore';
 import { useFlowStore } from '@/store/flowStore';
 import { useValidationStore } from '@/store/validationStore';
 import type { FactoryNode, FactoryEdge } from '@/types/graph';
+import type { TopologyResult } from '@/utils/layout/toTopology';
 import { watch } from 'vue';
-import { useDebounceFn } from '@vueuse/core';
+import { useTimeoutFn } from '@vueuse/core';
 
 // ─── 內部工具 ─────────────────────────────────────────────────────────────────
 
@@ -1316,22 +1317,24 @@ export function calcItemSummary(graph: FlowGraph): ItemSummary[] {
  * 副作用：寫入 `useFlowStore`（applyResult / isCalculating flag）。  \
  * 失敗時不 throw，僅 console.error 並重置 isCalculating。
  *
+ * @param topology 可選的正式拓撲；省略時沿用 editorStore，供既有 dev 入口使用
+ * @returns 結果寫入完成後結束的 Promise
+ *
  * @example
  * // 通常透過 useFlowEngine composable 自動觸發；
  * // 在 dev 測試頁可手動呼叫：
  * await runFlowEngine()
  */
-export async function runFlowEngine(): Promise<void> {
-    const editorStore = useEditorStore();
+export async function runFlowEngine(topology?: TopologyResult): Promise<void> {
+    /** 明確傳入的空拓撲也必須計算，避免退回舊 editorStore 的 mock 產線。 */
+    const { nodes, edges } = topology ?? useEditorStore();
     const flowStore = useFlowStore();
     const validationStore = useValidationStore();
 
     flowStore.$patch({ isCalculating: true });
 
     try {
-        const graph = buildGraph(editorStore.nodes, editorStore.edges, (uid) =>
-            validationStore.hasBlockingError(uid),
-        );
+        const graph = buildGraph(nodes, edges, (uid) => validationStore.hasBlockingError(uid));
         validateChains(graph);
         const sortedNodes = topologicalSort(graph);
         const edgeFlowsMap = propagateFlows(sortedNodes, graph);
@@ -1391,27 +1394,42 @@ export async function runFlowEngine(): Promise<void> {
  * 為了讓 FlowEngine 能用到最新的 validation 結果，**請先呼叫 `useValidation()` 再呼叫本函式**。
  *
  * 監聽策略：
- *   - 監聽目標：`editorStore.nodes` / `editorStore.edges` / `validationStore.alerts`
- *   - `immediate: true`：setup 時立即執行一次全量計算
+ *   - 監聽目標：指定拓撲來源（省略則沿用 editorStore）與 validationStore.alerts
+ *   - `immediate: true`：setup 時排程一次全量計算
  *   - `deep: true`：捕捉節點內部變動（配方更改、旋轉等）
- *   - `useDebounceFn(runFlowEngine, 150)`：150ms 防抄動，避免畫布快速操作時重複計算
+ *   - 可重啟的 150ms 計時器合併連續操作，scope 結束時自動取消，避免離頁後覆寫結果
+ *
+ * @param getTopology 響應式拓撲 getter；與 useValidation 共用同一來源
+ * @returns 使用同一來源的手動重算入口
  *
  * @example
  * // MainLayout.vue
  * useValidation()
  * useFlowEngine()
  */
-export function useFlowEngine() {
-    const editorStore = useEditorStore();
+export function useFlowEngine(getTopology?: () => TopologyResult) {
+    /** 舊頁面不傳來源時才讀 editorStore；正式頁不監聽舊 mock 資料。 */
+    const readTopology =
+        getTopology ??
+        (() => {
+            const editorStore = useEditorStore();
+            return { nodes: editorStore.nodes, edges: editorStore.edges };
+        });
+    /** 驗證結果變動也需重算，確保 blocking error 解除後會恢復產耗。 */
     const validationStore = useValidationStore();
-    const debouncedRun = useDebounceFn(runFlowEngine, 150);
+    /** 每次執行才讀最新拓撲，避免快速操作後仍計算舊快照。 */
+    const runCurrentTopology = () => runFlowEngine(readTopology());
+    /** VueUse 在 scope 結束時停止計時器，start 會重置先前的排程。 */
+    const { start: scheduleRun } = useTimeoutFn(runCurrentTopology, 150, { immediate: false });
 
-    watch(
-        // 同時監聽 nodes / edges 與 validation 結果
-        [() => editorStore.nodes, () => editorStore.edges, () => validationStore.alerts],
-        debouncedRun,
-        { deep: true, immediate: true },
-    );
+    /** 與驗證共用來源；單一排程合併拓撲與 alerts 的連續變更。 */
+    watch([readTopology, () => validationStore.alerts], () => scheduleRun(), {
+        deep: true,
+        immediate: true,
+    });
 
-    return { runFlowEngine };
+    return {
+        /** 立即以目前指定來源重算，不改變其他頁面的無參數入口。 */
+        runFlowEngine: runCurrentTopology,
+    };
 }

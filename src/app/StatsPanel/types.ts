@@ -34,6 +34,8 @@ export interface SingleTip {
 
 /** 產線總覽統計面板（StatsPanel）的 Props 定義 */
 export interface StatsPanelProps {
+    /** 正式畫布是否有設備；未傳時保留既有獨立預覽的行為。 */
+    hasDevices?: boolean;
     /** 電力消耗與供電統計數據 */
     power?: PowerData;
     /** 產能估算產品明細列表 */

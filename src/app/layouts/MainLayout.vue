@@ -3,18 +3,35 @@ import { computed, ref } from 'vue';
 import Navbar from '@/editor/navbar/Navbar.vue';
 import ToolbarPanel from '@/editor/toolbar/ToolbarPanel.vue';
 import LayoutView from '@/editor/layout/LayoutView.vue';
-import StatsPanel from '@/app/StatsPanel/Index.vue';
+import ProductionStats from '@/editor/stats/ProductionStats.vue';
 import MachineCard, { type MachineCardProps } from '@/app/MachineCard/Index.vue';
 import SourceOutputPanel from '@/editor/sourceOutput/SourceOutputPanel.vue';
 import { useLayoutStore } from '@/store/layoutStore';
+import { useFlowStore } from '@/store/flowStore';
 import type { PlacedDevice } from '@/types/layout';
 import { getMachineById } from '@/data/machines';
+import { getRecipesForMachine } from '@/data/products';
 import { resolveDisplayGrid } from '@/utils/portUtils';
-import { useFlowEngine } from '@/composables/useFlowEngine';
+import {
+    matchRecipeByInputs,
+    resolveMachineMode,
+    useFlowEngine,
+} from '@/composables/useFlowEngine';
 import { useValidation } from '@/composables/useValidation';
+import { toTopology } from '@/utils/layout/toTopology';
 
 /** 讀取已放置設備，供左側面板由選中 id 反查設備實例 */
 const layoutStore = useLayoutStore();
+
+/** 唯讀引擎算出的實際入料，用於呈現目前匹配的正式配方。 */
+const flowStore = useFlowStore();
+
+/** 驗證與引擎共用正式畫布的格子拓撲，不同步寫入舊 editorStore。 */
+const topology = computed(() => {
+    /** 沿用 store 的快照 API，避免把深層唯讀管線強制轉型成可變陣列。 */
+    const { devices, pipelines } = layoutStore.toSnapshot();
+    return toTopology(devices, pipelines, [...layoutStore.connections]);
+});
 
 /**
  * 目前選中的設備實例 id，`null` 表示未選取。  \
@@ -33,7 +50,7 @@ const selectedDevice = computed<PlacedDevice | null>(
 
 /**
  * 選中設備轉成 MachineCard 的 props；找不到設備或機器定義時為 `null`，面板隨之隱藏。  \
- * 尺寸取目前旋轉後的顯示長寬；配方清單本週不轉接，交給 MachineCard 的預設呈現。
+ * 尺寸取目前旋轉後的顯示長寬；正式配方依設備名稱及有效模式查詢，再映射為展示資料。
  */
 const selectedMachineCard = computed<MachineCardProps | null>(() => {
     const device = selectedDevice.value;
@@ -42,12 +59,34 @@ const selectedMachineCard = computed<MachineCardProps | null>(() => {
     if (!machine) return null;
     /** 與畫布共用旋轉後尺寸，避免選取面板仍顯示旋轉前長寬。 */
     const display = resolveDisplayGrid(machine.width, machine.height, device.rotation);
+    /** 與引擎沿用相同的缺省模式，避免面板混入其他模式的配方。 */
+    const mode = resolveMachineMode(device.machineType, device.machineMode);
+    const recipes = getRecipesForMachine(machine.name, mode);
+    /** 只讀實際正流量，避免把有連線但尚未供料的品項誤顯示成目前配方。 */
+    const incomingItems = new Set<string>();
+    for (const edge of topology.value.edges) {
+        if (edge.target !== device.id) continue;
+        const flow = flowStore.edgeFlows.get(edge.id);
+        if (flow && flow.rate > 0) incomingItems.add(flow.itemId);
+    }
+    /** 重用引擎的配方匹配規則；非法鏈路不顯示目前配方。 */
+    const matched = flowStore.invalidChainUids.has(device.id)
+        ? null
+        : matchRecipeByInputs(device.machineType, incomingItems, mode, device.environment);
     return {
         id: device.id,
         name: machine.name,
         sizeText: `${display.widthCells}×${display.heightCells}`,
         /** 負值（含 -1 資料未定義）不是耗電量，留給卡片顯示佔位符號 */
         power: machine.power >= 0 ? `${machine.power}kW` : undefined,
+        selectedRecipe: matched
+            ? `${matched.recipe.outputs.map((item) => item.itemId).join('、')}（${matched.recipe.timeSeconds}秒）`
+            : undefined,
+        formulas: recipes.map((recipe) => ({
+            duration: recipe.timeSeconds,
+            input: recipe.inputs.map((item) => ({ name: item.itemId, amount: item.quantity })),
+            output: recipe.outputs.map((item) => ({ name: item.itemId, amount: item.quantity })),
+        })),
     };
 });
 
@@ -61,10 +100,10 @@ const statsOpen = ref(true);
  * 啟動 CR-03 驗證監聽（藍圖變動時 sync 重跑所有 detector）。  \
  * 必須在 useFlowEngine() 之前呼叫，FlowEngine 才能讀到最新的 alerts。
  */
-useValidation();
+useValidation(() => topology.value);
 
 /** 啟動 CR-04 FlowEngine 監聽（watch + debounce 150ms） */
-useFlowEngine();
+useFlowEngine(() => topology.value);
 </script>
 
 <template>
@@ -112,7 +151,7 @@ useFlowEngine();
 
             <aside id="area-stats" class="area-stats" :class="{ 'is-collapsed': !statsOpen }">
                 <div class="area-stats__body">
-                    <StatsPanel />
+                    <ProductionStats overview />
                 </div>
             </aside>
         </div>

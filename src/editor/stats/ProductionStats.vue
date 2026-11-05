@@ -3,6 +3,20 @@ import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useFlowStore } from '@/store/flowStore';
 import { useEditorStore } from '@/store/editorStore';
+import { useLayoutStore } from '@/store/layoutStore';
+import StatsPanel from '@/app/StatsPanel/Index.vue';
+import type { SingleProductDetail } from '@/app/StatsPanel/types';
+
+/** 正式右欄使用現行展示面板；省略時保留舊 Inspector 的完整統計畫面。 */
+const props = defineProps<{
+    /** 是否以現行右欄總覽呈現；預設 false 以相容舊 Inspector 呼叫端。 */
+    overview?: boolean;
+}>();
+
+/** 正式畫布的設備來源，空狀態不依賴引擎是否已有摘要。 */
+const layoutStore = useLayoutStore();
+/** 供展示層區分無設備與有設備但無摘要；不由 products 長度推定。 */
+const hasDevices = computed(() => layoutStore.devices.length > 0);
 
 /** FlowEngine 計算結果 store：本面板所有統計數字的資料來源 */
 const flowStore = useFlowStore();
@@ -26,6 +40,19 @@ const {
     warehouseCapacity,
     warehouseEstimates,
 } = storeToRefs(flowStore);
+
+/** 僅映射展示欄位，保留中間物與零淨值，不在容器重算產耗。 */
+const products = computed<SingleProductDetail[]>(() =>
+    itemSummary.value.map((item) => ({
+        id: item.itemId,
+        name: item.name,
+        produce: item.produced,
+        consume: item.consumed,
+        profit: item.net,
+        /** 正式產線直接顯示產出與消耗，避免零淨值讓使用者誤以為沒有產能。 */
+        isExpanded: true,
+    })),
+);
 
 /** 解構 flowStore 的 action，供調度券兌換率與倉庫容量輸入框直接呼叫 */
 const { setTicketRate, setWarehouseCapacity } = flowStore;
@@ -232,7 +259,8 @@ function applyPlanRates(): void {
 </script>
 
 <template>
-    <div class="space-y-4 text-sm text-zinc-200">
+    <StatsPanel v-if="props.overview" :products="products" :has-devices="hasDevices" />
+    <div v-else class="space-y-4 text-sm text-zinc-200">
         <!-- G2：整體電力統計 -->
         <section>
             <h4 class="mb-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase">

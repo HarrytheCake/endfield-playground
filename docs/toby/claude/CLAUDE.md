@@ -125,4 +125,14 @@
 **Agents**（`.claude/agents/`，用 Task／Agent 呼叫）：
 
 - `dependency-grapher`：畫指定範圍的模組相依圖（Mermaid），只讀程式碼、只寫 markdown，不改原始碼
-- `test-writer`：建立或更新 Vitest 單元測試，測試檔鏡射到 `src/__tests__/`
+- `test-writer`：建立或更新 Vitest 單元測試；既有共用測試維持 `src/__tests__/`，Toby 新增的測試依第 10 節放在 `docs/toby/test/`
+
+---
+
+## 10. Toby 測試檔放置規則
+
+- Toby 新增的測試檔統一放在 `docs/toby/test/`，使用 `*.test.ts` 命名；既有共用測試不另行搬移。
+- 正式畫布與引擎接線整合測試位置為 `docs/toby/test/layoutFlowWiring.test.ts`。
+- 測試透過 `@/` 匯入 `src/` 正式程式；不要為搬移而複製正式邏輯或改用假配方。
+- `pnpm test` 仍須執行此目錄內的測試；可用 `pnpm exec vitest run docs/toby/test/layoutFlowWiring.test.ts` 單獨驗證接線。
+- `tsconfig.app.json` 應包含 `docs/toby/test/**/*.ts`，保留測試的型別檢查。此目錄不在既有格式檢查腳本範圍，修改後另執行 `pnpm exec prettier --check docs/toby/test/`。
