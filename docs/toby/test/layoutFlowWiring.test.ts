@@ -12,6 +12,7 @@ import { toTopology } from '@/utils/layout/toTopology';
 import { resolveConnections } from '@/utils/layout/resolveConnections';
 import type { LayoutSnapshot } from '@/types/layout';
 import type { ValidationContext } from '@/types/validation';
+import * as machineData from '@/data/machines';
 
 /**
  * 建立可由正式 resolveConnections 自動解出兩段 belt 的產線。
@@ -97,6 +98,7 @@ describe('正式 layout 產耗接線', () => {
 
     afterEach(() => {
         scope.stop();
+        vi.restoreAllMocks();
         vi.useRealTimers();
     });
 
@@ -114,12 +116,14 @@ describe('正式 layout 產耗接線', () => {
             ),
         );
         expect(flow.itemSummary.length).toBeGreaterThan(0);
+        expect(flow.totalPowerDemand).toBe(5);
 
         scope.run(startLayoutWiring);
         await vi.advanceTimersByTimeAsync(150);
 
         expect(flow.itemSummary).toEqual([]);
         expect(flow.edgeFlows.size).toBe(0);
+        expect(flow.totalPowerDemand).toBe(0);
         expect(editor.nodes).toBe(oldNodes);
         expect(editor.edges).toBe(oldEdges);
     });
@@ -172,6 +176,7 @@ describe('正式 layout 產耗接線', () => {
         await vi.advanceTimersByTimeAsync(150);
         const flow = useFlowStore();
         expect(flow.itemSummary.some((item) => item.itemId === '源石粉末')).toBe(true);
+        expect(flow.totalPowerDemand).toBe(5);
 
         const disconnected = productionSnapshot();
         disconnected.pipelines = [];
@@ -180,12 +185,14 @@ describe('正式 layout 產耗接線', () => {
         await vi.advanceTimersByTimeAsync(150);
         expect(flow.edgeFlows.size).toBe(0);
         expect(flow.itemSummary.some((item) => item.itemId === '源石粉末')).toBe(false);
+        expect(flow.totalPowerDemand).toBe(5);
 
         layout.loadSnapshot({ devices: [], pipelines: [] });
         await nextTick();
         await vi.advanceTimersByTimeAsync(150);
         expect(flow.itemSummary).toEqual([]);
         expect(flow.nodeEfficiencies.size).toBe(0);
+        expect(flow.totalPowerDemand).toBe(0);
     });
 
     it('驗證使用格子座標且同步更新，錯誤封鎖與解除後引擎跟著更新', async () => {
@@ -256,6 +263,135 @@ describe('正式 layout 產耗接線', () => {
         scope.stop();
         await vi.advanceTimersByTimeAsync(300);
         expect(apply).not.toHaveBeenCalled();
+    });
+
+    it('未連線的多台設備逐台加總額定耗電', async () => {
+        const layout = useLayoutStore();
+        const snapshot = productionSnapshot();
+        snapshot.pipelines = [];
+        snapshot.devices.push(
+            {
+                id: 'shaper',
+                machineType: 'shaping_machine',
+                position: { x: 20, y: 0, z: 0 },
+                rotation: 0,
+            },
+            {
+                id: 'crusher-2',
+                machineType: 'crusher',
+                position: { x: 30, y: 0, z: 0 },
+                rotation: 0,
+            },
+        );
+        layout.loadSnapshot(snapshot);
+        scope.run(startLayoutWiring);
+        await vi.advanceTimersByTimeAsync(150);
+
+        const flow = useFlowStore();
+        expect(flow.itemSummary).toEqual([]);
+        expect(flow.totalPowerDemand).toBe(20);
+        expect(flow.totalPowerSupply).toBe(0);
+    });
+
+    it('被阻擋的設備仍計入耗電，零值、未定義值與未知設備不增加需求', async () => {
+        const snapshot = productionSnapshot();
+        snapshot.pipelines = [];
+        snapshot.devices.push(
+            {
+                id: 'undefined-power',
+                machineType: 'gas_disperser',
+                position: { x: 20, y: 0, z: 0 },
+                rotation: 0,
+            },
+            {
+                id: 'unknown',
+                machineType: 'unknown_machine',
+                position: { x: 30, y: 0, z: 0 },
+                rotation: 0,
+            },
+        );
+        const blocked = vi.spyOn(useValidationStore(), 'hasBlockingError').mockReturnValue(true);
+        await runFlowEngine(toTopology(snapshot.devices, [], []));
+
+        const flow = useFlowStore();
+        expect(flow.nodeEfficiencies.size).toBe(0);
+        expect(flow.totalPowerDemand).toBe(5);
+        expect(flow.totalPowerSupply).toBe(0);
+        blocked.mockRestore();
+    });
+
+    it('依負值 power 逐台加總產電，驗證排除與刪除設備後結果仍正確', async () => {
+        /** 僅於測試模擬未來的發電資料，不修改正式熱能池額定值。 */
+        const resolve = machineData.resolveMachineDef;
+        vi.spyOn(machineData, 'resolveMachineDef').mockImplementation((type) => {
+            const def = resolve(type);
+            return def?.id === 'thermal_pool' ? { ...def, power: -125.5 } : def;
+        });
+        vi.spyOn(useValidationStore(), 'hasBlockingError').mockReturnValue(true);
+        const snapshot = productionSnapshot();
+        snapshot.pipelines = [];
+        snapshot.devices.push(
+            {
+                id: 'generator-1',
+                machineType: 'thermal_pool',
+                position: { x: 20, y: 0, z: 0 },
+                rotation: 0,
+            },
+            {
+                id: 'generator-2',
+                machineType: 'thermal_pool',
+                position: { x: 30, y: 0, z: 0 },
+                rotation: 0,
+            },
+            {
+                id: 'undefined-power',
+                machineType: 'gas_disperser',
+                position: { x: 40, y: 0, z: 0 },
+                rotation: 0,
+            },
+        );
+        await runFlowEngine(toTopology(snapshot.devices, [], []));
+        const flow = useFlowStore();
+        expect(flow.totalPowerDemand).toBe(5);
+        expect(flow.totalPowerSupply).toBe(251);
+        expect(flow.nodeEfficiencies.size).toBe(0);
+
+        snapshot.devices = snapshot.devices.filter((device) => device.id !== 'generator-2');
+        await runFlowEngine(toTopology(snapshot.devices, [], []));
+        expect(flow.totalPowerDemand).toBe(5);
+        expect(flow.totalPowerSupply).toBe(125.5);
+
+        await runFlowEngine({ nodes: [], edges: [] });
+        expect(flow.totalPowerDemand).toBe(0);
+        expect(flow.totalPowerSupply).toBe(0);
+    });
+
+    it('供料速率與素材清除不影響同設備集合的額定耗電', async () => {
+        const layout = useLayoutStore();
+        layout.loadSnapshot(productionSnapshot(15));
+        scope.run(startLayoutWiring);
+        await vi.advanceTimersByTimeAsync(150);
+        const flow = useFlowStore();
+        expect(flow.itemSummary.find((item) => item.itemId === '源石粉末')?.produced).toBe(15);
+        expect(flow.totalPowerDemand).toBe(5);
+
+        layout.setDevicePrimaryOutput('src', null);
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(150);
+        expect(flow.itemSummary).toEqual([]);
+        expect(flow.totalPowerDemand).toBe(5);
+    });
+
+    it('無參數入口包含未連線設備，並保留中文 label 與節點 id 的查詢相容性', async () => {
+        const editor = useEditorStore();
+        editor.nodes = [
+            { id: 'legacy-crusher', position: { x: 0, y: 0 }, data: { label: '粉碎機' } },
+            { id: 'shaping_machine', position: { x: 10, y: 0 } },
+        ];
+        editor.edges = [];
+        await runFlowEngine();
+        expect(useFlowStore().totalPowerDemand).toBe(15);
+        expect(useFlowStore().itemSummary).toEqual([]);
     });
 
     it('無參數 composable 與 runFlowEngine 仍使用舊 editorStore', async () => {

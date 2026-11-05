@@ -1311,8 +1311,8 @@ export function calcItemSummary(graph: FlowGraph): ItemSummary[] {
  * D9 — FlowEngine 主入口，串接 D2 → C1 → D3 → D6 → D7 → D8，寫入 useFlowStore。
  *
  * 電力統計：  \
- *   totalPowerDemand = Σ machineDef.power（power > 0 的有效設備）  \
- *   totalPowerSupply = 0（供電設備尚待 CR-01 定義）
+ *   totalPowerDemand = Σ machineDef.power（全部輸入設備中 power > 0 者，不依鏈路或效率折算）  \
+ *   totalPowerSupply = Σ |machineDef.power|（負值產電，排除 -1 未定義值；缺資料為 0）
  *
  * 副作用：寫入 `useFlowStore`（applyResult / isCalculating flag）。  \
  * 失敗時不 throw，僅 console.error 並重置 isCalculating。
@@ -1351,11 +1351,16 @@ export async function runFlowEngine(topology?: TopologyResult): Promise<void> {
             }
         }
 
+        /** 額定耗電涵蓋所有已擺放設備，包含被驗證排除而未進入 graph 的節點。 */
         let totalPowerDemand = 0;
-        for (const [, node] of graph.nodes) {
-            if (!node.isValid) continue;
-            const def = resolveMachineDef(node.machineType);
-            if (def && def.power > 0) totalPowerDemand += def.power;
+        /** 沿用 Machine.power 的負值產電契約，缺資料不推定無限供電。 */
+        let totalPowerSupply = 0;
+        for (const node of nodes) {
+            const machineType = node.data?.machineType ?? node.data?.label ?? node.id;
+            const def = resolveMachineDef(machineType);
+            if (!def || !Number.isFinite(def.power)) continue;
+            if (def.power > 0) totalPowerDemand += def.power;
+            else if (def.power < 0 && def.power !== -1) totalPowerSupply += -def.power;
         }
 
         const congestedEdges = new Set<string>();
@@ -1376,7 +1381,7 @@ export async function runFlowEngine(topology?: TopologyResult): Promise<void> {
             congestedEdges,
             invalidChainUids: graph.invalidSubgraphUids,
             totalPowerDemand,
-            totalPowerSupply: 0,
+            totalPowerSupply,
         };
         flowStore.applyResult(result);
     } catch (err) {

@@ -8,7 +8,7 @@ const props = withDefaults(
     defineProps<{
         /** 明確為 false 時隱藏上一輪摘要；任何空清單皆顯示空白提示。 */
         hasDevices?: boolean;
-        /** 電力消耗與供電統計數據 */
+        /** 耗電與供電唯讀統計數據 */
         power?: PowerData;
         /** 產能估算產品明細列表 */
         products?: SingleProductDetail[];
@@ -41,6 +41,12 @@ watch(
 /** 無設備時不顯示尚在等待引擎清除的上一輪品項。 */
 const visibleProducts = computed(() => (props.hasDevices === false ? [] : localProducts.value));
 
+/** 僅處理展示空值與非法數值；供電加總由引擎完成，沒有資料顯示 0。 */
+const powerSupply = computed(() => {
+    const total = props.power?.total ?? 0;
+    return Number.isFinite(total) && total > 0 ? total : 0;
+});
+
 /**
  * 切換本地產品副本的展開狀態，不修改 props。
  * @param index 目前顯示清單中的品項索引
@@ -51,14 +57,6 @@ const toggleExpand = (index: number) => {
         localProducts.value[index].isExpanded = !localProducts.value[index].isExpanded;
     }
 };
-
-/** 計算電力負載百分比（0 ~ 100），包含無資料與分母為零的保護 */
-const computedPercent = computed(() => {
-    if (!props.power) return 0;
-    if (props.power.percent !== undefined) return props.power.percent;
-    if (props.power.total <= 0) return 0;
-    return (props.power.used / props.power.total) * 100;
-});
 
 /** 調度券兌換效率顯示上限（6 位） */
 const NUMBER_DISPLAY_MAX = 999999;
@@ -118,37 +116,23 @@ const cutText = (text: string) => {
             整體統計
         </div>
 
-        <!-- 耗電量進度條 -->
+        <!-- 全部已擺放設備的額定耗電，由上層傳入引擎結果。 -->
         <div
             data-figma-id="2974:124"
             data-figma-name="power consumption"
-            class="relative mt-[16px] ml-[18px] h-[63px] w-[281px] shrink-0"
+            class="relative mt-[16px] ml-[18px] h-[51px] w-[281px] shrink-0"
         >
             <div
                 data-figma-id="2302:107"
-                data-figma-name="Text"
-                class="absolute top-0 left-0 text-[18px] leading-[21.096px] font-light whitespace-nowrap text-[#cfcfcf]"
+                class="text-[18px] leading-[21.096px] font-light text-[#cfcfcf]"
             >
                 總耗電量/供電量
             </div>
             <div
-                data-figma-id="2302:104"
-                data-figma-name="Bar"
-                class="absolute top-[28px] left-0 h-[10px] w-[281px] overflow-hidden rounded-[25px] bg-[#3c3c3c]"
-            >
-                <div
-                    data-figma-id="2302:106"
-                    data-figma-name="Bar"
-                    class="h-full rounded-[25px] bg-[#eefd1c] transition-all duration-300"
-                    :style="{ width: `${Math.min(100, Math.max(0, computedPercent))}%` }"
-                />
-            </div>
-            <div
                 data-figma-id="2302:132"
-                data-figma-name="Text"
-                class="absolute top-[44px] left-0 text-[16px] leading-[18.752px] font-light whitespace-nowrap text-[#a4a4a4]"
+                class="mt-[8px] text-[16px] leading-[18.752px] font-light break-words text-white"
             >
-                {{ power ? `${power.used}kW/${power.total}kW` : '-' }}
+                {{ power ? `${power.used} kW / ${powerSupply} kW` : '-' }}
             </div>
         </div>
 

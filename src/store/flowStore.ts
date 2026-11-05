@@ -38,10 +38,10 @@ export const useFlowStore = defineStore('flow', () => {
     const invalidChainUids = ref(new Set<string>());
 
     // ── 電力統計 ──────────────────────────────────────────────────────────────
-    /** 所有有效設備的總耗電量（kW）；power=-1 的設備暫計為 0 */
+    /** 全部已擺放設備的額定總耗電量（kW），不依鏈路或效率折算；僅加總正值 power */
     const totalPowerDemand = ref(0);
 
-    /** 所有供電設備（isSource 且有 power_output）的總供電量（kW） */
+    /** 全部已擺放設備的額定產電加總（kW），排除 power=-1；缺資料為 0。 */
     const totalPowerSupply = ref(0);
 
     // ── 元資料 ────────────────────────────────────────────────────────────────
@@ -207,9 +207,9 @@ export const useFlowStore = defineStore('flow', () => {
          * 這些節點不參與流量計算，畫布顯示灰色虛線。
          */
         invalidChainUids,
-        /** 所有有效設備的總耗電量（kW）；power=-1 的設備暫計為 0 */
+        /** 全部已擺放設備的額定總耗電量（kW），不依鏈路或效率折算；僅加總正值 power */
         totalPowerDemand,
-        /** 所有供電設備（isSource 且有 power_output）的總供電量（kW） */
+        /** 全部已擺放設備的額定產電加總（kW），排除 power=-1；缺資料為 0。 */
         totalPowerSupply,
         /** FlowEngine 計算中 flag，防止 UI 讀到中間狀態 */
         isCalculating,

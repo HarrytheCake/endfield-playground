@@ -5,7 +5,7 @@ import { useFlowStore } from '@/store/flowStore';
 import { useEditorStore } from '@/store/editorStore';
 import { useLayoutStore } from '@/store/layoutStore';
 import StatsPanel from '@/app/StatsPanel/Index.vue';
-import type { SingleProductDetail } from '@/app/StatsPanel/types';
+import type { PowerData, SingleProductDetail } from '@/app/StatsPanel/types';
 
 /** 正式右欄使用現行展示面板；省略時保留舊 Inspector 的完整統計畫面。 */
 const props = defineProps<{
@@ -26,8 +26,6 @@ const editorStore = useEditorStore();
 const {
     totalPowerDemand,
     totalPowerSupply,
-    powerBalance,
-    hasPowerShortage,
     edgeFlowCount,
     invalidChainCount,
     itemSummary,
@@ -40,6 +38,12 @@ const {
     warehouseCapacity,
     warehouseEstimates,
 } = storeToRefs(flowStore);
+
+/** 僅映射引擎的耗電／供電結果，不提供供電設定輸入。 */
+const power = computed<PowerData>(() => ({
+    used: totalPowerDemand.value,
+    total: totalPowerSupply.value,
+}));
 
 /** 僅映射展示欄位，保留中間物與零淨值，不在容器重算產耗。 */
 const products = computed<SingleProductDetail[]>(() =>
@@ -89,17 +93,6 @@ const ticketDetailsOpen = ref(false);
 
 /** 解構 editorStore 的響應式參照，供畫布概況與計畫相關區塊使用 */
 const { nodeCount, currentPlan, machineUsedCounts } = storeToRefs(editorStore);
-
-// G2：電力狀態文字
-/** 電力狀態顯示文字，依盈餘 / 不足呈現不同圖示與數值 */
-const powerStatusText = computed(() => {
-    const abs = Math.abs(powerBalance.value).toFixed(1);
-    return hasPowerShortage.value ? `⚠️ 不足 ${abs} kW` : `✅ 盈餘 ${abs} kW`;
-});
-/** 電力狀態文字顏色，不足為紅色、盈餘為綠色 */
-const powerStatusClass = computed(() =>
-    hasPowerShortage.value ? 'text-red-400' : 'text-green-400',
-);
 
 // G3：淨產量顏色
 /**
@@ -259,7 +252,12 @@ function applyPlanRates(): void {
 </script>
 
 <template>
-    <StatsPanel v-if="props.overview" :products="products" :has-devices="hasDevices" />
+    <StatsPanel
+        v-if="props.overview"
+        :power="power"
+        :products="products"
+        :has-devices="hasDevices"
+    />
     <div v-else class="space-y-4 text-sm text-zinc-200">
         <!-- G2：整體電力統計 -->
         <section>
@@ -268,16 +266,11 @@ function applyPlanRates(): void {
             </h4>
             <div class="space-y-1">
                 <div class="flex justify-between">
-                    <span class="text-zinc-400">總耗電</span>
-                    <span>{{ totalPowerDemand.toFixed(1) }} kW</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-zinc-400">總供電</span>
-                    <span>{{ totalPowerSupply.toFixed(1) }} kW</span>
-                </div>
-                <div class="flex justify-between font-semibold">
-                    <span class="text-zinc-400">電力狀態</span>
-                    <span :class="powerStatusClass">{{ powerStatusText }}</span>
+                    <span class="text-zinc-400">總耗電量/供電量</span>
+                    <span
+                        >{{ totalPowerDemand.toFixed(1) }} kW /
+                        {{ `${totalPowerSupply.toFixed(1)} kW` }}</span
+                    >
                 </div>
             </div>
         </section>

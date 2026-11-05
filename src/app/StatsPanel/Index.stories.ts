@@ -212,38 +212,47 @@ export const LiveUpdates: Story = {
     },
 };
 
-/** 邊界：電力過載（耗電量大於供電量，進度條滿格不超界） */
+/** 邊界：較高耗電仍顯示完整 kW 數值。 */
 export const OverloadPower: Story = {
-    name: '邊界：電力過載',
+    name: '邊界：高耗電',
     args: {
         power: {
             used: 350,
             total: 180,
-            percent: 100,
         },
         products: sampleProductions,
         exchangeRate: 50000,
         tips: [
             {
                 type: 'error',
-                text: '電網負載超載，請儘速擴建發電機',
+                text: '設備位置重疊，請調整佈局',
             },
         ],
     },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText('350 kW / 180 kW')).toBeVisible();
+        await expect(canvas.getByText('總耗電量/供電量')).toBeVisible();
+        await expect(canvas.queryByRole('spinbutton')).not.toBeInTheDocument();
+        await expect(canvasElement.querySelector('[data-figma-name="Bar"]')).toBeNull();
+    },
 };
 
-/** 邊界：零供電零耗電狀態（驗證除以零保護） */
+/** 邊界：零耗電顯示 0 kW。 */
 export const ZeroSupplyPower: Story = {
-    name: '邊界：零供電零耗電',
+    name: '邊界：零耗電',
     args: {
         power: {
             used: 0,
-            total: 0,
-            percent: 0,
         },
         products: [],
         exchangeRate: 0,
         tips: [],
+    },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText('0 kW / 0 kW')).toBeVisible();
+        await expect(canvas.queryByRole('spinbutton')).not.toBeInTheDocument();
     },
 };
 
@@ -267,7 +276,6 @@ export const ManyProductionsOverflow: Story = {
     args: {
         power: {
             used: 150,
-            total: 200,
         },
         products: overflowProductions,
         exchangeRate: 1250000,
@@ -293,7 +301,6 @@ export const ManyTipsOverflow: Story = {
     args: {
         power: {
             used: 80,
-            total: 120,
         },
         products: sampleProductions,
         exchangeRate: 34000,
@@ -307,7 +314,6 @@ export const LongTextOverflow: Story = {
     args: {
         power: {
             used: 999999,
-            total: 1200000,
         },
         products: [
             {

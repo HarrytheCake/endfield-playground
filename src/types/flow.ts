@@ -239,9 +239,9 @@ export interface FlowStoreState {
     congestedEdges: Set<string>;
     /** 非合法鏈路 / 孤立節點的 deviceUid 集合 */
     invalidChainUids: Set<string>;
-    /** 所有有效設備的總耗電量（kW） */
+    /** 全部已擺放設備的額定總耗電量（kW），僅加總正值 power，不依鏈路或效率折算 */
     totalPowerDemand: number;
-    /** 所有供電設備的總供電量（kW） */
+    /** 全部已擺放設備的額定產電加總（kW），排除 power=-1；缺資料為 0 */
     totalPowerSupply: number;
     /** 計算中 flag */
     isCalculating: boolean;
@@ -268,8 +268,8 @@ export interface FlowEngineResult {
     congestedEdges: Set<string>;
     /** 非合法鏈路 / 孤立節點的 deviceUid 集合 */
     invalidChainUids: Set<string>;
-    /** 所有有效設備的總耗電量（kW） */
+    /** 全部已擺放設備的額定總耗電量（kW），僅加總正值 power，不依鏈路或效率折算 */
     totalPowerDemand: number;
-    /** 所有供電設備的總供電量（kW） */
+    /** 全部已擺放設備的額定產電加總（kW），排除 power=-1；缺資料為 0 */
     totalPowerSupply: number;
 }
