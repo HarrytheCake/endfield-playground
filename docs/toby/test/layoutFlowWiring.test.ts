@@ -13,6 +13,9 @@ import { resolveConnections } from '@/utils/layout/resolveConnections';
 import type { LayoutSnapshot } from '@/types/layout';
 import type { ValidationContext } from '@/types/validation';
 import * as machineData from '@/data/machines';
+import { plans } from '@/data/plans';
+import { useCanvasStore } from '@/store/canvasStore';
+import { useHistoryStore } from '@/store/historyStore';
 
 /**
  * 建立可由正式 resolveConnections 自動解出兩段 belt 的產線。
@@ -100,6 +103,203 @@ describe('正式 layout 產耗接線', () => {
         scope.stop();
         vi.restoreAllMocks();
         vi.useRealTimers();
+    });
+
+    it('基地價格跟隨選擇，自由畫布逐品項使用武陵與谷地價格', () => {
+        const canvas = useCanvasStore();
+        const flow = useFlowStore();
+        expect(flow.deliveryTicketPrices.get('低容量武陵電池')).toBe(25);
+        expect(flow.deliveryTicketPrices.get('低容量谷地電池')).toBe(16);
+        expect(flow.deliveryTicketPrices.get('鋼製零件')).toBe(3);
+
+        canvas.setBaseRegion('wuling');
+        expect(flow.deliveryTicketPrices.get('低容量武陵電池')).toBe(25);
+        expect(flow.deliveryTicketPrices.has('低容量谷地電池')).toBe(false);
+        canvas.setBaseRegion('valley4');
+        expect(flow.deliveryTicketPrices.get('低容量谷地電池')).toBe(16);
+        expect(flow.deliveryTicketPrices.has('低容量武陵電池')).toBe(false);
+        canvas.setBaseRegion(null);
+        expect(flow.deliveryTicketPrices.get('低容量武陵電池')).toBe(25);
+        expect(flow.deliveryTicketPrices.get('紫晶質瓶')).toBe(2);
+    });
+
+    it('自由畫布同名品項優先武陵，僅谷地有價格的品項仍可回退', () => {
+        /** 僅以價格表測試替身驗證同名覆蓋，不修改正式價格或配方。 */
+        vi.spyOn(plans, 'find')
+            .mockReturnValueOnce({
+                ...plans[1]!,
+                product_values: [{ name: '同名價格測試', price: 25 }],
+            })
+            .mockReturnValueOnce({
+                ...plans[0]!,
+                product_values: [
+                    { name: '同名價格測試', price: 16 },
+                    { name: '谷地後備測試', price: 2 },
+                ],
+            });
+        const flow = useFlowStore();
+        expect(flow.deliveryTicketPrices.get('同名價格測試')).toBe(25);
+        expect(flow.deliveryTicketPrices.get('谷地後備測試')).toBe(2);
+    });
+
+    it('自動券數依實際交付換算每小時，多品項加總並隨基地更新', () => {
+        const flow = useFlowStore();
+        const canvas = useCanvasStore();
+        flow.sinkDeliveries = new Map([
+            ['低容量武陵電池', 2],
+            ['紫晶質瓶', 2],
+        ]);
+        expect(flow.deliveryTicketTotal).toBe(3240);
+        expect(flow.deliveryTicketOutput.get('低容量武陵電池')).toBe(3000);
+        canvas.setBaseRegion('wuling');
+        expect(flow.deliveryTicketTotal).toBe(3000);
+        canvas.setBaseRegion('valley4');
+        expect(flow.deliveryTicketTotal).toBe(240);
+
+        flow.sinkDeliveries = new Map([['低容量谷地電池', 2]]);
+        expect(flow.deliveryTicketTotal).toBe(1920);
+        canvas.setBaseRegion('wuling');
+        expect(flow.deliveryTicketTotal).toBe(0);
+        canvas.setBaseRegion(null);
+        expect(flow.deliveryTicketTotal).toBe(1920);
+
+        flow.sinkDeliveries = new Map([['鋼製零件', 2]]);
+        expect(flow.deliveryTicketTotal).toBe(360);
+        flow.reset();
+        expect(flow.deliveryTicketTotal).toBe(0);
+        expect(flow.deliveryTicketOutput.size).toBe(0);
+    });
+
+    it('自動券數不採正淨產量或手動兌換率，忽略缺價格與非法交付量', () => {
+        const flow = useFlowStore();
+        flow.itemSummary = [
+            {
+                itemId: '鋼製零件',
+                name: '鋼製零件',
+                produced: 10,
+                consumed: 0,
+                net: 10,
+                efficiency: 1,
+            },
+        ];
+        flow.setTicketRate('鋼製零件', 99);
+        expect(flow.ticketTotal).toBe(990);
+        expect(flow.deliveryTicketTotal).toBe(0);
+
+        flow.sinkDeliveries = new Map([
+            ['未知價格品項', 20],
+            ['鋼製零件', Number.NaN],
+            ['紫晶質瓶', Number.POSITIVE_INFINITY],
+            ['低容量谷地電池', -2],
+            ['低容量武陵電池', 0],
+        ]);
+        expect(flow.deliveryTicketTotal).toBe(0);
+        flow.sinkDeliveries = new Map([['鋼製零件', 0.125]]);
+        expect(flow.deliveryTicketTotal).toBe(22.5);
+        expect(flow.ticketTotal).toBe(990);
+    });
+
+    it('正式精煉配方交付券數跟隨流量、基地、斷線與歷史操作更新', async () => {
+        /** 沿用正式管線幾何，源礦以正式精煉配方產生有價的晶體外殼。 */
+        const snapshot = productionSnapshot();
+        snapshot.devices[1]!.machineType = 'refinery';
+        snapshot.devices[1]!.machineMode = 'base_mode';
+        const layout = useLayoutStore();
+        const canvas = useCanvasStore();
+        const history = useHistoryStore();
+        layout.loadSnapshot(snapshot);
+        scope.run(startLayoutWiring);
+        await vi.advanceTimersByTimeAsync(150);
+        const flow = useFlowStore();
+        expect(flow.sinkDeliveries.get('晶體外殼')).toBe(30);
+        expect(flow.deliveryTicketTotal).toBe(1800);
+        expect(flow.totalPowerDemand).toBe(5);
+
+        /** 基地只影響價格，沒有觸發引擎或改變交付流量。 */
+        const apply = vi.spyOn(flow, 'applyResult');
+        canvas.setBaseRegion('wuling');
+        expect(flow.deliveryTicketTotal).toBe(0);
+        canvas.setBaseRegion('valley4');
+        expect(flow.deliveryTicketTotal).toBe(1800);
+        canvas.setBaseRegion(null);
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(150);
+        expect(flow.deliveryTicketTotal).toBe(1800);
+        expect(apply).not.toHaveBeenCalled();
+
+        layout.setDevicePrimaryOutput('src', '源礦', 15);
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(150);
+        expect(flow.sinkDeliveries.get('晶體外殼')).toBe(15);
+        expect(flow.deliveryTicketTotal).toBe(900);
+        layout.removePipeline('p2');
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(150);
+        expect(flow.deliveryTicketTotal).toBe(0);
+        history.undo();
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(150);
+        expect(flow.deliveryTicketTotal).toBe(900);
+        history.redo();
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(150);
+        expect(flow.deliveryTicketTotal).toBe(0);
+        expect(flow.totalPowerDemand).toBe(5);
+
+        layout.loadSnapshot({ devices: [], pipelines: [] });
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(150);
+        expect(flow.deliveryTicketTotal).toBe(0);
+        expect(flow.totalPowerDemand).toBe(0);
+        expect(flow.totalPowerSupply).toBe(0);
+    });
+
+    it('正式多產線同品項交付彙總一次，被阻擋的鏈路不增加券數', async () => {
+        const snapshot = productionSnapshot();
+        snapshot.devices[1]!.machineType = 'refinery';
+        snapshot.devices[1]!.machineMode = 'base_mode';
+        /** 正式倉庫存貨口由上側接收，路徑從外側接近，避免穿越設備。 */
+        snapshot.devices[2]!.machineType = 'warehouse_input';
+        snapshot.devices[2]!.position.y = 2;
+        snapshot.pipelines[1]!.waypoints = [
+            { x: 4, y: 3, z: 0 },
+            { x: 8, y: 3, z: 0 },
+            { x: 8, y: 1, z: 0 },
+            { x: 11, y: 1, z: 0 },
+        ];
+        /** 第二條同配方產線平移二十格，保留真實連接解析與品項彙總。 */
+        const devices = [
+            ...snapshot.devices,
+            ...snapshot.devices.map((device) => ({
+                ...device,
+                id: `${device.id}-2`,
+                position: { ...device.position, x: device.position.x + 20 },
+            })),
+        ];
+        const pipelines = [
+            ...snapshot.pipelines,
+            ...snapshot.pipelines.map((pipeline) => ({
+                ...pipeline,
+                id: `${pipeline.id}-2`,
+                waypoints: pipeline.waypoints.map((point) => ({ ...point, x: point.x + 20 })),
+            })),
+        ];
+        const layout = useLayoutStore();
+        layout.loadSnapshot({ devices, pipelines });
+        const controls = scope.run(startLayoutWiring)!;
+        await vi.advanceTimersByTimeAsync(150);
+        const flow = useFlowStore();
+        expect(flow.sinkDeliveries.get('晶體外殼')).toBe(60);
+        expect(flow.deliveryTicketTotal).toBe(3600);
+        expect(flow.deliveryTicketOutput.size).toBe(1);
+
+        vi.spyOn(useValidationStore(), 'hasBlockingError').mockImplementation(
+            (uid) => uid === 'crusher-2',
+        );
+        await controls.runFlowEngine();
+        expect(flow.sinkDeliveries.get('晶體外殼')).toBe(30);
+        expect(flow.deliveryTicketTotal).toBe(1800);
+        expect(flow.totalPowerDemand).toBe(10);
     });
 
     it('空 layout 清除上次產線的結果，且不雙寫 editorStore', async () => {

@@ -122,7 +122,7 @@ Skills：
 Agents：
 
 - `dependency-grapher`：只讀分析相依關係並輸出 Mermaid markdown，不修改原始碼。
-- `test-writer`：建立或更新 Vitest 測試；既有共用測試維持 `src/__tests__/`，Toby 新增的測試依 A.12 節放在 `docs/toby/test/`。
+- `test-writer`：依 A.12 節建立或更新 Vitest 測試，測試程式僅放在 `docs/toby/test/layoutFlowWiring.test.ts`。
 
 ### A.10 Storybook 開發守則
 
@@ -169,8 +169,8 @@ Agents：
 
 ### A.12 Toby 測試檔放置規則
 
-- Toby 新增的測試檔統一放在 `docs/toby/test/`，使用 `*.test.ts` 命名；既有共用測試不另行搬移。
-- 正式畫布與引擎接線整合測試位置為 `docs/toby/test/layoutFlowWiring.test.ts`。
+- 測試程式僅放在 `docs/toby/test/layoutFlowWiring.test.ts`；所有新增或調整的測試皆集中於此檔案，不新增其他測試檔，也不修改 `src/__tests__/` 或 Story 測試。既有共用測試不另行搬移。
+- 畫面呈現以正式頁面及既有 Story 手動檢查。
 - 測試透過 `@/` 匯入 `src/` 正式程式；不要為搬移而複製正式邏輯或改用假配方。
 - `pnpm test` 仍須執行此目錄內的測試；可用 `pnpm exec vitest run docs/toby/test/layoutFlowWiring.test.ts` 單獨驗證接線。
 - `tsconfig.app.json` 應包含 `docs/toby/test/**/*.ts`，保留測試的型別檢查。此目錄不在既有格式檢查腳本範圍，修改後另執行 `pnpm exec prettier --check docs/toby/test/`。

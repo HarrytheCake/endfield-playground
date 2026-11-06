@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { EdgeFlow, ItemSummary, FlowEngineResult } from '@/types/flow';
+import { plans } from '@/data/plans';
+import { useCanvasStore } from '@/store/canvasStore';
 
 /**
  * CR-04 儲存 FlowEngine 的所有計算結果（管線流量、設備效率、電力統計等）。
@@ -11,6 +13,25 @@ import type { EdgeFlow, ItemSummary, FlowEngineResult } from '@/types/flow';
  * console.log(flowStore.hasResults)
  */
 export const useFlowStore = defineStore('flow', () => {
+    /** 基地選擇提供自動計價範圍；價格切換不需重新執行流量引擎。 */
+    const canvasStore = useCanvasStore();
+
+    /** 基地品項單價（券／個）；自由畫布逐項以武陵覆蓋谷地的後備價格。 */
+    const deliveryTicketPrices = computed(() => {
+        /** 使用計畫識別值，避免介面基地標籤與資料名稱不同。 */
+        const wuling = plans.find((plan) => plan.id === '9bdb2f99-531e-416a-8f4c-27c5e8d8957c');
+        /** 四號谷地也是自由畫布缺少武陵品項時的價格來源。 */
+        const valley = plans.find((plan) => plan.id === '7dd94e87-a806-4035-9644-63eb99f76f75');
+        /** 後列項目覆蓋同名價格；單一基地不使用另一基地的價格。 */
+        const values =
+            canvasStore.baseRegion === 'wuling'
+                ? (wuling?.product_values ?? [])
+                : canvasStore.baseRegion === 'valley4'
+                  ? (valley?.product_values ?? [])
+                  : [...(valley?.product_values ?? []), ...(wuling?.product_values ?? [])];
+        return new Map(values.map((value) => [value.name, value.price]));
+    });
+
     // ── 管線流量 ──────────────────────────────────────────────────────────────
     /** connectionUid → EdgeFlow（管線實際傳輸速率與堵塞狀態） */
     const edgeFlows = ref(new Map<string, EdgeFlow>());
@@ -26,6 +47,35 @@ export const useFlowStore = defineStore('flow', () => {
     // ── 物品輸入口交付量 ──────────────────────────────────────────────────────
     /** itemId → 流入物品輸入口（sink）的速率（個/min），代表產線實際交付量 */
     const sinkDeliveries = ref(new Map<string, number>());
+
+    /** 自動調度券明細（券／小時），僅換算實際交付且有有效單價的品項。 */
+    const deliveryTicketOutput = computed(() => {
+        /** 每個品項的每小時券數，不使用品項淨產量或手動兌換設定。 */
+        const output = new Map<string, number>();
+        for (const [itemId, delivery] of sinkDeliveries.value) {
+            /** 缺少價格的品項貢獻為零。 */
+            const price = deliveryTicketPrices.value.get(itemId) ?? 0;
+            if (
+                !Number.isFinite(delivery) ||
+                delivery <= 0 ||
+                !Number.isFinite(price) ||
+                price <= 0
+            )
+                continue;
+            /** 交付量是個／分，乘以六十換成券／小時。 */
+            const tickets = delivery * price * 60;
+            if (Number.isFinite(tickets)) output.set(itemId, tickets);
+        }
+        return output;
+    });
+
+    /** 自動調度券總額（券／小時）；無有效交付時為 0，避免累加溢位。 */
+    const deliveryTicketTotal = computed(() =>
+        [...deliveryTicketOutput.value.values()].reduce(
+            (sum, value) => Math.min(Number.MAX_VALUE, sum + value),
+            0,
+        ),
+    );
 
     // ── 異常節點集合 ──────────────────────────────────────────────────────────
     /** 堵塞的 connectionUid 集合（isCongested = true 的邊） */
@@ -192,6 +242,12 @@ export const useFlowStore = defineStore('flow', () => {
     }
 
     return {
+        /** 基地品項單價（券／個）；自由畫布逐項以武陵覆蓋谷地的後備價格。 */
+        deliveryTicketPrices,
+        /** 自動調度券明細（券／小時），僅換算實際交付且有有效單價的品項。 */
+        deliveryTicketOutput,
+        /** 自動調度券總額（券／小時）；無有效交付時為 0，避免累加溢位。 */
+        deliveryTicketTotal,
         /** connectionUid → EdgeFlow（管線實際傳輸速率與堵塞狀態） */
         edgeFlows,
         /** deviceUid → 效率 0~1 */
