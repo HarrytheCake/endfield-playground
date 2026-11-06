@@ -36,12 +36,18 @@ const {
     ticketOutput,
     ticketTotal,
     deliveryTicketTotal,
+    deliveryTicketRates,
     warehouseCapacity,
     warehouseEstimates,
 } = storeToRefs(flowStore);
 
 /** 映射自動交付券數；空畫布立即歸零，避免顯示等待引擎更新的舊值。 */
 const exchangeRate = computed(() => (hasDevices.value ? deliveryTicketTotal.value : 0));
+
+/** 映射各券種與數值；清空設備時立即將每一種券歸零，保留名稱。 */
+const exchangeRates = computed(() =>
+    deliveryTicketRates.value.map((item) => ({ ...item, rate: hasDevices.value ? item.rate : 0 })),
+);
 
 /** 僅映射引擎的耗電／供電結果，不提供供電設定輸入。 */
 const power = computed<PowerData>(() => ({
@@ -262,6 +268,7 @@ function applyPlanRates(): void {
         :products="products"
         :has-devices="hasDevices"
         :exchange-rate="exchangeRate"
+        :exchange-rates="exchangeRates"
     />
     <div v-else class="space-y-4 text-sm text-zinc-200">
         <!-- G2：整體電力統計 -->

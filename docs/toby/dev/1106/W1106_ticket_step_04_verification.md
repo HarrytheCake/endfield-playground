@@ -57,4 +57,12 @@ git diff --check
 
 Story axe 仍有既有問題：Default 對比度 2 處、DecimalRates 1 處、OverloadPower 2 處、ManyProductionsOverflow 3 處、ManyTipsOverflow 5 處、LongTextOverflow 對比度 1 處與 scrollable-region-focusable 1 處；其餘 7 個 Story 無違規。未將 13 個 Story 通過描述為全面無障礙通過。建置仍有既有 Index 同名元件、Browserslist 過期、chunk 大小與 plugin timing 警告。
 
-正式頁面操作細節與首次 CDP 工具逾時見步驟 03。Delete 依要求不處理，原始 plans.json 與使用者更正的 plans.ts 尚未同步。數字沿用既有顯示上限與精度。本輪依使用者指示提交至 dev/toby，不 push，實際提交結果以 Git 紀錄為準；未建立額外工作摘要。
+正式頁面操作細節與首次 CDP 工具逾時見步驟 03。Delete 依要求不處理，原始 plans.json 與使用者更正的 plans.ts 尚未同步。數字沿用既有顯示上限與精度。初版依使用者當時指示僅提交，後續券種擴充依最新指示提交並一併推送；實際結果以 Git 紀錄為準，未建立額外工作摘要。
+
+## 券種擴充再驗證
+
+初版提交 `88cfd89` 後，依使用者確認新增券種分類。測試程式僅擴充指定接線檔，增加混合券種分類、同名武陵優先只計一次、單基地只顯示對應券及重設後兩種券歸零的斷言；仍為接線 19 案。正式精煉配方測試另核對實際交付量對應谷地調度券。
+
+本輪 pnpm type-check、lint-check、format-check、test、docs 測試 prettier 及 build-storybook 全通過；全套 59 檔 1051 案。13 個既有 Story 與鍵盤操作檢查通過，axe 結果與上述既有問題相同。未新增或修改 Story 測試。
+
+正式頁面單券種、雙券種、基地切換、零值、小數、大值、清空與 DOM 不裁切檢查通過，見步驟 03。完整計算值保存在 store，數字展示仍沿用 999,999+ 上限。沒有產生截圖或 JSON 報告，沒有新增測試檔。本次券種擴充依使用者指示提交至 dev/toby 並推送 origin/dev/toby；實際結果以 Git 紀錄為準。

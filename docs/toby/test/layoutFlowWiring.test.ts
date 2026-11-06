@@ -140,6 +140,14 @@ describe('正式 layout 產耗接線', () => {
         const flow = useFlowStore();
         expect(flow.deliveryTicketPrices.get('同名價格測試')).toBe(25);
         expect(flow.deliveryTicketPrices.get('谷地後備測試')).toBe(2);
+        flow.sinkDeliveries = new Map([
+            ['同名價格測試', 2],
+            ['谷地後備測試', 2],
+        ]);
+        expect(flow.deliveryTicketRates).toEqual([
+            { currency: 'wuling', label: '武陵調度券', rate: 3000 },
+            { currency: 'valley4', label: '谷地調度券', rate: 240 },
+        ]);
     });
 
     it('自動券數依實際交付換算每小時，多品項加總並隨基地更新', () => {
@@ -151,10 +159,20 @@ describe('正式 layout 產耗接線', () => {
         ]);
         expect(flow.deliveryTicketTotal).toBe(3240);
         expect(flow.deliveryTicketOutput.get('低容量武陵電池')).toBe(3000);
+        expect(flow.deliveryTicketRates).toEqual([
+            { currency: 'wuling', label: '武陵調度券', rate: 3000 },
+            { currency: 'valley4', label: '谷地調度券', rate: 240 },
+        ]);
         canvas.setBaseRegion('wuling');
         expect(flow.deliveryTicketTotal).toBe(3000);
+        expect(flow.deliveryTicketRates).toEqual([
+            { currency: 'wuling', label: '武陵調度券', rate: 3000 },
+        ]);
         canvas.setBaseRegion('valley4');
         expect(flow.deliveryTicketTotal).toBe(240);
+        expect(flow.deliveryTicketRates).toEqual([
+            { currency: 'valley4', label: '谷地調度券', rate: 240 },
+        ]);
 
         flow.sinkDeliveries = new Map([['低容量谷地電池', 2]]);
         expect(flow.deliveryTicketTotal).toBe(1920);
@@ -168,6 +186,10 @@ describe('正式 layout 產耗接線', () => {
         flow.reset();
         expect(flow.deliveryTicketTotal).toBe(0);
         expect(flow.deliveryTicketOutput.size).toBe(0);
+        expect(flow.deliveryTicketRates).toEqual([
+            { currency: 'wuling', label: '武陵調度券', rate: 0 },
+            { currency: 'valley4', label: '谷地調度券', rate: 0 },
+        ]);
     });
 
     it('自動券數不採正淨產量或手動兌換率，忽略缺價格與非法交付量', () => {
@@ -214,11 +236,18 @@ describe('正式 layout 產耗接線', () => {
         expect(flow.sinkDeliveries.get('晶體外殼')).toBe(30);
         expect(flow.deliveryTicketTotal).toBe(1800);
         expect(flow.totalPowerDemand).toBe(5);
+        expect(flow.deliveryTicketRates).toEqual([
+            { currency: 'wuling', label: '武陵調度券', rate: 0 },
+            { currency: 'valley4', label: '谷地調度券', rate: 1800 },
+        ]);
 
         /** 基地只影響價格，沒有觸發引擎或改變交付流量。 */
         const apply = vi.spyOn(flow, 'applyResult');
         canvas.setBaseRegion('wuling');
         expect(flow.deliveryTicketTotal).toBe(0);
+        expect(flow.deliveryTicketRates).toEqual([
+            { currency: 'wuling', label: '武陵調度券', rate: 0 },
+        ]);
         canvas.setBaseRegion('valley4');
         expect(flow.deliveryTicketTotal).toBe(1800);
         canvas.setBaseRegion(null);

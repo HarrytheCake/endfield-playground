@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import iconArrowRaw from '@/assets/icon/icon arrow.svg?raw';
 import type { PowerData, SingleProductDetail } from './types';
+import type { TicketCurrencyRate } from '@/types/flow';
 
 /** 上半部統計與產能估算面板傳入屬性；未提供設備狀態時保留原有預覽行為。 */
 const props = withDefaults(
@@ -14,6 +15,8 @@ const props = withDefaults(
         products?: SingleProductDetail[];
         /** 調度券每小時兌換效率（券/hr） */
         exchangeRate?: number;
+        /** 各券種兌換效率；提供時分別顯示，優先於單一 exchangeRate。 */
+        exchangeRates?: TicketCurrencyRate[];
     }>(),
     { hasDevices: undefined },
 );
@@ -61,13 +64,19 @@ const toggleExpand = (index: number) => {
 /** 調度券兌換效率顯示上限（6 位） */
 const NUMBER_DISPLAY_MAX = 999999;
 
+/**
+ * 沿用既有數字格式，讓單一總額與各券種使用相同顯示上限。
+ * @param value 每小時券數；未提供時顯示空值符號。
+ * @returns 不含券種及時間單位的格式化文字。
+ */
+function formatExchangeRate(value?: number): string {
+    if (value == null) return '-';
+    if (value > NUMBER_DISPLAY_MAX) return `${NUMBER_DISPLAY_MAX.toLocaleString('en-US')}+`;
+    return value.toLocaleString('en-US');
+}
+
 /** 調度券兌換效率顯示文字（不含 /hr），無資料時為「-」 */
-const exchangeRateText = computed(() => {
-    if (props.exchangeRate == null) return '-';
-    if (props.exchangeRate > NUMBER_DISPLAY_MAX)
-        return `${NUMBER_DISPLAY_MAX.toLocaleString('en-US')}+`;
-    return props.exchangeRate.toLocaleString('en-US');
-});
+const exchangeRateText = computed(() => formatExchangeRate(props.exchangeRate));
 
 /** 所有產耗數字以個/分呈現，固定一位小數並保留千分位。 */
 const rateFormatter = new Intl.NumberFormat('en-US', {
@@ -220,7 +229,11 @@ const cutText = (text: string) => {
         <div
             data-figma-id="2974:108"
             data-figma-name="Exchange"
-            class="relative mt-[11px] ml-[18px] h-[50px] w-[146px] shrink-0"
+            class="relative mt-[11px] ml-[18px] shrink-0"
+            :class="[
+                props.exchangeRates?.length ? 'w-[284px]' : 'w-[146px]',
+                (props.exchangeRates?.length ?? 0) > 1 ? 'h-[83px]' : 'h-[50px]',
+            ]"
         >
             <div
                 data-figma-id="2302:110"
@@ -229,35 +242,52 @@ const cutText = (text: string) => {
             >
                 調度券兌換效率
             </div>
-            <div
-                v-if="exchangeRate != null"
-                data-figma-id="2302:108"
-                data-figma-name="Text"
-                class="absolute top-[29px] left-[31px] text-[18px] leading-[21.096px] font-light whitespace-nowrap text-[#cfcfcf]"
+            <ul
+                v-if="props.exchangeRates?.length"
+                aria-label="各券種兌換效率"
+                class="absolute top-[29px] left-0 m-0 w-full list-none space-y-[8px] p-0 text-[18px] leading-[21.096px] font-light text-[#cfcfcf]"
             >
-                ≈
-            </div>
-            <!-- 數值裁切框：x=46、寬 76，內容靠右，超出裁切 -->
-            <div
-                data-figma-id="3476:169"
-                data-figma-name="Clip"
-                class="absolute top-[29px] left-[46px] flex w-[76px] justify-end overflow-hidden"
-            >
-                <div
-                    data-figma-id="2302:109"
-                    data-figma-name="Text"
-                    class="shrink-0 text-right text-[18px] leading-[21.096px] font-light whitespace-nowrap text-[#cfcfcf]"
+                <li
+                    v-for="item in props.exchangeRates"
+                    :key="item.currency"
+                    :data-ticket-currency="item.currency"
+                    class="flex items-center justify-between gap-2 whitespace-nowrap"
                 >
-                    {{ exchangeRateText }}
+                    <span>{{ item.label }}</span>
+                    <span>≈ {{ formatExchangeRate(item.rate) }} /hr</span>
+                </li>
+            </ul>
+            <template v-else>
+                <div
+                    v-if="exchangeRate != null"
+                    data-figma-id="2302:108"
+                    data-figma-name="Text"
+                    class="absolute top-[29px] left-[31px] text-[18px] leading-[21.096px] font-light whitespace-nowrap text-[#cfcfcf]"
+                >
+                    ≈
                 </div>
-            </div>
-            <div
-                data-figma-id="3476:160"
-                data-figma-name="Text"
-                class="absolute top-[29px] left-[122px] w-[24px] text-right text-[18px] leading-[21.096px] font-light whitespace-nowrap text-[#cfcfcf]"
-            >
-                /hr
-            </div>
+                <!-- 數值裁切框：x=46、寬 76，內容靠右，超出裁切 -->
+                <div
+                    data-figma-id="3476:169"
+                    data-figma-name="Clip"
+                    class="absolute top-[29px] left-[46px] flex w-[76px] justify-end overflow-hidden"
+                >
+                    <div
+                        data-figma-id="2302:109"
+                        data-figma-name="Text"
+                        class="shrink-0 text-right text-[18px] leading-[21.096px] font-light whitespace-nowrap text-[#cfcfcf]"
+                    >
+                        {{ exchangeRateText }}
+                    </div>
+                </div>
+                <div
+                    data-figma-id="3476:160"
+                    data-figma-name="Text"
+                    class="absolute top-[29px] left-[122px] w-[24px] text-right text-[18px] leading-[21.096px] font-light whitespace-nowrap text-[#cfcfcf]"
+                >
+                    /hr
+                </div>
+            </template>
         </div>
     </div>
 </template>

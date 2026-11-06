@@ -83,6 +83,7 @@ useEventListener(window, 'touchend', stopDrag);
                 :power="props.power"
                 :products="props.products"
                 :exchange-rate="props.exchangeRate"
+                :exchange-rates="props.exchangeRates"
                 :style="{
                     height: `${topHeight}px`,
                     maxHeight: `calc(100% - ${MIN_BOTTOM_HEIGHT}px)`,

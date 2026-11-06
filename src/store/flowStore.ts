@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { EdgeFlow, ItemSummary, FlowEngineResult } from '@/types/flow';
+import type {
+    EdgeFlow,
+    ItemSummary,
+    FlowEngineResult,
+    TicketCurrency,
+    TicketCurrencyRate,
+    TicketUnitPrice,
+} from '@/types/flow';
 import { plans } from '@/data/plans';
 import { useCanvasStore } from '@/store/canvasStore';
 
@@ -16,21 +23,34 @@ export const useFlowStore = defineStore('flow', () => {
     /** 基地選擇提供自動計價範圍；價格切換不需重新執行流量引擎。 */
     const canvasStore = useCanvasStore();
 
-    /** 基地品項單價（券／個）；自由畫布逐項以武陵覆蓋谷地的後備價格。 */
-    const deliveryTicketPrices = computed(() => {
+    /** 品項單價與券種來源一併選取，讓自由畫布的同名覆蓋同時決定券種。 */
+    const deliveryTicketQuotes = computed(() => {
         /** 使用計畫識別值，避免介面基地標籤與資料名稱不同。 */
         const wuling = plans.find((plan) => plan.id === '9bdb2f99-531e-416a-8f4c-27c5e8d8957c');
         /** 四號谷地也是自由畫布缺少武陵品項時的價格來源。 */
         const valley = plans.find((plan) => plan.id === '7dd94e87-a806-4035-9644-63eb99f76f75');
-        /** 後列項目覆蓋同名價格；單一基地不使用另一基地的價格。 */
+        /** 武陵品項單價及對應券種。 */
+        const wulingValues = (wuling?.product_values ?? []).map(
+            (value) => [value.name, { price: value.price, currency: 'wuling' }] as const,
+        );
+        /** 谷地品項單價及對應券種。 */
+        const valleyValues = (valley?.product_values ?? []).map(
+            (value) => [value.name, { price: value.price, currency: 'valley4' }] as const,
+        );
+        /** 後列項目覆蓋同名價格及券種；單一基地不使用另一基地的價格。 */
         const values =
             canvasStore.baseRegion === 'wuling'
-                ? (wuling?.product_values ?? [])
+                ? wulingValues
                 : canvasStore.baseRegion === 'valley4'
-                  ? (valley?.product_values ?? [])
-                  : [...(valley?.product_values ?? []), ...(wuling?.product_values ?? [])];
-        return new Map(values.map((value) => [value.name, value.price]));
+                  ? valleyValues
+                  : [...valleyValues, ...wulingValues];
+        return new Map<string, TicketUnitPrice>(values);
     });
+
+    /** 基地品項單價（券／個）；自由畫布逐項以武陵覆蓋谷地的後備價格。 */
+    const deliveryTicketPrices = computed(
+        () => new Map([...deliveryTicketQuotes.value].map(([id, quote]) => [id, quote.price])),
+    );
 
     // ── 管線流量 ──────────────────────────────────────────────────────────────
     /** connectionUid → EdgeFlow（管線實際傳輸速率與堵塞狀態） */
@@ -76,6 +96,26 @@ export const useFlowStore = defineStore('flow', () => {
             0,
         ),
     );
+
+    /** 各券種兌換效率（券／小時）；自由畫布分開顯示兩種券，無交付時仍保留零值。 */
+    const deliveryTicketRates = computed<TicketCurrencyRate[]>(() => {
+        /** 按目前基地決定可見券種，自由畫布固定先武陵後谷地。 */
+        const currencies: TicketCurrency[] = canvasStore.baseRegion
+            ? [canvasStore.baseRegion]
+            : ['wuling', 'valley4'];
+        /** 分別累計兩種券，避免混合價格來源成為同一券種。 */
+        const totals: Record<TicketCurrency, number> = { wuling: 0, valley4: 0 };
+        for (const [itemId, tickets] of deliveryTicketOutput.value) {
+            /** 沿用實際採用單價的來源，不重新選價或再次換算時間。 */
+            const currency = deliveryTicketQuotes.value.get(itemId)?.currency;
+            if (currency) totals[currency] = Math.min(Number.MAX_VALUE, totals[currency] + tickets);
+        }
+        return currencies.map((currency) => ({
+            currency,
+            label: currency === 'wuling' ? '武陵調度券' : '谷地調度券',
+            rate: totals[currency],
+        }));
+    });
 
     // ── 異常節點集合 ──────────────────────────────────────────────────────────
     /** 堵塞的 connectionUid 集合（isCongested = true 的邊） */
@@ -248,6 +288,8 @@ export const useFlowStore = defineStore('flow', () => {
         deliveryTicketOutput,
         /** 自動調度券總額（券／小時）；無有效交付時為 0，避免累加溢位。 */
         deliveryTicketTotal,
+        /** 各券種兌換效率（券／小時）；自由畫布分開顯示兩種券，無交付時仍保留零值。 */
+        deliveryTicketRates,
         /** connectionUid → EdgeFlow（管線實際傳輸速率與堵塞狀態） */
         edgeFlows,
         /** deviceUid → 效率 0~1 */

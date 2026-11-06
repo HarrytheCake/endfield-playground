@@ -1,3 +1,5 @@
+import type { TicketCurrencyRate } from '@/types/flow';
+
 /** 單一產品的產能估算明細資料 */
 export interface SingleProductDetail {
     /** 產品唯一識別碼 */
@@ -40,6 +42,8 @@ export interface StatsPanelProps {
     products?: SingleProductDetail[];
     /** 調度券每小時兌換效率（券/hr） */
     exchangeRate?: number;
+    /** 各券種兌換效率；提供時分別顯示，優先於單一 exchangeRate。 */
+    exchangeRates?: TicketCurrencyRate[];
     /** 下半部提示與警報訊息列表 */
     tips?: SingleTip[];
 }
