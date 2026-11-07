@@ -1,6 +1,6 @@
 # Session Handoff —— 給下一個聊天用的接續筆記
 
-**最後更新：** 2026-10-31（W1026-H1 已 push 未開 PR；另有工單外的 `dev/cake_toolbar`、`dev/cake_prodstats`、`dev/cake_machinecard`）
+**最後更新：** 2026-11-08（W1102-H1 供水邏輯已在 `dev/cake` commit，未 push、未開 PR；W1026-H1 已以 #81 合入；工單外的 `dev/cake_toolbar`、`dev/cake_prodstats`、`dev/cake_machinecard` 本週不動）
 **用途：** 開新聊天時給 Claude 看，快速還原現況與待跟進項目。長期規則在同資料夾的 [CLAUDE.md](CLAUDE.md)。
 **身分：** L2 接線層（harry），負責 CR-01（畫布）+ CR-02（管線）+ CR-11（工具列）的互動與接線。詳細角色定位見 [README.md](../README.md)，早期 editorStore action 缺口清單見 [MILESTONE_0726.md](../MILESTONE_0726.md)（屬舊 Vue Flow 世界，參考用）。
 
@@ -24,9 +24,37 @@
 | W1004-H1：正式畫面換殼 | [PLAN_chromeLand.md](../PLAN_chromeLand.md) / [PR_DESCRIPTION_1011.md](../PR_DESCRIPTION_1011.md) | `MainLayout.vue` 槽位、卸載 `InspectorSidebar`、Esc 修正 `useShortcuts.ts` | PR #63 已合入 |
 | W1011-H2：刪舊左側面板、接上 `MachineCard`＋WASD 補回 | [PLAN_leftPanelSwap.md](../PLAN_leftPanelSwap.md) / [PR_DESCRIPTION_1018.md](../PR_DESCRIPTION_1018.md) | 刪 `ProjectSidebar`、Navbar 拿掉 ☰、`MainLayout.vue` 左槽 451px 掛 `MachineCard`、`LayoutView` WASD（`a1da734`／`e1d35e4`／`6a73be5`） | PR #75，10-19 合入（`59aac12`）；與 #76 的 `LayoutView` import 衝突由 dernoson 在 `5de3c04` 解（拿掉 `onMounted`、保留 WASD 用的 `watch`／`useRafFn`） |
 
+| W1026-H1：正式頁源素材選擇（C5 左面板） | [PLAN_c5SourceForm.md](../PLAN_c5SourceForm.md) / [PR_DESCRIPTION_1031.md](../PR_DESCRIPTION_1031.md) | `src/editor/sourceOutput/SourceOutputPanel.vue`、`sourceMaterialOptions.ts`、`MainLayout.vue` 掛面板 | PR #81，10-31 合入 |
+
 **額外設計筆記（尚未實作）：** [DESIGN_clipboardAndEdgeSelectionState.md](../DESIGN_clipboardAndEdgeSelectionState.md)——clipboard store 與管線選取狀態構想，寫於舊 Vue Flow 世界，若要用需先對照新 `layoutStore` 重新評估。
 
-## 3. 本週（W1026，10/26→11/01）：W1026-H1 正式頁源素材選擇（C5 左面板 L2）
+## 3. 本週（W1102，11/02→11/08）：W1102-H1 水源供給的設備邏輯
+
+工單：[W1102-H1_water_supply.md](../../work_dispatch/harry/1102/W1102-H1_water_supply.md)｜週總表：[WEEK_20261102.md](../../work_dispatch/WEEK_20261102.md) v1.2｜計畫：[PLAN_waterSupply.md](../PLAN_waterSupply.md)｜PR 描述：[PR_DESCRIPTION_1108.md](../PR_DESCRIPTION_1108.md)
+
+**狀態：** 已在 `dev/cake`（快轉到 `upstream/master` `3b368b1` 後）commit，**未 push、未開 PR**（等使用者指示）。四項全綠（58 檔、1039 測試）；Edge 實測過。
+
+**本週分工提醒：** 11/01 會議把右側產耗（W1102-T1）改派 **toby**，harry 不做右側面板。週總表 §2.2 把 `ProductionStats.vue`、`StatsPanel/Index.vue`、`ItemSummaryTable.vue` 鎖給 toby。toby 已交 **PR #84**（`upstream/dev/toby`，含 `layoutStore` 拓撲接引擎、電力、調度券），`dev/cake_prodstats` 不再作底。
+
+**使用者裁決（2026-11-08）：** 只對多型態源設備（目前只有 `material_source`）寫型態；`sourceMaterialOptions` 拿掉 `machineMode` 參數；在 `dev/cake` 上做。
+
+**變更：**
+
+- `layoutStore.ts`：模組內 helper `syncSourceMachineMode`，依 `getMaterialPortMedia` 找輸出埠媒質相符的型態；清除時刪 `machineMode`。仍是一筆歷史
+- `sourceMaterialOptions.ts`：改看所有型態主輸出埠媒質的聯集（基礎材料輸出點 14 種）；`SourceOutputPanel.vue` 只改呼叫一行與註解
+- 兩份測試各補／改案例
+
+**待跟進：**
+
+1. push＋開 PR——等使用者指示（PR 描述：[PR_DESCRIPTION_1108.md](../PR_DESCRIPTION_1108.md)，貼上前刪掉最後一行 Claude Code 標記）
+2. 告知 aaaaa：`contractCatalog.ts` 的 `setDevicePrimaryOutput` 說明可補「會寫 `machineMode`」
+3. 與 #84 相容：已把本 diff 套到 `dev/toby` 跑過 toby 的 `layoutFlowWiring.test.ts`，全過；兩邊沒碰同一檔
+
+---
+
+以下為 W1026 的舊紀錄，保留作背景。
+
+## 3-1026. W1026（10/26→11/01）：W1026-H1 正式頁源素材選擇（C5 左面板 L2）——已以 #81 合入
 
 工單：[W1026-H1_c5_source_form.md](../../work_dispatch/harry/1026/W1026-H1_c5_source_form.md)｜週總表：[WEEK_20261026.md](../../work_dispatch/WEEK_20261026.md) v1.1｜計畫：[PLAN_c5SourceForm.md](../PLAN_c5SourceForm.md)｜PR 描述：[PR_DESCRIPTION_1031.md](../PR_DESCRIPTION_1031.md)
 
@@ -155,7 +183,7 @@
 
 ## 5. Git 狀態
 
-- **`dev/cake`**：W1026-H1，已 push（`f17e9bb`），未開 PR
+- **`dev/cake`**：11-08 快轉到 `upstream/master` `3b368b1`（W1026-H1 已以 #81 合入），其上為 W1102-H1 的 commit，未 push
 - **`dev/cake_toolbar`**：自 `upstream/master` 切出，工具列對齊設計稿，已 push（`8cf8b48`），未開 PR
 - **`dev/cake_prodstats`**：自 `dev/cake` 切出，右側產線總覽，已 push 主要 commit
 - **`dev/cake_machinecard`**：自 `dev/cake` 切出並 merge `dev/cake_toolbar`，左側卡片接機器圖與配方（目前所在分支）
@@ -174,8 +202,9 @@
 **仍未修：**
 
 - **Ctrl+Z 會同時觸發瀏覽器原生文字復原**（2026-10-31 發現，已在原始 `d48ac99` 重現）：`onComboTriggered`（`src/composables/useKeybinding.ts:137`）註冊 undo／redo 時沒有 `preventDefault`，按 Ctrl+Z 時瀏覽器也會復原工具列搜尋框的輸入，焦點跳進 `<input>`，之後 `isTypingTarget()` 會擋掉 Ctrl+Y，看起來就像重做失效。只要搜尋框打過兩次字就會發生。尚未回報，不在 W1026-H1 範圍
-- **`layoutStore` 沒有切換 `machineMode` 的 action**：正式頁放下的基礎材料輸出點固定 `solid_belt`（見 §3 待跟進 2）
-- **正式頁 FlowEngine 沒有讀 `layoutStore`**（2026-10-31 發現）：`useFlowEngine()`（`src/composables/useFlowEngine.ts:1409`）仍只 watch `editorStore.nodes`／`edges`；`toTopology` 只有 dev 頁（`L1ContractLab`、`LayoutL1Preview`）在呼叫。因此正式頁擺的設備、W1026-H1 寫入的 `primaryOutput` 都不會進引擎，`flowStore` 在正式頁永遠是空結果。C5 文件寫「引擎讀 #74 合入」應只指 adapter 本身。尚未回報 dernoson／aaaaa
+- ~~**`layoutStore` 沒有切換 `machineMode` 的 action**~~：W1102-H1 改由 `setDevicePrimaryOutput` 依素材物態一併切換（基礎材料輸出點），不新增 action
+- **`setDevicePrimaryOutput` 的 JSDoc 寫 `@param itemId 基礎材料 id`**，實際存的是中文名（`MaterialDef.name`），既有說法不精確，未修
+- **正式頁 FlowEngine 沒有讀 `layoutStore`**（2026-10-31 發現；toby 的 #84 已處理，未合入）：`useFlowEngine()`（`src/composables/useFlowEngine.ts:1409`）仍只 watch `editorStore.nodes`／`edges`；`toTopology` 只有 dev 頁（`L1ContractLab`、`LayoutL1Preview`）在呼叫。因此正式頁擺的設備、W1026-H1 寫入的 `primaryOutput` 都不會進引擎，`flowStore` 在正式頁永遠是空結果。C5 文件寫「引擎讀 #74 合入」應只指 adapter 本身。尚未回報 dernoson／aaaaa
 - **`src/editor/stats/ProductionStats.vue` 的「總產出」區塊重複兩次**（第 340–367 行與 369–396 行內容完全相同）。該元件目前不在正式頁（見 §3.2）
 - **`src/style.css` 的全域字型註解與實際不符**：註解寫「全域字型 HarmonyOS Sans TC」，但 `:root` 的 `font-family` 是 Inter；`MachineCard`、StatsPanel、工具列（`dev/cake_toolbar`）各自在元件內指定 HarmonyOS
 - **`src/components/BaseRegionSelector` 讀 store，違反 L3 規則**（L3 不得 import Pinia store；2026-10-31 以 grep 盤點發現）。尚未回報
