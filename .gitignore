@@ -33,6 +33,9 @@ components.d.ts
 # Claude Code: personal config symlinked to docs/dernoson/claude
 /.claude
 /CLAUDE.md
+docs/harry/claude/CLAUDE.md
+docs/harry/figma_full.json
+docs/harry/dev/icons/*.png
 
 # Agents
 .agents/

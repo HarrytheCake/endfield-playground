@@ -47,7 +47,7 @@
 
 ## 3. DoD
 
-- [ ] tutorial 可跟做（或明寫「以 USAGE／LAB 為準」並互連）
-- [ ] `/dev/l1-contract-lab` 從 DevLayout 找得到
-- [ ] 詞彙／API 說明有白話入口
-- [ ] 未改 C1 鎖檔
+- [x] tutorial 可跟做（[tutorial/l1-contract-lab/usage.md](../../../tutorial/l1-contract-lab/usage.md)；與 lab「入門」／USAGE／LAB 互連）
+- [x] `/dev/l1-contract-lab` 從 DevLayout 找得到
+- [x] 詞彙／API 說明有白話入口
+- [x] 未改 C1 鎖檔
