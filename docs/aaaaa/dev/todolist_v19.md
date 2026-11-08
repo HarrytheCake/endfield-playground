@@ -8,8 +8,8 @@
 **上游：** [WEEK_20261026](../../work_dispatch/WEEK_20261026.md) **v1.1**、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.21**、[AGENT_WEEK_1026](../claude/AGENT_WEEK_1026.md)
 **週次：** 2026-10-26 → 2026-11-01（問卷週 1026；#78 合入收尾週）
 **開發分支：** `dev/aaaaa1026`
-**狀態總覽：** **`[x]` 主線完成**（2026-11-01；A–E `[x]`；**PR 待裁**；WEEK V2 勾選屬主編結算）
-**下一批：** [todolist_v20](./todolist_v20.md) **主線完成**；再下＝[todolist_v21](./todolist_v21.md)（**硬閘：本版＋V20 合 master 後**；見 [AGENT_WEEK_1102](../claude/AGENT_WEEK_1102.md)）
+**狀態總覽：** **`[x]` 主線完成並已合 master**（[#82](https://github.com/dernoson/endfield-playground/pull/82)，2026-11-02；A–E `[x]`）
+**下一批：** [todolist_v20](./todolist_v20.md) 同 PR 已合；[todolist_v21](./todolist_v21.md) **閘門已過、已開版**（本週只開版；見 [AGENT_WEEK_1102](../claude/AGENT_WEEK_1102.md)）
 **待確認問題：** [dispatch_private/1026/PENDING_DECISIONS_20261101.md](../collaborator_survey/dispatch_private/1026/PENDING_DECISIONS_20261101.md)（A 組已決；M 組非本責）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -190,6 +190,10 @@ A 定案 → B V18／#78 收斂（前置）
 ---
 
 ## 開發日誌
+
+### 2026-11-08｜#82 已合
+
+- V19＋V20 收斂完畢；V21 開版見 [todolist_v21](./todolist_v21.md)
 
 ### 2026-11-01｜V20 正式開版（交接）
 

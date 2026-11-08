@@ -2,7 +2,7 @@
 
 | meta | value |
 |------|-------|
-| version | **v1.7（2026-11-01；V19＋V20 主線皆完成；PR 待裁）** |
+| version | **v1.8（2026-11-08；V19＋V20 已由 #82 合入）** |
 | 用途 | Agent 執行本週派工／改工單時的強制約束 |
 | 公開 | [WEEK_1026](../../work_dispatch/WEEK_20261026.md) v1.1、[W1026-A0](../../work_dispatch/aaaaa/1026/W1026-A0_tutorial_lab_api.md) |
 | 執行計畫 | [todolist_v19](../dev/todolist_v19.md)、[dev_v19/](../dev/dev_v19/)；下一批 **已開** [todolist_v20](../dev/todolist_v20.md)、[AGENT_WEEK_1102](./AGENT_WEEK_1102.md) |
@@ -10,7 +10,7 @@
 | 操作總則 | [AGENT_ROADMAP](./AGENT_ROADMAP.md)（v1.6；檔案地圖仍指 0907，已知過期） |
 | 上週 | [AGENT_WEEK_1018](./AGENT_WEEK_1018.md)（V18／#79 已合） |
 | 撰寫 | aaaaa |
-| 最後更新 | 2026-11-01 |
+| 最後更新 | 2026-11-08 |
 
 ---
 
@@ -18,8 +18,8 @@
 
 **V19 主線完成。** `/dev/l1-contract-lab`＝L1 Hub MVP（入門／詞彙／目錄／V14–V17 定義＋可點測＋維運摘要）。  
 V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L1／store 簽名、不碰正式畫布。  
-**PR → master 另裁**（主線已收斂；開 PR 等負責人下令）。不發解鎖句。  
-**下一批 V20 主線亦完成：** [AGENT_WEEK_1102](./AGENT_WEEK_1102.md)。本檔＋1102 同線 **`dev/aaaaa1026`**；**開 PR 另裁**（可 V19+V20 同 PR）。
+**已收斂：** [#82](https://github.com/dernoson/endfield-playground/pull/82) 2026-11-02 MERGED（V19＋V20 同 PR）。不發解鎖句。  
+**下一批：** [AGENT_WEEK_1102](./AGENT_WEEK_1102.md)＝V21 只開版；分支改 **`dev/aaaaa1102`**。
 
 ---
 
@@ -34,7 +34,7 @@ V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L
 | ~~4~~ | ~~維運規則＋驗收~~ | **已完成**；[V19-E1](../dev/dev_v19/E1_ops_rules_and_handoff.md) |
 | ~~4b~~ | ~~下一批清單落檔~~ | **已完成**；[V19-F0](../dev/dev_v19/F0_next_catalog_batch.md) |
 | ~~4c~~ | ~~V20 正式開版~~ | **已完成**；見 [AGENT_WEEK_1102](./AGENT_WEEK_1102.md) |
-| 5 | 開 PR → master（另裁） | E1 §3 建議標題／body |
+| ~~5~~ | ~~開 PR → master~~ | **已完成**；[#82](https://github.com/dernoson/endfield-playground/pull/82) |
 | — | **禁止**改 LayoutView／GridCanvas 業務 | 工單＋鎖表精神 |
 | — | **禁止**改 layoutStore／editorStore／utils/layout **簽名** | W1026-A0 §2 |
 | — | **禁止**另開第二 hub 路由／全量一次列完／codegen 自動同步 | A-1／A-3／A-4 |
@@ -68,7 +68,7 @@ V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L
 | 時數 | ≤2h 問卷；**接受超標** |
 | 解鎖句 | **本版不發** |
 | 分支 | **`dev/aaaaa1026`** |
-| PR | **主線完成；開 PR 另裁** |
+| PR | **已合** [#82](https://github.com/dernoson/endfield-playground/pull/82)（2026-11-02） |
 
 ---
 
@@ -80,7 +80,7 @@ V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L
 | 2 | 回寫 todolist_v19 | Agent／aaaaa | `[x]` |
 | 3 | REVIEW／E3／PENDING 日誌 | 決策層 `1026/` | `[x]` |
 | 4 | 11/01 驗收回寫 WEEK V2 | 主編／aaaaa | 結算時 |
-| 5 | 開 PR → master | aaaaa | `[ ]`（**另裁**） |
+| 5 | 開 PR → master | aaaaa | `[x]`（[#82](https://github.com/dernoson/endfield-playground/pull/82)，2026-11-02） |
 | 6 | 下一批正式開 V20 | aaaaa | `[x]`（A1；實作見 1102／C1） |
 | — | **不動** CLAUDE §4.6 索引、AGENT_ROADMAP 版本 | 已知過期 | 維持 |
 
@@ -101,6 +101,10 @@ V18／#78／#79 已收斂。全量 catalog／自動同步列後續週。不改 L
 ---
 
 ## 6. 日誌
+
+### 2026-11-08（v1.8）
+
+- #82 已合；本週檔收斂。後續看 AGENT_WEEK_1102
 
 ### 2026-11-01（v1.7）
 

@@ -3,13 +3,13 @@
 **版本：** V20
 **建立日期：** 2026-11-01
 **負責人：** aaaaa
-**前置：** [V19](./todolist_v19.md) 主線完成（Hub MVP；**PR 待裁**）；輸入清單 [V19-F0](./dev_v19/F0_next_catalog_batch.md)
+**前置：** [V19](./todolist_v19.md) 主線完成；本版與 V19 已由 [#82](https://github.com/dernoson/endfield-playground/pull/82) 合入（2026-11-02）。輸入清單 [V19-F0](./dev_v19/F0_next_catalog_batch.md)
 **正式依據：** [V19-F0](./dev_v19/F0_next_catalog_batch.md)、[V19-E1 維運](./dev_v19/E1_ops_rules_and_handoff.md)；公開 WEEK／Wxxxx **待補編號**（不擋本版）
 **上游：** [todolist_v19](./todolist_v19.md)、[AGENT_WEEK_1102](../claude/AGENT_WEEK_1102.md)
 **週次：** 2026-11-01 起（接 1026 週之後；內部延續）
 **開發分支：** `dev/aaaaa1026`（接續 V19）
-**狀態總覽：** **`[x]` 主線完成**（2026-11-01；A–E `[x]`；**PR 待裁**；公開工單編號待補）
-**下一批：** [V20-F1](./dev_v20/F1_tryout_not_swagger.md)（輕量試玩／非 swagger）→ 草案 [todolist_v21](./todolist_v21.md)（**硬閘：本版＋V19 合 master 後**）
+**狀態總覽：** **`[x]` 主線完成並已合 master**（2026-11-02 [#82](https://github.com/dernoson/endfield-playground/pull/82)；A–E `[x]`）
+**下一批：** [V20-F1](./dev_v20/F1_tryout_not_swagger.md) → [todolist_v21](./todolist_v21.md)（**閘門已過**；2026-11-08 已開版，牌 2 未開工）
 **待確認問題：** [dispatch_private/1102/PENDING_DECISIONS_20261101.md](../collaborator_survey/dispatch_private/1102/PENDING_DECISIONS_20261101.md)（A 組已決）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中
@@ -157,6 +157,10 @@ A1 定案 → C1 P0 點測／定義表
 ---
 
 ## 開發日誌
+
+### 2026-11-08｜#82 已合
+
+- 本版與 V19 同 PR 收斂；V21-A1 另分支 `dev/aaaaa1102`
 
 ### 2026-11-01｜V20-F1 試玩決策
 
