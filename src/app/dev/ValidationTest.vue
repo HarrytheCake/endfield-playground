@@ -117,7 +117,7 @@
                         @click="testPlaceUnconnectedSource"
                         class="w-full rounded-md bg-rose-600 px-3 py-2 text-sm text-white hover:bg-rose-700"
                     >
-                        ➕ 新增沒接輸出線的源機（採礦機 @60,20，純粹觸發 E005）
+                        ➕ 新增沒接輸出線的源機（物品輸出口 @60,20，純粹觸發 E005）
                     </button>
                     <button
                         @click="testPlaceMismatchedConnection"
@@ -274,7 +274,7 @@ function testPlaceUnconnectedMachine() {
 }
 
 /**
- * 在像素座標 (1200,400)（即格子 (60,20)）擺放一台未接輸出線的採礦機（is_source: true），
+ * 在像素座標 (1200,400)（即格子 (60,20)）擺放一台未接輸出線的物品輸出口（is_source: true），
  * 因源機不套用 E004，但無出邊而觸發 E005，用於純粹驗證 E005。
  * @example
  * testPlaceUnconnectedSource()
@@ -284,7 +284,7 @@ function testPlaceUnconnectedSource() {
         id: crypto.randomUUID(),
         type: 'default',
         position: { x: 1200, y: 400 },
-        data: { label: '未接線採礦機', machineType: '採礦機', rotation: 0 },
+        data: { label: '未接線物品輸出口', machineType: '物品輸出口', rotation: 0 },
     });
 }
 
@@ -323,8 +323,9 @@ function testPlaceMismatchedConnection() {
 
 /**
  * 測試純粹 W001：上游為源類機器（物品輸出口，is_source: true），輸出「赤銅礦」；
- * 下游精煉爐在預設基礎模式（base_mode）下無法單獨精煉赤銅礦（赤銅需在 liquid_mode 加清水）。
- * 因上游是源機，E004 自動忽略；下游有入邊，不報 E004；
+ * 下游精煉爐在預設基礎模式（base_mode）下無法單獨精煉赤銅礦（赤銅需在 liquid_mode 加清水）；
+ * 後方接至匯出點（物品輸入口，is_sink: true）提供出邊以排除 E005。
+ * 因上游是源機，E004 自動忽略；精煉爐與匯出點皆有管線進出，不報 E004 與 E005；
  * 僅有精煉爐材料不符 ➔ 畫面上純粹只有 1 筆 W001 Warning（0 Errors）。
  * @example
  * testPlacePureW001Connection()
@@ -332,6 +333,7 @@ function testPlaceMismatchedConnection() {
 function testPlacePureW001Connection() {
     const srcId = crypto.randomUUID();
     const dstId = crypto.randomUUID();
+    const sinkId = crypto.randomUUID();
 
     // 1. 放置上游源設備（物品輸出口，is_source: true，不套用 E004）
     editorStore.placeDevice({
@@ -358,11 +360,28 @@ function testPlacePureW001Connection() {
         },
     });
 
-    // 3. 連接管線
+    // 3. 放置終點匯出點（物品輸入口，is_sink: true，不套用 E005）
+    editorStore.placeDevice({
+        id: sinkId,
+        type: 'default',
+        position: { x: 700, y: 400 },
+        data: {
+            label: '終點物品輸入口',
+            machineType: '物品輸入口',
+            rotation: 0,
+        },
+    });
+
+    // 4. 連接管線：源機 ➔ 精煉爐 ➔ 物品輸入口
     editorStore.addConnection({
         id: crypto.randomUUID(),
         source: srcId,
         target: dstId,
+    });
+    editorStore.addConnection({
+        id: crypto.randomUUID(),
+        source: dstId,
+        target: sinkId,
     });
 }
 
