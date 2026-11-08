@@ -4,8 +4,8 @@
 |------|-------|
 | 頁面 | `http://localhost:5173/dev/l1-contract-lab` |
 | 對象 | 畫布 L2、驗證、引擎、週會聽眾、**較少開發經驗的協作者** |
-| 對應 | [todolist_v14](./todolist_v14.md)～[todolist_v21](./todolist_v21.md)（V19 Hub；V20 catalog；V21＝**輕量試玩草案**） |
-| 最後更新 | 2026-11-03 |
+| 對應 | [todolist_v14](./todolist_v14.md)～[todolist_v21](./todolist_v21.md)（V19 Hub；V20 catalog；V21-C1＝試玩分頁 P0） |
+| 最後更新 | 2026-11-08 |
 | 簡易教學（建議先跟做） | [tutorial/l1-contract-lab/usage.md](../../../tutorial/l1-contract-lab/usage.md) |
 | 公開長文 | [LAB_l1_contract_guide](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md)（詞彙表＋各函式用途／串接） |
 
@@ -21,7 +21,7 @@
 3. **目錄**（長期 API inventory：已列／待列）
 4. **定義表**（符號／模組／誰呼叫／不要做什麼）
 5. **一鍵案例**（呼叫真實 API，JSON 輸出）
-6. （規劃中／V21）**輕量可調參試玩**——少數 API 可改參數再執行；**不是**完整 Swagger（見 [V20-F1](./dev_v20/F1_tryout_not_swagger.md)、[A0 牌程](./dev_v21/A0_tryout_panel_plan.md)）
+6. **試玩**（V21-C1）：用白話分辨滑鼠點到的埠，和管子要接的格子。交接見 [HANDOFF](../../work_dispatch/aaaaa/1102/HANDOFF_tryout_p0.md)。`canConnect` 還沒做
 
 方便其他串接者對照與自測，而不必只讀 diff。  
 **最短跟做**先看 [tutorial](../../../tutorial/l1-contract-lab/usage.md)；頁內「入門」分頁也有 5 步。完整長文見 [LAB 指南](../../work_dispatch/aaaaa/1018/LAB_l1_contract_guide.md)。
@@ -43,6 +43,7 @@ pnpm dev
 | **入門** | 給無經驗者的 5 步最短路徑＋**維運規則摘要**（建議先看） |
 | **詞彙** | 專有名詞白話（精簡；完整見 LAB §2） |
 | **目錄** | layout utils／layoutStore／可選驗證・引擎：已列／待列 |
+| **試玩** | 用白話分辨「滑鼠點到的埠」和「管子要接的格子」，可改位置再看答案 |
 | 總覽 | 四版一句話＋誤用對照 |
 | V14 | `canPlaceDevice`／`canMoveDevice`／`canConnect` |
 | V15 | 出界／熱區／waypoints／**gap**／**findPortAt 對照**／**resolveConnections**（V20） |
@@ -84,5 +85,5 @@ pnpm dev
 改契約說明時優先改此檔，避免 Vue 模板散落。
 
 **V20 已交（可點測）：** `findPortAt`／`resolveConnections`；`buildGapConnectionWaypoints`；`addPipeline`／`removePipeline`。  
-**V21 規劃：** 輕量可調參（先 `hitTestPortAt`／`findPortAt`／`canConnect`）——[todolist_v21](./todolist_v21.md)；**開工前提＝V19＋V20 合 master**。  
+**V21-C1 已交：** 分頁「試玩」可調 `hitTestPortAt`／`findPortAt`。`canConnect` 仍是牌 3。見 [todolist_v21](./todolist_v21.md)。  
 其餘 inventory `todo`（佔格／snapshot／detectors…）與試玩**脫鉤**另牌——見 [F0 §2.3](./dev_v19/F0_next_catalog_batch.md)。
