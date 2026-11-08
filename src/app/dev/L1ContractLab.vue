@@ -51,9 +51,10 @@ import {
     type ContractInventoryArea,
     type ContractVersion,
 } from '@/app/dev/l1ContractLab/contractCatalog';
+import TryoutPanel from '@/app/dev/l1ContractLab/TryoutPanel.vue';
 
-/** Hub 導覽分頁（入門／詞彙／目錄／總覽／版本） */
-type HubTab = ContractVersion | 'overview' | 'guide' | 'glossary' | 'inventory';
+/** Hub 導覽分頁（入門／詞彙／目錄／試玩／總覽／版本） */
+type HubTab = ContractVersion | 'overview' | 'guide' | 'glossary' | 'inventory' | 'tryout';
 
 /** 目前分頁：入門／詞彙／目錄／總覽或某契約版本 */
 const active = ref<HubTab>('guide');
@@ -97,7 +98,8 @@ const activeBlock = computed(() => {
         active.value === 'overview' ||
         active.value === 'guide' ||
         active.value === 'glossary' ||
-        active.value === 'inventory'
+        active.value === 'inventory' ||
+        active.value === 'tryout'
     ) {
         return null;
     }
@@ -126,6 +128,15 @@ const outputJson = ref('點下方「執行」按鈕，結果會顯示在這裡�
 function showResult(title: string, value: unknown) {
     outputTitle.value = title;
     outputJson.value = JSON.stringify(value, null, 2);
+}
+
+/**
+ * 試玩分頁把真實呼叫結果寫進同一個輸出面板。
+ *
+ * @param payload 標題與 JSON 本體
+ */
+function onTryoutResult(payload: { title: string; value: unknown }) {
+    showResult(payload.title, payload.value);
 }
 
 /**
@@ -842,6 +853,14 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
             <button
                 type="button"
                 class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                :class="navClass('tryout')"
+                @click="active = 'tryout'"
+            >
+                試玩
+            </button>
+            <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-medium"
                 :class="navClass('overview')"
                 @click="active = 'overview'"
             >
@@ -1004,6 +1023,11 @@ const playByVersion: Record<ContractVersion, PlayCase[]> = {
                     </li>
                 </ul>
             </div>
+        </section>
+
+        <!-- 試玩：可調參，結果仍走下方 JSON -->
+        <section v-else-if="active === 'tryout'" class="space-y-4">
+            <TryoutPanel @result="onTryoutResult" />
         </section>
 
         <!-- 總覽 -->
