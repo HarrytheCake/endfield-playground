@@ -11,6 +11,7 @@ import type { PlacedDevice } from '@/types/layout';
 import { getMachineById } from '@/data/machines';
 import { getMachineIconUrl } from '@/editor/toolbar/toolbarMachines';
 import { toMachineCardFormulas } from './toMachineCardFormulas';
+import { resolveDisplayGrid } from '@/utils/portUtils';
 import { useFlowEngine } from '@/composables/useFlowEngine';
 import { useValidation } from '@/composables/useValidation';
 import { useDragScroll } from '@/composables/useDragScroll';
@@ -20,7 +21,8 @@ const layoutStore = useLayoutStore();
 
 /**
  * 目前選中的設備實例 id，`null` 表示未選取。  \
- * 只有左側面板消費，依主編裁決 A-3 暫放本地；多重選取需要跨元件共用時再搬進 store。
+ * 同時供左側面板與 LayoutView 旋轉入口使用；單選身分仍由此處保存，透過 prop 傳給畫布。
+ * 多重選取需要跨元件共用時再搬進 store。
  */
 const selectedDeviceId = ref<string | null>(null);
 
@@ -48,7 +50,7 @@ const selectedDevice = computed<PlacedDevice | null>(
 
 /**
  * 選中設備轉成 MachineCard 的 props；找不到設備或機器定義時為 `null`，面板隨之隱藏。  \
- * 尺寸取 0° 靜態值，因為旋轉尚未開放。
+ * 尺寸取目前旋轉後的顯示長寬。
  * `selectedRecipe` 不給：正式頁沒有指定配方，配方由引擎依實際輸入判斷，卡片顯示佔位符號。
  */
 const selectedMachineCard = computed<MachineCardProps | null>(() => {
@@ -56,10 +58,12 @@ const selectedMachineCard = computed<MachineCardProps | null>(() => {
     if (!device) return null;
     const machine = getMachineById(device.machineType);
     if (!machine) return null;
+    /** 與畫布共用旋轉後尺寸，避免選取面板仍顯示旋轉前長寬。 */
+    const display = resolveDisplayGrid(machine.width, machine.height, device.rotation);
     return {
         id: device.id,
         name: machine.name,
-        sizeText: `${machine.width}×${machine.height}`,
+        sizeText: `${display.widthCells}×${display.heightCells}`,
         /** 負值（含 -1 資料未定義）不是耗電量，留給卡片顯示佔位符號 */
         power: machine.power >= 0 ? `${machine.power}kW` : undefined,
         /** 沒有機器圖的機型為 undefined，卡片改用內建占位圖 */
@@ -98,7 +102,10 @@ useFlowEngine();
             <!-- 畫布與疊在其上的浮層共用同一個定位容器；工具列（#48）以 absolute 貼齊此容器底緣 -->
             <div class="area-stage">
                 <div class="area-canvas">
-                    <LayoutView @select-device="onSelectDevice" />
+                    <LayoutView
+                        :selected-device-id="selectedDeviceId"
+                        @select-device="onSelectDevice"
+                    />
                 </div>
                 <aside
                     v-if="selectedMachineCard && !devicePanelHidden"

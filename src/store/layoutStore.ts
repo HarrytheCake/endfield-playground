@@ -31,6 +31,7 @@ import type {
 } from '@/types/layout';
 import { HistoryRecordType } from '@/types/history';
 import { getMachineById } from '@/data/machines';
+import { getMaterialPortMedia } from '@/data/materials';
 import { resolveConnections } from '@/utils/layout/resolveConnections';
 import {
     assessInvolving,
@@ -74,6 +75,37 @@ function cloneSnapshot(snapshot: LayoutSnapshot): LayoutSnapshot {
  */
 function cloneDevice(device: PlacedDevice): PlacedDevice {
     return { ...device, position: { ...device.position } };
+}
+
+/**
+ * 依源素材物態同步多型態源設備的 `machineMode`（W1102-H1）。
+ *
+ * 基礎材料輸出點以型態決定輸出埠是 belt 還是 pipe；只寫 `primaryOutput` 時，  \
+ * 清水等液氣會卡在預設的固體埠出不去。型態以「輸出埠媒質與材料相符」查表決定，  \
+ * 不寫死型態 id。
+ *
+ * 只處理有多個型態的源設備；非源設備、單型態源設備、未知材料或查不到相符型態時不動。
+ *
+ * @param device 要寫入的設備副本；**就地修改**，呼叫端須傳入新拷貝
+ * @param itemId 基礎材料名；`null` 表示清除，型態回到 `modes[0]`
+ */
+function syncSourceMachineMode(device: PlacedDevice, itemId: string | null): void {
+    const machine = getMachineById(device.machineType);
+    if (!machine?.is_source || machine.modes.length < 2) {
+        return;
+    }
+    if (itemId === null) {
+        delete device.machineMode;
+        return;
+    }
+    const media = getMaterialPortMedia(itemId);
+    if (!media) {
+        return;
+    }
+    const mode = machine.modes.find((m) => m.output_ports[0]?.media === media);
+    if (mode) {
+        device.machineMode = mode.id;
+    }
 }
 
 /**
@@ -390,6 +422,8 @@ export const useLayoutStore = defineStore('layout', () => {
      * 設定源設備的主要產出物與速率（V16／W1011-A0／C5）。
      *
      * 寫入 {@link PlacedDevice.primaryOutput}／{@link PlacedDevice.sourceRatePerMin}；進歷史。  \
+     * 多型態源設備（基礎材料輸出點）同一筆歷史內一併切換 `machineMode`：  \
+     * 液氣→`fluid_pipe`、固體→`solid_belt`、清除→刪除（回到 `modes[0]`）（W1102-H1）。  \
      * 未知或同 id 多台時靜默 no-op，且**不**進歷史。
      *
      * @param uid 設備 uid
@@ -416,14 +450,17 @@ export const useLayoutStore = defineStore('layout', () => {
                 const cleared: PlacedDevice = { ...d, position: { ...d.position } };
                 delete cleared.primaryOutput;
                 delete cleared.sourceRatePerMin;
+                syncSourceMachineMode(cleared, null);
                 return cleared;
             }
-            return {
+            const updated: PlacedDevice = {
                 ...d,
                 position: { ...d.position },
                 primaryOutput: itemId,
                 sourceRatePerMin: ratePerMin ?? 30,
             };
+            syncSourceMachineMode(updated, itemId);
+            return updated;
         });
 
         const historyStore = useHistoryStore();
@@ -509,6 +546,8 @@ export const useLayoutStore = defineStore('layout', () => {
          * 設定源設備的主要產出物與速率（V16／W1011-A0／C5）。
          *
          * 寫入 {@link PlacedDevice.primaryOutput}／{@link PlacedDevice.sourceRatePerMin}；進歷史。  \
+         * 多型態源設備（基礎材料輸出點）同一筆歷史內一併切換 `machineMode`：  \
+         * 液氣→`fluid_pipe`、固體→`solid_belt`、清除→刪除（回到 `modes[0]`）（W1102-H1）。  \
          * 未知或同 id 多台時靜默 no-op，且**不**進歷史。
          *
          * @param uid 設備 uid

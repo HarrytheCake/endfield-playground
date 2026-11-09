@@ -19,11 +19,14 @@ const layoutStore = useLayoutStore();
  */
 const NONE_VALUE = '__none__';
 
-/** 下拉選項：「無」＋依輸出埠媒質過濾後的基礎材料；非源設備為空陣列 */
+/**
+ * 下拉選項：「無」＋該機任一型態送得出去的基礎材料；非源設備為空陣列。  \
+ * 不依目前型態過濾：選了液氣後 store 會自行切換型態（W1102-H1）。
+ */
 const materialItems = computed(() => {
     const machine = getMachineById(props.device.machineType);
     if (!machine) return [];
-    const materials = sourceMaterialOptions(machine, props.device.machineMode);
+    const materials = sourceMaterialOptions(machine);
     if (materials.length === 0) return [];
     return [
         { label: '無', value: NONE_VALUE },

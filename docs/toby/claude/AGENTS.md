@@ -83,6 +83,7 @@
 ### A.6 提交流程
 
 - 分支命名和 PR 流程以根目錄 `README.md` 的「開發者守則」為準。
+- 不需另外測試圖片或 JSON 檔案，也不主動產生測試用圖片（含截圖）或 JSON 報告；驗證結果以文字或 Markdown 紀錄。
 - push 前必須通過：
   - `pnpm type-check`
   - `pnpm lint-check`

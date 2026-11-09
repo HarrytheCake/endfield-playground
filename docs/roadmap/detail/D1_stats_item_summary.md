@@ -5,11 +5,11 @@
 | 對應大綱 | [ROADMAP_OUTLINE.md](../ROADMAP_OUTLINE.md) §6 |
 | 里程碑 | M4（2026-11-29）；首次可演示 11/1 |
 | 擋門檻 | **是**（主編步驟 7） |
-| 建議主責／備援 | aaaaa（CR-04 主責）／— |
+| 建議主責／備援 | 整項仍是 aaaaa。**11/01 切片本週＝toby**（[W1102-T1](../../work_dispatch/toby/1102/W1102-T1_stats_panel.md)，11/01 會議）。不把 11/29 整項單獨押在這一週 |
 | 性質 | 接線 ＋ 畫面 |
 | 依賴 | [B2](./B2_placement_chain.md)、[C1](./C1_port_hit_and_draft.md)、[C5](./C5_source_primary_output.md) |
-| 狀態 | `[~]` 進行中（空狀態切片已合入；未接 flowStore） |
-| 最後更新 | 2026-08-30 |
+| 狀態 | `[~]` 進行中（空狀態切片已合入；**master 仍未接 flowStore**） |
+| 最後更新 | **2026-11-03** |
 
 ---
 
@@ -128,6 +128,11 @@ FlowEngine 完整、`flowStore` 完整、`ItemSummaryTable.vue` 存在、`MainLa
 **未交頂替：** 無。這是 11/29 門檻的核心，也是 [D5](./D5_acceptance_rehearsal.md) 驗收劇本第 4 步。
 
 ## 11. 開發日誌
+
+### 2026-11-03
+- harry 的 `dev/cake_prodstats` 有「右側產線總覽接上 flowStore／驗證結果」（10-31），**沒有 PR、不在 master**
+- 這不是 W1026 的工單。D1 仍未交付
+- **11/01 會議：** 11/01 切片改派 toby（[W1102-T1](../../work_dispatch/toby/1102/W1102-T1_stats_panel.md)）。harry 改做供水邏輯，不接這張表。`dev/cake_prodstats` 無 PR，不作底。見 [WEEK_20261102](../../work_dispatch/WEEK_20261102.md) v1.1
 
 ### 2026-08-22
 - 建檔。本項技術新增極少，主要工作被定義為「除錯上游資料」與「補空狀態」，避免屆時把時間花在重寫引擎
