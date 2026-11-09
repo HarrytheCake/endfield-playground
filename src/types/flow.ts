@@ -108,6 +108,27 @@ export function rateLimitForMedia(media: PortMedia | null | undefined): number {
 
 // ─── FlowGraph 圖結構型別 ─────────────────────────────────────────────────────
 
+/** 調度券種類，依採用單價的基地區分。 */
+export type TicketCurrency = 'wuling' | 'valley4';
+
+/** 品項兌換單價及其券種來源。 */
+export interface TicketUnitPrice {
+    /** 每個品項可兌換的券數。 */
+    price: number;
+    /** 此單價對應的券種。 */
+    currency: TicketCurrency;
+}
+
+/** 單一券種的每小時兌換效率。 */
+export interface TicketCurrencyRate {
+    /** 券種識別值，用於保持顯示與更新順序穩定。 */
+    currency: TicketCurrency;
+    /** 使用者可見的券種名稱。 */
+    label: string;
+    /** 實際交付量換算的券數／小時。 */
+    rate: number;
+}
+
 /** 有向圖邊的元資料 */
 export interface EdgeMeta {
     /** 對應 Vue Flow edge.id / Connection uid */
@@ -239,9 +260,9 @@ export interface FlowStoreState {
     congestedEdges: Set<string>;
     /** 非合法鏈路 / 孤立節點的 deviceUid 集合 */
     invalidChainUids: Set<string>;
-    /** 所有有效設備的總耗電量（kW） */
+    /** 全部已擺放設備的額定總耗電量（kW），僅加總正值 power，不依鏈路或效率折算 */
     totalPowerDemand: number;
-    /** 所有供電設備的總供電量（kW） */
+    /** 全部已擺放設備的額定產電加總（kW），排除 power=-1；缺資料為 0 */
     totalPowerSupply: number;
     /** 計算中 flag */
     isCalculating: boolean;
@@ -268,8 +289,8 @@ export interface FlowEngineResult {
     congestedEdges: Set<string>;
     /** 非合法鏈路 / 孤立節點的 deviceUid 集合 */
     invalidChainUids: Set<string>;
-    /** 所有有效設備的總耗電量（kW） */
+    /** 全部已擺放設備的額定總耗電量（kW），僅加總正值 power，不依鏈路或效率折算 */
     totalPowerDemand: number;
-    /** 所有供電設備的總供電量（kW） */
+    /** 全部已擺放設備的額定產電加總（kW），排除 power=-1；缺資料為 0 */
     totalPowerSupply: number;
 }

@@ -144,7 +144,7 @@ export const plans: Plan[] = [
             },
             {
                 name: '鋼製零件',
-                price: 1,
+                price: 3,
             },
         ],
         priority_products: [
@@ -404,7 +404,7 @@ export const plans: Plan[] = [
                 price: 48,
             },
             {
-                name: '低容量谷地電池',
+                name: '低容量武陵電池',
                 price: 25,
             },
             {

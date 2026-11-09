@@ -1,7 +1,8 @@
 # Endfield Playground Agent 開發守則與架構導覽
 
-本文件整合 `docs/toby/claude/CLAUDE.md` 的強制開發守則，以及
+本文件為 Toby 的統一開發守則，整合原 CLAUDE.md 的規則，以及
 `endfield-playground` 的程式架構、主要資料流和主要檔案用途。
+開發守則於 2026-11-06 合併，衝突規則依使用者確認結果統一；原 CLAUDE.md 已移除。
 架構內容以 2026-08-28 的實際程式碼為準。
 
 ## A. 強制開發守則
@@ -83,6 +84,7 @@
 ### A.6 提交流程
 
 - 分支命名和 PR 流程以根目錄 `README.md` 的「開發者守則」為準。
+- 不需另外測試圖片或 JSON 檔案，也不主動產生測試用圖片（含截圖）或 JSON 報告；驗證結果以文字或 Markdown 紀錄。
 - push 前必須通過：
   - `pnpm type-check`
   - `pnpm lint-check`
@@ -95,8 +97,8 @@
 ### A.7 互動與變更範圍
 
 - 大量或跨多檔案變更應先與使用者討論並分割步驟，一次執行一個步驟。
-- 除非使用者明確要求，不得自行建立 README、CHANGELOG 或 planning 文件。
-- 不確定且會實質影響結果的決策應交由使用者選擇。
+- 除非使用者明確要求，不得自行建立任何新檔案，包含 README、CHANGELOG、planning 文件等。
+- 所有不確定的決策都應回報並交由使用者選擇，不得自行下判斷。
 - 修 bug 時聚焦根因，不順便重構周邊。
 - 重構時不順便改變既有邏輯。
 
@@ -120,7 +122,7 @@ Skills：
 Agents：
 
 - `dependency-grapher`：只讀分析相依關係並輸出 Mermaid markdown，不修改原始碼。
-- `test-writer`：建立或更新 Vitest 測試，測試檔鏡射至 `src/__tests__/`。
+- `test-writer`：依 A.12 節建立或更新 Vitest 測試，測試程式僅放在 `docs/toby/test/layoutFlowWiring.test.ts`。
 
 ### A.10 Storybook 開發守則
 
@@ -164,6 +166,14 @@ Agents：
 分析文件命名為 `<工單>_analysis.md`，分步索引為 `<工單>_steps.md`，各步驟使用
 `<工單>_step_NN_<主題>.md`。除非使用者要求留下分析紀錄，否則先在對話中完成分析，
 不得因套用此流程而自行建立 planning 文件。
+
+### A.12 Toby 測試檔放置規則
+
+- 測試程式僅放在 `docs/toby/test/layoutFlowWiring.test.ts`；所有新增或調整的測試皆集中於此檔案，不新增其他測試檔，也不修改 `src/__tests__/` 或 Story 測試。既有共用測試不另行搬移。
+- 畫面呈現以正式頁面及既有 Story 手動檢查。
+- 測試透過 `@/` 匯入 `src/` 正式程式；不要為搬移而複製正式邏輯或改用假配方。
+- `pnpm test` 仍須執行此目錄內的測試；可用 `pnpm exec vitest run docs/toby/test/layoutFlowWiring.test.ts` 單獨驗證接線。
+- `tsconfig.app.json` 應包含 `docs/toby/test/**/*.ts`，保留測試的型別檢查。此目錄不在既有格式檢查腳本範圍，修改後另執行 `pnpm exec prettier --check docs/toby/test/`。
 
 ## B. 專案架構導覽
 

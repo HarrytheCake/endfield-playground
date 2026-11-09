@@ -31,7 +31,7 @@ export interface MachineLimit {
 export interface ProductValue {
     /** 產品中文名稱 */
     name: string;
-    /** 該品項在本計畫下的兌換單價（券 / 個或內部評估值） */
+    /** 該品項在本計畫下的兌換單價（券／個）；每分鐘交付量換算券／小時時須乘以 60。 */
     price: number;
 }
 

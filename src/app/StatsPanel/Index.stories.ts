@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { ref } from 'vue';
 import TestStatsPanel from './Index.vue';
 import type { SingleProductDetail, SingleTip } from './types.ts';
 
 /** 產線總覽統計面板（StatsPanel）Storybook Meta 設定 */
 const meta = {
-    title: 'L3/StatsPanel',
+    title: 'L3/StatsPanel/Index',
     component: TestStatsPanel,
     decorators: [
         () => ({
@@ -68,44 +70,189 @@ export const Default: Story = {
     },
 };
 
-/** 邊界：不傳入 props，驗證無資料時不使用 placeholder，乾淨呈現（或使用子元件預設值） */
+/** 邊界：不傳入 props 時，空清單仍顯示指定提示。 */
 export const MinimalProps: Story = {
     name: '邊界：最小 props (無資料狀態)',
     args: {},
+    /** 空白提示不依賴 hasDevices 是否有傳入。 */
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByRole('status')).toHaveTextContent('尚未擺放設備');
+    },
 };
 
-/** 邊界：電力過載（耗電量大於供電量，進度條滿格不超界） */
+/** 無設備時顯示工單指定文案，不建立零值品項。 */
+export const EmptyFactory: Story = {
+    name: '空產線：尚未擺放設備',
+    args: { hasDevices: false, products: [] },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByRole('status')).toHaveTextContent('尚未擺放設備');
+        await expect(canvas.queryByRole('button', { name: /產耗明細/ })).not.toBeInTheDocument();
+    },
+};
+
+/** 依使用者指定，已有設備但沒有產耗摘要時，也顯示相同的空白提示。 */
+export const DevicesWithoutSummary: Story = {
+    name: '邊界：有設備但無產耗摘要',
+    args: { hasDevices: true, products: [] },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByRole('status')).toHaveTextContent('尚未擺放設備');
+    },
+};
+
+/** 與接線整合測試對齊的 30/min 產線；中間物淨值為零仍完整保留。 */
+const connectedProducts: SingleProductDetail[] = [
+    { id: 'ore', name: '源礦', produce: 30, consume: 30, profit: 0, isExpanded: true },
+    { id: 'powder', name: '源石粉末', produce: 30, consume: 30, profit: 0, isExpanded: true },
+];
+
+/** 正常產線展示與固定一位小數的格式驗證。 */
+export const ConnectedProduction: Story = {
+    name: '已接線：30 個每分與零淨值中間物',
+    args: { hasDevices: true, products: connectedProducts },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getAllByRole('button', { name: /產耗明細/ })).toHaveLength(2);
+        await expect(canvas.getAllByText('30.0')).toHaveLength(4);
+        await expect(canvas.getAllByText('淨值+0.0')).toHaveLength(2);
+        await expect(canvas.getByText('(個/分)')).toBeInTheDocument();
+    },
+};
+
+/** 清空設備後，即使引擎尚在 debounce 期間，舊摘要也不應繼續顯示。 */
+export const EmptyWithStaleProducts: Story = {
+    name: '邊界：無設備但仍有上一輪摘要',
+    args: { hasDevices: false, products: connectedProducts },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByRole('status')).toHaveTextContent('尚未擺放設備');
+        await expect(canvas.queryByRole('button', { name: /產耗明細/ })).not.toBeInTheDocument();
+    },
+};
+
+/** 小數、千分位與負淨值僅做格式化，不修改傳入的產耗數值。 */
+export const DecimalRates: Story = {
+    name: '邊界：小數與正負淨值',
+    args: {
+        hasDevices: true,
+        products: [
+            {
+                id: 'positive',
+                name: '紫晶纖維',
+                produce: 1234.56,
+                consume: 1200,
+                profit: 34.56,
+                isExpanded: true,
+            },
+            {
+                id: 'negative',
+                name: '纖維原料',
+                produce: 0.05,
+                consume: 0.15,
+                profit: -0.1,
+                isExpanded: true,
+            },
+        ],
+    },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText('1,234.6')).toBeInTheDocument();
+        await expect(canvas.getByText('淨值+34.6')).toHaveClass('text-[#a3fd1c]');
+        await expect(canvas.getByText('淨值-0.1')).toHaveClass('text-[#ff6e6e]');
+    },
+};
+
+/** 刷新與排序後保留同品項的展開狀態，並驗證展開不會改寫 args。 */
+export const LiveUpdates: Story = {
+    name: '互動：刷新數據保留展開狀態',
+    args: {
+        hasDevices: true,
+        products: connectedProducts.map((item) => ({ ...item, isExpanded: false })),
+    },
+    render: (args) => ({
+        components: { TestStatsPanel },
+        setup() {
+            /** 初始資料沿用傳入物件，讓 play 可以檢查展示操作是否回寫 props。 */
+            const products = ref(args.products ?? []);
+            /** 示範產線更新及排序；產耗值由 Story 提供，展示元件不計算流量。 */
+            const refreshProducts = () => {
+                products.value = products.value
+                    .map((item) => ({
+                        ...item,
+                        produce: 15,
+                        consume: 15,
+                    }))
+                    .reverse();
+            };
+            return { args, products, refreshProducts };
+        },
+        template: `
+            <div class="h-full">
+                <button type="button" class="text-white" @click="refreshProducts">更新產線數據</button>
+                <TestStatsPanel v-bind="args" :products="products" />
+            </div>
+        `,
+    }),
+    play: async ({ canvasElement, args }) => {
+        const canvas = within(canvasElement);
+        await userEvent.click(canvas.getByRole('button', { name: '源礦產耗明細' }));
+        await expect(args.products?.[0].isExpanded).toBe(false);
+        await userEvent.click(canvas.getByRole('button', { name: '更新產線數據' }));
+        await waitFor(() => expect(canvas.getAllByText('15.0')).toHaveLength(2));
+        await expect(canvas.getByRole('button', { name: '源礦產耗明細' })).toHaveAttribute(
+            'aria-expanded',
+            'true',
+        );
+        await expect(canvas.getByRole('button', { name: '源石粉末產耗明細' })).toHaveAttribute(
+            'aria-expanded',
+            'false',
+        );
+    },
+};
+
+/** 邊界：較高耗電仍顯示完整 kW 數值。 */
 export const OverloadPower: Story = {
-    name: '邊界：電力過載',
+    name: '邊界：高耗電',
     args: {
         power: {
             used: 350,
             total: 180,
-            percent: 100,
         },
         products: sampleProductions,
         exchangeRate: 50000,
         tips: [
             {
                 type: 'error',
-                text: '電網負載超載，請儘速擴建發電機',
+                text: '設備位置重疊，請調整佈局',
             },
         ],
     },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText('350 kW / 180 kW')).toBeVisible();
+        await expect(canvas.getByText('總耗電量/供電量')).toBeVisible();
+        await expect(canvas.queryByRole('spinbutton')).not.toBeInTheDocument();
+        await expect(canvasElement.querySelector('[data-figma-name="Bar"]')).toBeNull();
+    },
 };
 
-/** 邊界：零供電零耗電狀態（驗證除以零保護） */
+/** 邊界：零耗電顯示 0 kW。 */
 export const ZeroSupplyPower: Story = {
-    name: '邊界：零供電零耗電',
+    name: '邊界：零耗電',
     args: {
         power: {
             used: 0,
-            total: 0,
-            percent: 0,
         },
         products: [],
         exchangeRate: 0,
         tips: [],
+    },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText('0 kW / 0 kW')).toBeVisible();
+        await expect(canvas.queryByRole('spinbutton')).not.toBeInTheDocument();
     },
 };
 
@@ -129,7 +276,6 @@ export const ManyProductionsOverflow: Story = {
     args: {
         power: {
             used: 150,
-            total: 200,
         },
         products: overflowProductions,
         exchangeRate: 1250000,
@@ -155,7 +301,6 @@ export const ManyTipsOverflow: Story = {
     args: {
         power: {
             used: 80,
-            total: 120,
         },
         products: sampleProductions,
         exchangeRate: 34000,
@@ -169,7 +314,6 @@ export const LongTextOverflow: Story = {
     args: {
         power: {
             used: 999999,
-            total: 1200000,
         },
         products: [
             {

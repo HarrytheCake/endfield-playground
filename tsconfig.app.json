@@ -12,5 +12,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", ".storybook/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", ".storybook/**/*.ts", "docs/toby/test/**/*.ts"]
 }

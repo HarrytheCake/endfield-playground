@@ -1,12 +1,12 @@
 # V18-D1 — L1 contract lab 合入（W1018-A0 ②B）
 
 **對應工項：** V18-D1
-**狀態：** `[~]` 碼已併入 `dev/aaaaa1018`；type-check／關鍵測綠；**開 PR 中**
-**日期：** 2026-10-25
+**狀態：** `[x]` 完成（[#79](https://github.com/dernoson/endfield-playground/pull/79) MERGED 2026-10-25）
+**日期：** 2026-10-25（收斂確認 2026-11-01）
 **依賴：** 無（來源分支已存在）
 **正式工單：** [W1018-A0 §1](../../../work_dispatch/aaaaa/1018/W1018-A0_m3_engine_lab.md)
 **來源分支：** `origin/dev/aaaaa1019-l1-lab`
-**開發分支：** `dev/aaaaa1018`（已 merge lab）
+**開發分支：** `dev/aaaaa1018`（已 merge lab → #79）
 
 > **與 C1 皆交：** 本項＝②B（必做）。驗收步驟見 [C1](./C1_m3_acceptance_steps.md)。
 
@@ -32,8 +32,8 @@
 |---|------|------|
 | 1 | merge `origin/dev/aaaaa1019-l1-lab` → `dev/aaaaa1018` | `[x]`（衝突：todolist_v17 meta 兩行皆留） |
 | 2 | 品質閘（type-check／相關測） | `[x]` type-check；primaryOutput＋topology 8 passed |
-| 3 | 開 PR → `master`（W1018-A0 ②B；不發解鎖句） | `[ ]` **另裁** |
-| 4 | 合入後回寫 E1／todolist | `[ ]` |
+| 3 | 開 PR → `master`（W1018-A0 ②B；不發解鎖句） | `[x]` [#79](https://github.com/dernoson/endfield-playground/pull/79) |
+| 4 | 合入後回寫 E1／todolist | `[x]` 2026-11-01（V19-B1） |
 
 **不做：** 正式頁掛 lab、改 LayoutView 互動、擴大 catalog 範圍。
 
@@ -72,10 +72,10 @@ pnpm dev
 
 ## 5. DoD
 
-- [ ] PR 已開（或已合）——**另裁**
+- [x] PR 已合——[#79](https://github.com/dernoson/endfield-playground/pull/79)
 - [x] 品質閘綠（type-check＋關鍵兩測；2026-10-25）
 - [x] 未改 GridCanvas／LayoutView／MainLayout 業務邏輯（diff 僅 dev lab）
-- [x] 不發解鎖句（預定 PR body）
+- [x] 不發解鎖句
 
 ---
 
@@ -94,6 +94,10 @@ pnpm dev
 ---
 
 ## 7. 開發日誌
+
+### 2026-11-01｜收斂確認
+
+- #79 MERGED；本項標 `[x]`
 
 ### 2026-10-25｜merge 進本週分支
 

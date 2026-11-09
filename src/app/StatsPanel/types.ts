@@ -1,3 +1,5 @@
+import type { TicketCurrencyRate } from '@/types/flow';
+
 /** 單一產品的產能估算明細資料 */
 export interface SingleProductDetail {
     /** 產品唯一識別碼 */
@@ -14,14 +16,12 @@ export interface SingleProductDetail {
     isExpanded?: boolean;
 }
 
-/** 電力消耗與供電統計資料 */
+/** 耗電與供電的唯讀統計資料。 */
 export interface PowerData {
     /** 目前總耗電量（kW） */
     used: number;
-    /** 目前總供電量（kW） */
-    total: number;
-    /** 電力負載百分比（0 ~ 100），若未提供則由元件依 used / total 計算 */
-    percent?: number;
+    /** 總供電量（kW）；缺資料時顯示 0。 */
+    total?: number;
 }
 
 /** 單一提示或警報訊息項目 */
@@ -34,12 +34,16 @@ export interface SingleTip {
 
 /** 產線總覽統計面板（StatsPanel）的 Props 定義 */
 export interface StatsPanelProps {
-    /** 電力消耗與供電統計數據 */
+    /** 正式畫布是否有設備；未傳時保留既有獨立預覽的行為。 */
+    hasDevices?: boolean;
+    /** 耗電與供電唯讀統計數據 */
     power?: PowerData;
     /** 產能估算產品明細列表 */
     products?: SingleProductDetail[];
     /** 調度券每小時兌換效率（券/hr） */
     exchangeRate?: number;
+    /** 各券種兌換效率；提供時分別顯示，優先於單一 exchangeRate。 */
+    exchangeRates?: TicketCurrencyRate[];
     /** 下半部提示與警報訊息列表 */
     tips?: SingleTip[];
 }

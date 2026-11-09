@@ -3,17 +3,25 @@
  */
 import { describe, it, expect } from 'vitest';
 import { toStatsPanelProps, type StatsPanelSource } from '@/editor/stats/toStatsPanelProps';
-import type { ItemSummary } from '@/types/flow';
+import type { ItemSummary, TicketCurrencyRate } from '@/types/flow';
 import type { Alert } from '@/types/validation';
 
 /** 空來源：尚無設備、引擎沒有結果 */
 const EMPTY: StatsPanelSource = {
+    hasDevices: false,
     powerDemand: 0,
     powerSupply: 0,
     itemSummary: [],
     ticketTotal: 0,
+    ticketRates: [],
     alerts: [],
 };
+
+/** 自由畫布的兩種券，數值帶長小數 */
+const RATES: TicketCurrencyRate[] = [
+    { currency: 'wuling', label: '武陵調度券', rate: 12.345 },
+    { currency: 'valley4', label: '谷地調度券', rate: 0 },
+];
 
 /**
  * 建立最小的品項摘要；未用到的欄位以型別斷言略過。
@@ -42,6 +50,7 @@ function alert(level: Alert['level'], message: string): Alert {
 describe('toStatsPanelProps', () => {
     it('空來源：power／exchangeRate 不給，讓面板顯示「-」', () => {
         const props = toStatsPanelProps(EMPTY);
+        expect(props.hasDevices).toBe(false);
         expect(props.power).toBeUndefined();
         expect(props.exchangeRate).toBeUndefined();
         expect(props.products).toEqual([]);
@@ -73,8 +82,28 @@ describe('toStatsPanelProps', () => {
         ]);
     });
 
-    it('調度券總效率大於 0 才給 exchangeRate', () => {
-        expect(toStatsPanelProps({ ...EMPTY, ticketTotal: 120.04 }).exchangeRate).toBe(120);
+    it('有設備且調度券總效率大於 0 才給 exchangeRate', () => {
+        expect(
+            toStatsPanelProps({ ...EMPTY, hasDevices: true, ticketTotal: 120.04 }).exchangeRate,
+        ).toBe(120);
+        expect(toStatsPanelProps({ ...EMPTY, ticketTotal: 120.04 }).exchangeRate).toBeUndefined();
+    });
+
+    it('有設備時各券種效率取小數一位', () => {
+        const props = toStatsPanelProps({ ...EMPTY, hasDevices: true, ticketRates: RATES });
+        expect(props.hasDevices).toBe(true);
+        expect(props.exchangeRates).toEqual([
+            { currency: 'wuling', label: '武陵調度券', rate: 12.3 },
+            { currency: 'valley4', label: '谷地調度券', rate: 0 },
+        ]);
+    });
+
+    it('沒有設備時各券種效率歸零但保留券種名稱', () => {
+        const props = toStatsPanelProps({ ...EMPTY, ticketRates: RATES });
+        expect(props.exchangeRates).toEqual([
+            { currency: 'wuling', label: '武陵調度券', rate: 0 },
+            { currency: 'valley4', label: '谷地調度券', rate: 0 },
+        ]);
     });
 
     it('警示依原順序轉成 Tips', () => {
