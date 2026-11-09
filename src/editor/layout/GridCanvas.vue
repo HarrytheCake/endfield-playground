@@ -3,9 +3,11 @@ import { computed, type DeepReadonly } from 'vue';
 import type { ScreenPoint } from './useGridViewport';
 import { getMachineById } from '@/data/machines';
 import type { Position } from '@/types/euclideanSpace';
-import type { PlacedDevice, Pipeline } from '@/types/layout';
+import type { PlacedDevice, Pipeline, PortRef } from '@/types/layout';
+import type { PortMedia } from '@/types/machine';
 import { getDeviceOccupiedCells } from '@/utils/layout/deviceOccupancy';
 import { deviceSizeFromMachine, toDeviceFootprint } from '@/utils/layout/toFootprint';
+import WarningIcon from '@/components/WarningIcon/Index.vue';
 
 /** GridCanvas 的唯讀輸入資料 */
 interface Props {
@@ -13,6 +15,28 @@ interface Props {
     devices: readonly DeepReadonly<PlacedDevice>[];
     /** 要顯示的管線 */
     pipelines: readonly DeepReadonly<Pipeline>[];
+    /** L2 依既有衍生連線提供的斷線端點；展示層不自行判定連線是否合法。 */
+    readonly disconnectedPipelineEnds?: readonly DisconnectedPipelineEnd[];
+    /** L2 已映射的視覺埠點；展示層不讀取機型埠定義或呼叫埠幾何。 */
+    readonly ports?: readonly RenderedPort[];
+    /** 可見埠圓點的 viewBox 像素半徑；由 L2 同步命中範圍，高亮時不放大。 */
+    readonly portRadius?: number;
+    /** 容器命中的埠；只控制 highlight，不自行判定手勢或連線是否合法。 */
+    readonly highlightedPort?: Readonly<PortRef> | null;
+    /** 容器提供的錯誤訊息；本元件只顯示，不決定規則或觸發提交。 */
+    readonly connectionFeedback?: string | null;
+    /** 本地 draft 的連續格座標與合法狀態；只畫預覽，不將它當作正式管線。 */
+    readonly connectionPreview?: {
+        /** 尚未提交的線，座標直接表示視覺位置，不額外加半格。 */
+        readonly points: readonly Readonly<{
+            /** 世界連續格 X 座標，尚未乘上 cellSize。 */
+            x: number;
+            /** 世界連續格 Y 座標，尚未乘上 cellSize。 */
+            y: number;
+        }>[];
+        /** 非法目標時改以紅色顯示，避免彈窗中斷手勢。 */
+        readonly invalid: boolean;
+    } | null;
     /** 容器持有的拿起位置；只影響顯示，不改寫已放設備 */
     deviceDragPreview?: {
         /** 被拿起設備的實例識別；查無 ID 時不影響其他設備 */
@@ -50,6 +74,35 @@ interface RenderedDeviceCell {
     y: number;
 }
 
+/** 用於埠繪製的 plain 資料，沿用共用埠身分並明列世界連續格座標。 */
+interface RenderedPort extends PortRef {
+    /** Vue 列表的穩定識別，避免同設備不同方向或索引互相覆蓋。 */
+    readonly key: string;
+    /** 展示埠所屬媒質，不在展示層推斷連線規則。 */
+    readonly media: PortMedia;
+    /** 視覺埠邊心的世界連續格 X 座標，不是螢幕像素。 */
+    readonly x: number;
+    /** 視覺埠邊心的世界連續格 Y 座標，不是外側錨點格索引。 */
+    readonly y: number;
+}
+
+/** 管線端點未接上設備時的唯讀展示資料，與驗證系統的設備錯誤分開。 */
+interface DisconnectedPipelineEnd {
+    /** 所屬管線識別，供穩定渲染與無障礙說明使用。 */
+    readonly pipelineId: string;
+    /** 未接上的是路徑起點或終點。 */
+    readonly endpoint: 'from' | 'to';
+    /** 使用既有圖示的媒質配色：belt 黃色、pipe 青色。 */
+    readonly media: PortMedia;
+    /** 管線外側錨點格；繪製時對齊該格中心，不跟隨設備移動。 */
+    readonly position: Readonly<Position>;
+}
+
+/** 圖示維持固定 viewBox 像素大小，縮放只改世界位置，不讓警示縮到難以辨識。 */
+const WARNING_ICON_SIZE_PX = 18;
+/** 圖示放在未連接端點右側，保留間隔以免覆蓋端點與截斷滑鼠操作。 */
+const WARNING_ICON_GAP_PX = 6;
+
 /** 外部傳入的唯讀佈局資料與畫布尺寸 */
 const props = withDefaults(defineProps<Props>(), {
     cellSize: 28,
@@ -60,6 +113,12 @@ const props = withDefaults(defineProps<Props>(), {
     baseSize: null,
     outsideDeviceIds: () => [],
     deviceDragPreview: null,
+    highlightedPort: null,
+    connectionPreview: null,
+    connectionFeedback: null,
+    ports: () => [],
+    portRadius: 4,
+    disconnectedPipelineEnds: () => [],
 });
 
 /** 畫布格點點擊事件；只傳座標，不決定是否放置設備 */
@@ -111,9 +170,26 @@ const renderedDevices = computed(() =>
 );
 
 /**
+ * 以 PortRef 三鍵比對，避免同設備的多個埠同時被 highlight。
+ * @param port 正在繪製的埠
+ * @returns 是否與容器傳入的 highlight 埠完全相符
+ * @example
+ * isHighlighted({ deviceId: 'src', portType: 'output', portIndex: 1 });
+ */
+function isHighlighted(port: PortRef): boolean {
+    return (
+        props.highlightedPort?.deviceId === port.deviceId &&
+        props.highlightedPort.portType === port.portType &&
+        props.highlightedPort.portIndex === port.portIndex
+    );
+}
+
+/**
  * 以 SVG 本身的顯示矩形換算點擊格點，避免子元素成為 target 時座標漂移。
  *
  * @param event SVG 上的滑鼠點擊事件
+ * @example
+ * handleCanvasClick(event);
  */
 function handleCanvasClick(event: MouseEvent): void {
     if (event.button !== 0 || props.viewportWidth <= 0 || props.viewportHeight <= 0) return;
@@ -181,6 +257,8 @@ const deviceCells = computed(() => {
  *
  * @param waypoints 管線依序經過的絕對格點
  * @returns SVG path 的 d attribute；沒有 waypoint 時回傳空字串
+ * @example
+ * pipelinePath([{ x: 4, y: 3, z: 0 }, { x: 8, y: 3, z: 0 }]);
  */
 function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
     return waypoints
@@ -194,7 +272,7 @@ function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
 </script>
 
 <template>
-    <div class="h-full w-full overflow-hidden rounded-lg bg-white dark:bg-zinc-900">
+    <div class="relative h-full w-full overflow-hidden rounded-lg bg-white dark:bg-zinc-900">
         <svg
             width="100%"
             height="100%"
@@ -202,10 +280,10 @@ function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
             preserveAspectRatio="none"
             class="block select-none"
             role="img"
-            aria-label="格點佈局，可拖曳設備移位、拖曳空白平移，選取機器後可點擊格點放置"
+            aria-label="格點佈局，可拖曳埠連線、拖曳設備移位、拖曳空白平移，選取機器後可點擊格點放置"
             @click="handleCanvasClick"
         >
-            <title>格點佈局；拖曳設備移位，拖曳空白或按住滑鼠中鍵可平移</title>
+            <title>格點佈局；拖曳埠可連線，拖曳設備可移位，拖曳空白或按住滑鼠中鍵可平移</title>
 
             <g :transform="worldTransform">
                 <!-- 格線 -->
@@ -303,6 +381,90 @@ function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
                         class="fill-emerald-600 dark:fill-emerald-400"
                     />
                 </g>
+                <!-- draft 使用獨立圖層與連續座標，不混入正式 pipelines。 -->
+                <polyline
+                    v-if="props.connectionPreview"
+                    data-connection-preview
+                    :data-invalid="props.connectionPreview.invalid"
+                    :points="
+                        props.connectionPreview.points
+                            .map(
+                                (point) =>
+                                    `${point.x * props.cellSize},${point.y * props.cellSize}`,
+                            )
+                            .join(' ')
+                    "
+                    fill="none"
+                    :class="
+                        props.connectionPreview.invalid ? 'stroke-red-500' : 'stroke-yellow-500'
+                    "
+                    stroke-width="3"
+                    stroke-dasharray="6 4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    vector-effect="non-scaling-stroke"
+                    class="pointer-events-none"
+                />
+                <!-- 埠畫在設備及管線之上；命中由容器統一處理，不讓圓點攔截事件。 -->
+                <g class="pointer-events-none" data-ports>
+                    <circle
+                        v-for="port in props.ports"
+                        :key="port.key"
+                        :data-port-device="port.deviceId"
+                        :data-port-type="port.portType"
+                        :data-port-index="port.portIndex"
+                        :data-port-media="port.media"
+                        :data-port-highlighted="isHighlighted(port) || undefined"
+                        :cx="port.x * props.cellSize"
+                        :cy="port.y * props.cellSize"
+                        :r="props.portRadius / props.zoom"
+                        :class="
+                            isHighlighted(port)
+                                ? props.connectionPreview?.invalid
+                                    ? 'fill-red-500'
+                                    : 'fill-yellow-400'
+                                : port.portType === 'input'
+                                  ? 'fill-sky-400'
+                                  : 'fill-emerald-400'
+                        "
+                        class="stroke-zinc-900"
+                        stroke-width="1.5"
+                        vector-effect="non-scaling-stroke"
+                    >
+                        <title>
+                            {{ port.portType === 'input' ? '輸入' : '輸出' }}埠
+                            {{ port.portIndex + 1 }}（{{
+                                port.media === 'belt' ? '傳送帶' : '水管'
+                            }}）
+                        </title>
+                    </circle>
+                </g>
+                <!-- 沿用其他作者交付的驚嘆號元件，只展示 L2 提供的斷線端點。 -->
+                <g
+                    v-for="end in props.disconnectedPipelineEnds"
+                    :key="`${end.pipelineId}-${end.endpoint}`"
+                    data-pipeline-warning
+                    :data-pipeline-id="end.pipelineId"
+                    :data-endpoint="end.endpoint"
+                    :data-media="end.media"
+                    role="img"
+                    :aria-label="`管線 ${end.pipelineId} ${end.endpoint === 'from' ? '起點' : '終點'}未連接設備`"
+                    class="pointer-events-none"
+                >
+                    <title>{{ end.endpoint === 'from' ? '管線起點' : '管線終點' }}未連接設備</title>
+                    <WarningIcon
+                        :size="WARNING_ICON_SIZE_PX / props.zoom"
+                        :color="end.media === 'pipe' ? 'cyan' : 'yellow'"
+                        :x="
+                            (end.position.x + 0.5) * props.cellSize +
+                            WARNING_ICON_GAP_PX / props.zoom
+                        "
+                        :y="
+                            (end.position.y + 0.5) * props.cellSize -
+                            WARNING_ICON_SIZE_PX / (2 * props.zoom)
+                        "
+                    />
+                </g>
                 <!-- 基地是世界座標框線；不攔截落子，也不限制視角 -->
                 <rect
                     v-if="props.baseSize"
@@ -319,5 +481,13 @@ function pipelinePath(waypoints: DeepReadonly<Pipeline['waypoints']>): string {
                 />
             </g>
         </svg>
+        <!-- 非彈窗狀態訊息由展示層統一呈現，避免 L2 容器承擔視覺樣式。 -->
+        <p
+            v-if="props.connectionFeedback"
+            role="status"
+            class="pointer-events-none absolute top-3 left-3 rounded bg-red-950/90 px-3 py-2 text-sm text-red-100"
+        >
+            {{ props.connectionFeedback }}
+        </p>
     </div>
 </template>

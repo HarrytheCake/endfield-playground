@@ -8,7 +8,7 @@
 **上游：** [WEEK_20261018](../../work_dispatch/WEEK_20261018.md) **v1.0**、[ROADMAP_OUTLINE](../../roadmap/ROADMAP_OUTLINE.md) **v1.20**、[C5](../../roadmap/detail/C5_source_primary_output.md)、[AGENT_WEEK_1018](../claude/AGENT_WEEK_1018.md)
 **週次：** 2026-10-18 → 2026-10-25（連線月第三週；**M3＝10/25**）
 **開發分支：** `dev/aaaaa1018`
-**狀態總覽：** **`[~]`**（2026-10-25；開版；A-1 **已決＝A＋B**）
+**狀態總覽：** **`[x]` 已結案**（2026-11-01；[#79](https://github.com/dernoson/endfield-playground/pull/79) MERGED；文件收斂見 [V19-B1](./dev_v19/B1_v18_residue_close.md)）
 **待確認問題：** [dispatch_private/1018/PENDING_DECISIONS_20261025.md](../collaborator_survey/dispatch_private/1018/PENDING_DECISIONS_20261025.md)（A-1 已決；M-1／M-2 非本責）
 
 > 標記說明：`[ ]` 未開始 / `[~]` 進行中 / `[x]` 完成 / `[!]` 封鎖中（等待依賴）
@@ -109,7 +109,7 @@ A 定案 → B V17 收斂（前置）
 
 ## V18-D｜②B Lab 合入（必做）
 
-- [~] **V18-D1** lab 已 merge 進 `dev/aaaaa1018`；**開 PR → master 另裁**
+- [x] **V18-D1** lab 已合 master（[#79](https://github.com/dernoson/endfield-playground/pull/79)，2026-10-25）
     - 細項：[dev_v18/D1_l1_lab_pr.md](./dev_v18/D1_l1_lab_pr.md)
     - 產物：`/dev/l1-contract-lab`＋[USAGE](./USAGE_l1_contract_lab.md)
 
@@ -117,7 +117,7 @@ A 定案 → B V17 收斂（前置）
 
 ## V18-E｜驗收、交接
 
-- [ ] **V18-E1** 對齊公開 V2；回寫 todolist／AGENT_WEEK／決策層
+- [x] **V18-E1** 對齊公開 V2；文件收斂（2026-11-01｜V19-B1）
     - 細項：[dev_v18/E1_acceptance_and_handoff.md](./dev_v18/E1_acceptance_and_handoff.md)
 
 ---
@@ -138,15 +138,15 @@ A 定案 → B V17 收斂（前置）
 
 - [x] 派工①已發（WEEK＋工單在 master；#77）
 - [x] ②A 驗收步驟可跟做（[C1](./dev_v18/C1_m3_acceptance_steps.md)）
-- [~] ②B lab 已在分支可開頁；PR → master 另裁
-- [ ] 未改 C1 鎖檔／`editorStore` 簽名
-- [ ] 不做長篇派工第二主交付
+- [x] ②B lab 已合 master（#79）
+- [x] 未改 C1 鎖檔／`editorStore` 簽名（#79 範圍）
+- [x] 不做長篇派工第二主交付
 
-### 品質閘（若選 B 開碼 PR）
+### 品質閘（#79）
 
-- [ ] type-check／lint／format／test 綠
-- [ ] diff 不含 `GridCanvas`／`LayoutView`／`MainLayout` 互動大改
-- [ ] 不發解鎖句
+- [x] type-check／lint／format／test 綠（合入時）
+- [x] diff 不含 `GridCanvas`／`LayoutView`／`MainLayout` 互動大改
+- [x] 不發解鎖句
 
 ---
 
@@ -167,12 +167,16 @@ A 定案 → B V17 收斂（前置）
 |------|----------|----------|------|
 | ① | 派工已發 | `[x]` | #77；已在 master |
 | ②A | 驗收步驟 | `[x]` | [C1](./dev_v18/C1_m3_acceptance_steps.md) 2026-10-25 |
-| ②B | lab 合入 | `[~]` | 碼已 merge；開 PR 另裁 |
-| 邊界 | 未改 C1 鎖檔 | `[ ]` | 驗收時勾 |
+| ②B | lab 合入 | `[x]` | #79 MERGED |
+| 邊界 | 未改 C1 鎖檔 | `[x]` | #79 範圍 |
 
 ---
 
 ## 開發日誌
+
+### 2026-11-01｜文件收斂結案（V19-B1）
+
+- #79 MERGED 確認；D1／E1／本檔標 `[x]`；後續執行改掛 [todolist_v19](./todolist_v19.md)
 
 ### 2026-10-25｜埠幾何／L2 FAQ 寫入公開檔＋開 PR
 

@@ -5,8 +5,11 @@ import ToolbarPanel from '@/editor/toolbar/ToolbarPanel.vue';
 import LayoutView from '@/editor/layout/LayoutView.vue';
 import StatsPanel from '@/app/StatsPanel/Index.vue';
 import MachineCard, { type MachineCardProps } from '@/app/MachineCard/Index.vue';
+import SourceOutputPanel from '@/editor/sourceOutput/SourceOutputPanel.vue';
 import { useLayoutStore } from '@/store/layoutStore';
+import type { PlacedDevice } from '@/types/layout';
 import { getMachineById } from '@/data/machines';
+import { resolveDisplayGrid } from '@/utils/portUtils';
 import { useFlowEngine } from '@/composables/useFlowEngine';
 import { useValidation } from '@/composables/useValidation';
 
@@ -15,24 +18,34 @@ const layoutStore = useLayoutStore();
 
 /**
  * 目前選中的設備實例 id，`null` 表示未選取。  \
- * 只有左側面板消費，依主編裁決 A-3 暫放本地；多重選取需要跨元件共用時再搬進 store。
+ * 同時供左側面板與 LayoutView 旋轉入口使用；單選身分仍由此處保存，透過 prop 傳給畫布。
+ * 多重選取需要跨元件共用時再搬進 store。
  */
 const selectedDeviceId = ref<string | null>(null);
 
 /**
- * 選中設備轉成 MachineCard 的 props；找不到設備或機器定義時為 `null`，面板隨之隱藏。  \
+ * 選中的設備實例；找不到時為 `null`。  \
  * 每次從 store 反查而非保存快照：設備被復原移除後面板自動收起，不會顯示已不存在的設備。
- * 尺寸取 0° 靜態值，因為旋轉尚未開放；配方清單本週不轉接，交給 MachineCard 的預設呈現。
+ */
+const selectedDevice = computed<PlacedDevice | null>(
+    () => layoutStore.devices.find((d) => d.id === selectedDeviceId.value) ?? null,
+);
+
+/**
+ * 選中設備轉成 MachineCard 的 props；找不到設備或機器定義時為 `null`，面板隨之隱藏。  \
+ * 尺寸取目前旋轉後的顯示長寬；配方清單本週不轉接，交給 MachineCard 的預設呈現。
  */
 const selectedMachineCard = computed<MachineCardProps | null>(() => {
-    const device = layoutStore.devices.find((d) => d.id === selectedDeviceId.value);
+    const device = selectedDevice.value;
     if (!device) return null;
     const machine = getMachineById(device.machineType);
     if (!machine) return null;
+    /** 與畫布共用旋轉後尺寸，避免選取面板仍顯示旋轉前長寬。 */
+    const display = resolveDisplayGrid(machine.width, machine.height, device.rotation);
     return {
         id: device.id,
         name: machine.name,
-        sizeText: `${machine.width}×${machine.height}`,
+        sizeText: `${display.widthCells}×${display.heightCells}`,
         /** 負值（含 -1 資料未定義）不是耗電量，留給卡片顯示佔位符號 */
         power: machine.power >= 0 ? `${machine.power}kW` : undefined,
     };
@@ -64,10 +77,15 @@ useFlowEngine();
             <!-- 畫布與疊在其上的浮層共用同一個定位容器；工具列（#48）以 absolute 貼齊此容器底緣 -->
             <div class="area-stage">
                 <div class="area-canvas">
-                    <LayoutView @select-device="selectedDeviceId = $event" />
+                    <LayoutView
+                        :selected-device-id="selectedDeviceId"
+                        @select-device="selectedDeviceId = $event"
+                    />
                 </div>
                 <aside v-if="selectedMachineCard" class="area-device-panel">
                     <MachineCard v-bind="selectedMachineCard" />
+                    <!-- C5：源設備才會渲染內容，非源設備此元件為空 -->
+                    <SourceOutputPanel v-if="selectedDevice" :device="selectedDevice" />
                 </aside>
                 <section class="area-toolbar-dock">
                     <ToolbarPanel />
