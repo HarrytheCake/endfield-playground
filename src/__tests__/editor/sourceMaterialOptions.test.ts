@@ -1,5 +1,6 @@
 /**
  * W1026-H1／C5 — 源設備可選材料依輸出埠媒質過濾
+ * W1102-H1 — 改看該機所有型態，基礎材料輸出點同時列固體與液氣
  */
 import { describe, it, expect } from 'vitest';
 import { getMachineById } from '@/data/machines';
@@ -18,28 +19,23 @@ describe('sourceMaterialOptions', () => {
     it('非源設備回傳空陣列', () => {
         const nonSource = machineOf('item_sink');
         expect(nonSource.is_source).toBe(false);
-        expect(sourceMaterialOptions(nonSource, undefined)).toEqual([]);
+        expect(sourceMaterialOptions(nonSource)).toEqual([]);
     });
 
-    it('基礎材料輸出點預設型態（belt）只列固體', () => {
-        const names = sourceMaterialOptions(machineOf('material_source'), undefined).map(
-            (m) => m.name,
-        );
-        expect(names).toHaveLength(10);
+    it('基礎材料輸出點（solid_belt／fluid_pipe 兩型態）列出固體與液氣共 14 種', () => {
+        const names = sourceMaterialOptions(machineOf('material_source')).map((m) => m.name);
+        expect(names).toHaveLength(14);
         expect(names).toContain('源礦');
-        expect(names.every((n) => getMaterialForm(n) === 'solid')).toBe(true);
-    });
-
-    it('基礎材料輸出點 fluid_pipe 型態只列液體與氣體', () => {
-        const names = sourceMaterialOptions(machineOf('material_source'), 'fluid_pipe').map(
-            (m) => m.name,
+        expect(names).toContain('清水');
+        expect(names.filter((n) => getMaterialForm(n) === 'solid')).toHaveLength(10);
+        expect(names.filter((n) => getMaterialForm(n) !== 'solid').sort()).toEqual(
+            ['惰氣', '息壤氣', '沉積酸', '清水'].sort(),
         );
-        expect(names.sort()).toEqual(['惰氣', '息壤氣', '沉積酸', '清水'].sort());
     });
 
-    it('其他源設備（belt 埠）同樣只列固體', () => {
+    it('單型態源設備（belt 埠）只列固體', () => {
         for (const id of ['item_source', 'warehouse_output']) {
-            const options = sourceMaterialOptions(machineOf(id), undefined);
+            const options = sourceMaterialOptions(machineOf(id));
             expect(options).toHaveLength(10);
             expect(options.every((m) => m.form === 'solid')).toBe(true);
         }

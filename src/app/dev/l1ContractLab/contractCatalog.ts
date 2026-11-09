@@ -129,7 +129,7 @@ export const HUB_GUIDE_STEPS: ContractGuideStep[] = [
     {
         step: 3,
         title: '各分頁點什麼？',
-        detail: '「入門」＝跟這幾步；「詞彙」＝專有名詞白話；「目錄」＝長期會收哪些 API（已列／待列）；「總覽／V14–V17」＝定義表與一鍵測試。',
+        detail: '「入門」＝跟這幾步；「詞彙」＝專有名詞白話；「目錄」＝長期會收哪些 API（已列／待列）；「試玩」＝分辨滑鼠點到的埠，和管子要接的格子；「總覽／V14–V17」＝定義表與一鍵測試。',
     },
     {
         step: 4,
@@ -622,6 +622,119 @@ export const CONTRACT_BLOCKS: ContractVersionBlock[] = [
                 purpose: '／＝formal、／dev＝dev；跨界 history.clear()',
                 callers: '已掛 router；呼叫端通常不用再清',
                 dont: '以為獨立 HTML preview 與 SPA 共用 Pinia（其實分開）',
+            },
+        ],
+    },
+];
+
+/** 試玩白名單 API（V21-C1；不含 canConnect） */
+export type TryoutApiId = 'hitTestPortAt' | 'findPortAt';
+
+/** 試玩用的固定裝置場景 */
+export type TryoutFixtureId = 'crusher-origin' | 'splitters-adjacent';
+
+/** 表單 prefer：空字串＝呼叫時不傳 */
+export type TryoutPrefer = '' | 'input' | 'output';
+
+/**
+ * 一則情境快捷（灌進表單的預設參數）
+ */
+export interface TryoutScenario {
+    /** 穩定 id */
+    id: string;
+    /** 按鈕文案 */
+    label: string;
+    /** 連續格 x，或 findPortAt 的整數格 x */
+    x: number;
+    /** 連續格 y，或 findPortAt 的整數格 y */
+    y: number;
+    /** 優先方向；空＝不傳 */
+    prefer: TryoutPrefer;
+    /** 這則快捷使用的裝置 */
+    fixture: TryoutFixtureId;
+    /** 給人讀的預期 */
+    hint: string;
+}
+
+/**
+ * 試玩白名單一項
+ */
+export interface TryoutApiDef {
+    /** API id */
+    id: TryoutApiId;
+    /** 下拉顯示名 */
+    label: string;
+    /** 一句話 */
+    summary: string;
+    /** 至少兩則快捷 */
+    scenarios: readonly TryoutScenario[];
+}
+
+/**
+ * V21-C1 試玩白名單。
+ *
+ * 座標對齊既有一鍵案例：crusher@(0,0) 熱區 (0.5, 0.1)、頂邊 input[0] 錨點 (0,-1)；
+ * 緊貼埠對埠為 splitter A@(0,0) 與 B@(1,0)，視覺點 (1, 0.5)。
+ */
+export const TRYOUT_APIS: readonly TryoutApiDef[] = [
+    {
+        id: 'hitTestPortAt',
+        label: '滑鼠有沒有點到埠',
+        summary:
+            '模擬滑鼠點在某個位置，看會不會落進埠旁邊的圓形範圍。兩台機器的埠疊在同一點時，要指定優先找進料還是出料。程式裡叫 hitTestPortAt。',
+        scenarios: [
+            {
+                id: 'hit-hot',
+                label: '點在進料口旁邊',
+                x: 0.5,
+                y: 0.1,
+                prefer: 'input',
+                fixture: 'crusher-origin',
+                hint: '粉碎機最左邊的進料口在機器頂邊上。這個小數點落在它旁邊的範圍裡，所以會找到 c 的第 1 個進料口。',
+            },
+            {
+                id: 'hit-prefer-out',
+                label: '兩埠重疊，優先出料',
+                x: 1,
+                y: 0.5,
+                prefer: 'output',
+                fixture: 'splitters-adjacent',
+                hint: '左邊機器的出料口和右邊機器的進料口，畫面上是同一個點。指定優先出料，就會選到 a，不會因為機器的排列順序而換邊。',
+            },
+            {
+                id: 'hit-prefer-in',
+                label: '同一點，優先進料',
+                x: 1,
+                y: 0.5,
+                prefer: 'input',
+                fixture: 'splitters-adjacent',
+                hint: '還是同一個點。改成優先進料，就會選到 b 的進料口。拉線時，起點通常優先出料，放開時優先進料。',
+            },
+        ],
+    },
+    {
+        id: 'findPortAt',
+        label: '這個格子能不能接管子',
+        summary:
+            '看這個整數格子是不是某台機器外面、用來接管子的那一格。小數點的滑鼠位置通常對不到，結果會是空的。程式裡叫 findPortAt。',
+        scenarios: [
+            {
+                id: 'find-anchor',
+                label: '正好是進料的端點格',
+                x: 0,
+                y: -1,
+                prefer: 'input',
+                fixture: 'crusher-origin',
+                hint: '(0, -1) 是粉碎機頂邊第一個進料口外面的那一格。數字和表上完全一樣，所以對得到。',
+            },
+            {
+                id: 'find-hot-null',
+                label: '拿滑鼠的點去對端點',
+                x: 0.5,
+                y: 0.1,
+                prefer: '',
+                fixture: 'crusher-origin',
+                hint: '(0.5, 0.1) 是滑鼠用的小數點，下面的表沒有這一格，所以結果是空的。滑鼠點得到，不代表管子能接在這裡。',
             },
         ],
     },

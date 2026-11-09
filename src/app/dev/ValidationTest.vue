@@ -17,7 +17,8 @@
                 <ul class="ml-4 space-y-1">
                     <li>
                         • 本頁於 setup 時以 <code>registerDetector()</code> 掛上
-                        <code>E001_deviceOverlap</code>，因此下方警示會實際反映設備重疊
+                        <code>E001</code
+                        >、<code>E004</code>、<code>E005</code>、<code>W001</code>，警示會即時反映重疊、缺輸入、缺輸出與材料不符
                     </li>
                     <li>
                         • 透過 <code>useValidation()</code> 監聽
@@ -110,7 +111,13 @@
                         @click="testPlaceUnconnectedMachine"
                         class="w-full rounded-md bg-amber-600 px-3 py-2 text-sm text-white hover:bg-amber-700"
                     >
-                        ➕ 新增沒接線的機器（精煉爐 @20,20，觸發 E004）
+                        ➕ 新增沒接線的機器（精煉爐 @20,20，觸發 E004+E005）
+                    </button>
+                    <button
+                        @click="testPlaceUnconnectedSource"
+                        class="w-full rounded-md bg-rose-600 px-3 py-2 text-sm text-white hover:bg-rose-700"
+                    >
+                        ➕ 新增沒接輸出線的源機（物品輸出口 @60,20，純粹觸發 E005）
                     </button>
                     <button
                         @click="testPlaceMismatchedConnection"
@@ -193,6 +200,7 @@ import { useValidationStore } from '@/store/validationStore';
 import { useValidation } from '@/composables/useValidation';
 import { E001_deviceOverlap } from '@/lib/validation/detectors/E001_deviceOverlap';
 import { E004_missingInput } from '@/lib/validation/detectors/E004_missingInput';
+import { E005_missingOutput } from '@/lib/validation/detectors/E005_missingOutput';
 import { W001_unmatchedMaterial } from '@/lib/validation/detectors/W001_unmatchedMaterial';
 
 /** 藍圖 store：本頁所有測試設備皆透過此 store 擺放 / 清除 */
@@ -203,6 +211,7 @@ const validationStore = useValidationStore();
 /** 註冊必須早於 useValidation()：後者的 watch 是 immediate，setup 當下就會跑一次 */
 validationStore.registerDetector(E001_deviceOverlap);
 validationStore.registerDetector(E004_missingInput);
+validationStore.registerDetector(E005_missingOutput);
 validationStore.registerDetector(W001_unmatchedMaterial);
 
 /** 啟動 editorStore → validationStore 的自動重跑監聽 */
@@ -265,6 +274,21 @@ function testPlaceUnconnectedMachine() {
 }
 
 /**
+ * 在像素座標 (1200,400)（即格子 (60,20)）擺放一台未接輸出線的物品輸出口（is_source: true），
+ * 因源機不套用 E004，但無出邊而觸發 E005，用於純粹驗證 E005。
+ * @example
+ * testPlaceUnconnectedSource()
+ */
+function testPlaceUnconnectedSource() {
+    editorStore.placeDevice({
+        id: crypto.randomUUID(),
+        type: 'default',
+        position: { x: 1200, y: 400 },
+        data: { label: '未接線物品輸出口', machineType: '物品輸出口', rotation: 0 },
+    });
+}
+
+/**
  * 測試 W001：上游輸出「藍鐵粉末」，下游「精煉爐」需要赤銅相關材料，兩者接線後觸發 W001。
  * @example
  * testPlaceMismatchedConnection()
@@ -299,8 +323,9 @@ function testPlaceMismatchedConnection() {
 
 /**
  * 測試純粹 W001：上游為源類機器（物品輸出口，is_source: true），輸出「赤銅礦」；
- * 下游精煉爐在預設基礎模式（base_mode）下無法單獨精煉赤銅礦（赤銅需在 liquid_mode 加清水）。
- * 因上游是源機，E004 自動忽略；下游有入邊，不報 E004；
+ * 下游精煉爐在預設基礎模式（base_mode）下無法單獨精煉赤銅礦（赤銅需在 liquid_mode 加清水）；
+ * 後方接至匯出點（物品輸入口，is_sink: true）提供出邊以排除 E005。
+ * 因上游是源機，E004 自動忽略；精煉爐與匯出點皆有管線進出，不報 E004 與 E005；
  * 僅有精煉爐材料不符 ➔ 畫面上純粹只有 1 筆 W001 Warning（0 Errors）。
  * @example
  * testPlacePureW001Connection()
@@ -308,6 +333,7 @@ function testPlaceMismatchedConnection() {
 function testPlacePureW001Connection() {
     const srcId = crypto.randomUUID();
     const dstId = crypto.randomUUID();
+    const sinkId = crypto.randomUUID();
 
     // 1. 放置上游源設備（物品輸出口，is_source: true，不套用 E004）
     editorStore.placeDevice({
@@ -334,11 +360,28 @@ function testPlacePureW001Connection() {
         },
     });
 
-    // 3. 連接管線
+    // 3. 放置終點匯出點（物品輸入口，is_sink: true，不套用 E005）
+    editorStore.placeDevice({
+        id: sinkId,
+        type: 'default',
+        position: { x: 700, y: 400 },
+        data: {
+            label: '終點物品輸入口',
+            machineType: '物品輸入口',
+            rotation: 0,
+        },
+    });
+
+    // 4. 連接管線：源機 ➔ 精煉爐 ➔ 物品輸入口
     editorStore.addConnection({
         id: crypto.randomUUID(),
         source: srcId,
         target: dstId,
+    });
+    editorStore.addConnection({
+        id: crypto.randomUUID(),
+        source: dstId,
+        target: sinkId,
     });
 }
 

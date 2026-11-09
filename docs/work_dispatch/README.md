@@ -29,7 +29,7 @@
 | [azure9572](./azure9572/1102/) | [Z1](./azure9572/1102/W1102-Z1_e005.md) | 繼續 E005 |
 | [casey](./casey/1102/) | [K0](./casey/1102/W1102-K0_design_orientation.md) | 了解設計現況與目標 |
 | [MBD](./MBD/1102/) | [M3](./MBD/1102/W1102-M3_device_shape.md) | 繼續 DeviceShape 本體 |
-| [aaaaa](./aaaaa/1102/) | [A0](./aaaaa/1102/W1102-A0_v21_a1_open.md) | 試玩只開版（≤2h） |
+| [aaaaa](./aaaaa/1102/) | [A0](./aaaaa/1102/W1102-A0_v21_a1_open.md) | 原只開版；試玩分頁已交（見工單 §4） |
 | [dernoson](./dernoson/1102/) | [D0](./dernoson/1102/W1102-D0_gate.md) | 守閘 |
 | [shirone](./shirone/1102/) | [S0](./shirone/1102/W1102-S0_pause.md) | 長假至 11 月中～底 |
 

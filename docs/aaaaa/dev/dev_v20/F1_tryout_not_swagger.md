@@ -1,7 +1,7 @@
 # V20-F1 — 決策：Lab 朝「輕量可調參試玩」，不做完整 Swagger
 
 **對應工項：** V20-F1（決策／交接；**非本版實作**）
-**狀態：** `[x]` 定案落檔（2026-11-01）
+**狀態：** `[x]` 定案落檔（2026-11-01）。D-6 閘門 **已滿足**（[#82](https://github.com/dernoson/endfield-playground/pull/82)，2026-11-02）
 **日期：** 2026-11-01
 **依賴：** [E1](./E1_acceptance_and_handoff.md) `[x]`
 **承接：** [todolist_v21](../todolist_v21.md)（草案）、[dev_v21/A0_tryout_panel_plan.md](../dev_v21/A0_tryout_panel_plan.md)
@@ -50,6 +50,10 @@ L1 lab 是否要加入類 swagger 的：**任意呼叫、參數輸入、各式 r
 ---
 
 ## 4. 開發日誌
+
+### 2026-11-08｜閘門已滿足
+
+- #82 已合 master；V21-A1 於 `dev/aaaaa1102` 開版。D-6 條文不變
 
 ### 2026-11-01｜閘門確認
 
